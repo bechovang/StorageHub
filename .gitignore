@@ -1,0 +1,46 @@
+# ---- OS ----
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ---- IDE ----
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.code-workspace
+
+# ---- Java / Maven / Gradle (backend) ----
+target/
+build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.log
+hs_err_pid*
+
+# ---- Node / React (frontend) ----
+node_modules/
+dist/
+.vite/
+.next/
+coverage/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.env
+.env.*
+!.env.example
+
+# ---- Misc ----
+*.tmp
+*.bak
+*.bkp
