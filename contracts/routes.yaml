@@ -1,0 +1,56 @@
+# ============================================================================
+# StorageHub — FE route table + notification deep-link registry (Sprint 1)
+#
+# AD-6: notification deep-link registry sống ở đây — FE route PHẢI khớp tên
+# trong file này. Notification trong openapi.yaml chỉ chứa deepLink string đã
+# resolve; file này là nguồn đối chiếu khi review.
+#
+# Quy ước: route FE tuyệt đối, param dạng {camelCase}. Modal KHÔNG có route
+# (không URL riêng): Payment Modal, Forgot Password, Contract print view
+# (render từ ContractDetail.contentSnapshot).
+#
+# Sprint 2+ đánh dấu "placeholder" — FE chưa dựng, chỉ ch reserved tên đường
+# dẫn để notification tương lai không đổi tên route giữa chừng.
+# ============================================================================
+version: 1.0.0-sprint1
+
+routes:
+  # Public
+  login: /login
+  register: /register
+
+  # Customer
+  browse: /browse                          # landing CUSTOMER
+  unit-detail: /units/{unitId}
+  booking-summary: /units/{unitId}/book
+  my-rentals: /rentals
+  rental-detail: /rentals/{reservationId}
+  check-in-pass: /rentals/{reservationId}/check-in-pass
+
+  # Mọi role (adaptive shell — bell FR-33/34 dùng chung)
+  notifications: /notifications
+
+  # Staff / Manager / Ops / Admin — landing đã định, trang Sprint 2+
+  tasks: /tasks                            # landing STAFF (placeholder Sprint 2)
+  facility: /facility                      # landing FACILITY_MANAGER (placeholder Sprint 2)
+  overview: /overview                      # landing BUSINESS_OPS (placeholder Sprint 3)
+  users: /users                            # landing SYSTEM_ADMIN (placeholder Sprint 3)
+
+# Root "/" không phải route — FE redirect theo landingRoute trong AuthSession.
+# Sprint 1: non-CUSTOMER đăng nhập xong đổ vào landing placeholder (shell +
+# empty state "coming soon"); nội dung trang thuộc US Sprint 2/3.
+
+landing-by-role:
+  CUSTOMER: /browse
+  STAFF: /tasks
+  FACILITY_MANAGER: /facility
+  BUSINESS_OPS: /overview
+  SYSTEM_ADMIN: /users
+
+# AD-6 deep-link registry — type → key trong routes map ở trên (không lặp path;
+# đổi route một chỗ là deep-link theo). API trả deepLink string đã resolve sẵn.
+deep-links:
+  RESERVATION_CONFIRMED: rental-detail
+  PAYMENT_SUCCEEDED: rental-detail
+  CONTRACT_DRAFTED: rental-detail
+  RESERVATION_EXPIRED: rental-detail

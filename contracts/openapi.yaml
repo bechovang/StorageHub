@@ -1,0 +1,1056 @@
+# ============================================================================
+# StorageHub API — Sprint 1 contract (FROZEN 2026-09-22)
+# Nguồn chân lý DUY NHẤT của API (AD-2). Muốn đổi API: PR vào file này trước,
+# code sau. Endpoint ngoài Sprint 1 KHÔNG khai báo ở đây — mỗi sprint đóng băng
+# riêng. FE phát triển chống MSW sinh từ file này; BE endpoint phải khớp.
+#
+# Quy ước xuyên suốt (không lặp lại ở từng endpoint):
+# - AD-5: JWT Bearer (TTL 24h, không refresh). Đúng 3 endpoint public:
+#   POST /auth/login, POST /auth/register, POST /auth/forgot-password.
+# - AD-7: Tiền VND = JSON number nguyên (đồng), không float. Ngày nghiệp vụ
+#   (business date) = chuỗi "YYYY-MM-DD" ngữ nghĩa ICT; timestamp = ISO-8601
+#   kèm offset (UTC khi lưu).
+# - AD-8: Mọi lỗi theo envelope Error (machine code + message + fieldErrors).
+#   Danh sách theo envelope page {items, page, pageSize, total}, page 1-based,
+#   mặc định 25. Enum UPPER_SNAKE; JSON field camelCase; query param kebab-case.
+# - AD-9: Kết quả thanh toán do MockPaymentGateway quyết định theo cấu hình
+#   server-side (profile dev) — KHÔNG BAO GIỜ là field trong request.
+# - AD-11: Mọi con số tiền sinh từ PricingEngine; quote snapshot vào
+#   reservation tại Booking Summary; contract dùng lại snapshot.
+# - 401/403 từ tầng security vẫn trả envelope Error (AuthenticationEntryPoint /
+#   AccessDeniedHandler).
+# - Mọi operation đều CÓ THỂ trả 500 INTERNAL_ERROR theo cùng envelope Error
+#   (fallback chưa-được-liệt-kê) — không lặp lại 500 ở từng operation.
+# ============================================================================
+openapi: 3.0.3
+info:
+  title: StorageHub API
+  version: 1.0.0-sprint1
+  description: |
+    REST API cho StorageHub (SWP391) — Sprint 1: 22/09–05/10/2026.
+
+    Phạm vi Sprint 1 (13 US): auth + adaptive shell (US-4/5), browse units với
+    availability chính xác (US-6), unit detail + bảng giá (US-7), booking
+    summary + reserve re-check (US-9), payment modal + mock gateway (US-8),
+    reservation lifecycle + EXPIRED no-show on-read (US-10), contract
+    auto-draft + chain (US-11/13), my rentals + check-in pass (US-12).
+
+    Health check ngoài contract này: GET /actuator/health (không JWT).
+servers:
+  - url: /api/v1
+    description: Same-origin (Vite dev proxy /api → Boot :8080)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Units
+  - name: Reservations
+  - name: Payments
+  - name: Contracts
+  - name: Notifications
+
+# ---------------------------------------------------------------------------
+paths:
+
+  # ----------------------------- AUTH (AD-5) ------------------------------
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập (public) — ghi ActivityLog LOGIN/LOGIN_FAILED (FR-38)
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password, minLength: 6 }
+            example: { email: "lan@demo.vn", password: "secret123" }
+      responses:
+        "200":
+          description: Phiên đăng nhập hợp lệ; landingRoute theo role
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+              example:
+                token: "eyJhbGciOiJIUzI1NiJ9..."
+                expiresAt: "2026-09-23T08:00:00Z"
+                user:
+                  id: 10
+                  fullName: "Lan Nguyen"
+                  email: "lan@demo.vn"
+                  phone: "0901234567"
+                  role: CUSTOMER
+                landingRoute: /browse
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Sai email/mật khẩu — message chung, không tiết lộ field nào sai
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: AUTH_INVALID_CREDENTIALS, message: "Email hoặc mật khẩu không đúng. Thử lại hoặc dùng quên mật khẩu.", fieldErrors: [] }
+        "423":
+          description: |
+            Tài khoản deactivate/lock. Chỉ trả SAU khi mật khẩu đã đúng — không
+            phải vector enumeration email (phải có credential hợp lệ mới thấy
+            khác biệt so với 401). Giữ mã riêng để user bị khóa hiểu cần liên
+            hệ quản trị thay vì thử đổi mật khẩu.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: AUTH_ACCOUNT_LOCKED, message: "Tài khoản hiện không đăng nhập được. Liên hệ quản trị hệ thống.", fieldErrors: [] }
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Tự đăng ký tài khoản CUSTOMER (public) — không có trường role (FR-2)
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fullName, phone, email, password, agreeTerms]
+              properties:
+                fullName: { type: string, maxLength: 100 }
+                phone: { type: string, maxLength: 20 }
+                email: { type: string, format: email }
+                password: { type: string, format: password, minLength: 6 }
+                agreeTerms: { type: boolean, enum: [true] }
+            example: { fullName: "Lan Nguyen", phone: "0901234567", email: "lan@demo.vn", password: "secret123", agreeTerms: true }
+      responses:
+        "201":
+          description: Tạo xong + đăng nhập luôn (rơi vào Browse Units đã đăng nhập)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409":
+          description: Email đã tồn tại — chặn, FE báo inline ngay tại form
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: AUTH_EMAIL_EXISTS, message: "Email này đã có tài khoản. Đăng nhập hoặc dùng quên mật khẩu.", fieldErrors: [{ field: email, code: TAKEN, message: "Email đã được dùng" }] }
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Quên mật khẩu (public) — stub, không gửi email thật (FR-3)
+      description: Luôn trả 200 với message generic dù email có tồn tại hay không.
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200":
+          description: Xác nhận generic
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Nếu email này tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi." }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Profile + role + landing route của token hiện tại (boot shell)
+      operationId: getMe
+      responses:
+        "200":
+          description: Thông tin user của token
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/UserSummary"
+                  - type: object
+                    properties:
+                      landingRoute: { type: string, example: /browse }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # ----------------------------- UNITS (US-6/7) ---------------------------
+
+  /units/filter-options:
+    get:
+      tags: [Units]
+      summary: Giá trị cho filter bar Browse Units (loại + kích thước có sẵn)
+      operationId: getUnitFilterOptions
+      responses:
+        "200":
+          description: Danh mục loại unit + các size đang có (làm dropdown filter)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  types:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer, format: int64 }
+                        name: { type: string, example: Indoor }
+                  sizesM2:
+                    type: array
+                    items: { type: number, example: 5 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /units:
+    get:
+      tags: [Units]
+      summary: Tìm kho — availability tính tại thời điểm query (FR-4, AD-4)
+      description: |
+        Loại trừ Unit Rented / Maintenance / Retired khỏi kết quả.
+        Availability = Reservation + Turnover Buffer (Policy Rule active),
+        tính on-read phía server; card buffer trả status AVAILABLE_SOON kèm
+        availableFromDate — vẫn đặt được với ngày đó.
+        Chỉ re-query khi FE bấm Search (không per keystroke) — việc đó của FE,
+        contract chỉ cung cấp endpoint idempotent.
+        Yêu cầu đăng nhập (AD-5: đúng 3 endpoint public — browse không nằm
+        trong số đó).
+      operationId: searchUnits
+      parameters:
+        - { name: type-id, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo loại unit (id từ /units/filter-options)" }
+        - { name: size-m2, in: query, schema: { type: number }, description: "Lọc đúng kích thước (m²), vd 5" }
+        - { name: start-date, in: query, schema: { type: string, format: date }, description: "Ngày bắt đầu thuê dự kiến (YYYY-MM-DD)" }
+        - { name: duration-months, in: query, schema: { type: integer, minimum: 1, maximum: 36 }, description: "Thời hạn thuê (tháng)" }
+        - { name: sort, in: query, schema: { type: string, enum: [price-asc, price-desc], default: price-asc }, description: "Sắp xếp theo giá (mặc định giá thấp → cao)" }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page-size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: Lưới unit thỏa filter (đã tính availability + buffer)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitPage" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /units/{unitId}:
+    get:
+      tags: [Units]
+      summary: Chi tiết unit — spec đầy đủ (FR-6, phần tĩnh)
+      operationId: getUnit
+      parameters:
+        - { name: unitId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Spec unit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/UnitNotFound" }
+
+  /units/{unitId}/quote:
+    get:
+      tags: [Units]
+      summary: Bảng giá minh bạch (FR-6) + nền cho Booking Summary (FR-7, AD-11)
+      description: |
+        PricingEngine tính từ Policy active tại thời điểm gọi — nguồn DUY NHẤT
+        của mọi dòng tiền (Unit Detail, Booking Summary, Payment Modal khớp
+        tuyệt đối). Khi reserve, quote này được snapshot vào reservation.
+      operationId: getUnitQuote
+      parameters:
+        - { name: unitId, in: path, required: true, schema: { type: integer, format: int64 } }
+        - { name: start-date, in: query, required: true, schema: { type: string, format: date } }
+        - { name: duration-months, in: query, required: true, schema: { type: integer, minimum: 1, maximum: 36 } }
+      responses:
+        "200":
+          description: Bảng giá từng dòng + tổng + cọc
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Quote" }
+              example:
+                unitId: 3
+                startDate: "2026-10-03"
+                endDate: "2027-01-02"
+                durationMonths: 3
+                lines:
+                  - { kind: RENT, code: RENT_RATE, label: "Rent 345.000 ₫ × 3 months", amount: 1035000, refundable: false }
+                  - { kind: DEPOSIT, code: DEPOSIT_RATE, label: "Deposit (10%, refundable)", amount: 103500, refundable: true }
+                totalRent: 1035000
+                depositAmount: 103500
+                dueNow: 103500
+                policyVersion: v3
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/UnitNotFound" }
+
+  # ------------------------- RESERVATIONS (US-9/10/12) --------------------
+
+  /reservations:
+    post:
+      tags: [Reservations]
+      summary: Reserve — re-check availability chống stale (FR-5)
+      description: |
+        Server kiểm tra lại availability trong transaction (guard unique/
+        optimistic trên Unit + ngày). Unit bị chiếm giữa chừng → 409
+        BOOKING_UNIT_TAKEN, FE bounce về lưới + toast gợi ý unit tương tự.
+        Tạo thành công → trạng thái PENDING_PAYMENT (chưa giữ unit; bỏ modal
+        không tạo giữ chỗ). Trả cọc xong mới RESERVED. Không có cancel (v1).
+      operationId: createReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [unitId, startDate, durationMonths]
+              properties:
+                unitId: { type: integer, format: int64 }
+                startDate: { type: string, format: date }
+                durationMonths: { type: integer, minimum: 1, maximum: 36 }
+            example: { unitId: 3, startDate: "2026-10-03", durationMonths: 3 }
+      responses:
+        "201":
+          description: Reservation PENDING_PAYMENT + quote snapshot — mở Payment Modal (deposit)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReservationDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Unit vừa bị chiếm / ngày không còn hợp lệ
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: BOOKING_UNIT_TAKEN, message: "S-3 vừa được đặt. 5 unit tương tự còn trống.", fieldErrors: [] }
+
+    get:
+      tags: [Reservations]
+      summary: "Danh sách của tôi — My Rentals (FR-35): FE nhóm theo status"
+      description: |
+        FE gộp nhóm hiển thị: Reservations = PENDING_PAYMENT | RESERVED;
+        Rentals = CHECKED_IN | CHECKOUT_REQUESTED; History = CLOSED | EXPIRED.
+        Mọi số liệu nguyên văn từ server — FE không tự tính lại.
+        EXPIRED no-show cũng suy diễn on-read ở list này (AD-4, cùng quy tắc
+        GET /reservations/{id}) — item quá hạn hiển thị đúng nhóm History ngay
+        khi load, không phải chờ mở detail.
+      operationId: listMyReservations
+      parameters:
+        - { name: group, in: query, schema: { type: string, enum: [active, history], default: active }, description: "active = PENDING_PAYMENT/RESERVED/CHECKED_IN/CHECKOUT_REQUESTED; history = CLOSED/EXPIRED" }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page-size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: Danh sách reservation của customer đang đăng nhập
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReservationPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /reservations/{reservationId}:
+    get:
+      tags: [Reservations]
+      summary: Rental Detail (FR-35) + kích hoạt EXPIRED no-show on-read (FR-36, AD-4)
+      description: |
+        Nếu đã qua ngày nhận kho mà chưa check-in, lần đọc đầu tiên này
+        chuyển Reservation → EXPIRED (exactly-once, idempotent): mất cọc,
+        Unit → Available, Contract Draft → Closed, ActivityLog + notification
+        cho khách. Response trả state đã suy diễn xong.
+      operationId: getReservation
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chi tiết đầy đủ (unit, dates, deposit, payments, contract chain, accessCode nếu đã cấp)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReservationDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+
+  /reservations/{reservationId}/check-in-pass:
+    get:
+      tags: [Reservations]
+      summary: Check-in Pass (FR-35) — mã BK- hiển thị lớn để staff validate tại quầy
+      operationId: getCheckInPass
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Thông tin check-in pass
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code: { type: string, example: BK-1042 }
+                  unit: { $ref: "#/components/schemas/UnitSummary" }
+                  startDate: { type: string, format: date }
+                  checkInDeadline: { type: string, format: date, description: "Hạn cuối nhận kho — quá hạn mất cọc (FR-36)" }
+                  instructions:
+                    type: array
+                    items: { type: string }
+                    example: ["Mang CMND/CCCD để ký hợp đồng", "Chuẩn bị thanh toán 100% tiền thuê tại quầy"]
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+        "409":
+          description: Reservation không ở trạng thái RESERVED (chưa cọc / đã check-in / hết hạn)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: RESERVATION_INVALID_STATE, message: "Check-in pass chỉ khả dụng khi đặt chỗ đã xác nhận.", fieldErrors: [] }
+
+  # --------------------------- PAYMENTS (US-8, AD-9) ----------------------
+
+  /payments:
+    post:
+      tags: [Payments]
+      summary: Bắt đầu thanh toán (Payment Modal) — FR-8
+      description: |
+        Sprint 1 chỉ nhận purpose DEPOSIT (booking) và RENT (check-in —
+        endpoint này dùng chung, check-in task Sprint 2 gọi tiếp). EXTENSION_FEE
+        / EXTRA_FEE / DAMAGE_FEE thuộc sprint sau.
+        Kết quả thanh toán (thành công/thất bại) do MockPaymentGateway quyết
+        định theo cấu hình server-side — KHÔNG có field outcome trong request.
+        Flows: CARD → trả PROCESSING, FE poll GET; MOMO → trả PENDING +
+        otpRequired, FE nhập OTP rồi POST /payments/{id}/confirm; VNPAY →
+        trả PENDING + QR payload + expiresAt (~5 phút), FE poll GET (mock
+        auto-complete sau ~2s), hết hạn → EXPIRED, FE quay về chọn phương thức
+        rồi tạo payment mới.
+      operationId: createPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [purpose, reservationId, method]
+              properties:
+                purpose: { $ref: "#/components/schemas/PaymentPurpose" }
+                reservationId: { type: integer, format: int64 }
+                method: { $ref: "#/components/schemas/PaymentMethod" }
+                card:
+                  type: object
+                  required: [number, expiry, cvc]
+                  properties:
+                    number: { type: string, example: "4242424242424242" }
+                    expiry: { type: string, example: "12/28" }
+                    cvc: { type: string, example: "123" }
+                momoPhone: { type: string, example: "0901234567" }
+              description: "card bắt buộc khi method=CARD; momoPhone bắt buộc khi method=MOMO; VNPAY không cần field bổ sung."
+            example: { purpose: DEPOSIT, reservationId: 1042, method: MOMO, momoPhone: "0901234567" }
+      responses:
+        "201":
+          description: Payment session khởi tạo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentSession" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Trạng thái không cho thanh toán (đã trả / sai phase) hoặc duplicate
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              examples:
+                duplicate:
+                  value: { code: PAYMENT_DUPLICATE, message: "Khoản này đã được thanh toán.", fieldErrors: [] }
+                invalidState:
+                  value: { code: PAYMENT_INVALID_STATE, message: "Đặt chỗ này không ở trạng thái chờ thanh toán.", fieldErrors: [] }
+    get:
+      tags: [Payments]
+      summary: Lịch sử payment/receipt (Rental Detail — payment history, FR-9)
+      operationId: listPayments
+      parameters:
+        - { name: reservation-id, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo reservation (mặc định: mọi payment của tôi)" }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page-size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: Danh sách payment (receipt xem được vĩnh viễn)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /payments/{paymentId}:
+    get:
+      tags: [Payments]
+      summary: Trạng thái payment (FE poll trong lúc Processing — AD-9)
+      description: FE hiển thị đồng hồ đếm từ giá trị server (qrExpiresAt); spinner local được phép nhưng không tự quyết kết quả.
+      operationId: getPayment
+      parameters:
+        - { name: paymentId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Trạng thái hiện tại của payment (đủ qrExpiresAt/otpExpiresAt cho countdown + receipt khi terminal)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentSession" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Không tìm thấy payment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: PAYMENT_NOT_FOUND, message: "Không tìm thấy giao dịch này.", fieldErrors: [] }
+
+  /payments/{paymentId}/confirm:
+    post:
+      tags: [Payments]
+      summary: Xác nhận bước thứ hai (MoMo OTP) — terminal result
+      description: |
+        Chỉ dùng cho MoMo (OTP giả lập). CARD/VNPAY terminal qua poll, không
+        gọi endpoint này. Thành công: response trả kèm receipt + reservation
+        cập nhật + contract draft (nếu purpose=DEPOSIT, FR-10) + notification
+        (FE bắn toast từ response — Conventions). Thất bại: FAIL tile "No money
+        was taken" — không đổi trạng thái gì anywhere; FE Retry/Switch bằng
+        cách tạo payment mới.
+      operationId: confirmPayment
+      parameters:
+        - { name: paymentId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [otp]
+              properties:
+                otp: { type: string, minLength: 6, maxLength: 6, example: "123456" }
+      responses:
+        "200":
+          description: Kết quả terminal SUCCEEDED hoặc FAILED (mock gateway quyết định)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PaymentResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Payment không ở trạng thái chờ confirm
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              examples:
+                expired:
+                  value: { code: PAYMENT_EXPIRED, message: "Phiên thanh toán đã hết hạn (QR/OTP). Chọn lại phương thức để tiếp tục.", fieldErrors: [] }
+                invalidState:
+                  value: { code: PAYMENT_INVALID_STATE, message: "Giao dịch này đã kết thúc.", fieldErrors: [] }
+
+  # ------------------- CONTRACTS (US-11/13, FR-10/13) ---------------------
+
+  /reservations/{reservationId}/contracts:
+    get:
+      tags: [Contracts]
+      summary: Chuỗi hợp đồng trên Rental Detail (FR-13) — gốc + phụ lục
+      description: |
+        Sprint 1: chỉ contract gốc (auto-draft khi Deposit thành công, read-only
+        mọi nơi). Schema đã sẵn kind ADDENDUM cho sprint sau. Bản Superseded
+        vẫn đọc được trong chuỗi.
+      operationId: listContractsByReservation
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chuỗi contract theo thứ tự sinh
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ContractChainItem" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+
+  /contracts/{contractId}:
+    get:
+      tags: [Contracts]
+      summary: Chi tiết 1 contract — contentSnapshot để FE render print view (FR-11)
+      description: Contract read-only — không có endpoint sửa; sai sót sửa bằng re-draft (sprint sau).
+      operationId: getContract
+      parameters:
+        - { name: contractId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chi tiết contract
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContractDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Không tìm thấy contract
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: CONTRACT_NOT_FOUND, message: "Không tìm thấy hợp đồng này.", fieldErrors: [] }
+
+  # ------------------------ NOTIFICATIONS (FR-33/34) ----------------------
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Bell feed — unread trước (FR-34)
+      operationId: listNotifications
+      parameters:
+        - { name: unread-only, in: query, schema: { type: boolean, default: false } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page-size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: Feed notification của user (deep link theo registry trong contracts/routes.yaml)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Đếm unread cho bell badge — endpoint nhẹ, poll riêng (FR-33)
+      operationId: getUnreadCount
+      responses:
+        "200":
+          description: Số chưa đọc
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer, example: 3 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /notifications/mark-all-read:
+    post:
+      tags: [Notifications]
+      summary: Đánh dấu đã đọc tất cả (FR-34)
+      operationId: markAllRead
+      responses:
+        "204": { description: "Đã đánh dấu tất cả là đã đọc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+# ---------------------------------------------------------------------------
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Lỗi validation — fieldErrors chỉ ra field vi phạm
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: VALIDATION_FAILED, message: "Dữ liệu chưa hợp lệ.", fieldErrors: [{ field: "durationMonths", code: "MIN", message: "Tối thiểu 1 tháng" }] }
+    Unauthorized:
+      description: Thiếu/không hợp lệ token — envelope Error từ AuthenticationEntryPoint
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: AUTH_TOKEN_INVALID, message: "Cần đăng nhập để tiếp tục.", fieldErrors: [] }
+    Forbidden:
+      description: Token hợp lệ nhưng role không có quyền (403 đơn giản — FR-1)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: ROLE_FORBIDDEN, message: "Tài khoản của bạn không có quyền truy cập trang này.", fieldErrors: [] }
+    UnitNotFound:
+      description: Unit không tồn tại
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: UNIT_NOT_FOUND, message: "Unit này không tồn tại.", fieldErrors: [] }
+    ReservationNotFound:
+      description: Reservation không tồn tại hoặc không phải của bạn
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: RESERVATION_NOT_FOUND, message: "Không tìm thấy đặt chỗ này.", fieldErrors: [] }
+
+  schemas:
+
+    # ------------------------------ Envelope (AD-8) -----------------------
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Machine code UPPER_SNAKE
+          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, INTERNAL_ERROR]
+        message: { type: string, description: "Message human-readable theo khuôn NFR-7 (chuyện gì + hệ quả + 1 bước kế)" }
+        fieldErrors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              code: { type: string }
+              message: { type: string }
+
+    # ------------------------------ Auth ----------------------------------
+
+    RoleName:
+      type: string
+      enum: [CUSTOMER, STAFF, FACILITY_MANAGER, BUSINESS_OPS, SYSTEM_ADMIN]
+
+    UserSummary:
+      type: object
+      required: [id, fullName, email, role]
+      properties:
+        id: { type: integer, format: int64 }
+        fullName: { type: string }
+        email: { type: string }
+        phone: { type: string, nullable: true }
+        role: { $ref: "#/components/schemas/RoleName" }
+
+    AuthSession:
+      type: object
+      required: [token, expiresAt, user, landingRoute]
+      properties:
+        token: { type: string, description: JWT — client giữ, logout = drop token }
+        expiresAt: { type: string, format: date-time, description: "Hết hạn 24h (AD-5)" }
+        user: { $ref: "#/components/schemas/UserSummary" }
+        landingRoute:
+          type: string
+          description: Route FE đổ vào theo role (khớp contracts/routes.yaml)
+          enum: [/browse, /tasks, /facility, /overview, /users]
+          example: /browse
+
+    # ------------------------------ Units ---------------------------------
+
+    UnitAvailability:
+      type: string
+      enum: [AVAILABLE, AVAILABLE_SOON]
+      description: "AVAILABLE_SOON = đang trong turnover buffer — hiển thị 'Available {date} · cleaning buffer'"
+
+    UnitSummary:
+      type: object
+      required: [id, code, typeName, sizeM2, baseMonthlyRent, availability]
+      properties:
+        id: { type: integer, format: int64 }
+        code: { type: string, example: S-3 }
+        typeName: { type: string, example: Indoor }
+        sizeM2: { type: number, example: 5 }
+        floor: { type: integer }
+        zoneCode: { type: string, example: B }
+        facilityName: { type: string, example: Tân Bình Depot }
+        accessType: { type: string, example: PIN }
+        baseMonthlyRent: { type: integer, description: "Giá thuê/tháng theo Policy active (VND) — dùng cho sort giá", example: 345000 }
+        availability:
+          type: object
+          properties:
+            status: { $ref: "#/components/schemas/UnitAvailability" }
+            availableFromDate: { type: string, format: date, nullable: true, description: "Ngày sớm nhất thuê được (buffer áp dụng)" }
+        photoUrl: { type: string, example: "/units/S-3.jpg" }
+
+    UnitDetail:
+      allOf:
+        - $ref: "#/components/schemas/UnitSummary"
+        - type: object
+          required: [dimensions, security, photoUrls]
+          properties:
+            dimensions: { type: string, example: "2.0 × 2.5 × 2.2 m" }
+            security: { type: string, example: "CCTV 24/7 + khóa thông minh" }
+            photoUrls:
+              type: array
+              items: { type: string }
+
+    UnitPage:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/UnitSummary" }
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 25 }
+        total: { type: integer, example: 6 }
+
+    # ------------------------------ Quote (AD-11) -------------------------
+
+    QuoteLineKind:
+      type: string
+      enum: [RENT, SURCHARGE, DISCOUNT, DEPOSIT]
+      description: "DISCOUNT = FR-40 (P2) — Sprint 1 chưa dùng, giữ enum ổn định wire format"
+
+    QuoteLine:
+      type: object
+      required: [kind, label, amount]
+      properties:
+        kind: { $ref: "#/components/schemas/QuoteLineKind" }
+        code: { type: string, description: "Mã rule policy (RENT_RATE, SURCHARGE_…, DEPOSIT_RATE)", example: RENT_RATE }
+        label: { type: string, example: "Rent 345.000 ₫ × 3 months" }
+        amount: { type: integer, description: "VND, số nguyên" }
+        refundable: { type: boolean, default: false }
+
+    Quote:
+      type: object
+      required: [unitId, startDate, endDate, durationMonths, lines, totalRent, depositAmount, dueNow, policyVersion]
+      properties:
+        unitId: { type: integer, format: int64 }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date, description: "Server tính (inclusive)" }
+        durationMonths: { type: integer }
+        lines:
+          type: array
+          items: { $ref: "#/components/schemas/QuoteLine" }
+        totalRent: { type: integer, example: 1035000 }
+        depositAmount: { type: integer, example: 103500 }
+        dueNow: { type: integer, description: "Số phải trả ngay = deposit (booking)", example: 103500 }
+        policyVersion: { type: string, example: v3 }
+
+    # --------------------------- Reservations -----------------------------
+
+    ReservationStatus:
+      type: string
+      enum: [PENDING_PAYMENT, RESERVED, CHECKED_IN, CHECKOUT_REQUESTED, CLOSED, EXPIRED]
+      description: "CANCELLED dự phòng — v1 không kích hoạt (PRD §6). EXPIRED suy diễn on-read (AD-4)"
+
+    DepositStatus:
+      type: string
+      enum: [HELD, FORFEITED, SETTLED]
+
+    ReservationSummary:
+      type: object
+      required: [id, code, status, unit, startDate, endDate, depositAmount]
+      properties:
+        id: { type: integer, format: int64 }
+        code: { type: string, example: BK-1042 }
+        status: { $ref: "#/components/schemas/ReservationStatus" }
+        unit:
+          type: object
+          properties:
+            code: { type: string, example: S-3 }
+            sizeM2: { type: number }
+            typeName: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        depositAmount: { type: integer }
+        depositStatus:
+          allOf:
+            - $ref: "#/components/schemas/DepositStatus"
+            - type: string
+              nullable: true
+
+    ReservationDetail:
+      allOf:
+        - $ref: "#/components/schemas/ReservationSummary"
+        - type: object
+          required: [durationMonths, quote, checkInDeadline, payments, contracts]
+          properties:
+            durationMonths: { type: integer }
+            quote:
+              allOf:
+                - $ref: "#/components/schemas/Quote"
+              description: "Snapshot tại Booking Summary (AD-11) — mọi dòng tiền sau này đọc từ đây"
+            checkInDeadline: { type: string, format: date, description: "Hết ngày này chưa check-in → EXPIRED, mất cọc" }
+            depositForfeitReason:
+              type: string
+              nullable: true
+              example: "Deposit forfeited — no-show"
+              description: "Set khi depositStatus=FORFEITED (receipt no-show hiển thị trên detail)"
+            accessCode:
+              type: string
+              nullable: true
+              description: "SensitiveValue — chỉ trả trong detail của chủ reservation, chỉ sau khi contract có ảnh ký (AD-5)"
+            payments:
+              type: array
+              items: { $ref: "#/components/schemas/PaymentRecord" }
+            contracts:
+              type: array
+              items: { $ref: "#/components/schemas/ContractChainItem" }
+
+    ReservationPage:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ReservationSummary" }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+
+    # ------------------------------ Payments ------------------------------
+
+    PaymentPurpose:
+      type: string
+      enum: [DEPOSIT, RENT, EXTENSION_FEE, DAMAGE_FEE, EXTRA_FEE]
+      description: "Sprint 1: BE chỉ chấp nhận DEPOSIT, RENT. 3 giá trị còn lại thuộc sprint sau (enum đầy đủ để ổn định wire format)"
+
+    PaymentMethod:
+      type: string
+      enum: [CARD, MOMO, VNPAY]
+
+    PaymentStatus:
+      type: string
+      enum: [PENDING, PROCESSING, SUCCEEDED, FAILED, EXPIRED]
+
+    PaymentSession:
+      type: object
+      required: [id, reservationId, purpose, method, amount, status, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        reservationId: { type: integer, format: int64 }
+        purpose: { $ref: "#/components/schemas/PaymentPurpose" }
+        method: { $ref: "#/components/schemas/PaymentMethod" }
+        amount: { type: integer, example: 103500 }
+        status: { $ref: "#/components/schemas/PaymentStatus" }
+        otpRequired: { type: boolean, description: "true khi MOMO chờ OTP" }
+        otpExpiresAt: { type: string, format: date-time, nullable: true, description: "Hạn nhập OTP (MOMO) — quá hạn → EXPIRED, PAYMENT_EXPIRED" }
+        qrPayload: { type: string, nullable: true, description: "Nội dung QR khi VNPAY — FE render QR" }
+        qrExpiresAt: { type: string, format: date-time, nullable: true, description: "~5 phút (server quyết)" }
+        receiptCode: { type: string, nullable: true, description: "Sinh khi SUCCEEDED" }
+        paidAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    PaymentRecord:
+      type: object
+      required: [id, reservationId, purpose, method, amount, status]
+      properties:
+        id: { type: integer, format: int64 }
+        reservationId: { type: integer, format: int64, description: "Map receipt về rental ngay trong list không filter (FR-9)" }
+        receiptCode: { type: string, nullable: true, example: RC-2026-0042, description: "Sinh khi SUCCEEDED — receipt xem vĩnh viễn (FR-9)" }
+        purpose: { $ref: "#/components/schemas/PaymentPurpose" }
+        method: { $ref: "#/components/schemas/PaymentMethod" }
+        amount: { type: integer }
+        status: { $ref: "#/components/schemas/PaymentStatus" }
+        paidAt: { type: string, format: date-time, nullable: true }
+
+    PaymentPage:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/PaymentRecord" }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+
+    NotificationEvent:
+      type: object
+      description: "Kèm trong response của mutation thành công — FE bắn toast từ đây (Conventions); bản ghi bell sinh cùng transaction"
+      properties:
+        type: { $ref: "#/components/schemas/NotificationType" }
+        title: { type: string, example: "Booking confirmed — S-3 reserved" }
+        body: { type: string, nullable: true, example: "Deposit 103.500 ₫ đã nhận. Check-in pass sẵn sàng." }
+        deepLink: { type: string, example: /rentals/1042 }
+
+    PaymentResult:
+      type: object
+      required: [payment, reservation]
+      properties:
+        payment: { $ref: "#/components/schemas/PaymentRecord" }
+        receipt:
+          type: object
+          nullable: true
+          properties:
+            receiptCode: { type: string }
+            amount: { type: integer }
+            paidAt: { type: string, format: date-time }
+        reservation:
+          allOf:
+            - $ref: "#/components/schemas/ReservationDetail"
+          description: "Trạng thái sau flip (RESERVED / CHECKED_IN...)"
+        contract:
+          allOf:
+            - $ref: "#/components/schemas/ContractChainItem"
+            - type: object
+              nullable: true
+          description: "Auto-draft khi purpose=DEPOSIT thành công (FR-10)"
+        notification:
+          allOf:
+            - $ref: "#/components/schemas/NotificationEvent"
+            - type: object
+              nullable: true
+          description: "Chỉ có khi thanh toán THÀNH CÔNG — thất bại không sinh notification (FAIL tile: No money was taken)"
+
+    # ------------------------------ Contracts -----------------------------
+
+    ContractStatus:
+      type: string
+      enum: [DRAFT, PRINTED, SIGNED, ACTIVE, CLOSED, SUPERSEDED]
+
+    ContractKind:
+      type: string
+      enum: [ORIGINAL, ADDENDUM]
+
+    ContractChainItem:
+      type: object
+      required: [id, code, kind, status, isLatest]
+      properties:
+        id: { type: integer, format: int64 }
+        code: { type: string, example: CT-1042 }
+        kind: { $ref: "#/components/schemas/ContractKind" }
+        status: { $ref: "#/components/schemas/ContractStatus" }
+        isLatest: { type: boolean, description: "Chuỗi 1—N: đúng một bản IsLatest" }
+        signedPhotoUrl: { type: string, nullable: true, example: "/api/v1/attachments/1", description: "Endpoint /attachments thuộc Sprint 2 — URL giữ shape trước, chưa khai báo trong contract này" }
+        signatureDueDate: { type: string, format: date, nullable: true, description: "Chỉ ADDENDUM — hạn ký tại quầy 7 ngày" }
+
+    ContractDetail:
+      allOf:
+        - $ref: "#/components/schemas/ContractChainItem"
+        - type: object
+          required: [reservationId, policyVersion, contentSnapshot, createdAt]
+          properties:
+            reservationId: { type: integer, format: int64 }
+            policyVersion: { type: string, example: v3 }
+            contentSnapshot:
+              type: string
+              description: "Snapshot điều khoản lúc draft — FE render print view từ đây (Contract print, không PDF service)"
+            createdAt: { type: string, format: date-time }
+
+    # ---------------------------- Notifications ---------------------------
+
+    NotificationType:
+      type: string
+      enum: [RESERVATION_CONFIRMED, PAYMENT_SUCCEEDED, CONTRACT_DRAFTED, RESERVATION_EXPIRED]
+      description: "Sprint 1. Deep-link registry: contracts/routes.yaml (AD-6)"
+
+    Notification:
+      type: object
+      required: [id, type, title, isRead, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        type: { $ref: "#/components/schemas/NotificationType" }
+        title: { type: string }
+        body: { type: string, nullable: true, description: "Dòng phụ dưới title (bell 2 dòng); có thể null" }
+        deepLink: { type: string, nullable: true }
+        isRead: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    NotificationPage:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Notification" }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
