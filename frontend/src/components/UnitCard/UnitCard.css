@@ -1,0 +1,145 @@
+.unit-card {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: var(--border-strong);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.unit-card:hover {
+  border-color: var(--color-accent);
+}
+
+.unit-card__visual {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: var(--color-neutral);
+  border: 0;
+  border-bottom: var(--border-strong);
+  color: inherit;
+  cursor: pointer;
+}
+
+.unit-card__visual svg {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+.unit-card__code {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 5px 8px;
+  background: var(--color-ink);
+  color: #ffffff;
+  font: 700 0.72rem / 1 var(--font-mono);
+}
+
+.unit-card__body {
+  display: grid;
+  gap: 15px;
+  padding: 20px;
+  flex: 1;
+}
+
+.unit-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.unit-card__title {
+  margin: 0;
+  font: 700 1.45rem / 1 var(--font-display);
+}
+
+.unit-card__meta {
+  margin: 5px 0 0;
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+}
+
+.unit-card__features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.unit-card__feature {
+  padding: 4px 7px;
+  background: var(--color-neutral);
+  border: var(--border);
+  font-size: 0.7rem;
+}
+
+.unit-card__availability {
+  min-height: 40px;
+  display: grid;
+  gap: 2px;
+  padding-left: 10px;
+  border-left: 3px solid var(--color-ink);
+  font-size: 0.77rem;
+}
+
+.unit-card__availability.is-soon {
+  border-left-color: var(--color-secondary);
+}
+
+.unit-card__availability span:last-child {
+  color: var(--color-secondary);
+  font-size: 0.7rem;
+}
+
+.unit-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  padding-top: 15px;
+  border-top: var(--border);
+}
+
+.unit-card__price {
+  display: grid;
+}
+
+.unit-card__price strong {
+  font: 700 1.18rem / 1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.unit-card__price span {
+  margin-top: 4px;
+  color: var(--color-secondary);
+  font-size: 0.68rem;
+}
+
+.unit-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.unit-card__actions .button {
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.unit-card__actions .button--primary {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+.unit-card__actions .button--primary:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
