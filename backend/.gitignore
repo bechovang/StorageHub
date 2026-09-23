@@ -5,5 +5,6 @@ storage/*
 # Env / secrets — không bao giờ commit
 .env
 .env.*
+!.env.example
 
 # (target/, IDE... nằm ở .gitignore gốc repo)
