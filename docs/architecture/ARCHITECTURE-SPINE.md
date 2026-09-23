@@ -82,7 +82,7 @@ companions: [reviews/review-adversarial.md, reviews/review-reconcile-prd.md, rev
 | NOTIFICATIONS | `NotificationService` — độc quyền ghi, gọi đồng bộ trong cùng transaction nghiệp vụ qua event có kiểu (`NotificationEvent` enum + deep-link registry đặt trong openapi.yaml, FE route phải khớp registry); cấm module tự INSERT notification |
 | ACTIVITY_LOGS | `LogService` — ghi đồng bộ trong cùng transaction (không after-commit event); Action/EntityType là enum chung trong code (registry), khai báo bắt-buộc-reason theo loại action **tại registry**, không tại từng caller |
 
-ActivityLog append-only: chỉ INSERT, không tồn tại đường write update/delete. **Chống double-booking (FR-5): Reserve chạy trong transaction có guard unique/optimistic trên (Unit, ngày) — hai khách cùng unit sát nhau chỉ một bên thắng, bên thua nhận 409 + toast gợi ý.** **Seed demo data là Flyway migration versioned riêng (V2__seed_demo), chỉ chạy profile `dev`, chứa đúng bộ mock chuẩn (Lan/Minh/Hằng/Tuấn/Nam; S-3/M-2/M-5; BK-1042/RT-0871/SR-0032/CT-1042/CT-1042-A1; policy v3) — tái lập được từ 0, không insert tay.**
+ActivityLog append-only: chỉ INSERT, không tồn tại đường write update/delete. **Chống double-booking (FR-5): Reserve chạy trong transaction có guard unique/optimistic trên (Unit, ngày) — hai khách cùng unit sát nhau chỉ một bên thắng, bên thua nhận 409 + toast gợi ý.** **Seed demo data là Flyway migration versioned riêng (V2__seed_demo), chỉ chạy profile `dev`, chứa đúng bộ mock chuẩn (Lan/Minh/Hằng/Tuấn/Nam; S-3/M-2/M-5; BK-1042/RT-0871 (biên lai payment)/SR-0032/CT-1042/CT-1042-A1; policy v3) — tái lập được từ 0, không insert tay.**
 
 **V1 Flyway deltas so với model V3 (chốt tại đây, theo thẩm quyền PRD §9.1):**
 
@@ -94,6 +94,8 @@ ActivityLog append-only: chỉ INSERT, không tồn tại đường write update
 - `ESCALATIONS` giữ `TicketID UNIQUE` — quy ước v1: mỗi ticket escalate đúng một lần.
 - `INSPECTIONS.Item` enum `ACCESS_CARD / PADLOCK / CLEANLINESS / STRUCTURE` (chuẩn ERD); mapping với nhãn checklist UX chốt khi freeze openapi.
 - Ảnh unit: **static asset FE** (`public/units/{code}.jpg`) — không thêm entity, giữ con số 22.
+- Bổ sung 2026-09-23 khi viết `V1__model_v3.sql`: cột **snake_case** (quy tắc ánh xạ ERD → DB ghi trong header file SQL); `CreatedAt` mọi bảng giao dịch + `activity_logs`; `contract_addendums.Code` UNIQUE (`CT-…-A1`); `units.LockVersion` (optimistic lock FR-5 — MySQL không có exclusion constraint cho range).
+- **Biên lai (chốt 2026-09-23): `payments.ReceiptCode` = `RT-`, `settlements.ReceiptCode` = `TL-`** — mỗi bảng một namespace, tra mã gõ một chỗ. Sinh mã chuẩn `{PREFIX}-{YYYY}-{NNNN}`; seed demo dùng đúng mock chuẩn dạng ngắn (`BK-1042`, `RT-0871`) — DB là VARCHAR nên cả hai dạng hợp lệ.
 
 ### AD-7 — Money & time wire format
 
@@ -146,6 +148,7 @@ Không ai bỏ tầng: SPA không gọi service/repository; controller không g�
 | --- | --- |
 | Naming | REST danh từ số nhiều kebab-case (`/api/v1/unit-types`); class theo feature trong từng layer (`ReservationController/Service/Repository`); DTO `XxxRequest`/`XxxResponse`; FE component PascalCase, hook `useXxx`, API client hàm đặt theo resource; JSON field camelCase |
 | Data & formats | ID Long → JSON number; ngày ISO-8601 kèm offset; tiền theo AD-7; enum UPPER_SNAKE; error/list envelope theo AD-8 |
+| Mã hồ sơ & biên lai | Prefix: `BK-` reservation · `SR-` ticket · `CT-` contract · `CT-…-A{n}` addendum · `RT-` biên lai payments · `TL-` thanh lý (settlements.ReceiptCode). Format sinh: `{PREFIX}-{YYYY}-{NNNN}` tăng dần; seed demo dùng dạng ngắn không năm (BK-1042, RT-0871) |
 | State & cross-cutting | Validation = Bean Validation trên DTO; state machine chỉ ở service (AD-4); ghi ActivityLog qua `LogService`; config qua `application.yml` + profile `dev`/`prod`; FE: server-state bằng TanStack Query, UI-state cục bộ; role check FE chỉ để render |
 | FE states & forms (NFR-8) | Skeleton khớp layout (không layout shift); empty state = factual + echo filter + đúng 1 CTA; block server hiển thị banner đầu form, không phải toast; Submit chỉ disable theo missing required; guard unsaved-changes khi rời màn có inline edit; bảng quản trị pagination 25 rows |
 | Microcopy (NFR-7) | Mọi error/empty/toast theo khuôn 3 phần: chuyện gì xảy ra + hệ quả tiền/trạng thái + đúng 1 bước kế tiếp; nguồn chân trình bày = EXPERIENCE.md → Voice and Tone; register plain cho cả 5 role; cấm "!" và marketing verbs trong chuỗi hiển thị |
