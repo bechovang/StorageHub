@@ -1,0 +1,9 @@
+# Ảnh bản ký runtime (AD-10) — controller stream qua JWT, không commit
+storage/*
+!storage/.gitkeep
+
+# Env / secrets — không bao giờ commit
+.env
+.env.*
+
+# (target/, IDE... nằm ở .gitignore gốc repo)
