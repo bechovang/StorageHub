@@ -68,6 +68,13 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Lombok: @Getter/@Setter cho entity — compile-time only, không vào runtime -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Test: Boot 4 tách test starter theo module (@WithMockUser cần security-test) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
