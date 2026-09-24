@@ -1,0 +1,128 @@
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header, 20);
+  background: var(--color-surface);
+  border-bottom: var(--border-strong);
+}
+
+.app-header__inner {
+  min-height: 66px;
+  width: min(calc(100% - 48px), var(--page-width));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 230px 1fr auto;
+  align-items: stretch;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  font: 800 0.92rem / 1 var(--font-display);
+  letter-spacing: 0.035em;
+  color: var(--color-ink);
+}
+
+.brand__mark {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: var(--border-strong);
+}
+
+.brand__mark i {
+  background: var(--color-ink);
+  border-right: 1px solid white;
+}
+
+.brand__mark i:last-child {
+  background: var(--color-accent);
+  border: 0;
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+}
+
+.main-nav__link {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 126px;
+  padding: 0 16px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  border-left: var(--border);
+}
+
+.main-nav__link:last-child {
+  border-right: var(--border);
+}
+
+.main-nav__link.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--color-accent);
+}
+
+.main-nav__link:hover {
+  background: var(--color-neutral);
+}
+
+.account-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.role-label {
+  padding: 5px 9px;
+  border: var(--border-strong);
+  font: 700 0.66rem / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: var(--color-ink);
+  color: white;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .app-header__inner {
+    grid-template-columns: 1fr auto;
+  }
+  .main-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-header__inner {
+    width: calc(100% - 24px);
+    min-height: 58px;
+  }
+  .brand {
+    font-size: 0.78rem;
+  }
+  .role-label {
+    display: none;
+  }
+}
+

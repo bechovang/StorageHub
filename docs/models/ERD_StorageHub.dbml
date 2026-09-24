@@ -12,7 +12,7 @@
 
 Project StorageHub {
   database_type: 'MySQL'
-  Note: 'StorageHub — Hệ thống quản lý kho thuê tự phục vụ (SWP391). Tiền tệ DECIMAL(18,2) VND. Mã hồ sơ: BK- / SR- / CT- / CT-…-A1 / TL- (BK- duy nhất suốt vòng đời đặt chỗ → thuê → trả).'
+  Note: 'StorageHub — Hệ thống quản lý kho thuê tự phục vụ (SWP391). Tiền tệ DECIMAL(18,2) VND. Mã hồ sơ: BK- / SR- / CT- / CT-…-A1 / TL- (BK- duy nhất suốt vòng đời đặt chỗ → thuê → trả). Biên lai (chốt 2026-09-23): RT- = payments.ReceiptCode, TL- = settlements.ReceiptCode. Sinh mã chuẩn {PREFIX}-{YYYY}-{NNNN}; seed demo dùng dạng ngắn (BK-1042, RT-0871).'
 }
 
 // ---------------------------------------------------------------- ENUMS ----
@@ -157,7 +157,7 @@ Table roles {
   RoleID int [pk, increment]
   Name varchar(50) [unique, not null]
   Description varchar(200) [null]
-  Note: 'Danh mục 4 vai trò (Customer / Staff / Facility Manager / Business Ops). Quyết định tập màn hình và quyền thao tác.'
+  Note: 'Danh mục 5 vai trò (Customer / Staff / Facility Manager / Business Ops / System Admin — PRD addendum 2026-09-21 FR-37..41). Quyết định tập màn hình và quyền thao tác.'
 }
 
 Table users {
@@ -299,7 +299,7 @@ Table contract_addendums {
 // --------------------------------- NHÓM 6: THANH TOÁN & THANH LÝ ----
 Table payments {
   PaymentID bigint [pk, increment]
-  ReceiptCode varchar(20) [unique, not null]
+  ReceiptCode varchar(20) [unique, not null] // RT-2026-0001 — biên lai thu tiền (chốt 2026-09-23)
   PayerID bigint [not null]
   ReservationID bigint [null] // cọc 10% + thuê 100% (V3: gộp 2 touchpoint)
   ExtensionID bigint [null] // phí gia hạn
@@ -319,7 +319,7 @@ Table settlements {
   DamageFee decimal(18,2) [not null, default: 0]
   DamageReason varchar(255) [null] // NOT NULL khi DamageFee > 0
   RefundAmount decimal(18,2) [not null] // hoàn = cọc giữ - phí hư hại
-  ReceiptCode varchar(20) [unique, not null]
+  ReceiptCode varchar(20) [unique, not null] // TL-2026-0001 — biên lai thanh lý (chốt 2026-09-23)
   Note: 'Bản thanh lý mỗi lần trả kho. Phí hư hại chỉ thu khi có lý do bắt buộc.'
 }
 
@@ -359,7 +359,7 @@ Table escalations {
 Table tasks {
   TaskID bigint [pk, increment]
   Type task_type [not null]
-  RefCode varchar(20) [null] // BK- / SR- / CT- (V3: không còn RT-)
+  RefCode varchar(20) [null] // BK- / SR- / CT- (V3: không còn RT- — RT- giờ là biên lai payments)
   AssignedStaffID bigint [not null]
   WorkDate date [not null]
   Status task_status [not null]

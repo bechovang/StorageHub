@@ -30,6 +30,14 @@ management:
       exposure:
         include: health   # health check duy nhất (arch spine Deferred)
 
+# ----------------------------------------------------------------------------
+# JWT (AD-5) — secret là Base64, tạo bằng PowerShell, load từ env
+# ----------------------------------------------------------------------------
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    ttl: PT24H
+
 # springdoc render docs từ code — chỉ để tham khảo; contract thật =
 # contracts/openapi.yaml (AD-2)
 
@@ -44,20 +52,3 @@ spring:
       on-profile: dev
   flyway:
     locations: classpath:db/migration,classpath:db/seed
-
-
-    spring:
-      flyway:
-        enabled: true
-        locations:
-          - classpath:db/migration
-          - classpath:db/seed
-
-# ----------------------------------------------------------------------------
-# Secret cho JWT, tạo secret trong powershell
-# ----------------------------------------------------------------------------
-
-security:
-  jwt:
-    secret: ${JWT_SECRET}
-    ttl: PT24H
