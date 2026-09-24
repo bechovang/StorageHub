@@ -53,4 +53,9 @@ public class User {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    /** 1 = active — kiểm tra mỗi request, token của tài khoản locked hết hiệu lực ngay (AD-5). */
+    public boolean isActive() {
+        return status != null && status == 1;
+    }
 }
