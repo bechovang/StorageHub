@@ -39,7 +39,7 @@ public class JwtService {
 
         String token = Jwts.builder()
                 .subject(user.getEmail())
-                .claim("userId", user.getId())
+                .claim("userId", user.getUserId())
                 .claim(
                         "role",
                         user.getRole().getName().name()
