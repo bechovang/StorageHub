@@ -1,0 +1,149 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: var(--border-strong);
+  background: var(--color-surface);
+}
+
+.metric {
+  min-height: 132px;
+  padding: 18px;
+  border-right: var(--border-strong);
+}
+
+.metric:last-child {
+  border-right: 0;
+}
+
+.metric__label {
+  color: var(--color-secondary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metric__value {
+  margin-top: 22px;
+  font: 760 clamp(1.5rem, 2.4vw, 2.5rem) / 1 var(--font-display);
+  letter-spacing: -0.035em;
+}
+
+.metric__delta {
+  margin-top: 10px;
+  font-size: 0.7rem;
+}
+
+.metric__delta strong {
+  color: var(--color-accent);
+}
+
+.spec-list,
+.money-list {
+  margin: 0;
+  border-top: var(--border-strong);
+}
+
+.spec-row,
+.money-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  padding: 13px 0;
+  border-bottom: var(--border);
+}
+
+.spec-row dt,
+.money-row span:first-child {
+  color: var(--color-secondary);
+}
+
+.spec-row dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 960px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metric:nth-child(2) {
+    border-right: 0;
+  }
+
+  .metric:nth-child(1),
+  .metric:nth-child(2) {
+    border-bottom: var(--border-strong);
+  }
+
+  .grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid--3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric {
+    border-right: 0;
+    border-bottom: var(--border-strong);
+  }
+
+  .metric:last-child {
+    border-bottom: 0;
+  }
+
+  .grid--2,
+  .grid--4 {
+    grid-template-columns: 1fr;
+  }
+}

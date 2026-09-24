@@ -58,7 +58,7 @@ companions: [reviews/review-adversarial.md, reviews/review-reconcile-prd.md, rev
 
 - **Binds:** FR-1…3, FR-37; NFR-4
 - **Prevents:** trust-the-client; FE tự enforce quyền thật
-- **Rule:** JWT Bearer, role trong claim, TTL 24h, không refresh token, logout = client drop token. Permission matrix Role × Permission cố định, enforce **server-side từng endpoint**; FE chỉ dùng role để render (ẩn/hiện menu). Password hash at rest (BCrypt). LOGIN/LOGIN_FAILED ghi Activity Log (FR-38). **Mỗi request qua filter kiểm tra `users.Status` còn active (cache ngắn) — token của tài khoản bị deactivate/lock/đổi role hết hiệu lực ngay, không đợi hết TTL.** **Đúng 3 endpoint public không cần JWT: `POST /auth/login`, `POST /auth/register`, `POST /auth/forgot-password` (stub trả message generic, không email — FR-3).** **Giá trị nhạy cảm (Access Code) không nằm trong response danh sách; chỉ qua endpoint reveal có permission (cơ chế SensitiveValue, NFR-4).**
+- **Rule:** JWT Bearer, role trong claim, TTL 24h, không refresh token, logout = client drop token. Permission matrix Role × Permission cố định, enforce **server-side từng endpoint**; FE chỉ dùng role để render (ẩn/hiện menu). Password hash at rest (BCrypt). LOGIN/LOGIN_FAILED ghi Activity Log (FR-38). **Mỗi request qua filter kiểm tra `users.Status` còn active (cache ngắn) — token của tài khoản bị deactivate/lock/đổi role hết hiệu lực ngay, không đợi hết TTL.** **Đúng 3 endpoint public không cần JWT: `POST /auth/login`, `POST /auth/register`, `POST /auth/forgot-password` (stub trả message generic, không email — FR-3).** **Từ sprint 2 thêm endpoint public thứ 4: webhook PayOS (xem AD-9) — xác thực bằng chữ ký HMAC-SHA256, không JWT.** **Giá trị nhạy cảm (Access Code) không nằm trong response danh sách; chỉ qua endpoint reveal có permission (cơ chế SensitiveValue, NFR-4).**
 
 ### AD-6 — Schema & data ownership
 
@@ -82,7 +82,7 @@ companions: [reviews/review-adversarial.md, reviews/review-reconcile-prd.md, rev
 | NOTIFICATIONS | `NotificationService` — độc quyền ghi, gọi đồng bộ trong cùng transaction nghiệp vụ qua event có kiểu (`NotificationEvent` enum + deep-link registry đặt trong openapi.yaml, FE route phải khớp registry); cấm module tự INSERT notification |
 | ACTIVITY_LOGS | `LogService` — ghi đồng bộ trong cùng transaction (không after-commit event); Action/EntityType là enum chung trong code (registry), khai báo bắt-buộc-reason theo loại action **tại registry**, không tại từng caller |
 
-ActivityLog append-only: chỉ INSERT, không tồn tại đường write update/delete. **Chống double-booking (FR-5): Reserve chạy trong transaction có guard unique/optimistic trên (Unit, ngày) — hai khách cùng unit sát nhau chỉ một bên thắng, bên thua nhận 409 + toast gợi ý.** **Seed demo data là Flyway migration versioned riêng (V2__seed_demo), chỉ chạy profile `dev`, chứa đúng bộ mock chuẩn (Lan/Minh/Hằng/Tuấn/Nam; S-3/M-2/M-5; BK-1042/RT-0871/SR-0032/CT-1042/CT-1042-A1; policy v3) — tái lập được từ 0, không insert tay.**
+ActivityLog append-only: chỉ INSERT, không tồn tại đường write update/delete. **Chống double-booking (FR-5): Reserve chạy trong transaction có guard unique/optimistic trên (Unit, ngày) — hai khách cùng unit sát nhau chỉ một bên thắng, bên thua nhận 409 + toast gợi ý.** **Seed demo data là Flyway migration versioned riêng (V2__seed_demo), chỉ chạy profile `dev`, chứa đúng bộ mock chuẩn (Lan/Minh/Hằng/Tuấn/Nam; S-3/M-2/M-5; BK-1042/RT-0871 (biên lai payment)/SR-0032/CT-1042/CT-1042-A1; policy v3) — tái lập được từ 0, không insert tay.**
 
 **V1 Flyway deltas so với model V3 (chốt tại đây, theo thẩm quyền PRD §9.1):**
 
@@ -94,6 +94,8 @@ ActivityLog append-only: chỉ INSERT, không tồn tại đường write update
 - `ESCALATIONS` giữ `TicketID UNIQUE` — quy ước v1: mỗi ticket escalate đúng một lần.
 - `INSPECTIONS.Item` enum `ACCESS_CARD / PADLOCK / CLEANLINESS / STRUCTURE` (chuẩn ERD); mapping với nhãn checklist UX chốt khi freeze openapi.
 - Ảnh unit: **static asset FE** (`public/units/{code}.jpg`) — không thêm entity, giữ con số 22.
+- Bổ sung 2026-09-23 khi viết `V1__model_v3.sql`: cột **snake_case** (quy tắc ánh xạ ERD → DB ghi trong header file SQL); `CreatedAt` mọi bảng giao dịch + `activity_logs`; `contract_addendums.Code` UNIQUE (`CT-…-A1`); `units.LockVersion` (optimistic lock FR-5 — MySQL không có exclusion constraint cho range).
+- **Biên lai (chốt 2026-09-23): `payments.ReceiptCode` = `RT-`, `settlements.ReceiptCode` = `TL-`** — mỗi bảng một namespace, tra mã gõ một chỗ. Sinh mã chuẩn `{PREFIX}-{YYYY}-{NNNN}`; seed demo dùng đúng mock chuẩn dạng ngắn (`BK-1042`, `RT-0871`) — DB là VARCHAR nên cả hai dạng hợp lệ.
 
 ### AD-7 — Money & time wire format
 
@@ -111,7 +113,7 @@ ActivityLog append-only: chỉ INSERT, không tồn tại đường write update
 
 - **Binds:** FR-8, FR-9; NFR-5
 - **Prevents:** logic mock payment rải vào controller/UI; khó thay gateway
-- **Rule:** Thanh toán đi qua interface `PaymentGateway` với đúng một impl `MockPaymentGateway` deterministic (kết quả quyết bởi tham số test). FE không bao giờ tự quyết kết quả payment — chỉ hiển thị trạng thái từ API. **Trạng thái Payment là state machine của `PaymentService` duy nhất; đủ 5 trạng thái theo state chart được persist. Tham số outcome là cấu hình server-side của `MockPaymentGateway` (profile dev) — không bao giờ là field trong API request. Mọi mốc thời gian (QR expiry ~5 phút, processing timeout) do BE quyết định on-read — FE chỉ hiển thị đồng hồ đếm từ giá trị server trả; spinner local của modal Processing được phép và không coi là "quyết kết quả". Processing cố định ~1,5–2s cho demo ổn định (NFR-5).**
+- **Rule:** Thanh toán đi qua interface `PaymentGateway` với đúng một impl `MockPaymentGateway` deterministic (kết quả quyết bởi tham số test). FE không bao giờ tự quyết kết quả payment — chỉ hiển thị trạng thái từ API. **Trạng thái Payment là state machine của `PaymentService` duy nhất; đủ 5 trạng thái theo state chart được persist. Tham số outcome là cấu hình server-side của `MockPaymentGateway` (profile dev) — không bao giờ là field trong API request. Mọi mốc thời gian (QR expiry ~5 phút, processing timeout) do BE quyết định on-read — FE chỉ hiển thị đồng hồ đếm từ giá trị server trả; spinner local của modal Processing được phép và không coi là "quyết kết quả". Processing cố định ~1,5–2s cho demo ổn định (NFR-5).** **Từ sprint 2 (chốt 2026-09-23): thêm impl `PayOSGateway` sau cùng một interface — profile `payos`, tắt mặc định; demo vẫn chạy `MockPaymentGateway`. PayOS chỉ post event về webhook `POST /api/v1/payments/webhooks/payos` (verify chữ ký HMAC-SHA256 bằng checksum key, idempotent theo mã đơn); state machine Payment vẫn thuộc riêng `PaymentService` (AD-4) — gateway không bao giờ ghi DB. Contract PR (webhook + trường `paymentUrl` trong payment response) trước khi code (AD-2). Keys `PAYOS_CLIENT_ID / PAYOS_API_KEY / PAYOS_CHECKSUM_KEY` qua env vars.**
 
 ### AD-10 — File storage & serving (ảnh bản ký) `[ADOPTED 2026-09-22]`
 
@@ -146,6 +148,7 @@ Không ai bỏ tầng: SPA không gọi service/repository; controller không g�
 | --- | --- |
 | Naming | REST danh từ số nhiều kebab-case (`/api/v1/unit-types`); class theo feature trong từng layer (`ReservationController/Service/Repository`); DTO `XxxRequest`/`XxxResponse`; FE component PascalCase, hook `useXxx`, API client hàm đặt theo resource; JSON field camelCase |
 | Data & formats | ID Long → JSON number; ngày ISO-8601 kèm offset; tiền theo AD-7; enum UPPER_SNAKE; error/list envelope theo AD-8 |
+| Mã hồ sơ & biên lai | Prefix: `BK-` reservation · `SR-` ticket · `CT-` contract · `CT-…-A{n}` addendum · `RT-` biên lai payments · `TL-` thanh lý (settlements.ReceiptCode). Format sinh: `{PREFIX}-{YYYY}-{NNNN}` tăng dần; seed demo dùng dạng ngắn không năm (BK-1042, RT-0871) |
 | State & cross-cutting | Validation = Bean Validation trên DTO; state machine chỉ ở service (AD-4); ghi ActivityLog qua `LogService`; config qua `application.yml` + profile `dev`/`prod`; FE: server-state bằng TanStack Query, UI-state cục bộ; role check FE chỉ để render |
 | FE states & forms (NFR-8) | Skeleton khớp layout (không layout shift); empty state = factual + echo filter + đúng 1 CTA; block server hiển thị banner đầu form, không phải toast; Submit chỉ disable theo missing required; guard unsaved-changes khi rời màn có inline edit; bảng quản trị pagination 25 rows |
 | Microcopy (NFR-7) | Mọi error/empty/toast theo khuôn 3 phần: chuyện gì xảy ra + hệ quả tiền/trạng thái + đúng 1 bước kế tiếp; nguồn chân trình bày = EXPERIENCE.md → Voice and Tone; register plain cho cả 5 role; cấm "!" và marketing verbs trong chuỗi hiển thị |
@@ -221,6 +224,8 @@ Môi trường dev: Vite devserver proxy `/api` → Boot `:8080`; MySQL local. M
 | Cross-cutting (a11y · format · perf) | NFR-1…8 | envelope AD-8, a11y/microcopy/states = Conventions, ActivityLog AD-6 | AD-5…8 |
 
 ## Deferred
+
+- **Auth0 / Cloudflare R2 — cân nhắc và loại 2026-09-23** (thảo luận third-party): Auth0 thay AD-5 = mất phần Spring Security tự làm (trọng tâm đánh giá BE) + 2 nguồn sự thật user (Auth0 ↔ bảng users) + demo phụ thuộc ngoài. R2: presigned URL绕qua permission check (phá NFR-4), proxy qua BE thêm network hop vô ích ở volume ảnh vài MB — filesystem AD-10 giữ nguyên; chỉ xét lại nếu deploy topology đổi (multi-instance). PayOS là service ngoài duy nhất được adopt (sprint 2, xem AD-9).
 
 - **OQ-2 deploy demo** — (a) 1 jar Boot nhúng `frontend/dist` vào `static/` vs (b) docker-compose (mysql + api + nginx). Cả hai nhánh đều same-origin (không CORS) và đều cần **SPA fallback `/* → index.html`**; router (history mode) chốt cùng lúc. Chốt tuần 6–8; không đổi AD nào.
 - **FE libs (component + dnd + chart)** — AntD / MUI / Tailwind+shadcn + dnd-kit + thư viện chart: chốt **tuần 1** theo 27 mockup; không chạm contract. Không story FE nào dựng shared component trước lúc chốt.

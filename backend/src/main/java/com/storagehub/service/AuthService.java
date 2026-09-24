@@ -1,7 +1,7 @@
 package com.storagehub.service;
 
 import com.storagehub.dto.auth.*;
-import com.storagehub.enums.RoleName;
+import com.storagehub.entity.Role;
 import com.storagehub.entity.User;
 import com.storagehub.exception.AccountLockedException;
 import com.storagehub.exception.InvalidCredentialsException;
@@ -95,7 +95,7 @@ public class AuthService {
         );
     }
 
-    public String landingRoute(RoleName role) {
+    public String landingRoute(Role.Name role) {
         return switch (role) {
             case CUSTOMER -> "/browse";
             case STAFF -> "/tasks";
