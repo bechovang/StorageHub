@@ -109,3 +109,9 @@ git commit -m "feat(auth): thêm API login"
 git push origin be/<ten_ban>
 ```
 Lên GitHub tạo **Pull Request (PR)** vào branch `master` để các thành viên khác review trước khi merge.
+
+---
+
+## 7. Xem Thêm
+
+- **[BACKEND-DATABASE-GUIDE.md](BACKEND-DATABASE-GUIDE.md)** — quy trình bắt buộc khi sửa database (thêm cột / thêm bảng / seed, xử lý `Checksum mismatch`). Đọc trước khi đụng file trong `db/migration/` hoặc entity.
