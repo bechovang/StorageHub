@@ -1,6 +1,6 @@
 package com.storagehub.dto.auth;
 
-import com.storagehub.enums.RoleName;
+import com.storagehub.entity.Role;
 import com.storagehub.entity.User;
 
 public record MeResponse(
@@ -8,13 +8,13 @@ public record MeResponse(
         String fullName,
         String email,
         String phone,
-        RoleName role,
+        Role.Name role,
         String landingRoute
 ) {
 
     public static MeResponse from(User user, String landingRoute) {
         return new MeResponse(
-                user.getId(),
+                user.getUserId(),
                 user.getFullName(),
                 user.getEmail(),
                 user.getPhone(),

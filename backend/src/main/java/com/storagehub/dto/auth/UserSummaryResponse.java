@@ -1,5 +1,5 @@
 package com.storagehub.dto.auth;
-import com.storagehub.enums.RoleName;
+import com.storagehub.entity.Role;
 import com.storagehub.entity.User;
 
 public record UserSummaryResponse(
@@ -7,12 +7,12 @@ public record UserSummaryResponse(
         String fullName,
         String email,
         String phone,
-        RoleName role
+        Role.Name role
 ) {
 
     public static UserSummaryResponse from(User user) {
         return new UserSummaryResponse(
-                user.getId(),
+                user.getUserId(),
                 user.getFullName(),
                 user.getEmail(),
                 user.getPhone(),
