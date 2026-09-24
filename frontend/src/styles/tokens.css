@@ -1,0 +1,120 @@
+:root {
+  /* ========================================
+     STORAGEHUB CANONICAL TOKENS (SWISS GRID)
+     ======================================== */
+
+  --color-ink: #000000;
+  --color-secondary: #555555;
+  --color-accent: #dc2626;
+  --color-accent-dark: #a71919;
+  --color-neutral: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-line: #d7d7d7;
+  --color-line-strong: #000000;
+  --color-muted: #767676;
+  --color-disabled: #e8e8e8;
+
+  --font-display: "Inter Tight", "Arial Narrow", Arial, sans-serif;
+  --font-body: Inter, Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --text-display: clamp(2.8rem, 6vw, 5.5rem);
+  --text-h1: clamp(2rem, 3vw, 3rem);
+  --text-h2: 1.4rem;
+  --text-body: 0.95rem;
+  --text-small: 0.78rem;
+
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius: 0px;
+  --radius-none: 0px;
+
+  --border: 1px solid var(--color-line);
+  --border-strong: 1px solid var(--color-line-strong);
+  --page-width: 1200px;
+  --focus: 0 0 0 3px rgba(220, 38, 38, 0.25);
+  --focus-outline: 2px solid var(--color-accent);
+
+  /* ========================================
+     SEMANTIC ALIASES (FOR REACT COMPONENT COMPATIBILITY)
+     ======================================== */
+
+  --color-text-primary: var(--color-ink);
+  --color-text-secondary: var(--color-secondary);
+  --color-text-muted: var(--color-muted);
+  --color-text-inverse: var(--color-surface);
+
+  --color-surface-page: var(--color-neutral);
+  --color-surface-panel: var(--color-surface);
+  --color-surface-strong: var(--color-ink);
+  --color-surface-disabled: var(--color-disabled);
+
+  --color-border-default: var(--color-line);
+  --color-border-strong: var(--color-line-strong);
+
+  --color-action-primary: var(--color-accent);
+  --color-action-primary-hover: var(--color-accent-dark);
+
+  --color-status-success: #16a34a;
+  --color-status-warning: #f59e0b;
+  --color-status-danger: var(--color-accent);
+
+  --font-family-body: var(--font-body);
+  --font-family-display: var(--font-display);
+  --font-family-mono: var(--font-mono);
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.82rem;
+  --font-size-md: 0.95rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 3rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 800;
+
+  --line-height-tight: 1.1;
+  --line-height-normal: 1.55;
+  --line-height-relaxed: 1.7;
+
+  /* Layout */
+  --header-height: 64px;
+  --sidebar-width: 244px;
+  --content-max-width: var(--page-width);
+  --page-min-width: 320px;
+
+  /* Controls */
+  --control-height-sm: 36px;
+  --control-height-md: 40px;
+  --control-height-lg: 44px;
+  --control-padding-inline: 14px;
+
+  --button-font-size: 0.78rem;
+  --button-font-weight: 700;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --ease-standard: ease;
+
+  /* Z-index */
+  --z-header: 20;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-toast: 100;
+}
