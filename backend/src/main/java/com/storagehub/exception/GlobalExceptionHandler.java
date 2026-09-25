@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
                 .badRequest()
                 .body(new ApiError(
                         "VALIDATION_FAILED",
-                        "Dữ liệu chưa hợp lệ.",
+                        "Invalid request data.",
                         fieldErrors
                 ));
     }
@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiError.of(
                         "AUTH_INVALID_CREDENTIALS",
-                        "Email hoặc mật khẩu không đúng."
+                        "Invalid email or password."
                 ));
     }
 
@@ -57,7 +57,20 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.LOCKED)
                 .body(ApiError.of(
                         "AUTH_ACCOUNT_LOCKED",
-                        "Tài khoản hiện không đăng nhập được."
+                        "Account is locked. Please contact your system administrator."
+                ));
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleEmailAlreadyExists(
+            EmailAlreadyExistsException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ApiError(
+                        "AUTH_EMAIL_EXISTS",
+                        "An account with this email already exists. Sign in or reset your password.",
+                        List.of(new FieldErrorDetail("email", "TAKEN", "Email is already in use"))
                 ));
     }
 }
