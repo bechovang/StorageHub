@@ -4,7 +4,9 @@ import com.storagehub.dto.auth.*;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.User;
 import com.storagehub.exception.AccountLockedException;
+import com.storagehub.exception.EmailAlreadyExistsException;
 import com.storagehub.exception.InvalidCredentialsException;
+import com.storagehub.repository.RoleRepository;
 import com.storagehub.repository.UserRepository;
 import com.storagehub.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +19,7 @@ import java.util.Locale;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
@@ -24,10 +27,12 @@ public class AuthService {
 
     public AuthService(
             UserRepository userRepository,
+            RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService
     ) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
 
@@ -77,6 +82,43 @@ public class AuthService {
                 UserSummaryResponse.from(user),
                 landingRoute(user.getRole().getName())
         );
+    }
+
+    @Transactional
+    public AuthSessionResponse register(RegisterRequest request) {
+        String normalizedEmail = normalizeEmail(request.email());
+
+        if (userRepository.findByEmailIgnoreCase(normalizedEmail).isPresent()) {
+            throw new EmailAlreadyExistsException();
+        }
+
+        Role customerRole = roleRepository.findByName(Role.Name.CUSTOMER)
+                .orElseThrow(() -> new IllegalStateException("CUSTOMER role not found in database"));
+
+        User user = new User();
+        user.setFullName(request.fullName().trim());
+        user.setEmail(normalizedEmail);
+        user.setPhone(request.phone().trim());
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setRole(customerRole);
+        user.setStatus(1); // 1 = active
+        user.setFacility(null);
+
+        User savedUser = userRepository.save(user);
+
+        JwtService.TokenResult tokenResult = jwtService.generateToken(savedUser);
+
+        return new AuthSessionResponse(
+                tokenResult.token(),
+                tokenResult.expiresAt(),
+                UserSummaryResponse.from(savedUser),
+                landingRoute(savedUser.getRole().getName())
+        );
+    }
+
+    public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
+        // FR-3 & AD-5: Generic response stub, does not send real email in v1
+        return ForgotPasswordResponse.defaultMessage();
     }
 
     @Transactional(readOnly = true)
