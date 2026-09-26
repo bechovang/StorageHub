@@ -292,7 +292,14 @@
   padding: var(--space-4) var(--space-5);
   border-top: var(--border);
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: var(--space-2);
+}
+
+.login-card__footer-text {
+  font-size: var(--text-small);
+  color: var(--color-muted);
 }
 
 .login-link {
@@ -307,6 +314,35 @@
 .login-link:hover {
   color: var(--color-ink);
   border-color: var(--color-ink);
+}
+
+.login-link--strong {
+  font-weight: 700;
+  color: var(--color-ink);
+  border-bottom-color: var(--color-ink);
+}
+
+.login-link--subtle {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  border-bottom-color: transparent;
+}
+
+.login-link--subtle:hover {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.login-link--forgot {
+  border-bottom: none;
+  text-decoration: none;
+  padding-bottom: 0;
+}
+
+.login-link--forgot:hover {
+  border-bottom: none;
+  text-decoration: none;
+  color: var(--color-ink);
 }
 
 /* ── Responsive ── */

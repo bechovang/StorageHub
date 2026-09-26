@@ -1,0 +1,27 @@
+@import "../LoginPage/LoginPage.css";
+
+/* Điều khoản dịch vụ checkbox */
+.register-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 0 6px;
+  font-size: 0.75rem;
+  color: var(--color-ink);
+  line-height: 1.4;
+  cursor: pointer;
+  user-select: none;
+}
+
+.register-terms input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.register-terms a {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
