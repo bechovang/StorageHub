@@ -73,4 +73,77 @@ public class GlobalExceptionHandler {
                         List.of(new FieldErrorDetail("email", "TAKEN", "Email is already in use"))
                 ));
     }
+
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ApiError> handlePaymentNotFound(
+            PaymentNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "PAYMENT_NOT_FOUND",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PaymentDuplicateException.class)
+    public ResponseEntity<ApiError> handlePaymentDuplicate(
+            PaymentDuplicateException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "PAYMENT_DUPLICATE",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PaymentInvalidStateException.class)
+    public ResponseEntity<ApiError> handlePaymentInvalidState(
+            PaymentInvalidStateException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "PAYMENT_INVALID_STATE",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PaymentExpiredException.class)
+    public ResponseEntity<ApiError> handlePaymentExpired(
+            PaymentExpiredException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "PAYMENT_EXPIRED",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PaymentBadRequestException.class)
+    public ResponseEntity<ApiError> handlePaymentBadRequest(
+            PaymentBadRequestException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiError.of(
+                        "VALIDATION_FAILED",
+                        exception.getMessage()
+                ));
+    }
+
+    /** Ownership violation từ service (vd: trả reservation của người khác) → 403. */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of(
+                        "ROLE_FORBIDDEN",
+                        "You do not have permission to perform this action."
+                ));
+    }
 }
