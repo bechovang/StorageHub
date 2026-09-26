@@ -45,6 +45,45 @@ export function AuthProvider({ children }) {
         }
     };
 
+    // Hàm xử lý đăng ký
+    const register = async ({ fullName, phone, email, password, agreeTerms = true }) => {
+        setLoading(true);
+        try {
+            const res = await apiClient("/api/v1/auth/register", {
+                method: "POST",
+                body: JSON.stringify({
+                    fullName: fullName.trim(),
+                    phone: phone.trim(),
+                    email: email.trim(),
+                    password,
+                    agreeTerms,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw {
+                    status: res.status,
+                    code: data.code || "REGISTER_FAILED",
+                    message: data.message || "Đăng ký thất bại.",
+                    fieldErrors: data.fieldErrors || [],
+                };
+            }
+
+            tokenStorage.set(data.token);
+            localStorage.setItem("storagehub_user", JSON.stringify(data.user));
+            localStorage.setItem("storagehub_expires_at", data.expiresAt);
+
+            setToken(data.token);
+            setUser(data.user);
+
+            return data;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logout = () => {
         tokenStorage.clear();
         setToken(null);
@@ -53,7 +92,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, loading, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );
