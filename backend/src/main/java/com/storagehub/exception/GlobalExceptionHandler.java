@@ -73,4 +73,40 @@ public class GlobalExceptionHandler {
                         List.of(new FieldErrorDetail("email", "TAKEN", "Email is already in use"))
                 ));
     }
+
+    @ExceptionHandler(ReservationNotFoundException.class)
+    public ResponseEntity<ApiError> handleReservationNotFound(
+            ReservationNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "RESERVATION_NOT_FOUND",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(ReservationInvalidStateException.class)
+    public ResponseEntity<ApiError> handleReservationInvalidState(
+            ReservationInvalidStateException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "RESERVATION_INVALID_STATE",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of(
+                        "ROLE_FORBIDDEN",
+                        "You do not have permission to access this resource."
+                ));
+    }
 }
