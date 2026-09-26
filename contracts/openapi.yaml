@@ -432,6 +432,10 @@ paths:
         trả PENDING + QR payload + expiresAt (~5 phút), FE poll GET (mock
         auto-complete sau ~2s), hết hạn → EXPIRED, FE quay về chọn phương thức
         rồi tạo payment mới.
+        Giá trị test mock (config `payment.mock.*` backend): CARD
+        4242424242424242 → SUCCEEDED, thẻ khác → FAILED; MoMo OTP 123456 →
+        SUCCEEDED, OTP khác → FAILED; QR/OTP hết hạn ~5 phút theo
+        qrExpiresAt/otpExpiresAt server trả.
       operationId: createPayment
       requestBody:
         required: true
