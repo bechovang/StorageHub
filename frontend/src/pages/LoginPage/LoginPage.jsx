@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+
 import "./LoginPage.css";
 
 const ROLES = [
@@ -100,7 +101,7 @@ export default function LoginPage() {
                 <div className="login-form-col">
                     <div className="login-card">
                         <div className="login-card__header">
-                            <p className="login-card__eyebrow">AUTHENTICATE</p>
+                            <p className="login-card__eyebrow">StorageHub</p>
                             <h2 className="login-card__title">Đăng nhập</h2>
                         </div>
 
@@ -162,6 +163,11 @@ export default function LoginPage() {
                                         placeholder="••••••••"
                                         aria-required="true"
                                     />
+                                    <div className="login-field__header">
+                                        <Link to="/forgot-password" className="login-link login-link--forgot">
+                                            Quên mật khẩu?
+                                        </Link>
+                                    </div>
                                 </div>
 
                                 <button
@@ -181,9 +187,10 @@ export default function LoginPage() {
                         </div>
 
                         <div className="login-card__footer">
-                            <a href="/forgot-password" className="login-link">
-                                Quên mật khẩu?
-                            </a>
+                            <span className="login-card__footer-text">Chưa có tài khoản?</span>
+                            <Link to="/register" className="login-link login-link--strong">
+                            Đăng ký ngay
+                            </Link> 
                         </div>
                     </div>
                 </div>
