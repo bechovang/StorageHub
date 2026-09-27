@@ -1,5 +1,7 @@
 package com.storagehub.controller;
 
+import com.storagehub.dto.quote.QuoteResponse;
+import com.storagehub.dto.unit.UnitDetailResponse;
 import com.storagehub.dto.unit.UnitFilterOptionsResponse;
 import com.storagehub.dto.unit.UnitPageResponse;
 import com.storagehub.service.UnitService;
@@ -10,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,7 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Controller phục vụ Browse Units (US-6, FR-4).
+ * Controller phục vụ Browse Units (US-6, FR-4) và Unit Detail + Bảng giá (US-7, FR-6).
  * Enforce contract-first theo contracts/openapi.yaml.
  */
 @Validated
@@ -59,5 +62,22 @@ public class UnitController {
                 pageSize
         );
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{unitId}")
+    public ResponseEntity<UnitDetailResponse> getUnit(@PathVariable("unitId") Long unitId) {
+        return ResponseEntity.ok(unitService.getUnitDetail(unitId));
+    }
+
+    @GetMapping("/{unitId}/quote")
+    public ResponseEntity<QuoteResponse> getUnitQuote(
+            @PathVariable("unitId") Long unitId,
+            @RequestParam("start-date")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("duration-months")
+            @Min(value = 1, message = "Thời hạn thuê tối thiểu 1 tháng")
+            @Max(value = 36, message = "Thời hạn thuê tối đa 36 tháng") Integer durationMonths
+    ) {
+        return ResponseEntity.ok(unitService.getUnitQuote(unitId, startDate, durationMonths));
     }
 }

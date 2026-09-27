@@ -1,5 +1,7 @@
 package com.storagehub.service;
 
+import com.storagehub.dto.quote.QuoteResponse;
+import com.storagehub.dto.unit.UnitDetailResponse;
 import com.storagehub.dto.unit.UnitFilterOptionsResponse;
 import com.storagehub.dto.unit.UnitPageResponse;
 import com.storagehub.dto.unit.UnitSummaryResponse;
@@ -10,6 +12,7 @@ import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Unit;
 import com.storagehub.entity.UnitType;
 import com.storagehub.entity.Zone;
+import com.storagehub.exception.UnitNotFoundException;
 import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
@@ -29,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
@@ -51,6 +55,9 @@ class UnitServiceTest {
 
     @Mock
     private ReservationRepository reservationRepository;
+
+    @Mock
+    private PricingEngine pricingEngine;
 
     @InjectMocks
     private UnitService unitService;
@@ -224,6 +231,84 @@ class UnitServiceTest {
 
         assertThat(response.getTotal()).isEqualTo(0);
         assertThat(response.getItems()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("getUnitDetail trả về spec đầy đủ khi unit tồn tại")
+    void testGetUnitDetail_Success() {
+        Unit unit1 = createUnit(1L, "S-1", typeS, new BigDecimal("5.00"), Unit.Status.AVAILABLE);
+
+        when(unitRepository.findWithDetailsById(1L)).thenReturn(Optional.of(unit1));
+        when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(activePolicy));
+
+        PolicyRule rentRule = new PolicyRule();
+        rentRule.setType(typeS);
+        rentRule.setRuleType(PolicyRule.RuleType.RENT_RATE);
+        rentRule.setValue(new BigDecimal("345000"));
+
+        when(policyRuleRepository.findByPolicy_PolicyId(2)).thenReturn(List.of(rentRule));
+
+        UnitDetailResponse detail = unitService.getUnitDetail(1L);
+
+        assertThat(detail.id()).isEqualTo(1L);
+        assertThat(detail.code()).isEqualTo("S-1");
+        assertThat(detail.typeName()).isEqualTo("S");
+        assertThat(detail.sizeM2()).isEqualTo(new BigDecimal("5.00"));
+        assertThat(detail.baseMonthlyRent()).isEqualTo(345000L);
+        assertThat(detail.dimensions()).isEqualTo("2.0 × 2.5 × 2.2 m");
+        assertThat(detail.security()).isEqualTo("24/7 PIN + CCTV + Motion sensors");
+        assertThat(detail.photoUrls()).hasSize(2);
+        assertThat(detail.availability().status()).isEqualTo("AVAILABLE");
+    }
+
+    @Test
+    @DisplayName("getUnitDetail ném UnitNotFoundException khi không tìm thấy unit")
+    void testGetUnitDetail_NotFound() {
+        when(unitRepository.findWithDetailsById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> unitService.getUnitDetail(999L))
+                .isInstanceOf(UnitNotFoundException.class)
+                .hasMessage("Unit này không tồn tại.");
+    }
+
+    @Test
+    @DisplayName("getUnitQuote ủy quyền cho PricingEngine tính toán bảng giá")
+    void testGetUnitQuote_Success() {
+        Unit unit1 = createUnit(1L, "S-1", typeS, new BigDecimal("5.00"), Unit.Status.AVAILABLE);
+        LocalDate start = LocalDate.of(2026, 10, 3);
+        LocalDate end = LocalDate.of(2027, 1, 2);
+
+        QuoteResponse mockQuote = new QuoteResponse(
+                1L,
+                start,
+                end,
+                3,
+                List.of(),
+                1035000L,
+                103500L,
+                103500L,
+                "v3"
+        );
+
+        when(unitRepository.findById(1L)).thenReturn(Optional.of(unit1));
+        when(pricingEngine.calculateQuote(unit1, start, 3)).thenReturn(mockQuote);
+
+        QuoteResponse result = unitService.getUnitQuote(1L, start, 3);
+
+        assertThat(result.unitId()).isEqualTo(1L);
+        assertThat(result.totalRent()).isEqualTo(1035000L);
+        assertThat(result.depositAmount()).isEqualTo(103500L);
+        assertThat(result.policyVersion()).isEqualTo("v3");
+    }
+
+    @Test
+    @DisplayName("getUnitQuote ném UnitNotFoundException khi không tìm thấy unit")
+    void testGetUnitQuote_NotFound() {
+        when(unitRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> unitService.getUnitQuote(999L, LocalDate.of(2026, 10, 3), 3))
+                .isInstanceOf(UnitNotFoundException.class)
+                .hasMessage("Unit này không tồn tại.");
     }
 
     private Unit createUnit(Long id, String code, UnitType type, BigDecimal size, Unit.Status status) {
