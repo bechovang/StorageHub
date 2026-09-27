@@ -1,9 +1,11 @@
 package com.storagehub.repository;
 
 import com.storagehub.entity.Reservation;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,6 +17,11 @@ import java.util.Optional;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+
+    /** US-10 (FR-36): lock biên khi áp side-effect EXPIRED exactly-once. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Reservation r WHERE r.reservationId = :reservationId")
+    Optional<Reservation> findByIdForUpdate(@Param("reservationId") Long reservationId);
 
     @Query(value = """
         SELECT r FROM Reservation r
