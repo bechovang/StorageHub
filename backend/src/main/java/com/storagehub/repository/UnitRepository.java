@@ -40,4 +40,18 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
             "JOIN FETCH z.facility f " +
             "WHERE u.unitId = :unitId")
     Optional<Unit> findWithDetailsById(@Param("unitId") Long unitId);
+
+    /**
+     * Lấy các kho ứng viên tương tự (cùng typeId, khác unitId hiện tại, status hợp lệ).
+     */
+    @Query("SELECT u FROM Unit u " +
+            "JOIN FETCH u.type t " +
+            "JOIN FETCH u.zone z " +
+            "JOIN FETCH z.facility f " +
+            "WHERE u.type.typeId = :typeId AND u.unitId <> :excludeUnitId AND u.status IN :candidateStatuses")
+    List<Unit> findSimilarCandidateUnits(
+            @Param("typeId") Integer typeId,
+            @Param("excludeUnitId") Long excludeUnitId,
+            @Param("candidateStatuses") Collection<Unit.Status> candidateStatuses
+    );
 }
