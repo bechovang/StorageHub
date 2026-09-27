@@ -42,6 +42,7 @@ public class ContractService {
     private final UserRepository userRepository;
     private final RentalPolicyRepository rentalPolicyRepository;
     private final PricingEngine pricingEngine;
+    private final LogService logService;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -104,6 +105,30 @@ public class ContractService {
         }
 
         return contractRepository.save(newContract);
+    }
+
+    /**
+     * US-10 (FR-36): no-show — đóng hợp đồng của reservation hết hạn.
+     * Chỉ đóng bản isLatest đang DRAFT/PRINTED; trả contract đã đóng
+     * hoặc null nếu không có bản nào cần xử lý.
+     */
+    @Transactional
+    public Contract closeForNoShow(User actor, Reservation reservation) {
+        Contract latest = contractRepository
+                .findByReservation_ReservationIdAndIsLatestTrue(reservation.getReservationId())
+                .orElse(null);
+        if (latest == null
+                || (latest.getStatus() != Contract.Status.DRAFT
+                    && latest.getStatus() != Contract.Status.PRINTED)) {
+            return null;
+        }
+        Contract.Status from = latest.getStatus();
+        latest.setStatus(Contract.Status.CLOSED);
+        contractRepository.save(latest);
+        logService.log(actor, "CONTRACT", latest.getContractId(),
+                "STATUS_CHANGED", from.name(), "CLOSED",
+                "No-show expiry — " + reservation.getCode());
+        return latest;
     }
 
     /**

@@ -16,4 +16,7 @@ public interface NotificationService {
             Reservation reservation,
             Payment payment
     );
+
+    /** US-10 (FR-36): no-show hết hạn → reservation EXPIRED, cọc không hoàn lại. */
+    NotificationEventResponse notifyReservationExpired(Reservation reservation);
 }

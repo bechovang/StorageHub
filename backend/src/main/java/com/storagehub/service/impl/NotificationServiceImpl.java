@@ -17,6 +17,7 @@ import java.util.Locale;
 public class NotificationServiceImpl implements NotificationService {
 
     private static final String TYPE_RESERVATION_CONFIRMED = "RESERVATION_CONFIRMED";
+    private static final String TYPE_RESERVATION_EXPIRED = "RESERVATION_EXPIRED";
 
     private final NotificationRepository notificationRepository;
 
@@ -46,6 +47,32 @@ public class NotificationServiceImpl implements NotificationService {
 
         return new NotificationEventResponse(
                 TYPE_RESERVATION_CONFIRMED,
+                title,
+                body,
+                deepLink
+        );
+    }
+
+    @Override
+    public NotificationEventResponse notifyReservationExpired(Reservation reservation) {
+        // NFR-7 microcopy 3 phần: chuyện gì xảy ra + hệ quả tiền + bước kế tiếp.
+        String title = "Booking expired — "
+                + reservation.getUnit().getCode() + " no-show";
+        String body = "Quá hạn nhận kho nên đặt chỗ " + reservation.getCode()
+                + " đã kết thúc và cọc " + vnd(reservation.getDepositAmount())
+                + " không hoàn lại. Đặt kho mới bất cứ khi nào bạn sẵn sàng.";
+        String deepLink = "/rentals/" + reservation.getReservationId();
+
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_RESERVATION_EXPIRED);
+        row.setTitle(title);
+        row.setDeepLink(deepLink);
+        row.setIsRead(false);
+        notificationRepository.save(row);
+
+        return new NotificationEventResponse(
+                TYPE_RESERVATION_EXPIRED,
                 title,
                 body,
                 deepLink

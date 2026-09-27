@@ -22,6 +22,7 @@ import com.storagehub.exception.InvalidCredentialsException;
 import com.storagehub.exception.ReservationInvalidStateException;
 import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.exception.UnitNotFoundException;
+import com.storagehub.repository.ActivityLogRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.PolicyRuleRepository;
@@ -35,7 +36,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -57,6 +61,12 @@ public class ReservationService {
     private final PricingEngine pricingEngine;
     private final PaymentRepository paymentRepository;
     private final ContractRepository contractRepository;
+    private final ContractService contractService;
+    private final UnitService unitService;
+    private final NotificationService notificationService;
+    private final LogService logService;
+    private final ActivityLogRepository activityLogRepository;
+    private final PlatformTransactionManager transactionManager;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -74,7 +84,7 @@ public class ReservationService {
         int size = Math.max(1, Math.min(pageSize, 100));
         Pageable pageable = PageRequest.of(pageIndex, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ICT_ZONE);
         Page<Reservation> reservationPage;
 
         if (group != null && group.equalsIgnoreCase("history")) {
@@ -134,7 +144,7 @@ public class ReservationService {
             throw new ReservationNotFoundException("Reservation not found.");
         }
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ICT_ZONE);
         Reservation.Status effectiveStatus = resolveEffectiveStatus(reservation, today);
 
         // Guard: Check-in pass chỉ mở khi đặt chỗ đã xác nhận cọc và chưa check-in
@@ -482,6 +492,69 @@ public class ReservationService {
         }
         reservation.setStatus(Reservation.Status.RESERVED);
         reservationRepository.save(reservation);
+    }
+
+    /**
+     * US-10 (FR-36, AD-4): no-show — hết hạn nhận kho (startDate) mà chưa check-in.
+     * Cột status gốc VẪN RESERVED (EXPIRED là derived on-read); phương thức này áp
+     * side-effect exactly-once tại lần đọc/đụng đầu tiên: mất toàn bộ cọc,
+     * Unit mở lại, Contract Draft/Printed → Closed, ActivityLog + notification.
+     * Gọi ở controller TRƯỚC method đọc readOnly — transaction đọc bắt đầu
+     * sau khi side-effect commit nên thấy state mới (MySQL REPEATABLE_READ).
+     */
+    public void expireNoShowIfDue(String email, Long reservationId) {
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        Reservation reservation = reservationRepository.findById(reservationId).orElse(null);
+        if (reservation == null) {
+            return; // để method đọc chính ném 404 đúng quy ước
+        }
+
+        // Chỉ chủ đặt chỗ hoặc staff/admin mới kích hoạt — người ngoài
+        // không được tiết lộ tồn tại (404 do method đọc xử lý).
+        boolean isOwner = reservation.getCustomer().getUserId().equals(user.getUserId());
+        boolean isStaffOrAdmin = user.getRole().getName() != Role.Name.CUSTOMER;
+        if (!isOwner && !isStaffOrAdmin) {
+            return;
+        }
+
+        LocalDate today = LocalDate.now(ICT_ZONE);
+        if (reservation.getStatus() != Reservation.Status.RESERVED
+                || !today.isAfter(reservation.getStartDate())) {
+            return; // không due — không đụng gì
+        }
+
+        // Exactly-once (AD-4): tx REQUIRES_NEW + lock dòng reservation +
+        // marker ActivityLog — 2 request đua nhau thì bên sau thấy marker bỏ qua.
+        TransactionTemplate expiryTx = new TransactionTemplate(transactionManager);
+        expiryTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        expiryTx.executeWithoutResult(tx -> {
+            Reservation locked = reservationRepository.findByIdForUpdate(reservationId)
+                    .orElseThrow();
+            if (locked.getStatus() != Reservation.Status.RESERVED) {
+                return; // request khác đã áp trong tx vừa commit
+            }
+            if (activityLogRepository.existsByEntityTypeAndEntityIdAndAction(
+                    "RESERVATION", reservationId, "RESERVATION_EXPIRED")) {
+                return; // đã áp (marker) — idempotent
+            }
+            applyNoShowExpiry(locked);
+        });
+    }
+
+    /** Side-effect FR-36 — chỉ gọi khi đã giữ lock + xác nhận chưa áp. */
+    private void applyNoShowExpiry(Reservation reservation) {
+        // AD-6: mỗi owner service tự ghi bảng mình trong cùng transaction này.
+        User actor = reservation.getCustomer();
+        contractService.closeForNoShow(actor, reservation);
+        unitService.releaseHoldAfterNoShow(actor, reservation.getUnit());
+        notificationService.notifyReservationExpired(reservation);
+
+        // Marker exactly-once: sự tồn tại của dòng này = transition đã áp.
+        logService.log(actor, "RESERVATION", reservation.getReservationId(),
+                "RESERVATION_EXPIRED", "RESERVED", "EXPIRED",
+                "Deposit forfeited — no-show");
     }
 
     private synchronized String generateReservationCode() {
