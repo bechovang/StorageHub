@@ -74,6 +74,10 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // ------------------------------------------------------------------
+    // Unit / Reservation / Contract (US-7, US-9, US-11 — Phúc)
+    // ------------------------------------------------------------------
+
     @ExceptionHandler(UnitNotFoundException.class)
     public ResponseEntity<ApiError> handleUnitNotFound(
             UnitNotFoundException exception
@@ -134,6 +138,75 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // ------------------------------------------------------------------
+    // Payment (US-8 — An)
+    // ------------------------------------------------------------------
+
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ApiError> handlePaymentNotFound(
+            PaymentNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "PAYMENT_NOT_FOUND",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PaymentDuplicateException.class)
+    public ResponseEntity<ApiError> handlePaymentDuplicate(
+            PaymentDuplicateException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "PAYMENT_DUPLICATE",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PaymentInvalidStateException.class)
+    public ResponseEntity<ApiError> handlePaymentInvalidState(
+            PaymentInvalidStateException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "PAYMENT_INVALID_STATE",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PaymentExpiredException.class)
+    public ResponseEntity<ApiError> handlePaymentExpired(
+            PaymentExpiredException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "PAYMENT_EXPIRED",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(PaymentBadRequestException.class)
+    public ResponseEntity<ApiError> handlePaymentBadRequest(
+            PaymentBadRequestException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiError.of(
+                        "VALIDATION_FAILED",
+                        exception.getMessage()
+                ));
+    }
+
+    // ------------------------------------------------------------------
+    // Cross-cutting
+    // ------------------------------------------------------------------
+
+    /** Ownership violation từ service (vd: trả reservation của người khác) → 403. */
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(
             org.springframework.security.access.AccessDeniedException exception

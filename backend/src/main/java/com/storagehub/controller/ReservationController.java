@@ -58,6 +58,9 @@ public class ReservationController {
             Authentication authentication
     ) {
         String email = authentication != null ? authentication.getName() : "";
+        // US-10 (FR-36/AD-4): kích hoạt side-effect EXPIRED exactly-once TRƯỚC khi
+        // đọc — tx readOnly của getReservationDetail phải thấy state sau side-effect.
+        reservationService.expireNoShowIfDue(email, reservationId);
         return ResponseEntity.ok(
                 reservationService.getReservationDetail(
                         email,
@@ -72,6 +75,9 @@ public class ReservationController {
             Authentication authentication
     ) {
         String email = authentication != null ? authentication.getName() : "";
+        // US-10 (FR-36/AD-4): tương tự detail — side-effect chạy trước, guard
+        // RESERVED trong getCheckInPass sẽ ném 409 nếu đã hết hạn no-show.
+        reservationService.expireNoShowIfDue(email, reservationId);
         return ResponseEntity.ok(
                 reservationService.getCheckInPass(
                         email,
