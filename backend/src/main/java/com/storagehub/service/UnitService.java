@@ -11,6 +11,7 @@ import com.storagehub.entity.PolicyRule;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Unit;
+import com.storagehub.entity.User;
 import com.storagehub.exception.UnitNotFoundException;
 import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
@@ -48,6 +49,7 @@ public class UnitService {
     private final PolicyRuleRepository policyRuleRepository;
     private final ReservationRepository reservationRepository;
     private final PricingEngine pricingEngine;
+    private final LogService logService;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -302,6 +304,25 @@ public class UnitService {
                 .orElseThrow(() -> new UnitNotFoundException("Unit này không tồn tại."));
 
         return pricingEngine.calculateQuote(unit, startDate, durationMonths);
+    }
+
+    /**
+     * US-10 (FR-36): no-show hết hạn — mở lại unit khi khách không đến nhận kho.
+     * Chỉ flip RESERVED → AVAILABLE: availability browse là derive-on-read nên
+     * cột thường không giữ RESERVED; flip có điều kiện để an toàn khi US-15
+     * bắt đầu set RENTED. Method-level @Transactional đè class-level readOnly.
+     */
+    @Transactional
+    public boolean releaseHoldAfterNoShow(User actor, Unit unit) {
+        if (unit.getStatus() != Unit.Status.RESERVED) {
+            return false;
+        }
+        unit.setStatus(Unit.Status.AVAILABLE);
+        unitRepository.save(unit);
+        logService.log(actor, "UNIT", unit.getUnitId(),
+                "STATUS_CHANGED", "RESERVED", "AVAILABLE",
+                "No-show expiry — hold released");
+        return true;
     }
 
     private String resolveDimensions(BigDecimal sizeM2) {

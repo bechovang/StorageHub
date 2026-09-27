@@ -38,6 +38,18 @@ security:
     secret: ${JWT_SECRET}
     ttl: PT24H
 
+# ----------------------------------------------------------------------------
+# Payment mock gateway (AD-9 / US-8) — outcome do server quyết; test values
+# đã ghi trong contracts/openapi.yaml. Đổi giá trị test phải sửa contract trước.
+# ----------------------------------------------------------------------------
+payment:
+  mock:
+    success-card: "4242424242424242"
+    otp: "123456"
+    otp-ttl: PT5M
+    qr-ttl: PT5M
+    auto-complete-delay: PT2S
+
 # springdoc render docs từ code — chỉ để tham khảo; contract thật =
 # contracts/openapi.yaml (AD-2)
 

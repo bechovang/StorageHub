@@ -146,7 +146,7 @@ Không ai bỏ tầng: SPA không gọi service/repository; controller không g�
 
 | Concern | Convention |
 | --- | --- |
-| Naming | REST danh từ số nhiều kebab-case (`/api/v1/unit-types`); class theo feature trong từng layer (`ReservationController/Service/Repository`); DTO `XxxRequest`/`XxxResponse`; FE component PascalCase, hook `useXxx`, API client hàm đặt theo resource; JSON field camelCase |
+| Naming | REST danh từ số nhiều kebab-case (`/api/v1/unit-types`); class theo feature trong từng layer (`ReservationController/Repository`; business service tách interface `XxxService` trong `service/` + `XxxServiceImpl` `@Service` trong `service/impl/`; hạ tầng kỹ thuật như `JwtService` trong `security/` không bắt buộc tách); DTO `XxxRequest`/`XxxResponse`; FE component PascalCase, hook `useXxx`, API client hàm đặt theo resource; JSON field camelCase |
 | Data & formats | ID Long → JSON number; ngày ISO-8601 kèm offset; tiền theo AD-7; enum UPPER_SNAKE; error/list envelope theo AD-8 |
 | Mã hồ sơ & biên lai | Prefix: `BK-` reservation · `SR-` ticket · `CT-` contract · `CT-…-A{n}` addendum · `RT-` biên lai payments · `TL-` thanh lý (settlements.ReceiptCode). Format sinh: `{PREFIX}-{YYYY}-{NNNN}` tăng dần; seed demo dùng dạng ngắn không năm (BK-1042, RT-0871) |
 | State & cross-cutting | Validation = Bean Validation trên DTO; state machine chỉ ở service (AD-4); ghi ActivityLog qua `LogService`; config qua `application.yml` + profile `dev`/`prod`; FE: server-state bằng TanStack Query, UI-state cục bộ; role check FE chỉ để render |
