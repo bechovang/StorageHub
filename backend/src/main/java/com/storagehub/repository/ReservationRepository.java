@@ -100,4 +100,17 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             "AND r.status = com.storagehub.entity.Reservation.Status.CLOSED " +
             "ORDER BY r.endDate DESC")
     List<Reservation> findLatestClosedReservations(@Param("unitId") Long unitId);
+
+    /**
+     * Lấy các reservation đang hoạt động của 1 unit để kiểm tra overlap.
+     */
+    @Query("SELECT r FROM Reservation r " +
+            "WHERE r.unit.unitId = :unitId " +
+            "AND r.status IN :activeStatuses")
+    List<Reservation> findActiveReservationsForUnit(
+            @Param("unitId") Long unitId,
+            @Param("activeStatuses") Collection<Reservation.Status> activeStatuses
+    );
+
+    boolean existsByCode(String code);
 }
