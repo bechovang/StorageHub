@@ -1,8 +1,12 @@
 package com.storagehub.controller;
 
 import com.storagehub.dto.reservation.CheckInPassResponse;
+import com.storagehub.dto.reservation.CreateReservationRequest;
+import com.storagehub.dto.reservation.ReservationDetailResponse;
 import com.storagehub.dto.reservation.ReservationPageResponse;
 import com.storagehub.service.ReservationService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +21,19 @@ public class ReservationController {
         this.reservationService = reservationService;
     }
 
+    @PostMapping
+    public ResponseEntity<ReservationDetailResponse> createReservation(
+            @Valid @RequestBody CreateReservationRequest request,
+            Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        ReservationDetailResponse response = reservationService.createReservation(
+                email,
+                request
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @GetMapping
     public ResponseEntity<ReservationPageResponse> listMyReservations(
             @RequestParam(name = "group", defaultValue = "active") String group,
@@ -24,12 +41,27 @@ public class ReservationController {
             @RequestParam(name = "page-size", defaultValue = "25") int pageSize,
             Authentication authentication
     ) {
+        String email = authentication != null ? authentication.getName() : "";
         return ResponseEntity.ok(
                 reservationService.listMyReservations(
-                        authentication.getName(),
+                        email,
                         group,
                         page,
                         pageSize
+                )
+        );
+    }
+
+    @GetMapping("/{reservationId}")
+    public ResponseEntity<ReservationDetailResponse> getReservation(
+            @PathVariable("reservationId") Long reservationId,
+            Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        return ResponseEntity.ok(
+                reservationService.getReservationDetail(
+                        email,
+                        reservationId
                 )
         );
     }
@@ -39,9 +71,10 @@ public class ReservationController {
             @PathVariable("reservationId") Long reservationId,
             Authentication authentication
     ) {
+        String email = authentication != null ? authentication.getName() : "";
         return ResponseEntity.ok(
                 reservationService.getCheckInPass(
-                        authentication.getName(),
+                        email,
                         reservationId
                 )
         );
