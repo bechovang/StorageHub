@@ -4,6 +4,7 @@ import com.storagehub.dto.contract.ContractChainItemResponse;
 import com.storagehub.dto.contract.ContractDetailResponse;
 import com.storagehub.dto.quote.QuoteResponse;
 import com.storagehub.entity.Contract;
+import com.storagehub.entity.ContractAddendum;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Role;
@@ -12,6 +13,7 @@ import com.storagehub.entity.User;
 import com.storagehub.exception.ContractNotFoundException;
 import com.storagehub.exception.InvalidCredentialsException;
 import com.storagehub.exception.ReservationNotFoundException;
+import com.storagehub.repository.ContractAddendumRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
@@ -43,6 +45,7 @@ public class ContractService {
     private final RentalPolicyRepository rentalPolicyRepository;
     private final PricingEngine pricingEngine;
     private final LogService logService;
+    private final ContractAddendumRepository contractAddendumRepository;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -173,9 +176,26 @@ public class ContractService {
         }
 
         List<Contract> contracts = contractRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(reservationId);
-        return contracts.stream()
+        List<ContractChainItemResponse> chain = new java.util.ArrayList<>(contracts.stream()
                 .map(this::mapToChainItem)
-                .toList();
+                .toList());
+
+        if (contractAddendumRepository != null) {
+            List<ContractAddendum> addendums = contractAddendumRepository.findByContract_Reservation_ReservationIdOrderByCreatedAtAsc(reservationId);
+            for (ContractAddendum a : addendums) {
+                chain.add(new ContractChainItemResponse(
+                        a.getAddendumId(),
+                        a.getCode(),
+                        "ADDENDUM",
+                        a.getStatus() != null ? a.getStatus().name() : "AWAITING_SIGNATURE",
+                        false,
+                        a.getSignedPhotoUrl(),
+                        a.getSignatureDueDate()
+                ));
+            }
+        }
+
+        return chain;
     }
 
     /**
