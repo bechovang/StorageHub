@@ -52,9 +52,7 @@ class ReservationControllerTest {
     private UserRepository userRepository;
 
     private final org.springframework.security.core.Authentication auth =
-            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                    "lan@demo.vn", "secret", java.util.List.of()
-            );
+            new org.springframework.security.authentication.TestingAuthenticationToken("lan@demo.vn", null);
 
     @Test
     @DisplayName("POST /api/v1/reservations trả về 201 Created khi tạo đặt chỗ thành công")
