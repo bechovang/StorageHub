@@ -8,10 +8,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     /** Lock biên khi resolve (poll/confirm đua nhau) — chống handler chạy 2 lần. */
@@ -32,6 +35,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             WHERE p.paymentId = :paymentId
             """)
     Optional<Payment> findByIdWithAssociations(@Param("paymentId") Long paymentId);
+
+    /** US-9/US-11: lịch sử payment của reservation (ReservationService, ContractService). */
+    List<Payment> findByReservation_ReservationId(Long reservationId);
 
     Page<Payment> findByReservation_ReservationId(Long reservationId, Pageable pageable);
 
