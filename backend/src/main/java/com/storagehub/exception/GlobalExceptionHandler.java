@@ -110,6 +110,18 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(BookingUnitTakenException.class)
+    public ResponseEntity<ApiError> handleBookingUnitTaken(
+            BookingUnitTakenException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "BOOKING_UNIT_TAKEN",
+                        exception.getMessage() != null ? exception.getMessage() : "Unit vừa bị chiếm / ngày không còn hợp lệ"
+                ));
+    }
+
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(
             org.springframework.security.access.AccessDeniedException exception
