@@ -14,6 +14,7 @@ import com.storagehub.entity.User;
 import com.storagehub.entity.Zone;
 import com.storagehub.exception.ContractNotFoundException;
 import com.storagehub.exception.ReservationNotFoundException;
+import com.storagehub.repository.ContractAddendumRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
@@ -57,6 +58,9 @@ class ContractServiceTest {
 
     @Mock
     private PricingEngine pricingEngine;
+
+    @Mock
+    private ContractAddendumRepository contractAddendumRepository;
 
     @InjectMocks
     private ContractService contractService;
@@ -290,6 +294,8 @@ class ContractServiceTest {
         when(reservationRepository.findWithDetailsById(1042L)).thenReturn(Optional.of(reservation));
         when(contractRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(1042L))
                 .thenReturn(List.of(c1, c2));
+        when(contractAddendumRepository.findByContract_Reservation_ReservationIdOrderByCreatedAtAsc(1042L))
+                .thenReturn(List.of());
 
         List<ContractChainItemResponse> chain = contractService.listContractsByReservation("lan@demo.vn", 1042L);
 
