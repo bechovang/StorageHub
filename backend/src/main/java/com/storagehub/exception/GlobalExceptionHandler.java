@@ -98,6 +98,18 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(ContractNotFoundException.class)
+    public ResponseEntity<ApiError> handleContractNotFound(
+            ContractNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "CONTRACT_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Không tìm thấy hợp đồng này."
+                ));
+    }
+
     @ExceptionHandler(ReservationInvalidStateException.class)
     public ResponseEntity<ApiError> handleReservationInvalidState(
             ReservationInvalidStateException exception

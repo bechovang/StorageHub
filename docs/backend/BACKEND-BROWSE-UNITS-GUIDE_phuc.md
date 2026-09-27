@@ -1,13 +1,14 @@
-# Hướng Dẫn Chi Tiết Triển Khai Backend: Browse Units, Unit Detail & Booking Reserve
+# Hướng Dẫn Chi Tiết Triển Khai Backend: Browse Units, Unit Detail, Booking Reserve & Contract Auto-Draft
 
 > **Người thực hiện:** Kỹ sư Backend StorageHub (Phúc)  
-> **Phạm vi hoàn thiện:** Sprint 1 — Feature 4.2 / User Stories:  
+> **Phạm vi hoàn thiện:** Sprint 1 — Feature 4.2 & Contract Management / User Stories:  
 > - **US-6:** Browse Units với Availability chính xác (FR-4)  
 > - **US-7:** Unit Detail & Bảng giá minh bạch (FR-6, AD-11)  
 > - **US-9:** Booking Summary & Reserve re-check chống Stale data (FR-5, FR-7)  
+> - **US-11/13:** Contract auto-draft & chuỗi hợp đồng read-only (FR-10, FR-13, Thuần BE)  
 > **Nguồn đối chiếu:** `contracts/openapi.yaml`, `docs/architecture/ARCHITECTURE-SPINE.md`, `docs/prd/prd.md`, `docs/ux/DESIGN.md`, `docs/ux/EXPERIENCE.md`, Mockups `F1-03-browse-units.html`, `F1-04-unit-detail.html`, `F1-05-booking-summary.html`  
 > **Branch Git:** `be/phuc`  
-> **Trạng thái:** Đã hoàn thành 100% code backend & bộ test suite (**28/28 test cases passed**).
+> **Trạng thái:** Đã hoàn thành 100% code backend & bộ test suite (**40/40 test cases passed**).
 
 ---
 
@@ -50,7 +51,7 @@ Toàn bộ mã nguồn backend tuân thủ nghiêm ngặt các nguyên tắc ki�
 
 ---
 
-## 2. Danh Sách 6 Endpoints Hoàn Thiện
+## 2. Danh Sách 8 Endpoints Hoàn Thiện
 
 ```mermaid
 flowchart TD
@@ -60,6 +61,8 @@ flowchart TD
     Client -->|4. Tính bảng giá minh bạch| GET_QUOTE["GET /api/v1/units/{unitId}/quote"]
     Client -->|5. Bấm Reserve đặt chỗ| POST_RES["POST /api/v1/reservations"]
     Client -->|6. Xem chi tiết đặt chỗ| GET_RES["GET /api/v1/reservations/{reservationId}"]
+    Client -->|7. Chuỗi hợp đồng| GET_CHAIN["GET /api/v1/reservations/{reservationId}/contracts"]
+    Client -->|8. Chi tiết hợp đồng| GET_CT["GET /api/v1/contracts/{contractId}"]
 ```
 
 ### 2.1. `GET /api/v1/units/filter-options`
@@ -227,6 +230,60 @@ flowchart TD
 - Chi tiết hồ sơ đặt chỗ/thuê kho (Rental Detail), hỗ trợ suy diễn `EXPIRED` on-read nếu quá ngày nhận kho mà chưa check-in (FR-36, AD-4).
 - **Response `200 OK` (`ReservationDetail`)**
 
+### 2.7. `GET /api/v1/reservations/{reservationId}/contracts`
+- Lấy chuỗi hợp đồng liên kết với đặt chỗ theo thứ tự thời gian sinh (`createdAt ASC`) cho màn Rental Detail (FR-13).
+- Bao gồm bản hợp đồng gốc, các bản superseded (khi re-draft) và phụ lục (ADDENDUM).
+- **Response `200 OK` (`List<ContractChainItem>`):**
+```json
+[
+  {
+    "id": 101,
+    "code": "CT-2026-0001",
+    "kind": "ORIGINAL",
+    "status": "SUPERSEDED",
+    "isLatest": false,
+    "signedPhotoUrl": null,
+    "signatureDueDate": null
+  },
+  {
+    "id": 102,
+    "code": "CT-2026-0002",
+    "kind": "ORIGINAL",
+    "status": "DRAFT",
+    "isLatest": true,
+    "signedPhotoUrl": null,
+    "signatureDueDate": null
+  }
+]
+```
+
+### 2.8. `GET /api/v1/contracts/{contractId}`
+- Lấy chi tiết đầy đủ 1 bản hợp đồng — bao gồm `contentSnapshot` để Frontend render print view nguyên vẹn theo chuẩn in ấn (FR-11).
+- **Response `200 OK` (`ContractDetail`):**
+```json
+{
+  "id": 102,
+  "code": "CT-2026-0002",
+  "kind": "ORIGINAL",
+  "status": "DRAFT",
+  "isLatest": true,
+  "signedPhotoUrl": null,
+  "signatureDueDate": null,
+  "reservationId": 1042,
+  "policyVersion": "v3",
+  "contentSnapshot": "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n---\nHỢP ĐỒNG THUÊ KHO LƯU TRỮ TỰ QUẢN (STORAGEHUB)...",
+  "createdAt": "2026-09-27T10:00:00Z"
+}
+```
+- **Error Response `404 Not Found` (khi không tìm thấy hoặc user không có quyền):**
+```json
+{
+  "code": "CONTRACT_NOT_FOUND",
+  "message": "Không tìm thấy hợp đồng này.",
+  "fieldErrors": []
+}
+```
+
 ---
 
 ## 3. Kiến Trúc Thuật Toán & Xử Lý Concurrency (FR-5, FR-7)
@@ -270,52 +327,117 @@ sequenceDiagram
 
 ---
 
-## 4. Kết Quả Kiểm Thử Tự Động (Automated Testing)
+## 4. Kiến Trúc Contract Auto-Draft & Quản Lý Chuỗi Hợp Đồng (FR-10, FR-13, Thuần BE)
 
-Toàn bộ **28 test cases** đã vượt qua kiểm thử tự động với **100% BUILD SUCCESS**:
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Khách hàng (FE)
+    participant Ctrl as ContractController
+    participant Svc as ContractService
+    participant PE as PricingEngine
+    participant Repo as ContractRepository
+    participant DB as MySQL Database
+
+    Note over Customer,DB: 1. AUTO-DRAFT (FR-10): Kích hoạt tự động khi Deposit thành công
+    Customer->>Svc: autoDraftContract(reservation) [Độc quyền từ Payment Service]
+    Svc->>Repo: Khóa RentalPolicy active (v3)
+    Svc->>PE: calculateQuote(unit, startDate, durationMonths)
+    Svc->>Svc: Sinh nội dung pháp lý & tài chính (contentSnapshot)
+    opt Đã có bản hợp đồng trước đó
+        Svc->>Repo: Bản cũ -> status=SUPERSEDED, isLatest=false (FR-13)
+        Repo->>DB: UPDATE contracts SET status='SUPERSEDED', is_latest=0
+    end
+    Svc->>Repo: Lưu bản mới -> status=DRAFT, isLatest=true, supersedes=bản cũ
+    Repo->>DB: INSERT INTO contracts (is_latest=1, latest_key=reservation_id)
+    Note over Svc,DB: uk_contracts_latest (latest_key) bảo vệ đúng 1 bản latest
+
+    Note over Customer,DB: 2. TRA CỨU CHUỖI HỢP ĐỒNG (FR-13)
+    Customer->>Ctrl: GET /api/v1/reservations/{reservationId}/contracts
+    Ctrl->>Svc: listContractsByReservation(userEmail, reservationId)
+    Svc->>Repo: findByReservation_ReservationIdOrderByCreatedAtAsc(reservationId)
+    Svc-->>Ctrl: List<ContractChainItemResponse>
+    Ctrl-->>Customer: 200 OK (Chuỗi hợp đồng: SUPERSEDED -> DRAFT)
+
+    Note over Customer,DB: 3. CHI TIẾT ĐỂ IN VIEW (FR-11)
+    Customer->>Ctrl: GET /api/v1/contracts/{contractId}
+    Ctrl->>Svc: getContract(userEmail, contractId)
+    Svc->>Repo: findWithDetailsById(contractId)
+    Svc-->>Ctrl: ContractDetailResponse (kèm contentSnapshot)
+    Ctrl-->>Customer: 200 OK (FE render bản in chuẩn nguyên vẹn)
+```
+
+### 4.1. Quy Tắc Bất Biến Về Hợp Đồng (AD-6, FR-10, FR-13):
+1. **Tự động sinh (Auto-draft, FR-10):** Hợp đồng được sinh hoàn toàn tự động ngay khi thanh toán tiền cọc (Deposit) thành công. Hệ thống **không cung cấp bất kỳ API nào cho phép tạo hợp đồng thủ công**.
+2. **Bất biến (Strictly Read-Only):** Hợp đồng không thể bị chỉnh sửa dưới bất kỳ hình thức nào. Không tồn tại endpoint `PUT` hoặc `PATCH` cho Contract.
+3. **Cơ chế Superseded & Chuỗi hợp đồng (FR-13):**
+   - Khi cần phát hành lại hợp đồng (re-draft), bản hiện hành được cập nhật sang trạng thái `SUPERSEDED` và `isLatest = false`.
+   - Bản hợp đồng mới được tạo ở trạng thái `DRAFT`, `isLatest = true`, liên kết tự tham chiếu `supersedes` trỏ về bản cũ.
+   - Bản `SUPERSEDED` vẫn được lưu trữ vĩnh viễn và hiển thị đầy đủ trong chuỗi hợp đồng trên màn hình Rental Detail để đảm bảo tính minh bạch và truy vết kiểm toán.
+4. **Bảo vệ toàn vẹn cấp Database (Database-Level Invariant):**
+   - Bảng `contracts` sử dụng generated column: `latest_key AS (CASE WHEN is_latest = 1 THEN reservation_id ELSE NULL END) STORED`.
+   - Đi kèm ràng buộc duy nhất: `UNIQUE KEY uk_contracts_latest (latest_key)`.
+   - Cơ chế này loại bỏ hoàn toàn rủi ro có 2 bản hợp đồng cùng là `isLatest = true` cho cùng một reservation ngay ở tầng hệ quản trị cơ sở dữ liệu.
+5. **Snapshot Điều Khoản & Chi Phí (`contentSnapshot`):**
+   - Nội dung hợp đồng được cố định dạng chuỗi văn bản pháp lý đầy đủ (`SqlTypes.LONGVARCHAR`), bao gồm thông tin các bên, số hiệu kho, thời hạn thuê, đơn giá tháng, tổng tiền thuê, tiền cọc bảo đảm, và cam kết vận hành.
+   - Frontend chỉ việc lấy trường này hiển thị trực tiếp lên Print View / Modal xem trước mà không cần dựng dịch vụ PDF cồng kềnh.
+
+---
+
+## 5. Kết Quả Kiểm Thử Tự Động (Automated Testing)
+
+Toàn bộ **40 test cases** thuộc tất cả các tầng (Controller, Service, PricingEngine) đã vượt qua kiểm thử tự động với **100% BUILD SUCCESS**:
 
 ```
 [INFO] -------------------------------------------------------
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
+[INFO] Running com.storagehub.controller.ContractControllerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.901 s -- in com.storagehub.controller.ContractControllerTest
 [INFO] Running com.storagehub.controller.ReservationControllerTest
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.894 s -- in com.storagehub.controller.ReservationControllerTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.947 s -- in com.storagehub.controller.ReservationControllerTest
 [INFO] Running com.storagehub.controller.UnitControllerTest
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.556 s -- in com.storagehub.controller.UnitControllerTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.497 s -- in com.storagehub.controller.UnitControllerTest
+[INFO] Running com.storagehub.service.ContractServiceTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.312 s -- in com.storagehub.service.ContractServiceTest
 [INFO] Running com.storagehub.service.PricingEngineTest
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.152 s -- in com.storagehub.service.PricingEngineTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.060 s -- in com.storagehub.service.PricingEngineTest
 [INFO] Running com.storagehub.service.ReservationServiceTest
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.249 s -- in com.storagehub.service.ReservationServiceTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.130 s -- in com.storagehub.service.ReservationServiceTest
 [INFO] Running com.storagehub.service.UnitServiceTest
-[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.061 s -- in com.storagehub.service.UnitServiceTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.067 s -- in com.storagehub.service.UnitServiceTest
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 28, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 40, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
 ```
 
-### Các kịch bản kiểm thử mới cho Reservation:
-1. **`ReservationServiceTest`:**
-   - `testCreateReservation_Success`: Tạo reservation thành công với mã `BK-YYYY-NNNN`, trạng thái `PENDING_PAYMENT`, `quote` snapshot chính xác.
-   - `testCreateReservation_UnitNotFound`: Ném `UnitNotFoundException` (404) khi `unitId` không tồn tại.
-   - `testCreateReservation_UnitTaken_StatusRented`: Ném `BookingUnitTakenException` (409) kèm số lượng unit tương tự còn trống khi unit đã bị thuê.
-   - `testCreateReservation_UnitTaken_OverlappingReservation`: Ném `BookingUnitTakenException` (409) khi khoảng thời gian bị trùng với reservation active.
-   - `testGetReservationDetail_Success`: Đọc chi tiết reservation của chính chủ kèm bảng giá và trạng thái tiền cọc (`HELD`).
-   - `testGetReservationDetail_NotOwner`: Chặn truy cập và ném ngoại lệ khi user không phải chủ đơn và không phải staff/admin.
-2. **`ReservationControllerTest`:**
-   - `testCreateReservation_Success`: `POST /api/v1/reservations` trả về **201 Created** cùng `ReservationDetailResponse`.
-   - `testCreateReservation_Conflict_UnitTaken`: `POST /api/v1/reservations` trả về **409 Conflict** với mã lỗi `BOOKING_UNIT_TAKEN`.
-   - `testCreateReservation_ValidationFailed`: `POST /api/v1/reservations` trả về **400 Bad Request** với mã lỗi `VALIDATION_FAILED` khi `durationMonths <= 0`.
-   - `testGetReservationDetail_Success`: `GET /api/v1/reservations/{id}` trả về **200 OK**.
-   - `testGetReservationDetail_NotFound`: `GET /api/v1/reservations/{id}` trả về **404 Not Found**.
+### Chi tiết các kịch bản kiểm thử:
+1. **`ContractServiceTest` (8 tests):**
+   - `testAutoDraftContract_FirstContract_Success`: Sinh hợp đồng tự động lần đầu, mã `CT-YYYY-NNNN`, trạng thái `DRAFT`, `isLatest = true`, khóa chính sách giá `v3`, nội dung pháp lý `contentSnapshot` đầy đủ.
+   - `testAutoDraftContract_ReDraft_MarksPreviousContractSuperseded`: Khi re-draft, bản hợp đồng cũ tự động chuyển sang `SUPERSEDED`, `isLatest = false`, bản mới trỏ `supersedes` về bản cũ.
+   - `testReDraftContract_CustomerOwner_Success`: Khách hàng sở hữu reservation kích hoạt re-draft thành công.
+   - `testReDraftContract_UnauthorizedOtherCustomer_ThrowsReservationNotFound`: Khách hàng khác cố tình can thiệp bị chặn và trả mã lỗi bảo mật.
+   - `testListContractsByReservation_Success`: Trả về danh sách chuỗi hợp đồng sắp xếp tăng dần theo thời gian tạo.
+   - `testGetContract_Success`: Lấy chi tiết hợp đồng kèm nội dung snapshot.
+   - `testGetContract_NotFound_ThrowsContractNotFoundException`: Ném `ContractNotFoundException` khi mã hợp đồng không tồn tại.
+   - `testGetContract_UnauthorizedCustomer_ThrowsContractNotFoundException`: Ẩn thông tin và ném ngoại lệ khi user không có quyền đọc hợp đồng của người khác.
+2. **`ContractControllerTest` (4 tests):**
+   - `testListContractsByReservation_Success`: `GET /api/v1/reservations/{id}/contracts` trả về **200 OK** với chuỗi hợp đồng.
+   - `testListContractsByReservation_NotFound`: Trả về **404 Not Found** với mã `RESERVATION_NOT_FOUND`.
+   - `testGetContract_Success`: `GET /api/v1/contracts/{id}` trả về **200 OK** với thông tin chi tiết và `contentSnapshot`.
+   - `testGetContract_NotFound`: Trả về **404 Not Found** với mã `CONTRACT_NOT_FOUND` và thông báo `"Không tìm thấy hợp đồng này."`.
+3. **`ReservationServiceTest` (6 tests)** & **`ReservationControllerTest` (5 tests):** Kiểm thử luồng đặt chỗ, re-check availability chống double-booking, tính bảng giá minh bạch và phân quyền.
+4. **`UnitServiceTest` (8 tests)** & **`UnitControllerTest` (6 tests):** Kiểm thử tìm kiếm kho, filter bar, turnover buffer đệm dọn dẹp và phân trang.
+5. **`PricingEngineTest` (3 tests):** Kiểm thử công thức tính tiền thuê, phụ phí và tiền cọc đơn nguồn duy nhất (AD-11).
 
 ---
 
-## 5. Hướng Dẫn Kiểm Thử Thực Tế Bằng cURL
+## 6. Hướng Dẫn Kiểm Thử Thực Tế Bằng cURL
 
 Khởi chạy backend:
 ```bash
@@ -361,4 +483,18 @@ Kết quả trả về **409 Conflict**:
   "fieldErrors": []
 }
 ```
-Client (FE) dựa vào mã này để hiển thị Toast thông báo và gợi ý người dùng chọn các unit tương tự.
+
+### Bước 5: Xem Chuỗi Hợp Đồng Của Reservation (Rental Detail)
+```bash
+curl -X GET "http://localhost:8080/api/v1/reservations/1042/contracts" \
+  -H "Authorization: Bearer <TOKEN>"
+```
+Trả về mảng JSON các bản hợp đồng theo thứ tự thời gian (`SUPERSEDED` -> `DRAFT`).
+
+### Bước 6: Xem Chi Tiết 1 Bản Hợp Đồng (Print View)
+```bash
+curl -X GET "http://localhost:8080/api/v1/contracts/101" \
+  -H "Authorization: Bearer <TOKEN>"
+```
+Trả về chi tiết hợp đồng gồm trường `contentSnapshot` nguyên vẹn nội dung pháp lý và cam kết cho FE hiển thị bản in.
+
