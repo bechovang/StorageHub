@@ -6,10 +6,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     @Query(value = """
@@ -76,4 +80,24 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         WHERE r.reservationId = :reservationId
     """)
     Optional<Reservation> findWithDetailsById(@Param("reservationId") Long reservationId);
+
+    /**
+     * Lấy các reservation đang hoạt động của danh sách units để kiểm tra overlap.
+     */
+    @Query("SELECT r FROM Reservation r " +
+            "WHERE r.unit.unitId IN :unitIds " +
+            "AND r.status IN :activeStatuses")
+    List<Reservation> findActiveReservationsForUnits(
+            @Param("unitIds") Collection<Long> unitIds,
+            @Param("activeStatuses") Collection<Reservation.Status> activeStatuses
+    );
+
+    /**
+     * Lấy reservation closed gần nhất của unit để tính mốc thời gian hoàn thành dọn dẹp (Turnover Buffer).
+     */
+    @Query("SELECT r FROM Reservation r " +
+            "WHERE r.unit.unitId = :unitId " +
+            "AND r.status = com.storagehub.entity.Reservation.Status.CLOSED " +
+            "ORDER BY r.endDate DESC")
+    List<Reservation> findLatestClosedReservations(@Param("unitId") Long unitId);
 }
