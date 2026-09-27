@@ -299,10 +299,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         List<Payment> payments = paymentRepository
                 .findByReservation_ReservationId(
-                        reservation.getReservationId(),
-                        PageRequest.of(0, 100)
-                )
-                .getContent();
+                        reservation.getReservationId());
 
         boolean depositPaid = payments.stream().anyMatch(p ->
                 p.getPurpose() == Payment.Purpose.DEPOSIT
