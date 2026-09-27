@@ -109,4 +109,46 @@ public class GlobalExceptionHandler {
                         "You do not have permission to access this resource."
                 ));
     }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(
+            jakarta.validation.ConstraintViolationException exception
+    ) {
+        List<FieldErrorDetail> fieldErrors = exception.getConstraintViolations().stream()
+                .map(v -> new FieldErrorDetail(
+                        v.getPropertyPath().toString(),
+                        "INVALID",
+                        v.getMessage()
+                ))
+                .toList();
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ApiError(
+                        "VALIDATION_FAILED",
+                        "Invalid request data.",
+                        fieldErrors
+                ));
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+    public ResponseEntity<ApiError> handleHandlerMethodValidation(
+            org.springframework.web.method.annotation.HandlerMethodValidationException exception
+    ) {
+        List<FieldErrorDetail> fieldErrors = exception.getParameterValidationResults().stream()
+                .flatMap(r -> r.getResolvableErrors().stream().map(e -> new FieldErrorDetail(
+                        r.getMethodParameter().getParameterName() != null ? r.getMethodParameter().getParameterName() : "param",
+                        "INVALID",
+                        e.getDefaultMessage()
+                )))
+                .toList();
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ApiError(
+                        "VALIDATION_FAILED",
+                        "Invalid request data.",
+                        fieldErrors
+                ));
+    }
 }
