@@ -75,29 +75,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Test: Boot 4 tách test starter theo module (@WithMockUser cần security-test) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- TestRestTemplate (Boot 4 tách khỏi starter test chính) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-resttestclient</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-restclient</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <!-- JWT cho Login (AD-5) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
