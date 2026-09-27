@@ -8,32 +8,32 @@ import com.storagehub.service.ContractService;
 import com.storagehub.service.LogService;
 import com.storagehub.service.NotificationService;
 import com.storagehub.service.ReservationService;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
  * FR-5/FR-10: Deposit thành công → Reservation RESERVED (qua ReservationService
- * — owner), contract draft (qua ContractService của US-11 — chưa merge thì bỏ
- * qua), notification + ActivityLog cùng transaction.
+ * — owner), contract auto-draft (FR-13 qua ContractService US-11 của Phúc),
+ * notification + ActivityLog cùng transaction. Handler chỉ chạy khi payment
+ * transition → SUCCEEDED trong lock (PESSIMISTIC_WRITE) nên đúng 1 lần.
  */
 @Component
 public class DepositPaymentSuccessHandler implements PaymentSuccessHandler {
 
     private final ReservationService reservationService;
+    private final ContractService contractService;
     private final NotificationService notificationService;
     private final LogService logService;
-    private final ObjectProvider<ContractService> contractService;
 
     public DepositPaymentSuccessHandler(
             ReservationService reservationService,
+            ContractService contractService,
             NotificationService notificationService,
-            LogService logService,
-            ObjectProvider<ContractService> contractService
+            LogService logService
     ) {
         this.reservationService = reservationService;
+        this.contractService = contractService;
         this.notificationService = notificationService;
         this.logService = logService;
-        this.contractService = contractService;
     }
 
     @Override
@@ -46,12 +46,7 @@ public class DepositPaymentSuccessHandler implements PaymentSuccessHandler {
         Reservation reservation = payment.getReservation();
         reservationService.markDepositPaid(reservation);
 
-        // Contract draft qua owner service — US-11 (Phúc) chưa merge thì bỏ qua.
-        Contract contract = null;
-        ContractService contractSvc = contractService.getIfAvailable();
-        if (contractSvc != null) {
-            contract = contractSvc.draftDepositContract(reservation, payment);
-        }
+        Contract contract = contractService.autoDraftContract(reservation);
 
         NotificationEventResponse notification =
                 notificationService.notifyReservationConfirmed(reservation, payment);

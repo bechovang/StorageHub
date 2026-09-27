@@ -74,6 +74,74 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // ------------------------------------------------------------------
+    // Unit / Reservation / Contract (US-7, US-9, US-11 — Phúc)
+    // ------------------------------------------------------------------
+
+    @ExceptionHandler(UnitNotFoundException.class)
+    public ResponseEntity<ApiError> handleUnitNotFound(
+            UnitNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "UNIT_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Unit này không tồn tại."
+                ));
+    }
+
+    @ExceptionHandler(ReservationNotFoundException.class)
+    public ResponseEntity<ApiError> handleReservationNotFound(
+            ReservationNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "RESERVATION_NOT_FOUND",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(ContractNotFoundException.class)
+    public ResponseEntity<ApiError> handleContractNotFound(
+            ContractNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "CONTRACT_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Không tìm thấy hợp đồng này."
+                ));
+    }
+
+    @ExceptionHandler(ReservationInvalidStateException.class)
+    public ResponseEntity<ApiError> handleReservationInvalidState(
+            ReservationInvalidStateException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "RESERVATION_INVALID_STATE",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(BookingUnitTakenException.class)
+    public ResponseEntity<ApiError> handleBookingUnitTaken(
+            BookingUnitTakenException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "BOOKING_UNIT_TAKEN",
+                        exception.getMessage() != null ? exception.getMessage() : "Unit vừa bị chiếm / ngày không còn hợp lệ"
+                ));
+    }
+
+    // ------------------------------------------------------------------
+    // Payment (US-8 — An)
+    // ------------------------------------------------------------------
+
     @ExceptionHandler(PaymentNotFoundException.class)
     public ResponseEntity<ApiError> handlePaymentNotFound(
             PaymentNotFoundException exception
@@ -134,6 +202,10 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // ------------------------------------------------------------------
+    // Cross-cutting
+    // ------------------------------------------------------------------
+
     /** Ownership violation từ service (vd: trả reservation của người khác) → 403. */
     @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(
@@ -143,7 +215,49 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(ApiError.of(
                         "ROLE_FORBIDDEN",
-                        "You do not have permission to perform this action."
+                        "You do not have permission to access this resource."
+                ));
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(
+            jakarta.validation.ConstraintViolationException exception
+    ) {
+        List<FieldErrorDetail> fieldErrors = exception.getConstraintViolations().stream()
+                .map(v -> new FieldErrorDetail(
+                        v.getPropertyPath().toString(),
+                        "INVALID",
+                        v.getMessage()
+                ))
+                .toList();
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ApiError(
+                        "VALIDATION_FAILED",
+                        "Invalid request data.",
+                        fieldErrors
+                ));
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+    public ResponseEntity<ApiError> handleHandlerMethodValidation(
+            org.springframework.web.method.annotation.HandlerMethodValidationException exception
+    ) {
+        List<FieldErrorDetail> fieldErrors = exception.getParameterValidationResults().stream()
+                .flatMap(r -> r.getResolvableErrors().stream().map(e -> new FieldErrorDetail(
+                        r.getMethodParameter().getParameterName() != null ? r.getMethodParameter().getParameterName() : "param",
+                        "INVALID",
+                        e.getDefaultMessage()
+                )))
+                .toList();
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ApiError(
+                        "VALIDATION_FAILED",
+                        "Invalid request data.",
+                        fieldErrors
                 ));
     }
 }
