@@ -11,6 +11,7 @@ import com.storagehub.dto.reservation.ReservationSummaryResponse;
 import com.storagehub.dto.reservation.ReservationUnitSummaryResponse;
 import com.storagehub.dto.unit.UnitAvailabilityResponse;
 import com.storagehub.dto.unit.UnitSummaryResponse;
+import com.storagehub.entity.Contract;
 import com.storagehub.entity.PolicyRule;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
@@ -22,6 +23,7 @@ import com.storagehub.exception.InvalidCredentialsException;
 import com.storagehub.exception.ReservationInvalidStateException;
 import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.exception.UnitNotFoundException;
+import com.storagehub.repository.ContractAddendumRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.PolicyRuleRepository;
@@ -57,6 +59,7 @@ public class ReservationService {
     private final PricingEngine pricingEngine;
     private final PaymentRepository paymentRepository;
     private final ContractRepository contractRepository;
+    private final ContractAddendumRepository contractAddendumRepository;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -338,7 +341,7 @@ public class ReservationService {
     /**
      * Chi tiết reservation — Rental Detail (FR-35) + kích hoạt EXPIRED on-read (FR-36, AD-4).
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public ReservationDetailResponse getReservationDetail(String email, Long reservationId) {
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(InvalidCredentialsException::new);
@@ -358,11 +361,23 @@ public class ReservationService {
         String depositStatus = resolveDepositStatus(effectiveStatus);
 
         Unit unit = reservation.getUnit();
-        ReservationUnitSummaryResponse unitSummary = new ReservationUnitSummaryResponse(
-                unit.getCode(),
-                unit.getSizeM2(),
-                unit.getType() != null ? unit.getType().getName() : null
-        );
+
+        // AD-4: Exactly-once on-read expiry side effect (FR-36)
+        if (effectiveStatus == Reservation.Status.EXPIRED && reservation.getStatus() == Reservation.Status.RESERVED) {
+            // 1. Giải phóng Unit về AVAILABLE nếu unit đang RESERVED
+            if (unit.getStatus() == Unit.Status.RESERVED) {
+                unit.setStatus(Unit.Status.AVAILABLE);
+                unitRepository.save(unit);
+            }
+            // 2. Chuyển các bản Contract DRAFT/PRINTED sang CLOSED
+            List<Contract> activeContracts = contractRepository.findByReservation_ReservationId(reservationId);
+            for (Contract c : activeContracts) {
+                if (c.getStatus() == Contract.Status.DRAFT || c.getStatus() == Contract.Status.PRINTED) {
+                    c.setStatus(Contract.Status.CLOSED);
+                    contractRepository.save(c);
+                }
+            }
+        }
 
         int durationMonths = (int) ChronoUnit.MONTHS.between(
                 reservation.getStartDate().withDayOfMonth(1),
@@ -374,7 +389,33 @@ public class ReservationService {
 
         QuoteResponse quote = pricingEngine.calculateQuote(unit, reservation.getStartDate(), durationMonths);
 
-        List<PaymentRecordResponse> payments = paymentRepository.findByReservation_ReservationId(reservationId).stream()
+        Long baseMonthlyRent = (quote != null && quote.durationMonths() > 0)
+                ? (quote.totalRent() / quote.durationMonths())
+                : policyRuleRepository.findActivePolicyRule(
+                        unit.getType(),
+                        PolicyRule.RuleType.RENT_RATE
+                ).map(r -> r.getValue().longValue()).orElse(0L);
+
+        UnitAvailabilityResponse availability = new UnitAvailabilityResponse(
+                unit.getStatus() == Unit.Status.AVAILABLE ? "AVAILABLE" : unit.getStatus().name(),
+                reservation.getStartDate()
+        );
+
+        ReservationUnitSummaryResponse unitSummary = new ReservationUnitSummaryResponse(
+                unit.getUnitId(),
+                unit.getCode(),
+                unit.getType() != null ? unit.getType().getName() : null,
+                unit.getSizeM2(),
+                unit.getFloor(),
+                unit.getZone() != null ? unit.getZone().getCode() : null,
+                (unit.getZone() != null && unit.getZone().getFacility() != null) ? unit.getZone().getFacility().getName() : null,
+                unit.getAccessType(),
+                baseMonthlyRent,
+                availability,
+                "/units/" + unit.getCode() + ".jpg"
+        );
+
+        List<PaymentRecordResponse> payments = paymentRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(reservationId).stream()
                 .map(p -> new PaymentRecordResponse(
                         p.getPaymentId(),
                         reservationId,
@@ -387,20 +428,44 @@ public class ReservationService {
                 ))
                 .toList();
 
-        List<ContractChainItemResponse> contracts = contractRepository.findByReservation_ReservationId(reservationId).stream()
-                .map(c -> new ContractChainItemResponse(
-                        c.getContractId(),
-                        c.getCode(),
-                        "ORIGINAL",
-                        c.getStatus().name(),
-                        Boolean.TRUE.equals(c.getIsLatest()),
-                        c.getSignedPhotoUrl(),
-                        null
-                ))
-                .toList();
+        List<ContractChainItemResponse> contracts = new java.util.ArrayList<>(
+                contractRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(reservationId).stream()
+                        .map(c -> new ContractChainItemResponse(
+                                c.getContractId(),
+                                c.getCode(),
+                                "ORIGINAL",
+                                c.getStatus().name(),
+                                Boolean.TRUE.equals(c.getIsLatest()),
+                                c.getSignedPhotoUrl(),
+                                null
+                        ))
+                        .toList()
+        );
+
+        if (contractAddendumRepository != null) {
+            contractAddendumRepository.findByContract_Reservation_ReservationIdOrderByCreatedAtAsc(reservationId).forEach(a -> {
+                contracts.add(new ContractChainItemResponse(
+                        a.getAddendumId(),
+                        a.getCode(),
+                        "ADDENDUM",
+                        a.getStatus() != null ? a.getStatus().name() : "AWAITING_SIGNATURE",
+                        false,
+                        a.getSignedPhotoUrl(),
+                        a.getSignatureDueDate()
+                ));
+            });
+        }
 
         String depositForfeitReason = effectiveStatus == Reservation.Status.EXPIRED ? "Deposit forfeited — no-show" : null;
-        String accessCode = (effectiveStatus == Reservation.Status.CHECKED_IN || effectiveStatus == Reservation.Status.CHECKOUT_REQUESTED)
+
+        // AD-5 SensitiveValue: accessCode chỉ trả trong detail của chủ reservation, chỉ sau khi contract có ảnh ký (hoặc đã ký/active)
+        boolean hasSignedContract = contracts.stream().anyMatch(c ->
+                c.signedPhotoUrl() != null
+                || "SIGNED".equalsIgnoreCase(c.status())
+                || "ACTIVE".equalsIgnoreCase(c.status())
+        );
+
+        String accessCode = (isOwner && hasSignedContract && (effectiveStatus == Reservation.Status.CHECKED_IN || effectiveStatus == Reservation.Status.CHECKOUT_REQUESTED))
                 ? reservation.getAccessCode()
                 : null;
 
