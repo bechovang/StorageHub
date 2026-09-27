@@ -4,7 +4,10 @@ import com.storagehub.entity.Payment;
 
 import java.time.Instant;
 
-/** Schema PaymentRecord (openapi.yaml) — dùng trong list + PaymentResult. */
+/**
+ * Record thanh toán theo schema PaymentRecord trong contracts/openapi.yaml.
+ * receiptCode chỉ hiển thị khi SUCCEEDED (AD-9) — mapper tự ẩn.
+ */
 public record PaymentRecordResponse(
         Long id,
         Long reservationId,
