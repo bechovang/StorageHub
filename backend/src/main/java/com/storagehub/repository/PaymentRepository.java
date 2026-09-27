@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByReservation_ReservationId(Long reservationId);
+
+    List<Payment> findByReservation_ReservationIdOrderByCreatedAtAsc(Long reservationId);
 }
