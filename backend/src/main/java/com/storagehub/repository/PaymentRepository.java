@@ -59,4 +59,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     /** MAX receipt_code theo prefix "RT-2026-" — sinh NNNN tăng dần trong năm. */
     @Query("SELECT MAX(p.receiptCode) FROM Payment p WHERE p.receiptCode LIKE CONCAT(:prefix, '%')")
     String findMaxReceiptCodeByPrefix(@Param("prefix") String prefix);
+
+    List<Payment> findByReservation_ReservationIdOrderByCreatedAtAsc(Long reservationId);
 }
