@@ -74,6 +74,18 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(UnitNotFoundException.class)
+    public ResponseEntity<ApiError> handleUnitNotFound(
+            UnitNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "UNIT_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Unit này không tồn tại."
+                ));
+    }
+
     @ExceptionHandler(ReservationNotFoundException.class)
     public ResponseEntity<ApiError> handleReservationNotFound(
             ReservationNotFoundException exception

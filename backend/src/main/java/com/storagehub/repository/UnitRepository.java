@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificationExecutor<Unit> {
@@ -29,4 +30,14 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
             "JOIN FETCH z.facility f " +
             "WHERE u.status IN :candidateStatuses")
     List<Unit> findCandidateUnits(@Param("candidateStatuses") Collection<Unit.Status> candidateStatuses);
+
+    /**
+     * Lấy chi tiết unit kèm type, zone, facility.
+     */
+    @Query("SELECT u FROM Unit u " +
+            "JOIN FETCH u.type t " +
+            "JOIN FETCH u.zone z " +
+            "JOIN FETCH z.facility f " +
+            "WHERE u.unitId = :unitId")
+    Optional<Unit> findWithDetailsById(@Param("unitId") Long unitId);
 }
