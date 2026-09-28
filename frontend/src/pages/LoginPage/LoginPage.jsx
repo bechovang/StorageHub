@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { AuthValidator } from "../../validation";
 
 import "./LoginPage.css";
 
@@ -26,8 +27,9 @@ export default function LoginPage() {
         e.preventDefault();
         setGeneralError("");
 
-        if (!email.trim() || !password) {
-            setGeneralError("Vui lòng nhập đầy đủ email và mật khẩu.");
+        const validation = AuthValidator.validateLogin({ email, password });
+        if (!validation.isValid) {
+            setGeneralError(validation.firstError);
             return;
         }
 
