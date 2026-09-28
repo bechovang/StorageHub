@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import { AuthValidator } from "../../validation";
 import "./RegisterPage.css";
 
 const ROLES = [
@@ -29,23 +30,17 @@ export default function RegisterPage() {
         e.preventDefault();
         setGeneralError("");
 
-        if (!fullName.trim() || !phone.trim() || !email.trim() || !password) {
-            setGeneralError("Vui lòng điền đầy đủ các thông tin bắt buộc.");
-            return;
-        }
+        const validation = AuthValidator.validateRegister({
+            fullName,
+            phone,
+            email,
+            password,
+            confirmPassword,
+            agreeTerms,
+        });
 
-        if (password.length < 6) {
-            setGeneralError("Mật khẩu phải có ít nhất 6 ký tự.");
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setGeneralError("Mật khẩu xác nhận không khớp.");
-            return;
-        }
-
-        if (!agreeTerms) {
-            setGeneralError("Vui lòng đồng ý với Điều khoản dịch vụ để tiếp tục.");
+        if (!validation.isValid) {
+            setGeneralError(validation.firstError);
             return;
         }
 
