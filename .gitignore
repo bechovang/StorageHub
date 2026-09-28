@@ -4,6 +4,7 @@ Thumbs.db
 Desktop.ini
 
 # ---- IDE ----
+.playwright-mcp/
 .idea/
 *.iml
 .vscode/
