@@ -4,8 +4,8 @@
  */
 export class AuthValidator {
     static EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    // Số điện thoại Việt Nam 10 số (đầu 0 hoặc +84 kèm 3, 5, 7, 8, 9)
-    static PHONE_REGEX = /^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/;
+    // Số điện thoại Việt Nam (chấp nhận 9 số khi đã có +84, hoặc 10 số khi có 0, hoặc +84)
+    static PHONE_REGEX = /^(?:\+84|0)?(?:3|5|7|8|9)\d{8}$/;
 
     /**
      * Validate Họ và tên
@@ -33,7 +33,7 @@ export class AuthValidator {
         }
         const trimmedEmail = email.trim();
         if (!this.EMAIL_REGEX.test(trimmedEmail)) {
-            return "Địa chỉ email không đúng định dạng (Ví dụ: example@storagehub.vn).";
+            return "Địa chỉ email không đúng định dạng";
         }
         return null;
     }
@@ -49,26 +49,59 @@ export class AuthValidator {
         }
         const cleanPhone = phone.trim().replace(/[\s.-]/g, "");
         if (!this.PHONE_REGEX.test(cleanPhone)) {
-            return "Số điện thoại không hợp lệ (Ví dụ: 0901234567 hoặc +84901234567).";
+            return "Số điện thoại không hợp lệ";
         }
         if (cleanPhone.length > 20) {
-            return "Số điện thoại không được vượt quá 20 ký tự.";
+            return "Số điện thoại không hợp lệ";
         }
         return null;
+    }
+
+    static PASSWORD_REQUIREMENTS = [
+        { id: "length", label: "Ít nhất 8 ký tự", test: (pwd) => (pwd || "").length >= 8 },
+        { id: "uppercase", label: "Ít nhất 1 chữ hoa", test: (pwd) => /[A-Z]/.test(pwd || "") },
+        { id: "lowercase", label: "Ít nhất 1 chữ thường", test: (pwd) => /[a-z]/.test(pwd || "") },
+        { id: "number", label: "Ít nhất 1 chữ số", test: (pwd) => /[0-9]/.test(pwd || "") },
+        { id: "special", label: "Ít nhất 1 ký tự đặc biệt", test: (pwd) => /[^A-Za-z0-9]/.test(pwd || "") },
+    ];
+
+    /**
+     * Kiểm tra trạng thái từng tiêu chí mật khẩu
+     * @param {string} password
+     * @returns {Array<{ id: string, label: string, met: boolean }>}
+     */
+    static checkPasswordCriteria(password = "") {
+        const pwd = password || "";
+        return this.PASSWORD_REQUIREMENTS.map((req) => ({
+            id: req.id,
+            label: req.label,
+            met: req.test(pwd),
+        }));
     }
 
     /**
      * Validate Mật khẩu
      * @param {string} password
-     * @param {number} minLength
      * @returns {string|null} Thông báo lỗi hoặc null nếu hợp lệ
      */
-    static validatePassword(password, minLength = 6) {
+    static validatePassword(password) {
         if (!password) {
             return "Mật khẩu không được để trống.";
         }
-        if (password.length < minLength) {
-            return `Mật khẩu phải chứa ít nhất ${minLength} ký tự.`;
+        if (password.length < 8) {
+            return "Mật khẩu phải chứa ít nhất 8 ký tự.";
+        }
+        if (!/[A-Z]/.test(password)) {
+            return "Mật khẩu phải chứa ít nhất 1 chữ hoa.";
+        }
+        if (!/[a-z]/.test(password)) {
+            return "Mật khẩu phải chứa ít nhất 1 chữ thường.";
+        }
+        if (!/[0-9]/.test(password)) {
+            return "Mật khẩu phải chứa ít nhất 1 chữ số.";
+        }
+        if (!/[^A-Za-z0-9]/.test(password)) {
+            return "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.";
         }
         return null;
     }
@@ -96,7 +129,7 @@ export class AuthValidator {
      */
     static validateAgreeTerms(agreeTerms) {
         if (!agreeTerms) {
-            return "Bạn phải đồng ý với Điều khoản dịch vụ để tiếp tục.";
+            return "Đồng ý với Điều khoản dịch vụ để sử dụng dịch vụ.";
         }
         return null;
     }
@@ -141,7 +174,7 @@ export class AuthValidator {
         const emailError = this.validateEmail(data.email);
         if (emailError) errors.email = emailError;
 
-        const passwordError = this.validatePassword(data.password, 6);
+        const passwordError = this.validatePassword(data.password);
         if (passwordError) errors.password = passwordError;
 
         const confirmPasswordError = this.validateConfirmPassword(data.password, data.confirmPassword);

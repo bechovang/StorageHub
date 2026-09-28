@@ -1,16 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { Check, Square } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
+import { LoginPanel } from "../LoginPage/LoginPage";
 import "./RegisterPage.css";
-
-const ROLES = [
-    { key: "CUSTOMER", label: "Khách hàng" },
-    { key: "STAFF", label: "Nhân viên kho" },
-    { key: "FACILITY_MANAGER", label: "Quản lý cơ sở" },
-    { key: "BUSINESS_OPS", label: "Quản lý vận hành" },
-    { key: "SYSTEM_ADMIN", label: "Quản trị hệ thống" },
-];
 
 export default function RegisterPage() {
     const [fullName, setFullName] = useState("");
@@ -26,13 +20,41 @@ export default function RegisterPage() {
     const { register } = useAuth();
     const navigate = useNavigate();
 
+    const passwordCriteria = AuthValidator.checkPasswordCriteria(password);
+
+    // Tự động định dạng số điện thoại theo cụm 3-3-3 (ví dụ: 901 234 567)
+    const formatPhoneNumber = (value = "") => {
+        let digits = value.replace(/\D/g, "");
+        if (digits.startsWith("0")) {
+            digits = digits.slice(1);
+        }
+        digits = digits.slice(0, 9);
+
+        if (digits.length <= 3) {
+            return digits;
+        } else if (digits.length <= 6) {
+            return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+        } else {
+            return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+        }
+    };
+
+    const handlePhoneChange = (e) => {
+        setPhone(formatPhoneNumber(e.target.value));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setGeneralError("");
 
+        const cleanDigits = phone.replace(/\D/g, "");
+        const formattedPhoneForBackend = cleanDigits
+            ? (cleanDigits.startsWith("0") ? cleanDigits : `0${cleanDigits}`)
+            : "";
+
         const validation = AuthValidator.validateRegister({
             fullName,
-            phone,
+            phone: formattedPhoneForBackend,
             email,
             password,
             confirmPassword,
@@ -48,7 +70,7 @@ export default function RegisterPage() {
         try {
             const session = await register({
                 fullName,
-                phone,
+                phone: formattedPhoneForBackend,
                 email,
                 password,
                 agreeTerms,
@@ -69,48 +91,11 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="login-page">
+        <div className="login-page register-page">
             {/* ── Main: cột trái (info) + cột phải (form) ── */}
             <main className="login-main">
-                {/* Cột trái */}
-                <div className="login-info" aria-hidden="true">
-                    <div>
-                        <div className="login-brand login-brand--light" style={{ marginBottom: "2.5rem" }}>
-                            <span className="login-brand__mark" aria-hidden="true">
-                                <i /><i /><i />
-                            </span>
-                            <span>STORAGEHUB</span>
-                        </div>
-                        <p className="login-info__eyebrow">SELF-SERVICE STORAGE / TAN BINH</p>
-                        <h1 className="login-info__headline">
-                            Một hệ thống.<br />Năm vai trò.
-                        </h1>
-                        <p className="login-info__desc">
-                            Khách hàng tự đặt kho, nhân viên vận hành trên kanban, quản lý
-                            theo dõi toàn bộ cơ sở — cùng một ứng dụng, cùng một URL.
-                        </p>
-                    </div>
-
-                    <div className="login-info__roles">
-                        <p className="login-info__roles-label">Hệ thống phục vụ</p>
-                        {ROLES.map((r) => (
-                            <span key={r.key} className="role-chip">
-                                <span className="role-chip__dot" aria-hidden="true" />
-                                {r.key}
-                                <span
-                                    style={{
-                                        color: "rgba(255,255,255,0.4)",
-                                        fontWeight: 400,
-                                        letterSpacing: 0,
-                                    }}
-                                >
-                                    — {r.label}
-                                </span>
-                            </span>
-                        ))}
-                        <p className="login-info__footer-note">TAN BINH DEPOT · VND PRICING</p>
-                    </div>
-                </div>
+                {/* Cột trái dùng chung với LoginPage */}
+                <LoginPanel />
 
                 {/* Cột phải: form */}
                 <div className="login-form-col">
@@ -143,7 +128,7 @@ export default function RegisterPage() {
                                 aria-describedby={generalError ? "register-error-banner" : undefined}
                             >
                                 {/* Họ và tên */}
-                                <div className="login-field">
+                                <div className={`login-field ${fullName ? "login-field--has-value" : ""}`}>
                                     <label className="login-field__label" htmlFor="register-name">
                                         Họ và tên<span aria-hidden="true">*</span>
                                     </label>
@@ -162,26 +147,29 @@ export default function RegisterPage() {
                                 </div>
 
                                 {/* Số điện thoại */}
-                                <div className="login-field">
+                                <div className={`login-field login-field--phone ${phone ? "login-field--has-value" : ""}`}>
                                     <label className="login-field__label" htmlFor="register-phone">
                                         Số điện thoại<span aria-hidden="true">*</span>
                                     </label>
-                                    <input
-                                        id="register-phone"
-                                        className="login-field__input"
-                                        type="tel"
-                                        autoComplete="tel"
-                                        required
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        disabled={submitting}
-                                        placeholder="0901234567"
-                                        aria-required="true"
-                                    />
+                                    <div className="phone-input-group">
+                                        <span className="phone-prefix" aria-hidden="true">+84</span>
+                                        <input
+                                            id="register-phone"
+                                            className="login-field__input phone-input"
+                                            type="tel"
+                                            autoComplete="tel"
+                                            required
+                                            value={phone}
+                                            onChange={handlePhoneChange}
+                                            disabled={submitting}
+                                            placeholder="123 456 789"
+                                            aria-required="true"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Email */}
-                                <div className="login-field">
+                                <div className={`login-field ${email ? "login-field--has-value" : ""}`}>
                                     <label className="login-field__label" htmlFor="register-email">
                                         Email<span aria-hidden="true">*</span>
                                     </label>
@@ -194,13 +182,13 @@ export default function RegisterPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         disabled={submitting}
-                                        placeholder="example@storagehub.vn"
+                                        placeholder="storagehub@example.com"
                                         aria-required="true"
                                     />
                                 </div>
 
                                 {/* Mật khẩu */}
-                                <div className="login-field">
+                                <div className={`login-field ${password ? "login-field--has-value" : ""}`}>
                                     <label className="login-field__label" htmlFor="register-password">
                                         Mật khẩu<span aria-hidden="true">*</span>
                                     </label>
@@ -213,13 +201,30 @@ export default function RegisterPage() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         disabled={submitting}
-                                        placeholder="Tối thiểu 6 ký tự"
+                                        placeholder="••••••••"
                                         aria-required="true"
                                     />
+
+                                    {/* Danh sách tiêu chí mật khẩu trực quan */}
+                                    <ul className="pwd-requirements" aria-label="Tiêu chí mật khẩu">
+                                        {passwordCriteria.map((item) => (
+                                            <li
+                                                key={item.id}
+                                                className={`pwd-requirement-item ${item.met ? "pwd-requirement-item--met" : ""}`}
+                                            >
+                                                {item.met ? (
+                                                    <Check size={13} weight="bold" className="pwd-rule-icon pwd-rule-icon--met" />
+                                                ) : (
+                                                    <Square size={6} weight="fill" className="pwd-rule-icon pwd-rule-icon--unmet" />
+                                                )}
+                                                <span>{item.label}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
 
                                 {/* Xác nhận mật khẩu */}
-                                <div className="login-field">
+                                <div className={`login-field ${confirmPassword ? "login-field--has-value" : ""}`}>
                                     <label className="login-field__label" htmlFor="register-confirm-password">
                                         Xác nhận mật khẩu<span aria-hidden="true">*</span>
                                     </label>
