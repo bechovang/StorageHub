@@ -1,0 +1,105 @@
+.forbidden-page {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 3rem 1.5rem;
+  background: var(--color-surface-subtle, #f8fafc);
+}
+
+.forbidden-card {
+  width: 100%;
+  max-width: 540px;
+  background: var(--color-surface, #ffffff);
+  border: var(--border-strong);
+  padding: 2.5rem;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+}
+
+.forbidden-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font: 700 0.72rem / 1 var(--font-mono);
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+}
+
+.forbidden-title {
+  font: 800 1.75rem / 1.1 var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+  margin: 0 0 1rem 0;
+}
+
+.forbidden-desc {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--color-muted);
+  margin: 0 0 1.75rem 0;
+}
+
+.forbidden-desc code {
+  background: var(--color-neutral);
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+}
+
+.forbidden-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+.forbidden-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font: 600 0.82rem / 1 var(--font-body);
+  border: var(--border-strong);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.forbidden-btn--primary {
+  background: var(--color-ink);
+  color: white;
+}
+
+.forbidden-btn--primary:hover {
+  background: #334155;
+}
+
+.forbidden-btn--secondary {
+  background: transparent;
+  color: var(--color-ink);
+}
+
+.forbidden-btn--secondary:hover {
+  background: var(--color-neutral);
+}
+
+.forbidden-footer {
+  font: 700 0.65rem / 1 var(--font-mono);
+  color: var(--color-muted);
+  letter-spacing: 0.06em;
+  text-align: center;
+  border-top: var(--border);
+  padding-top: 1.25rem;
+}
+
+@media (max-width: 500px) {
+  .forbidden-actions {
+    grid-template-columns: 1fr;
+  }
+}
