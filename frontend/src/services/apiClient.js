@@ -29,7 +29,7 @@ export async function apiClient(endpoint, options = {}) {
     });
 
     // Nếu token hết hạn (401) ở các endpoint cần quyền
-    if (response.status === 401 && !endpoint.includes("/auth/login")) {
+    if (response.status === 401 && !endpoint.includes("/auth/")) {
         tokenStorage.clear();
         window.location.href = "/login";
         throw new Error("Phiên đăng nhập đã hết hạn");
