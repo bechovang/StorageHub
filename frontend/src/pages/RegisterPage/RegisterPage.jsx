@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { Check, Square } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
-import { LoginPanel } from "../LoginPage/LoginPage";
+import LoginPanel from "../../components/LoginPanel/LoginPanel";
 import "./RegisterPage.css";
 
 export default function RegisterPage() {

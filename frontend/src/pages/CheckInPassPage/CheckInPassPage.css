@@ -160,6 +160,22 @@
     margin-bottom: 16px;
 }
 
+.cip__qr-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.cip__qr-image {
+    width: 180px;
+    height: 180px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 10px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
 .cip__code {
     font-family: 'Courier New', Courier, monospace;
     font-size: 3rem;
