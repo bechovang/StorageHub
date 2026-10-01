@@ -80,15 +80,6 @@ const CONTRACT_STATUS_LABEL = {
     SUPERSEDED: "Đã thay thế",
 };
 
-function StatusBadge({ status, colorMap = STATUS_COLOR }) {
-    const color = colorMap[status] || "neutral";
-    return (
-        <span className={`rd-badge rd-badge--${color}`}>
-            {STATUS_LABEL[status] || status}
-        </span>
-    );
-}
-
 // ─── sections ────────────────────────────────────────────────────────────────
 
 function SectionCard({ title, icon: Icon, children }) {
@@ -152,7 +143,7 @@ function PaymentsSection({ payments }) {
     );
 }
 
-function ContractsSection({ contracts, reservationId }) {
+function ContractsSection({ contracts }) {
     if (!contracts || contracts.length === 0)
         return <p className="rd-empty-text">Chưa có hợp đồng nào. Hợp đồng tự sinh sau khi cọc thành công.</p>;
 
@@ -211,12 +202,36 @@ export default function RentalDetailPage() {
     }, [reservationId, navigate]);
 
     useEffect(() => {
-        load();
-    }, [load]);
+        let isMounted = true;
+        async function fetchDetail() {
+            try {
+                const data = await getReservation(reservationId);
+                if (isMounted) setReservation(data);
+            } catch (err) {
+                if (!isMounted) return;
+                if (err?.status === 404) {
+                    setError("Không tìm thấy đơn thuê này.");
+                } else if (err?.status === 403) {
+                    navigate("/403", { replace: true });
+                } else {
+                    setError(err?.message || "Không thể tải thông tin đơn thuê.");
+                }
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        }
+        fetchDetail();
+        return () => {
+            isMounted = false;
+        };
+    }, [reservationId, navigate]);
 
     const canCheckIn = reservation?.status === "RESERVED";
     const needsPayment = reservation?.status === "PENDING_PAYMENT";
     const isExpired = reservation?.status === "EXPIRED";
+    const unsignedAddendum = reservation?.contracts?.find(
+        (c) => c.kind === "ADDENDUM" && c.status !== "SIGNED" && c.status !== "CLOSED" && c.status !== "SUPERSEDED"
+    );
 
     return (
         <AppShell>
@@ -306,6 +321,20 @@ export default function RentalDetailPage() {
                             </div>
                         )}
 
+                        {/* ── Unsigned addendum callout (US-13 rule) ── */}
+                        {unsignedAddendum && (
+                            <div className="rd-warning-callout">
+                                <WarningCircle size={20} weight="fill" />
+                                <div>
+                                    <strong>Phụ lục gia hạn ({unsignedAddendum.code}) đang chờ ký tại quầy</strong>
+                                    <p>
+                                        Vui lòng đến quầy Tân Bình Depot ký phụ lục hợp đồng giấy trước ngày{" "}
+                                        <strong>{fmtDate(unsignedAddendum.signatureDueDate)}</strong> để hoàn tất hồ sơ.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* ── 3-col grid ── */}
                         <div className="rd-main-grid">
                             {/* Left: info + quote */}
@@ -379,10 +408,7 @@ export default function RentalDetailPage() {
                                 </SectionCard>
 
                                 <SectionCard title="Chuỗi hợp đồng" icon={FileText}>
-                                    <ContractsSection
-                                        contracts={reservation.contracts}
-                                        reservationId={reservationId}
-                                    />
+                                    <ContractsSection contracts={reservation.contracts} />
                                 </SectionCard>
                             </div>
                         </div>

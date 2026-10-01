@@ -193,6 +193,23 @@
 .rd-expired-callout svg { color: #ef4444; flex-shrink: 0; margin-top: 2px; }
 .rd-expired-callout p   { margin: 4px 0 0; color: #b91c1c; }
 
+/* ─ Unsigned Addendum callout ───────────────────── */
+.rd-warning-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    color: #92400e;
+    font-size: 0.875rem;
+}
+
+.rd-warning-callout svg { color: #f59e0b; flex-shrink: 0; margin-top: 2px; }
+.rd-warning-callout p   { margin: 4px 0 0; color: #b45309; }
+
 /* ─ Main grid ───────────────────────────────── */
 .rd-main-grid {
     display: grid;
