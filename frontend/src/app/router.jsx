@@ -7,6 +7,9 @@ import PaymentPage from "../pages/PaymentPage/PaymentPage.jsx";
 import ForbiddenPage from "../pages/ForbiddenPage/ForbiddenPage.jsx";
 import RoleLandingPlaceholder from "../pages/RoleLandingPlaceholder/RoleLandingPlaceholder.jsx";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
+import MyRentalsPage from "../pages/MyRentalsPage/MyRentalsPage.jsx";
+import RentalDetailPage from "../pages/RentalDetailPage/RentalDetailPage.jsx";
+import CheckInPassPage from "../pages/CheckInPassPage/CheckInPassPage.jsx";
 
 const ROLE_LANDINGS = {
   CUSTOMER: "/browse",
@@ -41,9 +44,9 @@ export default function AppRouter() {
       <Route path="/browse" element={<DesignSystemPage />} />
       <Route path="/units/:unitId" element={<DesignSystemPage />} />
       <Route path="/units/:unitId/book" element={<PaymentPage />} />
-      <Route path="/rentals" element={<DesignSystemPage />} />
-      <Route path="/rentals/:reservationId" element={<PaymentPage />} />
-      <Route path="/rentals/:reservationId/check-in-pass" element={<DesignSystemPage />} />
+      <Route path="/rentals" element={<MyRentalsPage />} />
+      <Route path="/rentals/:reservationId" element={<RentalDetailPage />} />
+      <Route path="/rentals/:reservationId/check-in-pass" element={<CheckInPassPage />} />
       <Route path="/support" element={<RoleLandingPlaceholder path="/support" />} />
 
       {/* ── 3. Payment Flow Routes (US-8) ── */}
