@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router";
+import QRCode from "qrcode";
 import {
     ArrowLeft,
-    QrCode,
+    QrCode as QrCodeIcon,
     Package,
     CalendarCheck,
     Warning,
@@ -32,11 +33,26 @@ function daysUntil(dateStr) {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+const INSTRUCTION_TRANSLATIONS = {
+    "Show this code at the Tân Bình depot desk upon arrival.":
+        "Xuất trình mã xác thực hoặc quét mã QR này tại quầy khi đến nhận kho.",
+    "Bring your valid national ID card (CCCD) or Passport to sign the contract.":
+        "Mang theo CCCD/CMND hoặc Hộ chiếu gốc để đối chiếu và ký hợp đồng thuê kho.",
+    "Pay the remaining rent balance at the front operational desk prior to access activation.":
+        "Thanh toán 100% tiền thuê còn lại tại quầy trước khi kích hoạt nhận kho.",
+};
+
+function formatInstruction(text) {
+    if (!text) return "";
+    return INSTRUCTION_TRANSLATIONS[text.trim()] || text;
+}
+
 export default function CheckInPassPage() {
     const { reservationId } = useParams();
     const navigate = useNavigate();
 
     const [pass, setPass] = useState(null);
+    const [qrDataUrl, setQrDataUrl] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [errorCode, setErrorCode] = useState(null);
@@ -65,8 +81,57 @@ export default function CheckInPassPage() {
     }, [reservationId, navigate]);
 
     useEffect(() => {
-        load();
-    }, [load]);
+        let isMounted = true;
+        async function fetchPass() {
+            try {
+                const data = await getCheckInPass(reservationId);
+                if (isMounted) setPass(data);
+            } catch (err) {
+                if (!isMounted) return;
+                setErrorCode(err?.code || null);
+                if (err?.status === 409) {
+                    setError("Check-in Pass chỉ khả dụng khi đặt chỗ đã xác nhận (đã thanh toán cọc).");
+                } else if (err?.status === 403) {
+                    navigate("/403", { replace: true });
+                } else if (err?.status === 404) {
+                    setError("Không tìm thấy đơn thuê này.");
+                } else {
+                    setError(err?.message || "Không thể tải Check-in Pass.");
+                }
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        }
+        fetchPass();
+        return () => {
+            isMounted = false;
+        };
+    }, [reservationId, navigate]);
+
+    useEffect(() => {
+        let active = true;
+        if (pass?.code) {
+            QRCode.toDataURL(pass.code, {
+                width: 180,
+                margin: 2,
+                color: {
+                    dark: "#0F172A",
+                    light: "#FFFFFF",
+                },
+            })
+                .then((url) => {
+                    if (active) setQrDataUrl(url);
+                })
+                .catch((err) => {
+                    console.error("Lỗi sinh QR Check-in:", err);
+                });
+        } else {
+            setQrDataUrl("");
+        }
+        return () => {
+            active = false;
+        };
+    }, [pass?.code]);
 
     const days = pass ? daysUntil(pass.checkInDeadline) : null;
     const isUrgent = days !== null && days >= 0 && days <= 3;
@@ -131,18 +196,29 @@ export default function CheckInPassPage() {
                                 <Package size={24} weight="fill" />
                                 StorageHub
                             </div>
-                            <div className="cip__pass-header__label">CHECK-IN PASS</div>
+                            <div className="cip__pass-header__label">THẺ NHẬN KHO (CHECK-IN PASS)</div>
                         </div>
 
-                        {/* Code – central focus */}
+                        {/* Code & QR – central focus */}
                         <div className="cip__code-section">
                             <div className="cip__code-label">
-                                <QrCode size={18} weight="bold" />
+                                <QrCodeIcon size={18} weight="bold" />
                                 Mã xác thực tại quầy
                             </div>
+
+                            {qrDataUrl && (
+                                <div className="cip__qr-wrapper">
+                                    <img
+                                        src={qrDataUrl}
+                                        alt={`QR Code ${pass.code}`}
+                                        className="cip__qr-image"
+                                    />
+                                </div>
+                            )}
+
                             <div className="cip__code">{pass.code}</div>
                             <p className="cip__code-hint">
-                                Trình mã này cho nhân viên khi đến nhận kho. Nhân viên sẽ ký xác nhận hợp đồng.
+                                Quét mã QR hoặc đọc mã này cho nhân viên khi đến nhận kho để ký hợp đồng và nhận chìa/mã mở kho.
                             </p>
                         </div>
 
@@ -160,7 +236,7 @@ export default function CheckInPassPage() {
                                     <span className="cip__info-item__value">
                                         {pass.unit?.code || "—"}
                                         {pass.unit?.typeName && (
-                                            <span className="cip__info-item__sub">
+                                             <span className="cip__info-item__sub">
                                                 {pass.unit.typeName}
                                                 {pass.unit?.sizeM2 && ` · ${pass.unit.sizeM2} m²`}
                                             </span>
@@ -224,13 +300,13 @@ export default function CheckInPassPage() {
                             <div className="cip__instructions">
                                 <div className="cip__instructions__title">
                                     <ListChecks size={16} weight="bold" />
-                                    Chuẩn bị khi đến nhận kho
+                                    Hướng dẫn check-in tại quầy cho khách hàng
                                 </div>
                                 <ul className="cip__instructions__list">
                                     {pass.instructions.map((inst, i) => (
                                         <li key={i} className="cip__instructions__item">
                                             <CheckCircle size={14} weight="fill" className="cip__check-icon" />
-                                            {inst}
+                                            {formatInstruction(inst)}
                                         </li>
                                     ))}
                                 </ul>

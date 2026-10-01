@@ -16,14 +16,7 @@ import "./MyRentalsPage.css";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-const STATUS_GROUP = {
-    PENDING_PAYMENT: "active",
-    RESERVED: "active",
-    CHECKED_IN: "active",
-    CHECKOUT_REQUESTED: "active",
-    CLOSED: "history",
-    EXPIRED: "history",
-};
+
 
 const STATUS_LABEL = {
     PENDING_PAYMENT: "Chờ thanh toán cọc",
@@ -63,7 +56,6 @@ function StatusBadge({ status }) {
 }
 
 function RentalCard({ item }) {
-    const isActive = STATUS_GROUP[item.status] === "active";
     const canCheckIn = item.status === "RESERVED";
     const needsPayment = item.status === "PENDING_PAYMENT";
 
@@ -197,8 +189,32 @@ export default function MyRentalsPage() {
     }, []);
 
     useEffect(() => {
-        load();
-    }, [load]);
+        let isMounted = true;
+        async function fetchInitial() {
+            try {
+                const [activePage, historyPage] = await Promise.all([
+                    listMyReservations({ group: "active" }),
+                    listMyReservations({ group: "history" }),
+                ]);
+                if (isMounted) {
+                    setActiveItems(activePage.items || []);
+                    setHistoryItems(historyPage.items || []);
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError(err?.message || "Không thể tải danh sách đơn thuê.");
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        }
+        fetchInitial();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     // Nhóm active theo sub-status để hiển thị rõ ràng hơn
     const pendingPayment = activeItems.filter((i) => i.status === "PENDING_PAYMENT");
