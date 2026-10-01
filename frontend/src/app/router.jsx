@@ -43,16 +43,65 @@ export default function AppRouter() {
       {/* ── 2. Customer Routes (contracts/routes.yaml) ── */}
       <Route path="/browse" element={<DesignSystemPage />} />
       <Route path="/units/:unitId" element={<DesignSystemPage />} />
-      <Route path="/units/:unitId/book" element={<PaymentPage />} />
-      <Route path="/rentals" element={<MyRentalsPage />} />
-      <Route path="/rentals/:reservationId" element={<RentalDetailPage />} />
-      <Route path="/rentals/:reservationId/check-in-pass" element={<CheckInPassPage />} />
+      <Route
+        path="/units/:unitId/book"
+        element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "SYSTEM_ADMIN"]}>
+            <PaymentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/rentals"
+        element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "SYSTEM_ADMIN"]}>
+            <MyRentalsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/rentals/:reservationId"
+        element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "SYSTEM_ADMIN"]}>
+            <RentalDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/rentals/:reservationId/check-in-pass"
+        element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "SYSTEM_ADMIN"]}>
+            <CheckInPassPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/support" element={<RoleLandingPlaceholder path="/support" />} />
 
       {/* ── 3. Payment Flow Routes (US-8) ── */}
-      <Route path="/payment" element={<PaymentPage />} />
-      <Route path="/payment/:reservationId" element={<PaymentPage />} />
-      <Route path="/payments/:paymentId" element={<PaymentPage />} />
+      <Route
+        path="/payment"
+        element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "SYSTEM_ADMIN"]}>
+            <PaymentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment/:reservationId"
+        element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "SYSTEM_ADMIN"]}>
+            <PaymentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments/:paymentId"
+        element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "SYSTEM_ADMIN"]}>
+            <PaymentPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/checkout" element={<Navigate to="/payment" replace />} />
 
       {/* ── 4. Staff Routes (Chỉ STAFF & SYSTEM_ADMIN) ── */}
