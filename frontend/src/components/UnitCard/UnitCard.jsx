@@ -53,9 +53,13 @@ const formatVnd = (amount) =>
 const formatDate = (isoDate) => {
   if (!isoDate) return "";
   try {
-    return new Intl.DateTimeFormat("en-GB", {
+    const parts = isoDate.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return new Intl.DateTimeFormat("vi-VN", {
       day: "2-digit",
-      month: "short",
+      month: "2-digit",
       year: "numeric",
     }).format(new Date(`${isoDate}T00:00:00`));
   } catch {
@@ -71,25 +75,50 @@ export default function UnitCard({
 }) {
   if (!unit) return null;
 
-  const isSoon = unit.availability === "soon";
+  // Hỗ trợ cả backend DTO (status: "AVAILABLE" | "AVAILABLE_SOON") và mock data
+  const rawStatus =
+    typeof unit.availability === "object"
+      ? unit.availability?.status
+      : unit.availability;
+  const isSoon =
+    rawStatus === "AVAILABLE_SOON" || rawStatus === "soon" || rawStatus === "PREPARING";
+  const availableDate =
+    typeof unit.availability === "object"
+      ? unit.availability?.availableFromDate
+      : unit.availableFrom;
+
   const availableLine = isSoon
-    ? `Available ${formatDate(unit.availableFrom)}`
-    : `Available from ${formatDate(unit.availableFrom)}`;
+    ? (availableDate ? `Khả dụng từ ${formatDate(availableDate)}` : "Sắp khả dụng")
+    : (availableDate ? `Khả dụng từ ${formatDate(availableDate)}` : "Đang trống · Đặt ngay");
+
   const subline = isSoon
-    ? unit.bufferNote || "Cleaning buffer"
-    : "Matches the selected rental period";
+    ? unit.bufferNote || "Đệm dọn dẹp vệ sinh kho (Turnover buffer)"
+    : "Sẵn sàng nhận kho theo lịch";
+
+  const price = unit.baseMonthlyRent ?? unit.monthlyPrice ?? 0;
+  const typeLabel = unit.typeName || unit.type || "Tiêu chuẩn";
+  const zoneLabel = unit.zoneCode ? `Khu ${unit.zoneCode}` : (unit.zone || "Khu A");
+  const floorLabel = unit.floor ? `Tầng ${unit.floor}` : "Tầng 1";
+  const accessLabel =
+    unit.accessType === "PIN"
+      ? "Mã PIN 24/7"
+      : unit.accessType === "QR"
+      ? "Mã QR"
+      : unit.accessType === "smart lock"
+      ? "Khoá thông minh"
+      : unit.accessType || "Mã PIN 24/7";
 
   return (
     <article className={`unit-card ${className}`} data-unit-id={unit.id}>
       <button
         className="unit-card__visual"
         type="button"
-        aria-label={`View details for unit ${unit.code}`}
+        aria-label={`Xem chi tiết kho ${unit.code}`}
         onClick={() => onViewDetails?.(unit)}
       >
         <UnitIllustration
-          variant={unit.imageVariant || 1}
-          zone={unit.zone || "Zone A"}
+          variant={unit.imageVariant || (unit.id % 4) + 1}
+          zone={unit.zoneCode || unit.zone || "A"}
         />
         <span className="unit-card__code">{unit.code}</span>
       </button>
@@ -98,15 +127,15 @@ export default function UnitCard({
         <div className="unit-card__header">
           <div>
             <h3 className="unit-card__title">
-              {unit.sizeM2} m² {unit.type}
+              {unit.sizeM2} m² · {typeLabel}
             </h3>
             <p className="unit-card__meta">
-              {unit.zone} · Floor {unit.floor} · {unit.accessType}
+              {zoneLabel} · {floorLabel} · {accessLabel}
             </p>
           </div>
 
-          <Badge tone={isSoon ? "muted" : "success"}>
-            {isSoon ? "Available soon" : "Available"}
+          <Badge tone={isSoon ? "warning" : "success"}>
+            {isSoon ? "Đang được thuê" : "Còn trống"}
           </Badge>
         </div>
 
@@ -129,8 +158,8 @@ export default function UnitCard({
 
         <div className="unit-card__footer">
           <div className="unit-card__price">
-            <strong>{formatVnd(unit.monthlyPrice)}</strong>
-            <span>per month · Policy v3</span>
+            <strong>{formatVnd(price)}</strong>
+            <span>mỗi tháng · Chính sách v3</span>
           </div>
 
           <div className="unit-card__actions">
@@ -139,14 +168,14 @@ export default function UnitCard({
               size="small"
               onClick={() => onViewDetails?.(unit)}
             >
-              Details
+              Chi tiết
             </Button>
             <Button
               variant="primary"
               size="small"
               onClick={() => onBook?.(unit)}
             >
-              Book
+              Đặt kho
             </Button>
           </div>
         </div>
