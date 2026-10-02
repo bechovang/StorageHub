@@ -6,6 +6,7 @@ export default function Header({
   roleLabel = "REFERENCE",
   avatarText = "00",
   navLinks = [],
+  rightContent = null,
   className = "",
 }) {
   return (
@@ -43,6 +44,7 @@ export default function Header({
               {avatarText}
             </span>
           )}
+          {rightContent}
         </div>
       </div>
     </header>
