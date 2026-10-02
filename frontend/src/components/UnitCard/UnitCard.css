@@ -86,12 +86,12 @@
   display: grid;
   gap: 2px;
   padding-left: 10px;
-  border-left: 3px solid var(--color-ink);
+  border-left: 3px solid var(--color-status-success);
   font-size: 0.77rem;
 }
 
 .unit-card__availability.is-soon {
-  border-left-color: var(--color-secondary);
+  border-left-color: var(--color-status-warning);
 }
 
 .unit-card__availability span:last-child {
