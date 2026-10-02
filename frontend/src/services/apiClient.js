@@ -37,3 +37,26 @@ export async function apiClient(endpoint, options = {}) {
 
     return response;
 }
+
+/**
+ * An toàn parse JSON từ Response, tránh lỗi 'Unexpected end of JSON input'
+ * khi Backend trả về body rỗng (204, proxy ECONNREFUSED 502/504, server drop socket).
+ *
+ * @param {Response} response
+ * @returns {Promise<any>}
+ */
+export async function safeParseJson(response) {
+    try {
+        const text = await response.text();
+        if (!text || !text.trim()) {
+            return {};
+        }
+        return JSON.parse(text);
+    } catch {
+        return {
+            message: response.status >= 500
+                ? "Không thể kết nối đến máy chủ Backend (Port 8080). Vui lòng kiểm tra backend đã được khởi chạy chưa."
+                : `Máy chủ phản hồi trạng thái ${response.status}`,
+        };
+    }
+}
