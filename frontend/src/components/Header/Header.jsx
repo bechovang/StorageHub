@@ -64,6 +64,7 @@ export default function Header({
   roleLabel,
   avatarText,
   navLinks,
+  rightContent = null,
   className = "",
 }) {
   const { user, isAuthenticated, logout } = useAuth();
@@ -168,109 +169,114 @@ export default function Header({
               {resolvedRoleLabel}
             </span>
           )}
-
-          {/* Bell Notifications */}
-          {isAuthenticated && (
-            <div className="header-notif-wrapper" ref={notifMenuRef}>
-              <button
-                type="button"
-                className={`header-tool-btn ${showNotificationMenu ? "is-active" : ""}`}
-                onClick={() => {
-                  setShowNotificationMenu((prev) => !prev);
-                  setShowAvatarMenu(false);
-                }}
-                aria-label="Thông báo"
-                aria-expanded={showNotificationMenu}
-              >
-                <Bell size={18} weight="bold" />
-                <span className="header-notif-badge">2</span>
-              </button>
-
-              {showNotificationMenu && (
-                <div className="header-dropdown header-dropdown--notif">
-                  <div className="header-dropdown__header">
-                    <span className="header-dropdown__title">Thông báo hệ thống</span>
-                    <span className="header-dropdown__tag">2 mới</span>
-                  </div>
-                  <div className="header-dropdown__list">
-                    <div className="header-notif-item">
-                      <CheckCircle size={16} className="header-notif-item__icon--success" weight="fill" />
-                      <div className="header-notif-item__content">
-                        <p className="header-notif-item__text">
-                          Cổng thanh toán Card / MoMo / VNPay QR sẵn sàng.
-                        </p>
-                        <span className="header-notif-item__time">Vừa xong</span>
-                      </div>
-                    </div>
-                    <div className="header-notif-item">
-                      <WarningCircle size={16} className="header-notif-item__icon--warning" weight="fill" />
-                      <div className="header-notif-item__content">
-                        <p className="header-notif-item__text">
-                          Đơn đặt chỗ RSV-1 tại kho Tân Bình đang chờ thanh toán cọc.
-                        </p>
-                        <span className="header-notif-item__time">5 phút trước</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Avatar & User Dropdown */}
-          {isAuthenticated ? (
-            <div className="header-avatar-wrapper" ref={avatarMenuRef}>
-              <button
-                type="button"
-                className="avatar-btn"
-                onClick={() => {
-                  setShowAvatarMenu((prev) => !prev);
-                  setShowNotificationMenu(false);
-                }}
-                aria-label="Tài khoản cá nhân"
-                aria-expanded={showAvatarMenu}
-              >
-                <span className="avatar">{resolvedAvatarText}</span>
-                <CaretDown
-                  size={12}
-                  weight="bold"
-                  className={`avatar-btn__caret ${showAvatarMenu ? "is-open" : ""}`}
-                />
-              </button>
-
-              {showAvatarMenu && (
-                <div className="header-dropdown header-dropdown--avatar">
-                  <div className="header-user-info">
-                    <p className="header-user-info__name">
-                      {user?.fullName || "Người dùng StorageHub"}
-                    </p>
-                    <p className="header-user-info__email">{user?.email || ""}</p>
-                    <span className="header-user-info__role">{currentRole}</span>
-                  </div>
-                  <div className="header-dropdown__divider" />
-                  <Link
-                    to={roleConfig.landing}
-                    className="header-dropdown__item"
-                    onClick={() => setShowAvatarMenu(false)}
-                  >
-                    <UserIcon size={16} />
-                    <span>Trang chủ vai trò</span>
-                  </Link>
+          {rightContent ? (
+            rightContent
+          ) : (
+            <>
+              {/* Bell Notifications */}
+              {isAuthenticated && (
+                <div className="header-notif-wrapper" ref={notifMenuRef}>
                   <button
                     type="button"
-                    className="header-dropdown__item header-dropdown__item--danger"
-                    onClick={handleLogout}
+                    className={`header-tool-btn ${showNotificationMenu ? "is-active" : ""}`}
+                    onClick={() => {
+                      setShowNotificationMenu((prev) => !prev);
+                      setShowAvatarMenu(false);
+                    }}
+                    aria-label="Thông báo"
+                    aria-expanded={showNotificationMenu}
                   >
-                    <SignOut size={16} />
-                    <span>Đăng xuất</span>
+                    <Bell size={18} weight="bold" />
+                    <span className="header-notif-badge">2</span>
                   </button>
+
+                  {showNotificationMenu && (
+                    <div className="header-dropdown header-dropdown--notif">
+                      <div className="header-dropdown__header">
+                        <span className="header-dropdown__title">Thông báo hệ thống</span>
+                        <span className="header-dropdown__tag">2 mới</span>
+                      </div>
+                      <div className="header-dropdown__list">
+                        <div className="header-notif-item">
+                          <CheckCircle size={16} className="header-notif-item__icon--success" weight="fill" />
+                          <div className="header-notif-item__content">
+                            <p className="header-notif-item__text">
+                              Cổng thanh toán Card / MoMo / VNPay QR sẵn sàng.
+                            </p>
+                            <span className="header-notif-item__time">Vừa xong</span>
+                          </div>
+                        </div>
+                        <div className="header-notif-item">
+                          <WarningCircle size={16} className="header-notif-item__icon--warning" weight="fill" />
+                          <div className="header-notif-item__content">
+                            <p className="header-notif-item__text">
+                              Đơn đặt chỗ RSV-1 tại kho Tân Bình đang chờ thanh toán cọc.
+                            </p>
+                            <span className="header-notif-item__time">5 phút trước</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          ) : (
-            <Link to="/login" className="header-login-btn">
-              Đăng nhập
-            </Link>
+
+              {/* Avatar & User Dropdown */}
+              {isAuthenticated ? (
+                <div className="header-avatar-wrapper" ref={avatarMenuRef}>
+                  <button
+                    type="button"
+                    className="avatar-btn"
+                    onClick={() => {
+                      setShowAvatarMenu((prev) => !prev);
+                      setShowNotificationMenu(false);
+                    }}
+                    aria-label="Tài khoản cá nhân"
+                    aria-expanded={showAvatarMenu}
+                  >
+                    <span className="avatar">{resolvedAvatarText}</span>
+                    <CaretDown
+                      size={12}
+                      weight="bold"
+                      className={`avatar-btn__caret ${showAvatarMenu ? "is-open" : ""}`}
+                    />
+                  </button>
+
+                  {showAvatarMenu && (
+                    <div className="header-dropdown header-dropdown--avatar">
+                      <div className="header-user-info">
+                        <p className="header-user-info__name">
+                          {user?.fullName || "Người dùng StorageHub"}
+                        </p>
+                        <p className="header-user-info__email">{user?.email || ""}</p>
+                        <span className="header-user-info__role">{currentRole}</span>
+                      </div>
+                      <div className="header-dropdown__divider" />
+                      <Link
+                        to={roleConfig.landing}
+                        className="header-dropdown__item"
+                        onClick={() => setShowAvatarMenu(false)}
+                      >
+                        <UserIcon size={16} />
+                        <span>Trang chủ vai trò</span>
+                      </Link>
+                      <button
+                        type="button"
+                        className="header-dropdown__item header-dropdown__item--danger"
+                        onClick={handleLogout}
+                      >
+                        <SignOut size={16} />
+                        <span>Đăng xuất</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link to="/login" className="header-login-btn">
+                  Đăng nhập
+                </Link>
+              )}
+            </>
           )}
         </div>
       </div>
