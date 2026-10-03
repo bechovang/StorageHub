@@ -4,62 +4,7 @@
   min-height: 100vh;
 }
 
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-header);
-  background: var(--color-surface);
-  border-bottom: var(--border-strong);
-}
 
-.app-header__inner {
-  min-height: 66px;
-  width: min(calc(100% - 48px), var(--page-width));
-  margin-inline: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  font: 800 0.92rem/1 var(--font-display);
-  letter-spacing: 0.035em;
-  color: var(--color-ink);
-}
-
-.brand__mark {
-  width: 27px;
-  height: 27px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border: var(--border-strong);
-}
-
-.brand__mark i {
-  background: var(--color-ink);
-  border-right: 1px solid white;
-}
-
-.brand__mark i:last-child {
-  background: var(--color-accent);
-  border: 0;
-}
-
-.account-tools {
-  display: flex;
-  align-items: center;
-}
-
-.role-label {
-  padding: 5px 9px;
-  border: var(--border-strong);
-  font: 700 0.66rem/1 var(--font-mono);
-  letter-spacing: 0.06em;
-}
 
 .page-masthead {
   display: grid;

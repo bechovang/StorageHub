@@ -67,6 +67,8 @@
   --color-action-primary-hover: var(--color-accent-dark);
 
   --color-status-success: #16a34a;
+  --color-status-success-tint: #f0fdf4;
+  --color-status-success-border: #bbf7d0;
   --color-status-warning: #f59e0b;
   --color-status-danger: var(--color-accent);
 

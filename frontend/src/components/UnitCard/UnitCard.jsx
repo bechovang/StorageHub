@@ -2,50 +2,8 @@ import Badge from "../Badge/Badge.jsx";
 import Button from "../Button/Button.jsx";
 import "./UnitCard.css";
 
-function UnitIllustration({ variant = 1, zone = "A" }) {
-  const doorWidth = 92 + variant * 3;
-  const offset = 54 - variant;
-  return (
-    <svg viewBox="0 0 360 180" role="img" aria-label="Storage unit illustration">
-      <rect width="360" height="180" fill="#eeeeee" />
-      <path d="M0 145H360M0 152H360" stroke="#c8c8c8" />
-      <rect
-        x={offset}
-        y="25"
-        width={doorWidth}
-        height="120"
-        fill="#ffffff"
-        stroke="#000000"
-        strokeWidth="2"
-      />
-      <path
-        d={`M${offset + 12} 42H${offset + doorWidth - 12}M${offset + 12} 58H${offset + doorWidth - 12}M${offset + 12} 74H${offset + doorWidth - 12}M${offset + 12} 90H${offset + doorWidth - 12}M${offset + 12} 106H${offset + doorWidth - 12}M${offset + 12} 122H${offset + doorWidth - 12}`}
-        stroke="#777777"
-      />
-      <rect
-        x={offset + doorWidth - 26}
-        y="80"
-        width="8"
-        height="15"
-        fill="#dc2626"
-      />
-      <path
-        d={`M${offset + doorWidth + 26} 25V145M${offset + doorWidth + 42} 25V145M${offset + doorWidth + 58} 25V145`}
-        stroke="#bdbdbd"
-      />
-      <text
-        x="302"
-        y="42"
-        fill="#000000"
-        fontFamily="Arial, sans-serif"
-        fontSize="11"
-        textAnchor="end"
-      >
-        {zone.toUpperCase()}
-      </text>
-    </svg>
-  );
-}
+const PLACEHOLDER_UNIT_IMAGE = "/placeholder.svg";
+
 
 const formatVnd = (amount) =>
   `${new Intl.NumberFormat("vi-VN").format(amount)} ₫`;
@@ -53,9 +11,13 @@ const formatVnd = (amount) =>
 const formatDate = (isoDate) => {
   if (!isoDate) return "";
   try {
-    return new Intl.DateTimeFormat("en-GB", {
+    const parts = isoDate.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return new Intl.DateTimeFormat("vi-VN", {
       day: "2-digit",
-      month: "short",
+      month: "2-digit",
       year: "numeric",
     }).format(new Date(`${isoDate}T00:00:00`));
   } catch {
@@ -65,54 +27,114 @@ const formatDate = (isoDate) => {
 
 export default function UnitCard({
   unit,
+  onOpenDrawer,
   onViewDetails,
   onBook,
   className = "",
 }) {
   if (!unit) return null;
 
-  const isSoon = unit.availability === "soon";
+  // Xử lý trạng thái khả dụng cho khách hàng
+  const rawStatus =
+    typeof unit.availability === "object"
+      ? unit.availability?.status
+      : unit.availability;
+  const availableDate =
+    typeof unit.availability === "object"
+      ? unit.availability?.availableFromDate
+      : unit.availableFrom;
+  const isSoon =
+    rawStatus === "AVAILABLE_SOON" ||
+    rawStatus === "soon" ||
+    rawStatus === "PREPARING" ||
+    rawStatus === "RENTED" ||
+    Boolean(availableDate);
+
   const availableLine = isSoon
-    ? `Available ${formatDate(unit.availableFrom)}`
-    : `Available from ${formatDate(unit.availableFrom)}`;
+    ? (availableDate ? `Dự kiến trống từ ${formatDate(availableDate)}` : "Sắp có kho trống")
+    : "Đang có sẵn · Nhận kho ngay";
+
   const subline = isSoon
-    ? unit.bufferNote || "Cleaning buffer"
-    : "Matches the selected rental period";
+    ? "Đang hoàn tất vệ sinh & kiểm tra kỹ thuật"
+    : "Tự quản bằng mã PIN riêng 24/7";
+
+  const price = unit.baseMonthlyRent ?? unit.monthlyPrice ?? 0;
+  const typeLabel = unit.typeName || unit.type || "Tiêu chuẩn";
+  const facilityLabel = unit.facilityName || "Cơ sở Tân Bình";
+  const volumeM3 = (unit.sizeM2 * 2.8).toFixed(1);
+
+  const handleCardClick = (e) => {
+    // Chỉ kích hoạt mở drawer nếu người dùng không click vào button hành động
+    if (e.target.closest("button") || e.target.closest("a")) return;
+    if (onOpenDrawer) {
+      onOpenDrawer(unit);
+    } else {
+      onViewDetails?.(unit);
+    }
+  };
 
   return (
-    <article className={`unit-card ${className}`} data-unit-id={unit.id}>
-      <button
-        className="unit-card__visual"
-        type="button"
-        aria-label={`View details for unit ${unit.code}`}
-        onClick={() => onViewDetails?.(unit)}
-      >
-        <UnitIllustration
-          variant={unit.imageVariant || 1}
-          zone={unit.zone || "Zone A"}
+    <article
+      className={`unit-card ${className}`}
+      data-unit-id={unit.id}
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          if (e.target.tagName !== "BUTTON" && e.target.tagName !== "A") {
+            e.preventDefault();
+            handleCardClick(e);
+          }
+        }
+      }}
+      aria-label={`Xem tổng quan gói kho ${typeLabel} ${unit.sizeM2} m²`}
+    >
+      <div className="unit-card__visual">
+        <img
+          src={unit.photoUrls?.[0] || unit.photoUrl || PLACEHOLDER_UNIT_IMAGE}
+          alt={`Kho ${typeLabel} ${unit.sizeM2} m²`}
+          className="unit-card__img"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = PLACEHOLDER_UNIT_IMAGE;
+          }}
+          loading="lazy"
         />
-        <span className="unit-card__code">{unit.code}</span>
-      </button>
+        <span className="unit-card__code">{typeLabel}</span>
+
+        {/* Badge trạng thái ở góc dưới bên phải minh họa (vị trí người dùng chỉ định) kèm tooltip khi hover */}
+        <div
+          className="unit-card__badge-wrapper"
+          tabIndex={0}
+          role="note"
+          aria-label={`${isSoon ? "Đang được thuê" : "Còn trống"}: ${availableLine}. ${subline}`}
+          title={`${availableLine} — ${subline}`}
+        >
+          <Badge tone={isSoon ? "warning" : "success"} className="unit-card__status-badge">
+            {isSoon ? "Đang được thuê" : "Còn trống"}
+          </Badge>
+
+          <div className="unit-card__tooltip" role="tooltip">
+            <span className="unit-card__tooltip-title">{availableLine}</span>
+            <span className="unit-card__tooltip-desc">{subline}</span>
+          </div>
+        </div>
+      </div>
 
       <div className="unit-card__body">
         <div className="unit-card__header">
-          <div>
-            <h3 className="unit-card__title">
-              {unit.sizeM2} m² {unit.type}
-            </h3>
-            <p className="unit-card__meta">
-              {unit.zone} · Floor {unit.floor} · {unit.accessType}
-            </p>
-          </div>
-
-          <Badge tone={isSoon ? "muted" : "success"}>
-            {isSoon ? "Available soon" : "Available"}
-          </Badge>
+          <h3 className="unit-card__title">
+            {unit.sizeM2} m² · {typeLabel}
+          </h3>
+          <p className="unit-card__meta">
+            {facilityLabel} · Thể tích ~{volumeM3} m³ · Trần cao 2.8m
+          </p>
         </div>
 
         {unit.features && unit.features.length > 0 && (
           <div className="unit-card__features">
-            {unit.features.map((feature) => (
+            {unit.features.slice(0, 3).map((feature) => (
               <span key={feature} className="unit-card__feature">
                 {feature}
               </span>
@@ -120,33 +142,32 @@ export default function UnitCard({
           </div>
         )}
 
-        <div
-          className={`unit-card__availability ${isSoon ? "is-soon" : ""}`}
-        >
-          <strong>{availableLine}</strong>
-          <span>{subline}</span>
-        </div>
-
         <div className="unit-card__footer">
           <div className="unit-card__price">
-            <strong>{formatVnd(unit.monthlyPrice)}</strong>
-            <span>per month · Policy v3</span>
+            <strong>{formatVnd(price)}</strong>
+            <span>/ tháng · Cọc 1 tháng (hoàn lại)</span>
           </div>
 
-          <div className="unit-card__actions">
+          <div className="unit-card__actions" onClick={(e) => e.stopPropagation()}>
             <Button
               variant="secondary"
               size="small"
-              onClick={() => onViewDetails?.(unit)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails?.(unit);
+              }}
             >
-              Details
+              Chi tiết
             </Button>
             <Button
               variant="primary"
               size="small"
-              onClick={() => onBook?.(unit)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onBook?.(unit);
+              }}
             >
-              Book
+              Đặt kho
             </Button>
           </div>
         </div>
@@ -154,4 +175,3 @@ export default function UnitCard({
     </article>
   );
 }
-
