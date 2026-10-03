@@ -176,7 +176,6 @@ export default function PaymentPage() {
 
       try {
         setLoadingReservation(true);
-
         // Nếu truy cập từ luồng /units/:unitId/book -> tải trực tiếp thông tin kho
         if (paramUnitId) {
           try {
@@ -219,7 +218,6 @@ export default function PaymentPage() {
             // fallback nếu lỗi
           }
         }
-
         // Tải danh sách active reservations
         const listData = await paymentService.listMyReservations({ group: "active" });
         if (isMounted && listData?.items) {
