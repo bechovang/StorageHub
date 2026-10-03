@@ -1,0 +1,130 @@
+US,Field/Screen,level,BE,FE,Sprint,From-To,Business Rules,Note,Mô tả
+1,Project Setup + API Contract,medium,An,Phú,Sprint 1,22/09/2026 - 05/10/2026,• openapi.yaml là nguồn tra cứu duy nhất của API — muốn đổi API phải sửa contract trước khi code.,AD-2/3/8 · Spring Boot 4.1.1 (Java 21) + Vite React 19.3,"Dựng khung dự án (monorepo BE + FE) và chốt hợp đồng API: mọi API lấy từ openapi.yaml, muốn đổi phải sửa contract trước. Thống nhất chuẩn lỗi + phân trang."
+2,DB Schema — Flyway V1 (model V3),complex,Phúc,—,Sprint 1,22/09/2026 - 05/10/2026,"• Tiền tệ lưu DECIMAL(15,0) — cấm float/double.
+ • Mọi thời gian lưu trong DB theo UTC.
+ • ActivityLog chỉ được INSERT — không UPDATE, không DELETE.
+ • Thay đổi schema chỉ qua migration Flyway — cấm DDL tay và hbm2ddl auto.",AD-6/7 · Flyway V1 · Thuần BE,"Tạo toàn bộ CSDL (22 bảng) theo model V3 bằng Flyway. Tiền lưu DECIMAL cấm float; nhật ký chỉ ghi thêm, không sửa/xóa."
+3,Seed demo data,medium,Huy,—,Sprint 1,22/09/2026 - 05/10/2026,"• Seed phải đủ 5 role (kèm System Administrator) và user demo cho từng role.
+ • Seed phải đủ dữ liệu lịch sử để dashboard và 6 UJ chạy trọn không đứt gãy.","Mã demo chuẩn: BK-1042, RT-0871, SR-0032, CT-1042, CT-1042-A1 · Thuần BE","Sinh dữ liệu demo: 5 quyền, user mẫu, kho Tân Bình + unit, bảng giá v3, dữ liệu lịch sử đủ chạy dashboard và demo 6 hành trình."
+4,Login + Adaptive Shell 5 role,complex,An,Phú,Sprint 1,22/09/2026 - 05/10/2026,"• Phiên đăng nhập hiệu lực 24h (JWT) — không cấp refresh token.
+ • Mỗi vai trò vào đúng trang chủ riêng; truy cập URL của vai trò khác → 403.
+ • Đăng nhập sai chỉ trả message chung — không tiết lộ field nào sai.
+ • Quyền truy cập kiểm tra ở server theo permission matrix, áp cho mọi endpoint.
+ • Mọi lần đăng nhập (thành/bại) phải ghi ActivityLog.
+ • Mật khẩu chỉ lưu dạng BCrypt hash.","FR-1, FR-38 · AD-5","Đăng nhập JWT: mỗi vai trò vào trang chủ riêng, sai thông tin báo lỗi chung, vào vùng khác vai trò bị 403. Phân quyền chặn ở server; ghi log mọi lần đăng nhập."
+5,Register + Forgot password,simple,Huy,Tuấn Anh,Sprint 1,22/09/2026 - 05/10/2026,"• Form đăng ký công khai chỉ tạo CUSTOMER — không có trường chọn role.
+ • Email đã tồn tại → chặn, báo inline ngay tại form.
+ • Quên mật khẩu luôn trả phản hồi giống nhau dù email có tồn tại hay không.","FR-2, FR-3 (P2)","Đăng ký công khai chỉ tạo Customer, email trùng báo ngay. Quên mật khẩu trả lời chung chung, chưa gửi email thật."
+6,Browse Units + availability chính xác,complex,Phúc,Tuấn Anh,Sprint 1,22/09/2026 - 05/10/2026,"• Unit Rented/Maintenance/Retired không xuất hiện trong kết quả.
+ • Unit chỉ được xem là Available khi khoảng thời gian khách yêu cầu không trùng với Reservation đang hiệu lực và không trùng Turnover Buffer (thời gian đệm).
+ • Sắp xếp mặc định: giá thấp → cao.",FR-4 · AD-4,"Danh sách unit dạng card: lọc loại/kích thước/ngày, sort theo giá. Còn trống tính trên server (đặt chỗ + buffer dọn); unit không cho thuê không hiện."
+7,Unit Detail + bảng giá minh bạch,medium,Phúc,Tuấn Anh,Sprint 1,22/09/2026 - 05/10/2026,"• Bảng giá phải đủ: rent × duration + từng dòng phụ thu theo Rental Policy đang hiệu lực.
+ • tiền cọc hiển thị kèm nhãn refundable (hoàn lại).
+ • Tiền hiển thị VND đầy đủ (1.150.000 ₫).",FR-6 · NFR-1,"Trang chi tiết unit + bảng giá minh bạch: tiền thuê, từng phụ thu, cọc ghi rõ hoàn lại. Số tiền khớp mọi màn sau; format tiền VND chuẩn."
+8,Payment Modal + mock gateway,complex,An,Phú,Sprint 1,22/09/2026 - 05/10/2026,"• Một modal dùng chung cho 4 điểm thanh toán: Deposit, 100% rent, Extension fee, Extra fee.
+ • Hỗ trợ 3 phương thức: Card / MoMo (OTP) / VNPay QR (hết hạn sau ~5 phút).
+ • Đang xử lý không được đóng modal hay điều hướng rời trang.
+ • Thất bại = chưa trừ tiền, KHÔNG thay đổi trạng thái nào — khách được Retry hoặc đổi phương thức.
+ • Mỗi payment thành công sinh đúng 1 hoá đơn, xem được vĩnh viễn.
+ • Kết quả thanh toán chỉ do server (gateway) quyết định — FE không tự quyết.",FR-8/9 · AD-9 (gateway interface + mock),"Một modal thanh toán dùng chung: Card / MoMo / VNPay QR. Đang xử lý không đóng được; lỗi đồng nghĩa chưa trừ tiền, được thử lại hoặc đổi cách; thành công có receipt vĩnh viễn."
+9,Booking Summary + Reserve re-check,complex,Phúc,Tuấn Anh,Sprint 1,22/09/2026 - 05/10/2026,"• Booking Summary phải hiển thị đầy đủ mọi khoản khách cần thanh toán; không dòng nào xuất hiện ở Payment mà vắng ở đây.
+ • Bấm Reserve phải re-check availability — unit bị chiếm giữa chừng thì không được đặt, quay về trang tìm kiếm + gợi ý unit tương tự.",FR-5/7,Trước khi trả cọc khách duyệt lại toàn bộ dòng tiền. Bấm Reserve hệ thống kiểm lại unit còn trống — bị giành thì quay về lưới kèm gợi ý; cọc xong unit được giữ.
+10,Reservation lifecycle + EXPIRED no-show,complex,An,—,Sprint 1,22/09/2026 - 05/10/2026,"• Quá ngày nhận kho mà chưa check-in → Reservation = EXPIRED.
+ • EXPIRED → khách mất cọc, receipt ghi ""Deposit forfeited — no-show"".
+ • EXPIRED phải ghi ActivityLog + notification cho khách.
+ • Khi quá ngày check-in mà khách chưa nhận kho, Reservation tự động chuyển thành EXPIRED. FE không được tự xác định trạng thái này.",FR-36 · AD-4 · Thuần BE,"Quá hạn nhận kho mà không check-in → Reservation hết hạn: mất cọc, unit mở lại, đóng contract draft, báo khách. Hết hạn tính trên server."
+11,Contract auto-draft,complex,Phúc,—,Sprint 1,22/09/2026 - 05/10/2026,"• Contract Draft sinh tự động ngay khi Deposit thành công — không có đường sinh tay.
+ • Contract luôn read-only — không UI nào cho phép sửa.
+ • bản cũ chuyển thành `Superseded` , vẫn đọc được trong chuỗi.",FR-10/13 · Thuần BE,"Cọc thành công → tự động sinh hợp đồng draft, khóa phiên bản giá. Hợp đồng chỉ đọc; sai thì soạn lại, bản cũ vẫn xem được."
+12,My Rentals + Check-in Pass,medium,Huy,Phú,Sprint 1,22/09/2026 - 05/10/2026,"• My Rentals hiển thị đủ 3 nhóm: Reservations / Rentals / History, mỗi card có status badge + nút action kế tiếp.
+ • Mọi số liệu/trạng thái lấy nguyên văn từ nguồn — FE không tự tính lại.
+ • Mã đặt chỗ BK- hiển thị lớn (mono) để staff đối chiếu tại quầy.",FR-35 · NFR-8,"Khách xem danh sách đặt chỗ/thuê của mình + mã check-in BK- đưa staff kiểm tại quầy kèm hướng dẫn. Số liệu lấy từ nguồn, không tự tính."
+13,Rental Detail + contract chain,complex,Huy,Phú,Sprint 1,22/09/2026 - 05/10/2026,"• Mỗi rental hiển thị: unit, dates, payment history, receipts, deposit status (held/settled).
+ • Chuỗi hợp đồng: gốc + mọi phụ lục; bản Signed, Superseded xem được mãi.
+ • Addendum chưa ký phải treo thông báo nêu deadline ký tại quầy.",FR-9/13/35,"Trang chi tiết một lần thuê: unit, ngày, lịch sử thanh toán, cọc, chuỗi hợp đồng + phụ lục. Mọi thao tác (check-in, gia hạn, trả kho, hỗ trợ) bắt đầu từ đây."
+14,Task Board — kanban 5 loại card,complex,Phúc,Tuấn Anh,Sprint 2,06/10/2026 - 19/10/2026,"• Board đúng 3 cột: To do / In progress / Done.
+ • Thẻ đúng 5 loại: Check-in / Checkout / Cleaning / Support / Contract-signature.
+ • Task được tự động phân cho staff đang trực ca và phụ trách Zone chứa Unit tại thời điểm task phát sinh. Không hỗ trợ giao task thủ công.
+ • Mặc định: hiện thẻ trong ngày/ca hiện tại.",FR-21 · NFR-2,"Kanban cho staff: To do / In progress / Done với 5 loại thẻ (check-in, checkout, dọn, hỗ trợ, ký hợp đồng); di chuyển bằng kéo thả hoặc phím."
+15,Check-in Task — ritual hợp đồng,complex,An,Tuấn Anh,Sprint 2,06/10/2026 - 19/10/2026,"• Chỉ được check-in khi Reservation tồn tại VÀ Deposit đã thanh toán — vi phạm chặn kèm lý do cụ thể.
+ • Deposit và 100% rent là 2 khoản thanh toán tách biệt.
+ • Access code chỉ được trao sau khi đã ký hợp đồng.
+ • Đính kèm ảnh bản ký phải ghi CONTRACT_SIGNED vào ActivityLog.
+ • Hoàn tất → Rental = CHECKED_IN, Unit = RENTED, task = Done.",FR-11/14/15,"Check-in tại quầy: xác nhận reservation đã cọc → thu 100% tiền thuê → in hợp đồng, chụp ảnh bản ký → mới được trao access code."
+17,Toast + Bell + Notification feed,medium,Huy,Phú,Sprint 2,06/10/2026 - 19/10/2026,"• Toast tồn tại ~4s, hover pause, tối đa 1 action link.
+ • Bell badge hiện số TB chưa đọc.
+ • Feed theo vai trò: khách (booking/payment/support), staff (task assignment), manager (escalation + status writes).",FR-33/34,"Thông báo: toast ngắn ~4s + chuông có badge số chưa đọc; feed theo vai trò, bấm vào tới thẳng đối tượng. Không gửi email."
+18,Extension + conflict boundary,complex,An,Phú,Sprint 2,06/10/2026 - 19/10/2026,"• Ngày checkout mới không được đụng Reservation kế tiếp — submit bị chặn kèm biên rõ (""Latest new checkout: Oct 18"").
+ • Extension chỉ mở TRƯỚC EndDate hiện tại.
+ • Phí gia hạn = tiền thuê kỳ thêm theo Rental Policy đang hiệu lực + top-up cọc = max(0, Deposit% × tổng tiền thuê hợp đồng sau gia hạn − cọc đang giữ).
+ • Thanh toán thành công → EndDate cập nhật NGAY, cọc đang giữ nâng lên mức mới, sinh Addendum (ghi số cọc mới).
+ • Settlement dùng số cọc hiện giữ — công thức refund không đổi.","FR-16/12 · Trễ không có OVERDUE — tính LATE_FEE lúc tất toán · Top-up cọc chốt 2026-09-22 (demo: 690.000 + 69.000 = 759.000 ₫, cọc → 172.500 ₫)","Gia hạn: khách chọn ngày trả mới, chặn nếu đụng đặt chỗ kế tiếp (báo rõ ngày giới hạn). Phí = tiền thuê kỳ thêm + top-up cọc về mức mới theo giá đang hiệu lực; trả xong cập nhật ngày + cọc + sinh phụ lục."
+19,Addendum giấy + Contract-signature card,complex,An,Phú,Sprint 2,06/10/2026 - 19/10/2026,"• Addendum (CT-…-A1) sinh tự động sau khi trả phí gia hạn — không có đường sinh tay nên không tồn tại ca ""soạn nhầm"" (khác hợp đồng gốc có re-draft).
+ • Addendum không hold Unit — ngày mới hiệu lực ngay từ lúc trả phí, phụ lục chỉ là hồ sơ giấy.
+ • Deadline ký tại quầy: 7 ngày.
+ • Trạng thái AWAITING_SIGNATURE cho đến khi có ảnh bản ký → SIGNED.
+ • Nút hoàn tất ký vô hiệu đến khi capture tile có ảnh.
+ • Voided chỉ còn 1 đường: khách trả kho sớm trước khi ký → staff đóng hồ sơ, không soạn lại.","FR-12 · Chốt 2026-09-22: bỏ trigger ""soạn nhầm"", giữ Voided cho trả kho sớm","Phụ lục gia hạn CT-…-A1: hẹn ký tại quầy 7 ngày, nhắc cả 2 bên; ký xong ảnh vào hồ sơ. Quá hạn chỉ nhắc mạnh hơn, không thu hồi ngày."
+20,Checkout Request,medium,Huy,Phú,Sprint 2,06/10/2026 - 19/10/2026,"• Checkout request gửi từ Rental Detail, kèm giải thích logic tất toán (hoàn / trừ / thu thêm).
+ • Gửi thành công → Rental = CHECKOUT_REQUESTED + sinh Checkout Task.
+ • Request mới thay request cũ — request cũ tự hủy.
+ • Request chỉ DONE khi settlement hoàn tất.",FR-17,Khách xin trả kho ngay trên trang rental → sinh thẻ Checkout cho staff; request mới thay request cũ.
+21,Checkout Task — climax tất toán,complex,Phúc,Tuấn Anh,Sprint 2,06/10/2026 - 19/10/2026,"• Nhận Unit + key theo checklist; Inspection từng hạng mục (access card, padlock, cleanliness, structure) với kết quả OK/MINOR/MAJOR. 
+ • Charge damage bắt buộc có số tiền + reason.
+ • Settlement = Deposit − charges = refund; tiền hư hao vượt tiền cọc → khách trả phần chênh.
+ • Không đóng rental khi còn charge thiếu reason hoặc phần chênh chưa trả.
+ • Settlement receipt hiển thị 2 bên.
+ • Đóng rental → Unit = Preparing + sinh Cleaning Task.",FR-18,"Staff nhận unit: checklist, kiểm tra hạng mục, kê khai phụ phí kèm lý do bắt buộc → tất toán (hoàn cọc hoặc thu thêm) → đóng rental, sinh thẻ dọn."
+33,Payment — PayOS gateway thật,complex,Phúc,Phú,Sprint 2,06/10/2026 - 19/10/2026,"• Hệ thống hỗ trợ PayOS thông qua PaymentGateway; MockPaymentGateway vẫn được giữ để chạy demo khi PayOS không khả dụng.
+• Khi khách chọn thanh toán qua PayOS, backend tạo payment request và trả về payment URL/QR cho frontend hiển thị.
+• Kết quả thanh toán PayOS được xác nhận qua webhook từ PayOS; frontend không tự xác nhận giao dịch thành công.
+• Webhook PayOS phải được kiểm tra chữ ký trước khi xử lý.
+• Một giao dịch PayOS chỉ được xử lý thành công một lần; webhook gửi lại không được tạo thêm payment hoặc receipt.
+• PaymentService chịu trách nhiệm cập nhật trạng thái Payment; PayOS gateway không trực tiếp thay đổi dữ liệu nghiệp vụ.
+• Thanh toán PayOS thành công áp dụng cùng luồng xử lý hiện có: cập nhật Payment và tạo đúng một receipt.","FR-8/9 · AD-9 · PayOS integration (2026-09-23)
+Env: PAYOS_CLIENT_ID / PAYOS_API_KEY / PAYOS_CHECKSUM_KEY
+Webhook: POST /api/v1/payments/webhooks/payos
+MockPaymentGateway vẫn là mặc định cho demo nếu chưa có PayOS sandbox keys.
+Checkpoint 06/10: nếu chưa có sandbox keys → PayOS chuyển thành stretch của Sprint 3; Mock vẫn dùng cho demo.","Tích hợp cổng thanh toán PayOS vào PaymentGateway hiện có: backend tạo link/QR thanh toán, nhận webhook xác nhận kết quả và cập nhật Payment. Mock gateway vẫn được giữ để demo khi PayOS chưa sẵn sàng."
+16,Snap-back chống Done ảo,medium,Phúc,Tuấn Anh,Sprint 3,20/10/2026 - 02/11/2026,"• Task chỉ được chuyển sang Done khi tất cả điều kiện hoàn tất bắt buộc của loại task đó đã được đáp ứng. Nếu thiếu, hệ thống từ chối và thông báo điều kiện còn thiếu",FR-22 · AD-4,"Kéo thẻ sang Done khi chưa xong bước chốt (thanh toán, ảnh ký...) → thẻ bật lại và báo thiếu bước nào. Không có Done ảo."
+23,"Support Ticket — tạo, route, resolve/escalate",complex,Phúc,Phú,Sprint 3,20/10/2026 - 02/11/2026,"• Ticket bắt buộc: Unit hợp lệ + incident type (LOST_ACCESS/DEVICE_ISSUE/SECURITY/CLEANLINESS/OTHER) + mô tả.
+ • Không có Unit hợp lệ → không gửi được.
+ • Ticket route tự động tới staff trực ca theo Unit + shift.
+ • Resolve phải kèm note — khách nhận kết quả plain words.
+ • Escalate bắt buộc note",FR-23/24,Khách gửi ticket gắn với unit; hệ thống chuyển cho staff trực ca. Staff xử lý kèm ghi chú hoặc chuyển lên quản lý (escalate phải có ghi chú).
+26,Staff & Shifts + conflict detection,medium,Huy,Tuấn Anh,Sprint 3,20/10/2026 - 02/11/2026,"• Phân công theo Staff × Zone × Ca (MORNING/AFTERNOON/EVENING) × ngày.
+ • Không lưu phân công trùng người-ca-ngày — chặn trước khi SAVE, báo lỗi cụ thể.",FR-27,"Phân công staff theo khu vực × ca × ngày trên lịch tuần; trùng người-ca-ngày bị chặn trước khi lưu, báo cụ thể."
+27,Activity Log viewer,simple,Huy,Phú,Sprint 3,20/10/2026 - 02/11/2026,"• Mỗi dòng log: timestamp, actor, entity, action, from → to, reason (nơi bắt buộc).
+ • Viewer read-only — không tồn tại UI xóa/sửa.
+ • Lọc được theo entity type.",FR-28 · NFR-6,"Xem nhật ký hệ thống (ai làm gì, khi nào, vì sao) chỉ đọc, lọc theo đối tượng; không xóa/sửa được."
+28,User Management — SYS-01,medium,An,Phú,Sprint 3,20/10/2026 - 02/11/2026,"• Tạo được tài khoản cho mọi role, kèm mật khẩu tạm.
+ • Đổi role phải ghi ActivityLog.
+• User có 3 trạng thái: ACTIVE, DEACTIVATED và LOCKED.
+• User không bị xóa khỏi hệ thống; việc ngừng sử dụng tài khoản được thực hiện bằng thay đổi trạng thái.
+ • Reset password = cấp mật khẩu tạm mới.
+ • Email trùng → chặn inline.
+ • Không được tự khóa chính mình.",FR-37,"SysAdmin quản lý user: tạo tài khoản mọi vai trò, đổi vai trò, khóa/mở, reset mật khẩu. Không xóa user — chỉ đổi trạng thái; không tự khóa chính mình."
+29,Login & Activity History — SYS-02 + Permission matrix,simple,Huy,Phú,Sprint 3,20/10/2026 - 02/11/2026,"• Hiển thị LOGIN/LOGIN_FAILED với actor, thời điểm, kết quả; filter theo user/thời gian/kết quả.
+ • Permission matrix Role × Permission hiển thị đúng như server enforce.
+ • Matrix read-only — không chỉnh runtime; không tự tính lại nguồn.",FR-38/39,"Xem lịch sử đăng nhập (thành/bại) + bảng quyền vai trò × chức năng đúng như server đang chặn, chỉ đọc."
+30,Policy Management — validate trước khi lưu,complex,Phúc,Phú,Sprint 3,20/10/2026 - 02/11/2026,"• Chỉnh inline: base rent theo Unit Type, phụ thu + trần, Deposit %, Turnover Buffer ngày.
+ • Save luôn chạy validation — giá trị vi phạm bị cắm cờ + banner nêu đúng luật (""15% exceeds the 10% cap in Rental Policy v3"").
+ • Policy không hợp lệ không bao giờ được persist.
+ • Save thành công → đóng dấu version + effective date.",FR-29/30 · NFR-8,"Sửa bảng giá quy định (giá cơ bản, phụ thu, % cọc, buffer ngày). Lưu luôn chạy validation — policy sai không bao giờ lưu được; lưu xong đóng dấu phiên bản + ngày hiệu lực."
+31,Business Overview + Reports + KPI drill-down,complex,An,Tuấn Anh,Sprint 3,20/10/2026 - 02/11/2026,"* Có 4 chỉ số: doanh thu, tiền cọc đang giữ, phụ thu, tỷ lệ sử dụng.
+* Tiền cọc không được tính vào doanh thu.
+* Có 4 tab báo cáo.
+* Có thể chọn kỳ có sẵn hoặc tự chọn khoảng ngày.
+* Có thể xuất báo cáo ra file CSV.
+* Bấm vào KPI phải xem được danh sách dữ liệu tạo ra KPI đó.",FR-31,"Dashboard kinh doanh: KPI doanh thu / cọc đang giữ / phụ thu / công suất + báo cáo theo kỳ, export CSV; bấm KPI xuyên xuống bảng chi tiết."
+32,Facility Overview + drill-down,medium,Huy,Tuấn Anh,Sprint 3,20/10/2026 - 02/11/2026,"
+* Hiển thị: tỷ lệ phòng được thuê, cơ cấu doanh thu, trạng thái phòng.
+* Mỗi phần theo thứ tự: KPI → biểu đồ → bảng dữ liệu.
+* Bấm vào KPI để xem chi tiết.
+* Ví dụ: bấm ""Occupancy 80%"" → chuyển sang Unit Management và chỉ lọc các phòng đang Rented.",FR-32,"Dashboard vận hành: công suất, cơ cấu doanh thu, trạng thái unit; drill-down (VD occupancy 87% → danh sách unit đang thuê)."
+25,Unit Management + edit drawer + guards,complex,Phúc,Tuấn Anh,(nice to have),20/10/2026 - 02/11/2026,"• Merge 2 unit → P2, KHÔNG build (chốt 2026-09-22 — cắt không phá flow; beat demo UJ-4 thay bằng Retire S-2, vẫn demo đủ guard + blocker + confirm).
+ • Mọi chuyển trạng thái unit qua guard + confirm — không silent status write.
+ • Fix status bắt buộc reason.
+ • Bị chặn → blocker nêu tên + link.
+ • Kết thúc Maintenance luôn qua Preparing + Cleaning Task theo buffer.
+ • Mọi thao tác ghi Activity Log.",FR-26/20 · Merge → P2 2026-09-22,"Quản lý unit: sửa thông tin, cho nghỉ, bảo trì, sửa trạng thái — đều có xác nhận và chặn khi unit còn được giữ/thuê; mọi thao tác ghi log. (Merge 2 unit: P2 — không build.)"
