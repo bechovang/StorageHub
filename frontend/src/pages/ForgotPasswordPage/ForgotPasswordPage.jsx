@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { CheckCircle, ArrowLeft, PaperPlaneTilt } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
-import { LoginPanel } from "../LoginPage/LoginPage";
+import LoginPanel from "../../components/LoginPanel/LoginPanel";
 import "./ForgotPasswordPage.css";
 
 export default function ForgotPasswordPage() {
