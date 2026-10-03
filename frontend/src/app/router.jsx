@@ -5,6 +5,7 @@ import LoginPage from "../pages/LoginPage/LoginPage.jsx";
 import RegisterPage from "../pages/RegisterPage/RegisterPage.jsx";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.jsx";
 import BrowsePage from "../pages/BrowsePage/BrowsePage.jsx";
+import UnitDetailPage from "../pages/UnitDetailPage/UnitDetailPage.jsx";
 import PaymentPage from "../pages/PaymentPage/PaymentPage.jsx";
 import ForbiddenPage from "../pages/ForbiddenPage/ForbiddenPage.jsx";
 import RoleLandingPlaceholder from "../pages/RoleLandingPlaceholder/RoleLandingPlaceholder.jsx";
@@ -42,7 +43,7 @@ export default function AppRouter() {
 
       {/* ── 2. Customer Routes (contracts/routes.yaml) ── */}
       <Route path="/browse" element={<BrowsePage />} />
-      <Route path="/units/:unitId" element={<DesignSystemPage />} />
+      <Route path="/units/:unitId" element={<UnitDetailPage />} />
       <Route path="/units/:unitId/book" element={<PaymentPage />} />
       <Route path="/rentals" element={<DesignSystemPage />} />
       <Route path="/rentals/:reservationId" element={<PaymentPage />} />

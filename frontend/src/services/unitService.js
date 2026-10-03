@@ -238,16 +238,157 @@ export async function searchUnits({
     items = items.filter((u) => String(u.facilityId || 1) === String(facilityId));
   }
 
-  if (sort === "price-desc") {
-    items.sort((a, b) => b.baseMonthlyRent - a.baseMonthlyRent);
-  } else {
-    items.sort((a, b) => a.baseMonthlyRent - b.baseMonthlyRent);
-  }
+  items.sort((a, b) => {
+    const isAvailA =
+      (a.availability?.status === "AVAILABLE" || a.availability === "AVAILABLE") &&
+      !a.availability?.availableFromDate;
+    const isAvailB =
+      (b.availability?.status === "AVAILABLE" || b.availability === "AVAILABLE") &&
+      !b.availability?.availableFromDate;
+
+    if (isAvailA !== isAvailB) {
+      return isAvailA ? -1 : 1;
+    }
+
+    const priceA = a.baseMonthlyRent ?? a.monthlyPrice ?? 0;
+    const priceB = b.baseMonthlyRent ?? b.monthlyPrice ?? 0;
+    return sort === "price-desc" ? priceB - priceA : priceA - priceB;
+  });
 
   return {
     items,
     page: 1,
     pageSize: items.length,
     total: items.length,
+  };
+}
+
+/**
+ * Lấy chi tiết thông tin kho (FR-6)
+ * @param {number|string} unitId
+ */
+export async function getUnitDetail(unitId) {
+  try {
+    const res = await apiClient(`/api/v1/units/${unitId}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // Backend offline / network error -> dùng fallback
+  }
+
+  const found = FALLBACK_UNITS.find((u) => String(u.id) === String(unitId)) || FALLBACK_UNITS[0];
+  const sizeM2 = found.sizeM2 || 5.0;
+  const volumeM3 = (sizeM2 * 2.8).toFixed(1);
+
+  return {
+    ...found,
+    dimensions: sizeM2 <= 1.5 ? "1.0 × 1.5 × 2.0 m" : sizeM2 <= 5 ? "2.0 × 2.5 × 2.8 m" : sizeM2 <= 8 ? "2.5 × 3.2 × 2.8 m" : "3.0 × 5.0 × 2.8 m",
+    security: "CCTV 24/7 + Cảm biến chuyển động riêng + Khóa mã số PIN điện tử tự quản",
+    clearHeight: "2.8 m (Trần cao thông thoáng)",
+    volumeM3,
+    floorLevel: `Tầng ${found.floor || 1} · Khu ${found.zoneCode || "A"}`,
+    facilityCode: "VN-SGN-01",
+    facilityAddress: "144 Nguyễn Thái Bình, Phường 12, Quận Tân Bình, TP.HCM",
+    photoUrls: [
+      found.photoUrl || "/units/S-1.jpg",
+      "/units/interior.jpg",
+      "/units/hallway.jpg",
+    ],
+  };
+}
+
+/**
+ * Lấy bảng giá minh bạch tính toán từ PricingEngine theo Rental Policy active (FR-6, AD-11)
+ * @param {number|string} unitId
+ * @param {object} params
+ * @param {string} params.startDate YYYY-MM-DD
+ * @param {number} params.durationMonths
+ */
+export async function getUnitQuote(unitId, { startDate, durationMonths = 3 } = {}) {
+  const duration = Math.max(1, parseInt(durationMonths, 10) || 1);
+  const queryParams = new URLSearchParams();
+  if (startDate) queryParams.set("start-date", startDate);
+  queryParams.set("duration-months", duration);
+
+  try {
+    const res = await apiClient(`/api/v1/units/${unitId}/quote?${queryParams.toString()}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // Backend offline / network error -> dùng calculation fallback
+  }
+
+  // Fallback calculation matching backend PricingEngine.java exactly
+  const found = FALLBACK_UNITS.find((u) => String(u.id) === String(unitId)) || FALLBACK_UNITS[0];
+  const monthlyRent = found.baseMonthlyRent || 345000;
+  const totalRent = monthlyRent * duration;
+  const depositPercent = 10;
+  const depositAmount = Math.round((totalRent * depositPercent) / 100);
+  const dueNow = depositAmount;
+
+  // Tính endDate
+  const start = startDate ? new Date(startDate) : new Date();
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + duration);
+  end.setDate(end.getDate() - 1);
+  const endDateStr = end.toISOString().split("T")[0];
+
+  const formattedMonthly = new Intl.NumberFormat("vi-VN").format(monthlyRent) + " ₫";
+  const formattedTotal = new Intl.NumberFormat("vi-VN").format(totalRent) + " ₫";
+
+  const lines = [
+    {
+      kind: "RENT",
+      code: "RENT_RATE",
+      label: `Tiền thuê ${formattedMonthly}/tháng × ${duration} tháng`,
+      amount: totalRent,
+      refundable: false,
+    },
+    {
+      kind: "SURCHARGE",
+      code: "SURCHARGE_FACILITY",
+      label: "Phí dịch vụ cơ sở & giám sát an ninh (Rental Policy v3)",
+      amount: 0,
+      refundable: false,
+      note: "Bao gồm trong gói",
+    },
+    {
+      kind: "SURCHARGE",
+      code: "SURCHARGE_INSURANCE",
+      label: "Bảo hiểm tài sản lưu trữ tiêu chuẩn",
+      amount: 0,
+      refundable: false,
+      note: "Bao gồm (Standard Policy)",
+    },
+    {
+      kind: "SURCHARGE",
+      code: "SURCHARGE_PIN_KEYLESS",
+      label: "Phí cấp mã số PIN điện tử tự quản 24/7",
+      amount: 0,
+      refundable: false,
+      note: "Miễn phí (Waived)",
+    },
+    {
+      kind: "DEPOSIT",
+      code: "DEPOSIT_RATE",
+      label: `Tiền cọc (${depositPercent}%, hoàn lại khi trả kho)`,
+      amount: depositAmount,
+      refundable: true,
+      note: "Refundable",
+    },
+  ];
+
+  return {
+    unitId: Number(unitId),
+    startDate: startDate || new Date().toISOString().split("T")[0],
+    endDate: endDateStr,
+    durationMonths: duration,
+    lines,
+    totalRent,
+    depositAmount,
+    dueNow,
+    policyVersion: "v3",
   };
 }

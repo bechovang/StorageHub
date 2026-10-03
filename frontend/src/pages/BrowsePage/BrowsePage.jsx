@@ -1,10 +1,80 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { MagnifyingGlass, SignOut, X, Funnel } from "@phosphor-icons/react";
-import { Header, Footer, UnitCard, Drawer, Badge, Button } from "../../components";
+import {
+  MagnifyingGlass,
+  SignOut,
+  X,
+  Funnel,
+  Package,
+} from "@phosphor-icons/react";
+import {
+  Header,
+  Footer,
+  UnitCard,
+  Drawer,
+  Badge,
+  Button,
+} from "../../components";
 import { useAuth } from "../../context/AuthContext";
 import { getUnitFilterOptions, searchUnits } from "../../services/unitService";
 import "./BrowsePage.css";
+
+function DrawerVisual({ unit }) {
+  const sizeM2 = unit?.sizeM2 || 3.5;
+  const volumeM3 = (sizeM2 * 2.8).toFixed(1);
+  const photo = unit?.photoUrls?.[0] || unit?.photoUrl || "/placeholder.svg";
+
+  return (
+    <div className="browse-drawer-visual" aria-label={`Hình ảnh không gian kho ${sizeM2} m²`}>
+      <img
+        src={photo}
+        alt={`Kho ${unit?.typeName || "Tiêu chuẩn"} ${sizeM2} m²`}
+        className="browse-drawer-visual__img"
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = "/placeholder.svg";
+        }}
+        loading="lazy"
+      />
+
+      {/* Thông số kích thước trực quan ghim trên ảnh */}
+      <div className="browse-drawer-visual__badges">
+        <span className="browse-drawer-visual__pill">
+          Diện tích <strong>{sizeM2} m²</strong>
+        </span>
+        <span className="browse-drawer-visual__pill">
+          Thể tích <strong>~{volumeM3} m³</strong>
+        </span>
+        <span className="browse-drawer-visual__pill">
+          Trần cao <strong>2.8m</strong>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function getCapacityHint(sizeM2) {
+  const size = Number(sizeM2) || 0;
+  if (size <= 2) {
+    return {
+      title: "Phù hợp lưu trữ cá nhân hoặc ít đồ đạc",
+      detail:
+        "Sức chứa tương đương 10 - 15 thùng carton tiêu chuẩn, 1 xe máy hoặc 4 - 5 vali lớn cùng các vật dụng cá nhân theo mùa.",
+    };
+  }
+  if (size <= 5) {
+    return {
+      title: "Phù hợp đồ đạc căn hộ 1 phòng ngủ",
+      detail:
+        "Sức chứa tương đương 20 - 30 thùng đồ, tủ lạnh mini, máy giặt, bàn ghế làm việc, đệm giường và đồ dùng gia đình cần bảo quản.",
+    };
+  }
+  return {
+    title: "Phù hợp chuyển nhà 2-3 phòng ngủ hoặc kho hàng",
+    detail:
+      "Không gian rộng rãi chứa trọn vẹn nội thất căn hộ gia đình, tủ lớn, sofa, giường ngủ hoặc 3-4 pallet hàng hóa kinh doanh.",
+  };
+}
 
 export default function BrowsePage() {
   const { user, logout } = useAuth();
@@ -50,6 +120,39 @@ export default function BrowsePage() {
     loadOptions();
   }, []);
 
+  // Hàm kiểm tra kho có đang trống không (AVAILABLE / "Còn trống")
+  const isUnitAvailable = (u) => {
+    const rawStatus =
+      typeof u.availability === "object"
+        ? u.availability?.status
+        : u.availability;
+    const availableDate =
+      typeof u.availability === "object"
+        ? u.availability?.availableFromDate
+        : u.availableFrom;
+    const isUnavailable =
+      rawStatus === "AVAILABLE_SOON" ||
+      rawStatus === "soon" ||
+      rawStatus === "PREPARING" ||
+      rawStatus === "RENTED" ||
+      Boolean(availableDate);
+    return !isUnavailable;
+  };
+
+  // Sắp xếp danh sách kho: Luôn luôn xếp kho còn trống (AVAILABLE) lên đầu, tiếp đến theo giá
+  const sortUnitsWithAvailableFirst = (items, sort) => {
+    return [...items].sort((a, b) => {
+      const aAvail = isUnitAvailable(a);
+      const bAvail = isUnitAvailable(b);
+      if (aAvail !== bAvail) {
+        return aAvail ? -1 : 1; // Kho còn trống luôn lên đầu
+      }
+      const aPrice = a.baseMonthlyRent ?? a.monthlyPrice ?? 0;
+      const bPrice = b.baseMonthlyRent ?? b.monthlyPrice ?? 0;
+      return sort === "price-desc" ? bPrice - aPrice : aPrice - bPrice;
+    });
+  };
+
   // Hàm thực thi tìm kiếm
   const fetchUnits = async (filters, sort) => {
     setLoading(true);
@@ -61,7 +164,8 @@ export default function BrowsePage() {
         facilityId: filters.facilityId,
         sort,
       });
-      setUnits(data.items || []);
+      const sorted = sortUnitsWithAvailableFirst(data.items || [], sort);
+      setUnits(sorted);
     } catch {
       setUnits([]);
     } finally {
@@ -87,10 +191,11 @@ export default function BrowsePage() {
     fetchUnits(newFilters, sortOrder);
   };
 
-  // Xử lý đổi thứ tự sắp xếp
+  // Xử lý đổi thứ tự sắp xếp: Giữ nguyên kho trống ở đầu và áp dụng thứ tự giá
   const handleSortChange = (e) => {
     const newSort = e.target.value;
     setSortOrder(newSort);
+    setUnits((prev) => sortUnitsWithAvailableFirst(prev, newSort));
     fetchUnits(activeFilters, newSort);
   };
 
@@ -111,13 +216,17 @@ export default function BrowsePage() {
     fetchUnits(updated, sortOrder);
   };
 
-
   // Quản lý Drawer xem chi tiết kho
   const [selectedUnitForDrawer, setSelectedUnitForDrawer] = useState(null);
 
-  // Xử lý điều hướng khi bấm Xem chi tiết hoặc Đặt kho
-  const handleViewDetails = (unit) => {
+  // Mở Drawer xem nhanh tóm tắt gói kho
+  const handleOpenDrawer = (unit) => {
     setSelectedUnitForDrawer(unit);
+  };
+
+  // Điều hướng đến trang chi tiết kho (Unit Detail)
+  const handleViewDetails = (unit) => {
+    navigate(`/units/${unit.id}`);
   };
 
   const handleBook = (unit) => {
@@ -126,12 +235,12 @@ export default function BrowsePage() {
 
   // Lấy tên loại kho đang được lọc để hiển thị trên chip
   const activeTypeName = filterOptions.types.find(
-    (t) => String(t.id) === String(activeFilters.typeId)
+    (t) => String(t.id) === String(activeFilters.typeId),
   )?.name;
 
   // Lấy tên cơ sở đang được lọc để hiển thị trên chip
   const activeFacilityName = filterOptions.facilities?.find(
-    (f) => String(f.id) === String(activeFilters.facilityId)
+    (f) => String(f.id) === String(activeFilters.facilityId),
   )?.name;
 
   return (
@@ -142,9 +251,7 @@ export default function BrowsePage() {
         brandHref="/browse"
         roleLabel="KHÁCH HÀNG"
         avatarText={
-          user?.fullName
-            ? user.fullName.trim().charAt(0).toUpperCase()
-            : "KH"
+          user?.fullName ? user.fullName.trim().charAt(0).toUpperCase() : "KH"
         }
         navLinks={[
           { label: "Tìm thuê kho", href: "/browse", active: true },
@@ -180,7 +287,10 @@ export default function BrowsePage() {
         </section>
 
         {/* ── Thẻ bộ lọc (Filter Card) ── */}
-        <section className="browse-filter-card" aria-label="Bộ lọc tìm kiếm kho">
+        <section
+          className="browse-filter-card"
+          aria-label="Bộ lọc tìm kiếm kho"
+        >
           <form className="browse-filter-grid" onSubmit={handleSearchSubmit}>
             {/* 1. Loại kho */}
             <div className="browse-filter-field">
@@ -260,7 +370,8 @@ export default function BrowsePage() {
                 onChange={(e) => setSelectedFacility(e.target.value)}
               >
                 <option value="">Tất cả cơ sở</option>
-                {(filterOptions.facilities && filterOptions.facilities.length > 0
+                {(filterOptions.facilities &&
+                filterOptions.facilities.length > 0
                   ? filterOptions.facilities
                   : [
                       { id: 1, name: "Cơ sở Tân Bình (VN-SGN-01)" },
@@ -385,6 +496,7 @@ export default function BrowsePage() {
               <UnitCard
                 key={unit.id}
                 unit={unit}
+                onOpenDrawer={handleOpenDrawer}
                 onViewDetails={handleViewDetails}
                 onBook={handleBook}
               />
@@ -394,173 +506,205 @@ export default function BrowsePage() {
       </main>
 
       {/* ── Drawer xem chi tiết kho ── */}
-      {selectedUnitForDrawer && (
-        <Drawer
-          open={Boolean(selectedUnitForDrawer)}
-          headerLabel={`CHI TIẾT KHO · ${selectedUnitForDrawer.code}`}
-          onClose={() => setSelectedUnitForDrawer(null)}
-        >
-          <div className="browse-drawer-body">
-            <div className="browse-drawer-header">
-              <p className="browse-drawer-eyebrow">
-                {selectedUnitForDrawer.code} /{" "}
-                {selectedUnitForDrawer.facilityName || "CƠ SỞ TÂN BÌNH (VN-SGN-01)"}
-              </p>
-              <h2 className="browse-drawer-title">
-                {selectedUnitForDrawer.sizeM2} m² ·{" "}
-                {selectedUnitForDrawer.typeName || selectedUnitForDrawer.type || "Tiêu chuẩn"}
-              </h2>
-              <div className="browse-drawer-status-bar">
-                <Badge
-                  tone={
-                    (typeof selectedUnitForDrawer.availability === "object"
-                      ? selectedUnitForDrawer.availability?.status
-                      : selectedUnitForDrawer.availability) === "AVAILABLE_SOON" ||
-                    selectedUnitForDrawer.availability === "soon"
-                      ? "warning"
-                      : "success"
-                  }
+      <Drawer
+        open={Boolean(selectedUnitForDrawer)}
+        headerLabel={
+          selectedUnitForDrawer
+            ? `CHI TIẾT GÓI KHO · ${(selectedUnitForDrawer.typeName || selectedUnitForDrawer.type || "TIÊU CHUẨN").toUpperCase()} (${selectedUnitForDrawer.sizeM2} M²)`
+            : ""
+        }
+        onClose={() => setSelectedUnitForDrawer(null)}
+        footer={
+          selectedUnitForDrawer ? (
+            <div className="browse-drawer-footer">
+              <div className="browse-drawer-footer__price">
+                <div className="browse-drawer-footer__price-val">
+                  <strong>
+                    {new Intl.NumberFormat("vi-VN").format(
+                      selectedUnitForDrawer.baseMonthlyRent ||
+                        selectedUnitForDrawer.monthlyPrice ||
+                        0,
+                    )}{" "}
+                    ₫
+                  </strong>
+                  <span className="browse-drawer-footer__price-period">
+                    / tháng
+                  </span>
+                </div>
+              </div>
+              <div className="browse-drawer-footer__actions">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    const u = selectedUnitForDrawer;
+                    setSelectedUnitForDrawer(null);
+                    navigate(`/units/${u.id}`);
+                  }}
                 >
-                  {(typeof selectedUnitForDrawer.availability === "object"
-                    ? selectedUnitForDrawer.availability?.status
-                    : selectedUnitForDrawer.availability) === "AVAILABLE_SOON" ||
-                  selectedUnitForDrawer.availability === "soon"
-                    ? "Đang được thuê"
-                    : "Còn trống"}
-                </Badge>
-                <span className="browse-drawer-rent-pill">
-                  {new Intl.NumberFormat("vi-VN").format(
-                    selectedUnitForDrawer.baseMonthlyRent ||
-                      selectedUnitForDrawer.monthlyPrice ||
-                      0
-                  )}{" "}
-                  ₫ / tháng
-                </span>
+                  Chi tiết
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    const u = selectedUnitForDrawer;
+                    setSelectedUnitForDrawer(null);
+                    handleBook(u);
+                  }}
+                >
+                  Đặt kho ngay
+                </Button>
               </div>
             </div>
+          ) : null
+        }
+      >
+        {selectedUnitForDrawer &&
+          (() => {
+            const typeName =
+              selectedUnitForDrawer.typeName ||
+              selectedUnitForDrawer.type ||
+              "Tiêu chuẩn";
+            const facilityName =
+              selectedUnitForDrawer.facilityName || "Cơ sở Tân Bình (TP.HCM)";
+            const price =
+              selectedUnitForDrawer.baseMonthlyRent ||
+              selectedUnitForDrawer.monthlyPrice ||
+              0;
+            const capacity = getCapacityHint(selectedUnitForDrawer.sizeM2);
+            const isSoon =
+              (typeof selectedUnitForDrawer.availability === "object"
+                ? selectedUnitForDrawer.availability?.status
+                : selectedUnitForDrawer.availability) === "AVAILABLE_SOON" ||
+              selectedUnitForDrawer.availability === "soon";
+            const availableDate =
+              typeof selectedUnitForDrawer.availability === "object"
+                ? selectedUnitForDrawer.availability?.availableFromDate
+                : selectedUnitForDrawer.availableFrom;
 
-            {/* Thông số kỹ thuật */}
-            <h3 className="browse-drawer-section-title">THÔNG SỐ KHO</h3>
-            <dl className="spec-list">
-              <div className="spec-row">
-                <dt>Mã định danh kho</dt>
-                <dd style={{ fontFamily: "var(--font-mono)" }}>
-                  {selectedUnitForDrawer.code}
-                </dd>
-              </div>
-              <div className="spec-row">
-                <dt>Vị trí</dt>
-                <dd>
-                  Khu {selectedUnitForDrawer.zoneCode || selectedUnitForDrawer.zone || "A"} · Tầng{" "}
-                  {selectedUnitForDrawer.floor || 1}
-                </dd>
-              </div>
-              <div className="spec-row">
-                <dt>Diện tích thực tế</dt>
-                <dd>{selectedUnitForDrawer.sizeM2} m²</dd>
-              </div>
-              <div className="spec-row">
-                <dt>Thể tích quy ước</dt>
-                <dd>
-                  {(selectedUnitForDrawer.sizeM2 * 2.8).toFixed(1)} m³ (Trần cao 2.8m)
-                </dd>
-              </div>
-              <div className="spec-row">
-                <dt>Cơ chế truy cập</dt>
-                <dd>
-                  {selectedUnitForDrawer.accessType === "PIN"
-                    ? "Mã PIN 24/7"
-                    : selectedUnitForDrawer.accessType === "QR"
-                    ? "Quét mã QR"
-                    : selectedUnitForDrawer.accessType || "Mã PIN 24/7"}
-                </dd>
-              </div>
-              <div className="spec-row">
-                <dt>Cơ sở quản lý</dt>
-                <dd>
-                  {selectedUnitForDrawer.facilityName || "Tân Bình Depot (VN-SGN-01)"}
-                </dd>
-              </div>
-            </dl>
-
-            {/* Tiện ích nổi bật */}
-            {selectedUnitForDrawer.features &&
-              selectedUnitForDrawer.features.length > 0 && (
-                <div style={{ marginTop: "24px" }}>
-                  <h3 className="browse-drawer-section-title">TIỆN ÍCH KHO</h3>
-                  <div className="browse-drawer-features">
-                    {selectedUnitForDrawer.features.map((feat) => (
-                      <span key={feat} className="browse-drawer-feature-tag">
-                        {feat}
-                      </span>
-                    ))}
+            return (
+              <div className="browse-drawer-body">
+                {/* Tiêu đề & Giá gói thuê */}
+                <div className="browse-drawer-header">
+                  <p className="browse-drawer-eyebrow">
+                    {facilityName.toUpperCase()}
+                  </p>
+                  <h2 className="browse-drawer-title">
+                    {selectedUnitForDrawer.sizeM2} m² · Kho {typeName}
+                  </h2>
+                  <div className="browse-drawer-status-bar">
+                    <Badge tone={isSoon ? "warning" : "success"}>
+                      {isSoon ? "Sắp khả dụng" : "Còn trống · Nhận kho ngay"}
+                    </Badge>
+                    <span className="browse-drawer-rent-pill">
+                      {new Intl.NumberFormat("vi-VN").format(price)} ₫ / tháng
+                    </span>
                   </div>
                 </div>
-              )}
 
-            {/* Chính sách thuê & Giá */}
-            <div style={{ marginTop: "24px" }}>
-              <h3 className="browse-drawer-section-title">CHÍNH SÁCH THUÊ & GIÁ</h3>
-              <dl className="spec-list">
-                <div className="spec-row">
-                  <dt>Giá thuê mỗi tháng</dt>
-                  <dd style={{ color: "var(--color-ink)", fontWeight: 700 }}>
-                    {new Intl.NumberFormat("vi-VN").format(
-                      selectedUnitForDrawer.baseMonthlyRent ||
-                        selectedUnitForDrawer.monthlyPrice ||
-                        0
-                    )}{" "}
-                    ₫
-                  </dd>
-                </div>
-                <div className="spec-row">
-                  <dt>Tiền đặt cọc (1 tháng)</dt>
-                  <dd>
-                    {new Intl.NumberFormat("vi-VN").format(
-                      selectedUnitForDrawer.baseMonthlyRent ||
-                        selectedUnitForDrawer.monthlyPrice ||
-                        0
-                    )}{" "}
-                    ₫
-                  </dd>
-                </div>
-                <div className="spec-row">
-                  <dt>Chính sách áp dụng</dt>
-                  <dd>Chính sách giá v3</dd>
-                </div>
-                <div className="spec-row">
-                  <dt>Thời gian sẵn sàng</dt>
-                  <dd>
-                    {selectedUnitForDrawer.availability?.availableFromDate
-                      ? `Nhận kho từ ${selectedUnitForDrawer.availability.availableFromDate}`
-                      : "Sẵn sàng bàn giao ngay"}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+                {/* Hình ảnh trực quan không gian kho */}
+                <DrawerVisual unit={selectedUnitForDrawer} />
 
-            {/* Thao tác hành động */}
-            <div className="browse-drawer-footer">
-              <Button
-                variant="secondary"
-                onClick={() => setSelectedUnitForDrawer(null)}
-              >
-                Đóng
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  const u = selectedUnitForDrawer;
-                  setSelectedUnitForDrawer(null);
-                  handleBook(u);
-                }}
-              >
-                Đặt kho ngay
-              </Button>
-            </div>
-          </div>
-        </Drawer>
-      )}
+                {/* Gợi ý sức chứa thực tế cho khách thuê */}
+                <div className="browse-drawer-capacity">
+                  <div className="browse-drawer-capacity__header">
+                    <Package size={17} weight="bold" />
+                    <span>{capacity.title}</span>
+                  </div>
+                  <p className="browse-drawer-capacity__desc">
+                    {capacity.detail}
+                  </p>
+                </div>
+
+                {/* Thông số không gian thiết thực */}
+                <h3 className="browse-drawer-section-title">
+                  THÔNG SỐ KHÔNG GIAN
+                </h3>
+                <dl className="spec-list">
+                  <div className="spec-row">
+                    <dt>Diện tích sàn sử dụng</dt>
+                    <dd style={{ fontWeight: 700 }}>
+                      {selectedUnitForDrawer.sizeM2} m²
+                    </dd>
+                  </div>
+                  <div className="spec-row">
+                    <dt>Chiều cao trần</dt>
+                    <dd>2.8 m (tối đa xếp chồng thùng đồ)</dd>
+                  </div>
+                  <div className="spec-row">
+                    <dt>Thể tích chứa đồ ước tính</dt>
+                    <dd>
+                      ~{(selectedUnitForDrawer.sizeM2 * 2.8).toFixed(1)} m³
+                    </dd>
+                  </div>
+                  <div className="spec-row">
+                    <dt>Cơ chế truy cập</dt>
+                    <dd>Mã PIN bảo mật riêng 24/7</dd>
+                  </div>
+                  <div className="spec-row">
+                    <dt>Địa điểm cơ sở</dt>
+                    <dd>{facilityName}</dd>
+                  </div>
+                </dl>
+
+                {/* Tiện ích an ninh & bảo vệ tài sản */}
+                {selectedUnitForDrawer.features &&
+                  selectedUnitForDrawer.features.length > 0 && (
+                    <div style={{ marginTop: "20px" }}>
+                      <h3 className="browse-drawer-section-title">
+                        TIỆN ÍCH KHO
+                      </h3>
+                      <div className="browse-drawer-features">
+                        {selectedUnitForDrawer.features.map((feat) => (
+                          <span
+                            key={feat}
+                            className="browse-drawer-feature-tag"
+                          >
+                            {feat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Chi phí & Chính sách thuê minh bạch */}
+                <div style={{ marginTop: "20px" }}>
+                  <h3 className="browse-drawer-section-title">
+                    CHI PHÍ & CHÍNH SÁCH THUÊ
+                  </h3>
+                  <dl className="spec-list">
+                    <div className="spec-row">
+                      <dt>Giá thuê niêm yết</dt>
+                      <dd
+                        style={{ color: "var(--color-ink)", fontWeight: 700 }}
+                      >
+                        {new Intl.NumberFormat("vi-VN").format(price)} ₫ / tháng
+                      </dd>
+                    </div>
+                    <div className="spec-row">
+                      <dt>Tiền đặt cọc (hoàn lại khi trả kho)</dt>
+                      <dd>
+                        {new Intl.NumberFormat("vi-VN").format(price)} ₫ (1
+                        tháng)
+                      </dd>
+                    </div>
+                    <div className="spec-row">
+                      <dt>Thời gian bàn giao</dt>
+                      <dd>
+                        {isSoon && availableDate
+                          ? `Bàn giao từ ${availableDate}`
+                          : "Sẵn sàng bàn giao ngay"}
+                      </dd>
+                    </div>
+                    <div className="spec-row">
+                      <dt>Thời hạn thuê</dt>
+                      <dd>Linh hoạt theo tháng · Gia hạn tự động</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            );
+          })()}
+      </Drawer>
 
       {/* ── Footer ── */}
       <Footer
