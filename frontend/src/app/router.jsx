@@ -3,6 +3,9 @@ import { useAuth } from "../context/AuthContext.jsx";
 import DesignSystemPage from "../pages/DesignSystemPage/DesignSystemPage.jsx";
 import LoginPage from "../pages/LoginPage/LoginPage.jsx";
 import RegisterPage from "../pages/RegisterPage/RegisterPage.jsx";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.jsx";
+import BrowsePage from "../pages/BrowsePage/BrowsePage.jsx";
+import UnitDetailPage from "../pages/UnitDetailPage/UnitDetailPage.jsx";
 import PaymentPage from "../pages/PaymentPage/PaymentPage.jsx";
 import ForbiddenPage from "../pages/ForbiddenPage/ForbiddenPage.jsx";
 import RoleLandingPlaceholder from "../pages/RoleLandingPlaceholder/RoleLandingPlaceholder.jsx";
@@ -37,12 +40,13 @@ export default function AppRouter() {
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/403" element={<ForbiddenPage />} />
       <Route path="/demo" element={<DesignSystemPage />} />
 
       {/* ── 2. Customer Routes (contracts/routes.yaml) ── */}
-      <Route path="/browse" element={<DesignSystemPage />} />
-      <Route path="/units/:unitId" element={<DesignSystemPage />} />
+      <Route path="/browse" element={<BrowsePage />} />
+      <Route path="/units/:unitId" element={<UnitDetailPage />} />
       <Route
         path="/units/:unitId/book"
         element={

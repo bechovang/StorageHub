@@ -25,6 +25,7 @@ import {
 import Header from "../../components/Header/Header.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { paymentService } from "../../services/paymentService.js";
+import { getUnitDetail } from "../../services/unitService.js";
 import { PaymentValidator } from "../../validation";
 
 import "./PaymentPage.css";
@@ -52,7 +53,7 @@ const DEFAULT_DEMO_RESERVATION = {
 };
 
 export default function PaymentPage() {
-  const { reservationId: paramResId, paymentId: paramPayId } = useParams();
+  const { reservationId: paramResId, paymentId: paramPayId, unitId: paramUnitId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, login } = useAuth();
@@ -175,6 +176,48 @@ export default function PaymentPage() {
 
       try {
         setLoadingReservation(true);
+        // Nếu truy cập từ luồng /units/:unitId/book -> tải trực tiếp thông tin kho
+        if (paramUnitId) {
+          try {
+            const u = await getUnitDetail(paramUnitId);
+            const duration = parseInt(searchParams.get("durationMonths") || searchParams.get("duration") || 3, 10);
+            const start = searchParams.get("startDate") || "2026-10-03";
+            const monthly = u.baseMonthlyRent || 345000;
+            const deposit = Math.round((monthly * duration * 10) / 100);
+
+            const sDate = new Date(start);
+            const eDate = new Date(sDate);
+            eDate.setMonth(eDate.getMonth() + duration);
+            eDate.setDate(eDate.getDate() - 1);
+
+            if (isMounted) {
+              setReservation({
+                id: u.id,
+                code: `RSV-2026-${u.code || u.id}`,
+                status: "PENDING_PAYMENT",
+                depositAmount: deposit,
+                depositStatus: "UNPAID",
+                durationMonths: duration,
+                startDate: start,
+                endDate: eDate.toISOString().split("T")[0],
+                unit: {
+                  code: u.code || `UNIT-${u.id}`,
+                  sizeM2: u.sizeM2 || 5,
+                  typeName: u.typeName || "Kho tiêu chuẩn",
+                  monthlyPrice: monthly,
+                  depot: u.facilityName || "Tân Bình Gateway",
+                  building: `Tòa nhà B · Tầng ${u.floor || 1}`,
+                  dimensions: u.dimensions || `${u.sizeM2} m²`,
+                  volume: `${(u.sizeM2 * 2.8).toFixed(1)} m³`,
+                },
+              });
+              setLoadingReservation(false);
+            }
+            return;
+          } catch {
+            // fallback nếu lỗi
+          }
+        }
         // Tải danh sách active reservations
         const listData = await paymentService.listMyReservations({ group: "active" });
         if (isMounted && listData?.items) {

@@ -190,6 +190,25 @@ export class AuthValidator {
             firstError: errorKeys.length > 0 ? errors[errorKeys[0]] : null,
         };
     }
+
+    /**
+     * Validate toàn bộ form Quên mật khẩu
+     * @param {{ email?: string }} data
+     * @returns {{ isValid: boolean, errors: Record<string, string>, firstError: string | null }}
+     */
+    static validateForgotPassword(data = {}) {
+        const errors = {};
+
+        const emailError = this.validateEmail(data.email);
+        if (emailError) errors.email = emailError;
+
+        const errorKeys = Object.keys(errors);
+        return {
+            isValid: errorKeys.length === 0,
+            errors,
+            firstError: errorKeys.length > 0 ? errors[errorKeys[0]] : null,
+        };
+    }
 }
 
 export default AuthValidator;
