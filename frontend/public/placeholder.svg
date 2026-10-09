@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@700;800&amp;family=Inter:wght@500;600;700&amp;display=swap');
+      .brand-title {
+        font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-weight: 800;
+        font-size: 32px;
+        letter-spacing: 2.5px;
+        fill: #000000;
+      }
+      .brand-sub {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-weight: 700;
+        font-size: 11px;
+        letter-spacing: 3.5px;
+        fill: #555555;
+      }
+      .tech-mono {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+    </style>
+  </defs>
+
+  <!-- Nền xám kỹ thuật Swiss Grid -->
+  <rect width="720" height="400" fill="#f5f5f5" />
+  <rect x="0.5" y="0.5" width="719" height="399" fill="none" stroke="#d7d7d7" stroke-width="1" />
+
+  <!-- Hệ trục toạ độ và lưới kiến trúc mờ -->
+  <line x1="0" y1="200" x2="720" y2="200" stroke="#e5e5e5" stroke-width="1" stroke-dasharray="4 4" />
+  <line x1="360" y1="0" x2="360" y2="400" stroke="#e5e5e5" stroke-width="1" stroke-dasharray="4 4" />
+
+  <!-- Khối nhận diện thương hiệu trung tâm (StorageHub Brandmark + Typography) -->
+  <rect x="120" y="120" width="480" height="160" fill="#ffffff" stroke="#000000" stroke-width="1.5" />
+
+  <!-- Biểu tượng StorageHub 3 cột chuẩn (Brandmark) -->
+  <g id="brandmark">
+    <rect x="160" y="148" width="18" height="54" fill="#000000" />
+    <line x1="178" y1="148" x2="178" y2="202" stroke="#ffffff" stroke-width="1.5" />
+    <rect x="178" y="148" width="18" height="54" fill="#000000" />
+    <line x1="196" y1="148" x2="196" y2="202" stroke="#ffffff" stroke-width="1.5" />
+    <rect x="196" y="148" width="18" height="54" fill="#dc2626" />
+    <rect x="160" y="148" width="54" height="54" fill="none" stroke="#000000" stroke-width="1.5" />
+  </g>
+
+  <!-- Typography: STORAGEHUB & HỆ THỐNG KHO TỰ QUẢN -->
+  <text x="236" y="178" class="brand-title">STORAGEHUB</text>
+  <text x="238" y="198" class="brand-sub">HỆ THỐNG KHO TỰ QUẢN</text>
+
+  <!-- Đường phân cách kỹ thuật trong card -->
+  <line x1="160" y1="228" x2="560" y2="228" stroke="#e5e5e5" stroke-width="1" />
+
+  <!-- Dòng trạng thái placeholder -->
+  <text x="160" y="254" class="tech-mono" fill="#767676">[ ẢNH ĐANG ĐƯỢC CẬP NHẬT ]</text>
+  <text x="560" y="254" text-anchor="end" class="tech-mono" fill="#dc2626">TIÊU CHUẨN AN TOÀN 24/7</text>
+</svg>
