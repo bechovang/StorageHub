@@ -12,6 +12,7 @@ import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
 import MyRentalsPage from "../pages/MyRentalsPage/MyRentalsPage.jsx";
 import RentalDetailPage from "../pages/RentalDetailPage/RentalDetailPage.jsx";
 import CheckInPassPage from "../pages/CheckInPassPage/CheckInPassPage.jsx";
+import TaskBoardPage from "../pages/TaskBoardPage/TaskBoardPage.jsx";
 
 const ROLE_LANDINGS = {
   CUSTOMER: "/browse",
@@ -113,7 +114,7 @@ export default function AppRouter() {
         path="/tasks"
         element={
           <ProtectedRoute allowedRoles={["STAFF", "SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/tasks" />
+            <TaskBoardPage />
           </ProtectedRoute>
         }
       />
