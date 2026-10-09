@@ -1,0 +1,567 @@
+/* ============================================================================
+   TaskBoardPage.css — Phong cách Swiss Grid / Clean Utility theo Design Tokens
+   ============================================================================ */
+
+.taskboard-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--header-height, 64px));
+  background-color: var(--color-surface-page, #f5f5f5);
+  color: var(--color-ink, #000000);
+}
+
+/* ── Context Subheader Bar ── */
+.taskboard-context-bar {
+  background-color: var(--color-surface, #ffffff);
+  border-bottom: var(--border);
+  padding: 8px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--color-secondary, #555555);
+}
+
+.taskboard-context-left,
+.taskboard-context-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-status-success, #16a34a);
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+}
+
+/* ── Main Canvas ── */
+.taskboard-main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Page Header ── */
+.taskboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.taskboard-title-group h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shift-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 2px;
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  text-transform: uppercase;
+}
+
+.taskboard-subtitle {
+  margin: 6px 0 0 0;
+  font-size: 0.84rem;
+  color: var(--color-secondary, #555555);
+}
+
+.taskboard-subtitle strong {
+  color: var(--color-ink, #000000);
+}
+
+/* ── Filter Tabs ── */
+.taskboard-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: var(--border);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.filter-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-secondary, #555555);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filter-tab-btn:hover {
+  color: var(--color-ink, #000000);
+}
+
+.filter-tab-btn.is-active {
+  color: var(--color-ink, #000000);
+  border-bottom-color: var(--color-ink, #000000);
+}
+
+.filter-tab-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
+.filter-tab-btn.is-active .filter-tab-badge {
+  background-color: var(--color-ink, #000000);
+  color: #ffffff;
+}
+
+/* ── Kanban Board (3 Columns) ── */
+.kanban-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.kanban-column {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+  padding: 14px;
+  gap: 12px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.kanban-column.is-drag-over {
+  background-color: #e2e8f0;
+  border-color: #4f46e5;
+  box-shadow: inset 0 0 0 1px #4f46e5;
+}
+
+.kanban-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.kanban-column-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.kanban-column-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  color: #475569;
+}
+
+.kanban-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 200px;
+}
+
+/* ── Task Card ── */
+.task-card {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  position: relative;
+  overflow: hidden;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: grab;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.task-card:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.task-card.is-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.task-card--done {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  opacity: 0.85;
+}
+
+.task-card__status-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+}
+
+.task-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-left: 4px;
+}
+
+.task-type-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.task-card__ref {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-secondary, #555555);
+}
+
+.task-card__body {
+  padding-left: 4px;
+}
+
+.task-card__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 2px 0;
+  color: var(--color-ink, #000000);
+}
+
+.task-card__meta {
+  font-size: 0.78rem;
+  color: var(--color-secondary, #555555);
+  margin: 0;
+}
+
+.task-card__extra-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  padding: 3px 6px;
+  margin-top: 4px;
+  border-radius: 2px;
+}
+
+.task-card__extra-badge--pin {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.task-card__extra-badge--alert {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.task-card__extra-badge--priority {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* ── Card Footer & Controls ── */
+.task-card__footer {
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-left: 4px;
+}
+
+.task-card__due {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--color-secondary, #555555);
+}
+
+.task-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-nav-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 3px 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.card-nav-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.card-ritual-btn {
+  background-color: var(--color-ink, #000000);
+  border: 1px solid var(--color-ink, #000000);
+  color: #ffffff;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.card-ritual-btn:hover {
+  opacity: 0.85;
+}
+
+/* ── Snap-back Toast Notification ── */
+.snapback-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #1e1b4b;
+  color: #ffffff;
+  border-left: 4px solid var(--color-accent, #dc2626);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: var(--z-toast, 100);
+  max-width: 460px;
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.snapback-toast__icon {
+  color: #ef4444;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.snapback-toast__text {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.snapback-toast__close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 4px;
+  margin-left: 8px;
+}
+
+.snapback-toast__close:hover {
+  color: #ffffff;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ── Ritual Drawers Styling (US-15 & US-21) ── */
+.ritual-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 0;
+}
+
+.ritual-step-card {
+  border: 1px solid var(--color-line, #d7d7d7);
+  background: var(--color-surface, #ffffff);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ritual-step-card.is-completed {
+  border-color: #a7f3d0;
+  background-color: #f0fdf4;
+}
+
+.ritual-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ritual-step-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ritual-photo-preview {
+  width: 100%;
+  height: 140px;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8fafc;
+  cursor: pointer;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #64748b;
+  position: relative;
+  overflow: hidden;
+}
+
+.ritual-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.access-pin-reveal-box {
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 16px;
+  text-align: center;
+  border-radius: 2px;
+}
+
+.access-pin-number {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #34d399;
+  margin: 6px 0;
+}
+
+/* ── Inspection Checklist Table (US-21) ── */
+.inspection-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.inspection-table th,
+.inspection-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.inspection-table th {
+  background-color: #f8fafc;
+  font-weight: 700;
+  color: #475569;
+}
+
+.inspection-radio-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inspection-radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 0.76rem;
+}
+
+.inspection-radio-label input {
+  cursor: pointer;
+}
+
+.damage-charge-item {
+  display: grid;
+  grid-template-columns: 1fr 140px 32px;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .kanban-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kanban-column {
+    min-height: auto;
+  }
+}
