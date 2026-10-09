@@ -192,7 +192,6 @@ export default function RentalDetailPage() {
     const [showExtensionModal, setShowExtensionModal] = useState(false);
     const [showCheckoutModal, setShowCheckoutModal] = useState(false);
     const [toastMessage, setToastMessage] = useState(null);
-
     const load = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -569,7 +568,6 @@ export default function RentalDetailPage() {
                                 </SectionCard>
                             </div>
                         </div>
-
                         {/* ── Sprint 2 Modals ── */}
                         <ExtensionModal
                             isOpen={showExtensionModal}
