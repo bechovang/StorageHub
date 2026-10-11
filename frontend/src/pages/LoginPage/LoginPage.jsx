@@ -59,9 +59,10 @@ export default function LoginPage() {
                 {/* Cột phải: form */}
                 <div className="login-form-col">
                     <div className="login-card">
+                        <div className="login-card__accent-bar" aria-hidden="true" />
                         <div className="login-card__header">
-                            <p className="login-card__eyebrow">StorageHub</p>
-                            <h2 className="login-card__title">Đăng nhập</h2>
+                            <h2 className="login-card__title">Đăng nhập StorageHub</h2>
+                            <p className="login-card__subtitle">Quản lý kho và tài khoản của bạn</p>
                         </div>
 
                         <div className="login-card__body">
@@ -87,9 +88,9 @@ export default function LoginPage() {
                                 aria-describedby={generalError ? "login-error-banner" : undefined}
                             >
                                 {/* Email */}
-                                <div className={`login-field ${email ? "login-field--has-value" : ""}`}>
+                                <div className="login-field">
                                     <label className="login-field__label" htmlFor="login-email">
-                                        Email đăng nhập<span aria-hidden="true">*</span>
+                                        Email đăng nhập <span className="login-field__req">*</span>
                                     </label>
                                     <input
                                         id="login-email"
@@ -106,10 +107,15 @@ export default function LoginPage() {
                                 </div>
 
                                 {/* Password */}
-                                <div className={`login-field ${password ? "login-field--has-value" : ""}`}>
-                                    <label className="login-field__label" htmlFor="login-password">
-                                        Mật khẩu<span aria-hidden="true">*</span>
-                                    </label>
+                                <div className="login-field">
+                                    <div className="login-field__label-row">
+                                        <label className="login-field__label" htmlFor="login-password">
+                                            Mật khẩu <span className="login-field__req">*</span>
+                                        </label>
+                                        <Link to="/forgot-password" className="login-link login-link--forgot">
+                                            Quên mật khẩu?
+                                        </Link>
+                                    </div>
                                     <input
                                         id="login-password"
                                         className="login-field__input"
@@ -122,11 +128,6 @@ export default function LoginPage() {
                                         placeholder="••••••••"
                                         aria-required="true"
                                     />
-                                    <div className="login-field__header">
-                                        <Link to="/forgot-password" className="login-link login-link--forgot">
-                                            Quên mật khẩu?
-                                        </Link>
-                                    </div>
                                 </div>
 
                                 <button
