@@ -505,3 +505,637 @@
     border: 1px dashed #e5e7eb;
     margin: 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Sprint 2 Additions: Actions, Toast & Modals (US-17, US-18, US-19, US-20)
+═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─ Outline white button ────────────────────── */
+.rd-hero__btn--outline-white {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+.rd-hero__btn--outline-white:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* ─ Toast Notification (US-17) ──────────────── */
+.rd-toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    animation: slideDown 0.3s ease-out;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.rd-toast--success {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    color: #166534;
+}
+
+.rd-toast--info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+.rd-toast svg { flex-shrink: 0; }
+.rd-toast span { flex: 1; font-weight: 500; }
+
+.rd-toast__close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.7;
+    line-height: 1;
+}
+
+.rd-toast__close:hover { opacity: 1; }
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─ Checkout Requested Banner (US-20) ───────── */
+.rd-checkout-requested-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    color: #92400e;
+}
+
+.rd-checkout-requested-banner__content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.rd-checkout-icon {
+    color: #d97706;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.rd-checkout-requested-banner p {
+    margin: 4px 0 0;
+    font-size: 0.84rem;
+    color: #b45309;
+}
+
+.rd-btn-cancel-checkout {
+    background: #fff;
+    border: 1px solid #f59e0b;
+    color: #b45309;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+}
+
+.rd-btn-cancel-checkout:hover {
+    background: #fef3c7;
+    border-color: #d97706;
+}
+
+/* ─ Modal Backdrop & Container ──────────────── */
+.rd-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 20px;
+}
+
+.rd-modal-container {
+    background: #fff;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    animation: modalPop 0.25s ease-out;
+}
+
+.rd-modal-container--checkout {
+    max-width: 600px;
+}
+
+@keyframes modalPop {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.rd-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.rd-modal-header__title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rd-modal-icon {
+    color: #1d4ed8;
+    background: #eff6ff;
+    padding: 8px;
+    border-radius: 10px;
+    width: 38px;
+    height: 38px;
+}
+
+.rd-modal-icon--orange {
+    color: #ea580c;
+    background: #fff7ed;
+}
+
+.rd-modal-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.rd-modal-subtitle {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.rd-modal-close-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    transition: all 0.15s;
+}
+
+.rd-modal-close-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.rd-modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* ─ Form elements ───────────────────────────── */
+.rd-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rd-form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.rd-form-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.rd-form-input,
+.rd-form-select {
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #0f172a;
+    transition: border-color 0.15s;
+    outline: none;
+    font-family: inherit;
+}
+
+.rd-form-input:focus,
+.rd-form-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.rd-form-input.is-error {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.rd-form-hint {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* ─ Current date box & Quick presets ────────── */
+.rd-current-date-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.rd-current-badge {
+    background: #e2e8f0;
+    color: #334155;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.rd-quick-presets {
+    display: flex;
+    gap: 10px;
+}
+
+.rd-preset-btn {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.rd-preset-btn:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.rd-preset-btn.is-selected {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+
+/* ─ Conflict Alert Banner (FR-16) ───────────── */
+.rd-conflict-alert {
+    display: flex;
+    gap: 14px;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #9f1239;
+    font-size: 0.84rem;
+}
+
+.rd-conflict-alert__icon {
+    color: #e11d48;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.rd-conflict-alert__title {
+    margin: 0 0 4px;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.rd-conflict-alert__text {
+    margin: 0 0 6px;
+    line-height: 1.4;
+}
+
+.rd-conflict-alert__boundary {
+    margin: 0 0 10px;
+    font-weight: 600;
+    color: #be123c;
+    background: rgba(225, 29, 72, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.rd-btn-fix-conflict {
+    display: block;
+    background: #e11d48;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.rd-btn-fix-conflict:hover {
+    background: #be123c;
+}
+
+/* ─ Price Breakdown Box ─────────────────────── */
+.rd-price-breakdown {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.rd-price-breakdown__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+}
+
+.rd-price-breakdown__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rd-price-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.86rem;
+    color: #475569;
+}
+
+.rd-price-row--sub {
+    flex-direction: column;
+    gap: 2px;
+    color: #64748b;
+    font-size: 0.78rem;
+    padding-left: 10px;
+    border-left: 2px solid #cbd5e1;
+}
+
+.rd-price-row--total {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    padding-top: 4px;
+}
+
+.rd-topup-value {
+    color: #d97706;
+    font-weight: 600;
+}
+
+.rd-total-price {
+    font-size: 1.15rem;
+    color: #1d4ed8;
+}
+
+.rd-info-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 4px;
+    color: #64748b;
+    cursor: help;
+}
+
+.rd-notice-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: #166534;
+    line-height: 1.4;
+}
+
+/* ─ Settlement Guide (FR-17) ────────────────── */
+.rd-settlement-guide {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.rd-settlement-guide__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0369a1;
+    margin-bottom: 12px;
+}
+
+.rd-settlement-deposit-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #bfdbfe;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #1e3a8a;
+    margin-bottom: 10px;
+}
+
+.rd-settlement-desc {
+    font-size: 0.82rem;
+    color: #334155;
+    margin: 0 0 8px;
+}
+
+.rd-settlement-checklist {
+    margin: 0 0 12px;
+    padding-left: 20px;
+    font-size: 0.8rem;
+    color: #475569;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rd-settlement-formula-box {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px dashed #7dd3fc;
+}
+
+.rd-formula-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #0369a1;
+    margin-bottom: 4px;
+}
+
+.rd-formula-code {
+    font-family: monospace;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #0284c7;
+    margin-bottom: 6px;
+}
+
+.rd-settlement-formula-box small {
+    font-size: 0.74rem;
+    color: #64748b;
+    display: block;
+    line-height: 1.4;
+}
+
+/* ─ Checkbox & Footer ───────────────────────── */
+.rd-checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #334155;
+}
+
+.rd-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.rd-checkbox-label input {
+    margin-top: 3px;
+    cursor: pointer;
+}
+
+.rd-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.rd-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.rd-btn-primary:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.rd-btn-primary:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.rd-btn-secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.rd-btn-secondary:hover:not(:disabled) {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.rd-btn-checkout-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ea580c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.rd-btn-checkout-submit:hover:not(:disabled) {
+    background: #c2410c;
+}
+
+.rd-btn-checkout-submit:disabled {
+    background: #fdba74;
+    cursor: not-allowed;
+}
+
+.rd-form-error-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+}

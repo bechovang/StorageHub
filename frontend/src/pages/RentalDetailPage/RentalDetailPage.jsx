@@ -13,9 +13,15 @@ import {
     Seal,
     ArrowRight,
     ArrowClockwise,
+    CalendarPlus,
+    SignOut,
+    Clock,
+    Check,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { getReservation } from "../../services/rentalService.js";
+import ExtensionModal from "./ExtensionModal.jsx";
+import CheckoutRequestModal from "./CheckoutRequestModal.jsx";
 import "./RentalDetailPage.css";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -182,6 +188,10 @@ export default function RentalDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Sprint 2 Modals State (US-18, US-19, US-20)
+    const [showExtensionModal, setShowExtensionModal] = useState(false);
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+    const [toastMessage, setToastMessage] = useState(null);
     const load = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -225,6 +235,94 @@ export default function RentalDetailPage() {
             isMounted = false;
         };
     }, [reservationId, navigate]);
+
+    // Tự tắt Toast sau 4 giây (theo chuẩn US-17 / FR-33)
+    useEffect(() => {
+        if (!toastMessage) return;
+        const timer = setTimeout(() => {
+            setToastMessage(null);
+        }, 4000);
+        return () => clearTimeout(timer);
+    }, [toastMessage]);
+
+    // Xử lý xác nhận gia hạn (US-18 & US-19)
+    const handleConfirmExtension = async (extensionData) => {
+        setReservation((prev) => {
+            const existingContracts = prev.contracts || [];
+            const originalContract = existingContracts.find((c) => c.kind === "ORIGINAL") || existingContracts[0];
+            const newAddendumCode = originalContract ? `${originalContract.code}-A1` : "CT-1042-A1";
+
+            const updatedContracts = existingContracts.map((c) => ({
+                ...c,
+                isLatest: false,
+            }));
+
+            updatedContracts.push({
+                id: Date.now(),
+                code: newAddendumCode,
+                kind: "ADDENDUM",
+                status: "AWAITING_SIGNATURE",
+                isLatest: true,
+                signatureDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+            });
+
+            const newPayments = [
+                ...(prev.payments || []),
+                {
+                    id: Date.now(),
+                    purpose: "EXTENSION_FEE",
+                    method: "CARD",
+                    amount: extensionData.totalPayable,
+                    status: "SUCCEEDED",
+                    receiptCode: `RT-EXT-${Date.now().toString().slice(-4)}`,
+                    paidAt: new Date().toISOString(),
+                },
+            ];
+
+            return {
+                ...prev,
+                endDate: extensionData.newEndDate,
+                durationMonths: (prev.durationMonths || 3) + extensionData.addedMonths,
+                depositAmount: extensionData.newDepositHeld,
+                contracts: updatedContracts,
+                payments: newPayments,
+            };
+        });
+
+        setToastMessage({
+            type: "success",
+            text: `Gia hạn thành công! Ngày trả kho mới: ${fmtDate(extensionData.newEndDate)}. Phụ lục hợp đồng đã sinh ra (hẹn ký tại quầy trong 7 ngày).`,
+        });
+    };
+
+    // Xử lý gửi yêu cầu trả kho (US-20)
+    const handleConfirmCheckoutRequest = async (checkoutData) => {
+        setReservation((prev) => ({
+            ...prev,
+            status: "CHECKOUT_REQUESTED",
+            checkoutRequestedDate: checkoutData.requestedDate,
+            checkoutTimeSlot: checkoutData.timeSlot,
+            checkoutReason: checkoutData.reason,
+        }));
+
+        setToastMessage({
+            type: "success",
+            text: `Đã gửi yêu cầu trả kho cho ngày ${fmtDate(checkoutData.requestedDate)}. Nhân viên ca trực sẽ tiến hành kiểm tra và tất toán cọc tại quầy.`,
+        });
+    };
+
+    // Hủy yêu cầu trả kho
+    const handleCancelCheckoutRequest = () => {
+        setReservation((prev) => ({
+            ...prev,
+            status: "CHECKED_IN",
+        }));
+
+        setToastMessage({
+            type: "info",
+            text: "Đã hủy yêu cầu trả kho. Trạng thái đơn tiếp tục duy trì Đang thuê kho.",
+        });
+    };
 
     const canCheckIn = reservation?.status === "RESERVED";
     const needsPayment = reservation?.status === "PENDING_PAYMENT";
@@ -304,11 +402,69 @@ export default function RentalDetailPage() {
                                         <ArrowRight size={14} weight="bold" />
                                     </Link>
                                 )}
+
+                                {/* Sprint 2: Actions cho trạng thái CHECKED_IN */}
+                                {reservation.status === "CHECKED_IN" && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            className="rd-hero__btn rd-hero__btn--primary"
+                                            onClick={() => setShowExtensionModal(true)}
+                                            title="Gia hạn thời gian thuê kho"
+                                        >
+                                            <CalendarPlus size={16} weight="bold" />
+                                            Gia hạn thuê kho
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="rd-hero__btn rd-hero__btn--outline-white"
+                                            onClick={() => setShowCheckoutModal(true)}
+                                            title="Gửi yêu cầu trả kho"
+                                        >
+                                            <SignOut size={16} weight="bold" />
+                                            Yêu cầu trả kho
+                                        </button>
+                                    </>
+                                )}
+
                                 <button onClick={load} className="rd-hero__btn rd-hero__btn--ghost" title="Tải lại">
                                     <ArrowClockwise size={14} />
                                 </button>
                             </div>
                         </div>
+
+                        {/* ── Toast notification nổi (US-17) ── */}
+                        {toastMessage && (
+                            <div className={`rd-toast rd-toast--${toastMessage.type}`}>
+                                <CheckCircle size={18} weight="fill" />
+                                <span>{toastMessage.text}</span>
+                                <button className="rd-toast__close" onClick={() => setToastMessage(null)}>×</button>
+                            </div>
+                        )}
+
+                        {/* ── Checkout Requested Callout (US-20) ── */}
+                        {reservation.status === "CHECKOUT_REQUESTED" && (
+                            <div className="rd-checkout-requested-banner">
+                                <div className="rd-checkout-requested-banner__content">
+                                    <Clock size={22} weight="fill" className="rd-checkout-icon" />
+                                    <div>
+                                        <strong>Đang chờ làm thủ tục trả kho tại quầy Tân Bình Depot</strong>
+                                        <p>
+                                            Yêu cầu trả kho đã gửi cho ngày{" "}
+                                            <strong>{fmtDate(reservation.checkoutRequestedDate || reservation.endDate)}</strong>.
+                                            Vui lòng mang thẻ từ, khóa kho đến quầy để kiểm tra và nhận hoàn tiền cọc minh bạch.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="rd-btn-cancel-checkout"
+                                    onClick={handleCancelCheckoutRequest}
+                                >
+                                    Hủy yêu cầu
+                                </button>
+                            </div>
+                        )}
 
                         {/* ── Expired callout ── */}
                         {isExpired && reservation.depositForfeitReason && (
@@ -321,7 +477,7 @@ export default function RentalDetailPage() {
                             </div>
                         )}
 
-                        {/* ── Unsigned addendum callout (US-13 rule) ── */}
+                        {/* ── Unsigned addendum callout (US-13 & US-19 rule) ── */}
                         {unsignedAddendum && (
                             <div className="rd-warning-callout">
                                 <WarningCircle size={20} weight="fill" />
@@ -412,6 +568,20 @@ export default function RentalDetailPage() {
                                 </SectionCard>
                             </div>
                         </div>
+                        {/* ── Sprint 2 Modals ── */}
+                        <ExtensionModal
+                            isOpen={showExtensionModal}
+                            onClose={() => setShowExtensionModal(false)}
+                            reservation={reservation}
+                            onConfirmExtension={handleConfirmExtension}
+                        />
+
+                        <CheckoutRequestModal
+                            isOpen={showCheckoutModal}
+                            onClose={() => setShowCheckoutModal(false)}
+                            reservation={reservation}
+                            onConfirmCheckoutRequest={handleConfirmCheckoutRequest}
+                        />
                     </>
                 )}
             </div>
