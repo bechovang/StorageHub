@@ -40,8 +40,6 @@ export default function AppRouter() {
       {/* ── 1. Public & Root Routes ── */}
       <Route path="/" element={<RootRedirect />} />
 
-      {/* ── Route Transition Shell (US-4 / Neo-brutalist Route Animations) ── */}
-      <Route element={<PageTransition />}>
         <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -184,7 +182,6 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
-      </Route>
 
       {/* ── 8. Fallback ── */}
       <Route path="*" element={<Navigate to="/" replace />} />

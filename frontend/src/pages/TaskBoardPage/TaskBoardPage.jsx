@@ -29,10 +29,8 @@ import {
   completeCleaningRitual,
   resolveSupportTicket,
 } from "../../services/taskService.js";
+import { formatVND as formatVnd, PLACEHOLDER_UNIT_IMAGE } from "../../utils/formatters.js";
 import "./TaskBoardPage.css";
-
-const formatVnd = (amount) =>
-  `${new Intl.NumberFormat("vi-VN").format(Math.round(amount || 0))} ₫`;
 
 export default function TaskBoardPage() {
   const [tasks, setTasks] = useState([]);
@@ -510,7 +508,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
     try {
       await completeCheckinRitual(task.taskId, {
         paymentMethod,
-        contractPhotoUrl: "/placeholder.svg",
+        contractPhotoUrl: PLACEHOLDER_UNIT_IMAGE,
         accessPin: task.accessPin || "8842-Active",
       });
       onSuccess();
