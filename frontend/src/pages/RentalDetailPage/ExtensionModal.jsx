@@ -273,7 +273,7 @@ export default function ExtensionModal({
                             </div>
 
                             <div className="rd-notice-box">
-                                <CheckCircle size={16} weight="fill" color="#16a34a" />
+                                <CheckCircle size={16} weight="fill" color="var(--color-status-success, #16a34a)" />
                                 <span>
                                     Sau khi thanh toán, ngày kết thúc thuê sẽ được cập nhật ngay lập tức. Hệ thống sẽ sinh
                                     phụ lục hợp đồng gia hạn (<strong>Addendum CT-...-A1</strong>) hẹn ký tại quầy trong vòng 7 ngày.
