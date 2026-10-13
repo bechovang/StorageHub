@@ -1,13 +1,5 @@
-const ROLES = [
-    { key: "CUSTOMER", label: "Khách hàng" },
-    { key: "STAFF", label: "Nhân viên kho" },
-    { key: "FACILITY_MANAGER", label: "Quản lý cơ sở" },
-    { key: "BUSINESS_OPS", label: "Quản lý vận hành" },
-    { key: "SYSTEM_ADMIN", label: "Quản trị hệ thống" },
-];
-
 /**
- * Cột thông tin thương hiệu và vai trò hệ thống dùng chung cho trang Auth (Login / Register)
+ * Cột thông tin thương hiệu và giá trị dịch vụ dùng chung cho trang Auth (Login / Register)
  */
 export default function LoginPanel() {
     return (
@@ -19,34 +11,34 @@ export default function LoginPanel() {
                     </span>
                     <span>STORAGEHUB</span>
                 </div>
-                <p className="login-info__eyebrow">SELF-SERVICE STORAGE / TAN BINH</p>
+                <p className="login-info__eyebrow">SELF-SERVICE STORAGE · TÂN BÌNH DEPOT</p>
                 <h1 className="login-info__headline">
-                    Một hệ thống.<br />Năm vai trò.
+                    Giải pháp lưu trữ cá nhân<br />&amp; quản lý kho thông minh.
                 </h1>
                 <p className="login-info__desc">
-                    Khách hàng tự đặt kho, nhân viên vận hành trên kanban, quản lý
-                    theo dõi toàn bộ cơ sở — cùng một ứng dụng, cùng một URL.
+                    Nền tảng thuê kho tự quản thông minh và quản lý vận hành cơ sở tập trung theo thời gian thực.
                 </p>
+
+                {/* Cụm thông tin thực sự hữu ích thay cho danh sách role */}
+                <div className="login-info__highlights">
+                    <div className="login-highlight-item">
+                        <span className="login-highlight-item__indicator" />
+                        <span>24/7 Access</span>
+                    </div>
+                    <div className="login-highlight-item">
+                        <span className="login-highlight-item__indicator" />
+                        <span>Secure PIN</span>
+                    </div>
+                    <div className="login-highlight-item">
+                        <span className="login-highlight-item__indicator" />
+                        <span>Flexible Rental</span>
+                    </div>
+                </div>
             </div>
 
-            <div className="login-info__roles">
-                <p className="login-info__roles-label">Hệ thống phục vụ</p>
-                {ROLES.map((r) => (
-                    <span key={r.key} className="role-chip">
-                        <span className="role-chip__dot" aria-hidden="true" />
-                        {r.key}
-                        <span
-                            style={{
-                                color: "rgba(255,255,255,0.4)",
-                                fontWeight: 400,
-                                letterSpacing: 0,
-                            }}
-                        >
-                            — {r.label}
-                        </span>
-                    </span>
-                ))}
-                <p className="login-info__footer-note">TAN BINH DEPOT · VND PRICING</p>
+            <div className="login-info__footer">
+                <p className="login-info__roles-hint">Secure storage · Flexible terms · Digital access</p>
+                <p className="login-info__footer-note">TÂN BÌNH DEPOT · TP. HỒ CHÍ MINH</p>
             </div>
         </div>
     );
