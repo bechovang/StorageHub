@@ -54,4 +54,7 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
             @Param("excludeUnitId") Long excludeUnitId,
             @Param("candidateStatuses") Collection<Unit.Status> candidateStatuses
     );
+
+    @Query("SELECT u FROM Unit u JOIN FETCH u.zone z JOIN FETCH z.facility f WHERE u.code = :code")
+    Optional<Unit> findByCode(@Param("code") String code);
 }
