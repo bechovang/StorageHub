@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from "react-router";
 import { useAuth } from "../context/AuthContext.jsx";
-import DesignSystemPage from "../pages/DesignSystemPage/DesignSystemPage.jsx";
 import LoginPage from "../pages/LoginPage/LoginPage.jsx";
 import RegisterPage from "../pages/RegisterPage/RegisterPage.jsx";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.jsx";
@@ -13,6 +12,7 @@ import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
 import MyRentalsPage from "../pages/MyRentalsPage/MyRentalsPage.jsx";
 import RentalDetailPage from "../pages/RentalDetailPage/RentalDetailPage.jsx";
 import CheckInPassPage from "../pages/CheckInPassPage/CheckInPassPage.jsx";
+import TaskBoardPage from "../pages/TaskBoardPage/TaskBoardPage.jsx";
 import PageTransition from "../components/PageTransition/PageTransition.jsx";
 
 const ROLE_LANDINGS = {
@@ -46,8 +46,6 @@ export default function AppRouter() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/403" element={<ForbiddenPage />} />
-      <Route path="/demo" element={<DesignSystemPage />} />
-
       {/* ── 2. Customer Routes (contracts/routes.yaml) ── */}
       <Route path="/browse" element={<BrowsePage />} />
       <Route path="/units/:unitId" element={<UnitDetailPage />} />
@@ -83,7 +81,10 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
-      <Route path="/support" element={<RoleLandingPlaceholder path="/support" />} />
+      <Route
+        path="/support"
+        element={<RoleLandingPlaceholder path="/support" />}
+      />
 
       {/* ── 3. Payment Flow Routes (US-8) ── */}
       <Route
@@ -117,7 +118,7 @@ export default function AppRouter() {
         path="/tasks"
         element={
           <ProtectedRoute allowedRoles={["STAFF", "SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/tasks" />
+            <TaskBoardPage />
           </ProtectedRoute>
         }
       />
