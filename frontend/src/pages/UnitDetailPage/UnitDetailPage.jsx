@@ -2,18 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import {
   ArrowLeft,
-  CheckCircle,
   Clock,
   ShieldCheck,
   Lock,
-  Package,
   ShareNetwork,
-  Copy,
   Check,
   CalendarCheck,
-  Info,
-  Warehouse,
-  ArrowsOutCardinal,
   Key,
   Truck,
   Sparkle,
@@ -25,52 +19,29 @@ import {
 import { Header, Footer, Badge, Button } from "../../components";
 import { useAuth } from "../../context/AuthContext";
 import { getUnitDetail, getUnitQuote } from "../../services/unitService";
+import {
+  formatVND as formatVnd,
+  formatDate,
+  getTomorrowDate,
+  PLACEHOLDER_UNIT_IMAGE,
+} from "../../utils/formatters.js";
 import "./UnitDetailPage.css";
-
-const formatVnd = (amount) =>
-  `${new Intl.NumberFormat("vi-VN").format(Math.round(amount || 0))} ₫`;
-
-const formatDate = (isoDate) => {
-  if (!isoDate) return "";
-  try {
-    const parts = isoDate.split("-");
-    if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-    return new Intl.DateTimeFormat("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(new Date(`${isoDate}T00:00:00`));
-  } catch {
-    return isoDate;
-  }
-};
-
-const getTomorrowDate = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().split("T")[0];
-};
-
-/**
- * Ảnh placeholder duy nhất dự phòng khi kho chưa có ảnh thật hoặc ảnh tải thất bại
- */
-const PLACEHOLDER_UNIT_IMAGE = "/placeholder.svg";
 
 /**
  * ── Image Slider Trình chiếu ảnh kho (Hỗ trợ ảnh thật & fallback về 1 ảnh placeholder) ──
  */
 function UnitImageSlider({ photos = [], typeName = "Tiêu chuẩn", sizeM2 = 5 }) {
   const rawPhotos = Array.isArray(photos) ? photos.filter(Boolean) : [];
+  const [prevPhotos, setPrevPhotos] = useState(photos);
   const [failedUrls, setFailedUrls] = useState(new Set());
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Reset failedUrls khi prop photos đổi
-  useEffect(() => {
+  // Reset failedUrls khi prop photos đổi theo idiomatic React
+  if (prevPhotos !== photos) {
+    setPrevPhotos(photos);
     setFailedUrls(new Set());
     setCurrentSlide(0);
-  }, [photos]);
+  }
 
   // Lọc bỏ những URL ảnh thật đã bị lỗi tải
   const validRealPhotos = rawPhotos.filter((url) => !failedUrls.has(url));
@@ -204,7 +175,6 @@ export default function UnitDetailPage() {
   // 1. Tải thông tin chi tiết của kho
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
 
     getUnitDetail(unitId)
       .then((data) => {
@@ -228,27 +198,27 @@ export default function UnitDetailPage() {
   }, [unitId]);
 
   // 2. Tính toán bảng giá minh bạch khi thay đổi ngày hoặc thời hạn thuê
-  const fetchQuote = useCallback(async (currentUnitId, date, months) => {
-    if (!currentUnitId) return;
-    setQuoteLoading(true);
-    try {
-      const q = await getUnitQuote(currentUnitId, {
-        startDate: date,
-        durationMonths: months,
-      });
-      setQuote(q);
-    } catch (err) {
-      console.error("Lỗi khi tính toán bảng giá:", err);
-    } finally {
-      setQuoteLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    if (unit?.id) {
-      fetchQuote(unit.id, startDate, durationMonths);
-    }
-  }, [unit?.id, startDate, durationMonths, fetchQuote]);
+    if (!unit?.id) return;
+    let active = true;
+    getUnitQuote(unit.id, {
+      startDate,
+      durationMonths,
+    })
+      .then((q) => {
+        if (active) setQuote(q);
+      })
+      .catch((err) => {
+        console.error("Lỗi khi tính toán bảng giá:", err);
+      })
+      .finally(() => {
+        if (active) setQuoteLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [unit?.id, startDate, durationMonths]);
 
   // Xử lý sao chép liên kết chia sẻ
   const handleCopyLink = () => {

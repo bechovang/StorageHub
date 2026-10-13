@@ -1,4 +1,5 @@
 import { apiClient } from "./apiClient";
+import { formatVND } from "../utils/formatters";
 
 export const FALLBACK_FILTER_OPTIONS = {
   types: [
@@ -335,8 +336,7 @@ export async function getUnitQuote(unitId, { startDate, durationMonths = 3 } = {
   end.setDate(end.getDate() - 1);
   const endDateStr = end.toISOString().split("T")[0];
 
-  const formattedMonthly = new Intl.NumberFormat("vi-VN").format(monthlyRent) + " ₫";
-  const formattedTotal = new Intl.NumberFormat("vi-VN").format(totalRent) + " ₫";
+  const formattedMonthly = formatVND(monthlyRent);
 
   const lines = [
     {
