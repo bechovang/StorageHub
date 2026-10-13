@@ -1,29 +1,7 @@
 import Badge from "../Badge/Badge.jsx";
 import Button from "../Button/Button.jsx";
 import "./UnitCard.css";
-
-const PLACEHOLDER_UNIT_IMAGE = "/placeholder.svg";
-
-
-const formatVnd = (amount) =>
-  `${new Intl.NumberFormat("vi-VN").format(amount)} ₫`;
-
-const formatDate = (isoDate) => {
-  if (!isoDate) return "";
-  try {
-    const parts = isoDate.split("-");
-    if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-    return new Intl.DateTimeFormat("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(new Date(`${isoDate}T00:00:00`));
-  } catch {
-    return isoDate;
-  }
-};
+import { formatVND as formatVnd, formatDate, PLACEHOLDER_UNIT_IMAGE } from "../../utils/formatters.js";
 
 export default function UnitCard({
   unit,
