@@ -8,20 +8,7 @@ import {
     Info,
     ArrowRight,
 } from "@phosphor-icons/react";
-
-function fmtDate(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-    });
-}
-
-function fmtMoney(n) {
-    if (n == null) return "0 ₫";
-    return n.toLocaleString("vi-VN") + " ₫";
-}
+import { fmtDate, fmtMoney } from "../../utils/formatters";
 
 /**
  * ExtensionModal — US-18 & US-19 (FR-16 / FR-12)
@@ -40,23 +27,20 @@ export default function ExtensionModal({
     reservation,
     onConfirmExtension,
 }) {
-    if (!isOpen || !reservation) return null;
-
-    const currentEndDateStr = reservation.endDate || "2026-08-18";
+    const currentEndDateStr = reservation?.endDate || "2026-08-18";
     const currentEndDate = useMemo(() => new Date(currentEndDateStr), [currentEndDateStr]);
 
     // Giá thuê 1 tháng & tỷ lệ cọc
-    const monthlyRent = reservation.quote?.monthlyRent || 345000;
+    const monthlyRent = reservation?.quote?.monthlyRent || 345000;
     const depositRate = 0.1; // 10%
-    const currentDepositHeld = reservation.depositAmount || 103500;
-    const currentDurationMonths = reservation.durationMonths || 3;
+    const currentDepositHeld = reservation?.depositAmount || 103500;
+    const currentDurationMonths = reservation?.durationMonths || 3;
 
     // Giới hạn xung đột (Conflict boundary): Đơn kế tiếp bắt đầu ngày 19/10/2026 (theo kịch bản demo PRD UJ-1)
     // Ngày muộn nhất được phép trả là 18/10/2026
-    const conflictStartDateStr = reservation.nextReservationStartDate || "2026-10-19";
+    const conflictStartDateStr = reservation?.nextReservationStartDate || "2026-10-19";
     const latestAllowedCheckoutStr = "2026-10-18";
     const conflictStartDate = useMemo(() => new Date(conflictStartDateStr), [conflictStartDateStr]);
-    const latestAllowedCheckout = useMemo(() => new Date(latestAllowedCheckoutStr), [latestAllowedCheckoutStr]);
 
     // Ngày checkout mới được chọn (mặc định gợi ý +2 tháng: 18/10/2026)
     const [selectedDateStr, setSelectedDateStr] = useState("2026-10-18");
@@ -70,12 +54,12 @@ export default function ExtensionModal({
         if (!selectedDateStr) return false;
         // Nếu ngày mới lớn hơn hoặc bằng ngày bắt đầu của đơn đặt chỗ kế tiếp
         return selectedDate >= conflictStartDate;
-    }, [selectedDate, conflictStartDate]);
+    }, [selectedDate, conflictStartDate, selectedDateStr]);
 
     const isBeforeCurrent = useMemo(() => {
         if (!selectedDateStr) return true;
         return selectedDate <= currentEndDate;
-    }, [selectedDate, currentEndDate]);
+    }, [selectedDate, currentEndDate, selectedDateStr]);
 
     // Tính toán chi phí gia hạn theo công thức PRD FR-16:
     // Phí gia hạn = Tiền thuê kỳ thêm + Top-up cọc
@@ -144,6 +128,8 @@ export default function ExtensionModal({
             setSubmitting(false);
         }
     };
+
+    if (!isOpen || !reservation) return null;
 
     return (
         <div className="rd-modal-backdrop" onClick={onClose}>
