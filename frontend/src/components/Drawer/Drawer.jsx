@@ -13,43 +13,46 @@ export default function Drawer({
 }) {
   const [isRendered, setIsRendered] = useState(open);
   const [isClosing, setIsClosing] = useState(false);
+  const [savedContent, setSavedContent] = useState({
+    children,
+    footer,
+    headerLabel,
+  });
+  const [prevOpen, setPrevOpen] = useState(open);
   const closeTimerRef = useRef(null);
 
-  // Giữ lại nội dung cũ trong quá trình chạy hiệu ứng đóng (disappear) để không bị nháy trắng
-  const lastChildrenRef = useRef(children);
-  const lastFooterRef = useRef(footer);
-  const lastHeaderLabelRef = useRef(headerLabel);
-
+  // Cập nhật snapshot khi open thay đổi (theo React recommended pattern)
   if (open) {
-    lastChildrenRef.current = children;
-    lastFooterRef.current = footer;
-    lastHeaderLabelRef.current = headerLabel;
+    if (
+      savedContent.children !== children ||
+      savedContent.footer !== footer ||
+      savedContent.headerLabel !== headerLabel
+    ) {
+      setSavedContent({ children, footer, headerLabel });
+    }
   }
 
-  // Quản lý trạng thái xuất hiện (appear) và biến mất (disappear)
-  useEffect(() => {
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
       setIsRendered(true);
       setIsClosing(false);
     } else if (isRendered) {
       setIsClosing(true);
+    }
+  }
+
+  useEffect(() => {
+    if (isClosing) {
       closeTimerRef.current = setTimeout(() => {
         setIsRendered(false);
         setIsClosing(false);
-        closeTimerRef.current = null;
       }, ANIMATION_DURATION);
+      return () => {
+        if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      };
     }
-
-    return () => {
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-      }
-    };
-  }, [open, isRendered]);
+  }, [isClosing]);
 
   // Xử lý phím Escape và khóa cuộn body khi Drawer đang mở
   useEffect(() => {
@@ -72,9 +75,9 @@ export default function Drawer({
 
   if (!isRendered) return null;
 
-  const contentToRender = open ? children : lastChildrenRef.current;
-  const footerToRender = open ? footer : lastFooterRef.current;
-  const labelToRender = open ? headerLabel : lastHeaderLabelRef.current;
+  const contentToRender = open ? children : savedContent.children;
+  const footerToRender = open ? footer : savedContent.footer;
+  const labelToRender = open ? headerLabel : savedContent.headerLabel;
 
   return (
     <>

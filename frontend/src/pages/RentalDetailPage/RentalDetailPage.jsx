@@ -1,590 +1,864 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import {
-    ArrowLeft,
-    Package,
-    Receipt,
-    FileText,
-    CheckCircle,
-    XCircle,
-    ClockCountdown,
-    WarningCircle,
-    QrCode,
-    Seal,
-    ArrowRight,
-    ArrowClockwise,
-    CalendarPlus,
-    SignOut,
-    Clock,
-    Check,
+  ArrowLeft,
+  ArrowRight,
+  ArrowClockwise,
+  Receipt,
+  FileText,
+  CheckCircle,
+  XCircle,
+  ClockCountdown,
+  WarningCircle,
+  QrCode,
+  Seal,
+  Key,
+  CreditCard,
+  Eye,
+  CalendarPlus,
+  SignOut,
+  Clock,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { getReservation } from "../../services/rentalService.js";
 import ExtensionModal from "./ExtensionModal.jsx";
 import CheckoutRequestModal from "./CheckoutRequestModal.jsx";
+import {
+  fmtDate,
+  fmtDateTime,
+  fmtMoney,
+  STATUS_LABEL,
+  STATUS_COLOR,
+  DEPOSIT_STATUS_LABEL,
+  PAYMENT_STATUS_LABEL,
+  CONTRACT_STATUS_LABEL,
+} from "../MyRentalsPage/rentalConstants";
 import "./RentalDetailPage.css";
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// ─── 1. BẢNG LỊCH SỬ GIAO DỊCH (PAYMENTS TABLE) ──────────────────────────────
+function PaymentsSection({ payments = [] }) {
+  if (payments.length === 0) {
+    return <p className="rd-empty-text">Chưa có giao dịch thanh toán nào được ghi nhận.</p>;
+  }
 
-function fmtDate(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-    });
+  const methodLabel = {
+    CARD: "Thẻ quốc tế",
+    MOMO: "Ví MoMo",
+    VNPAY: "VNPay QR",
+  };
+
+  const purposeLabel = {
+    DEPOSIT: "Tiền cọc (10%)",
+    RENT: "Tiền thuê kho",
+    EXTENSION_FEE: "Phí gia hạn",
+    DAMAGE_FEE: "Bồi thường hư hại",
+    EXTRA_FEE: "Phí phụ trợ",
+  };
+
+  const totalPaid = payments
+    .filter((p) => p.status === "SUCCEEDED")
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  return (
+    <div className="rd-payments-wrap">
+      <div className="rd-table-scroll">
+        <table className="rd-table">
+          <thead>
+            <tr>
+              <th>Mục đích</th>
+              <th>Phương thức</th>
+              <th>Mã biên lai</th>
+              <th>Thời gian</th>
+              <th className="text-right">Số tiền</th>
+              <th className="text-center">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payments.map((p) => {
+              const isSuccess = p.status === "SUCCEEDED";
+              const isFailed = p.status === "FAILED" || p.status === "EXPIRED";
+
+              return (
+                <tr key={p.id}>
+                  <td>
+                    <div className="rd-payment-purpose">
+                      {purposeLabel[p.purpose] || p.purpose}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="rd-payment-method">
+                      {methodLabel[p.method] || p.method}
+                    </div>
+                  </td>
+                  <td>
+                    <span className="font-mono rd-payment-receipt">
+                      {p.receiptCode || "—"}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="rd-payment-date">
+                      {fmtDateTime(p.paidAt)}
+                    </span>
+                  </td>
+                  <td className="text-right font-mono font-bold">
+                    {fmtMoney(p.amount)}
+                  </td>
+                  <td className="text-center">
+                    <span
+                      className={`rd-status-chip ${
+                        isSuccess
+                          ? "rd-status-chip--success"
+                          : isFailed
+                          ? "rd-status-chip--danger"
+                          : "rd-status-chip--neutral"
+                      }`}
+                    >
+                      {PAYMENT_STATUS_LABEL[p.status] || p.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="rd-payments-footer">
+        <div className="rd-payments-note">
+          <Receipt size={15} />
+          <span>Hóa đơn điện tử đối soát theo chuẩn VAT Depot SGN-01</span>
+        </div>
+        <div className="rd-payments-total">
+          <span>Tổng tiền đã tất toán:</span>
+          <strong className="font-mono">{fmtMoney(totalPaid)}</strong>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function fmtDateTime(str) {
-    if (!str) return "—";
-    return new Date(str).toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-function fmtMoney(n) {
-    if (n == null) return "—";
-    return n.toLocaleString("vi-VN") + " ₫";
-}
-
-const STATUS_LABEL = {
-    PENDING_PAYMENT: "Chờ thanh toán cọc",
-    RESERVED: "Đã xác nhận — Chờ nhận kho",
-    CHECKED_IN: "Đang thuê kho",
-    CHECKOUT_REQUESTED: "Đang chờ trả kho",
-    CLOSED: "Đã kết thúc",
-    EXPIRED: "Hết hạn — Đã mất cọc",
-};
-
-const STATUS_COLOR = {
-    PENDING_PAYMENT: "warning",
-    RESERVED: "success",
-    CHECKED_IN: "info",
-    CHECKOUT_REQUESTED: "info",
-    CLOSED: "neutral",
-    EXPIRED: "danger",
-};
-
-const PAYMENT_STATUS_LABEL = {
-    PENDING: "Chờ xử lý",
-    PROCESSING: "Đang xử lý",
-    SUCCEEDED: "Thành công",
-    FAILED: "Thất bại",
-    EXPIRED: "Hết hạn",
-};
-
-const CONTRACT_STATUS_LABEL = {
-    DRAFT: "Bản thảo",
-    PRINTED: "Đã in",
-    SIGNED: "Đã ký",
-    ACTIVE: "Đang hiệu lực",
-    CLOSED: "Đã đóng",
-    SUPERSEDED: "Đã thay thế",
-};
-
-// ─── sections ────────────────────────────────────────────────────────────────
-
-function SectionCard({ title, icon: Icon, children }) {
+// ─── 2. DANH SÁCH HỢP ĐỒNG & PHỤ LỤC (CONTRACTS CHAIN) ────────────────────────
+function ContractsSection({ contracts = [] }) {
+  if (contracts.length === 0) {
     return (
-        <div className="rd-section-card">
-            <div className="rd-section-card__header">
-                <Icon size={18} weight="bold" />
-                <h2 className="rd-section-card__title">{title}</h2>
+      <p className="rd-empty-text">
+        Chưa có hợp đồng nào. Hồ sơ hợp đồng được tự động khởi tạo sau khi thanh toán cọc thành công.
+      </p>
+    );
+  }
+
+  return (
+    <div className="rd-contracts-list">
+      {contracts.map((c, idx) => {
+        const isActive = c.status === "ACTIVE" || c.status === "SIGNED";
+        const isDraft = c.status === "DRAFT" || c.status === "AWAITING_SIGNATURE";
+
+        return (
+          <div
+            key={c.code || c.id || idx}
+            className={`rd-contract-item ${c.isLatest ? "rd-contract-item--latest" : ""}`}
+          >
+            <div className="rd-contract-item__left">
+              <Seal
+                size={20}
+                weight={c.isLatest ? "fill" : "bold"}
+                className="rd-contract-icon"
+              />
+              <div>
+                <div className="rd-contract-code font-mono">
+                  <strong>{c.code}</strong>
+                  <span className="rd-contract-kind">
+                    {c.kind === "ORIGINAL" ? "Hợp đồng gốc" : "Phụ lục gia hạn"}
+                  </span>
+                  {c.isLatest && (
+                    <span className="rd-contract-badge-latest">Hiện hành</span>
+                  )}
+                </div>
+                {c.signatureDueDate && (
+                  <p className="rd-contract-due">
+                    Hạn ký bản cứng tại quầy:{" "}
+                    <strong>{fmtDate(c.signatureDueDate)}</strong>
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="rd-section-card__body">{children}</div>
-        </div>
-    );
-}
 
-function MetaRow({ label, value }) {
-    return (
-        <div className="rd-meta-row">
-            <span className="rd-meta-row__label">{label}</span>
-            <span className="rd-meta-row__value">{value}</span>
-        </div>
-    );
-}
+            <div className="rd-contract-item__right">
+              <span
+                className={`rd-status-chip ${
+                  isActive || c.status === "CLOSED"
+                    ? "rd-status-chip--success"
+                    : isDraft
+                    ? "rd-status-chip--warning"
+                    : "rd-status-chip--neutral"
+                }`}
+              >
+                {CONTRACT_STATUS_LABEL[c.status] || c.status}
+              </span>
 
-function PaymentsSection({ payments }) {
-    if (!payments || payments.length === 0)
-        return <p className="rd-empty-text">Chưa có giao dịch nào.</p>;
-
-    const methodLabel = { CARD: "Thẻ ngân hàng", MOMO: "MoMo", VNPAY: "VNPay QR" };
-    const purposeLabel = { DEPOSIT: "Cọc", RENT: "Tiền thuê", EXTENSION_FEE: "Gia hạn", DAMAGE_FEE: "Bồi thường", EXTRA_FEE: "Phí khác" };
-
-    return (
-        <div className="rd-payments-list">
-            {payments.map((p) => (
-                <div
-                    key={p.id}
-                    className={`rd-payment-row rd-payment-row--${p.status === "SUCCEEDED" ? "success" : p.status === "FAILED" || p.status === "EXPIRED" ? "danger" : "neutral"}`}
+              {c.signedPhotoUrl && (
+                <a
+                  href={c.signedPhotoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rd-contract-link"
                 >
-                    <div className="rd-payment-row__left">
-                        <span className="rd-payment-row__purpose">
-                            {purposeLabel[p.purpose] || p.purpose}
-                        </span>
-                        <span className="rd-payment-row__method">
-                            {methodLabel[p.method] || p.method}
-                        </span>
-                        {p.receiptCode && (
-                            <span className="rd-payment-row__receipt">{p.receiptCode}</span>
-                        )}
-                        {p.paidAt && (
-                            <span className="rd-payment-row__date">{fmtDateTime(p.paidAt)}</span>
-                        )}
-                    </div>
-                    <div className="rd-payment-row__right">
-                        <span className="rd-payment-row__amount">{fmtMoney(p.amount)}</span>
-                        <span className={`rd-payment-status rd-payment-status--${p.status === "SUCCEEDED" ? "success" : p.status === "FAILED" || p.status === "EXPIRED" ? "danger" : "neutral"}`}>
-                            {PAYMENT_STATUS_LABEL[p.status] || p.status}
-                        </span>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-function ContractsSection({ contracts }) {
-    if (!contracts || contracts.length === 0)
-        return <p className="rd-empty-text">Chưa có hợp đồng nào. Hợp đồng tự sinh sau khi cọc thành công.</p>;
-
-    return (
-        <div className="rd-contracts-list">
-            {contracts.map((c) => (
-                <div key={c.id} className={`rd-contract-row ${c.isLatest ? "rd-contract-row--latest" : ""}`}>
-                    <div className="rd-contract-row__left">
-                        <Seal size={18} weight={c.isLatest ? "fill" : "regular"} className="rd-contract-row__icon" />
-                        <div>
-                            <span className="rd-contract-row__code">{c.code}</span>
-                            <span className="rd-contract-row__kind">{c.kind === "ORIGINAL" ? "Hợp đồng gốc" : "Phụ lục"}</span>
-                        </div>
-                    </div>
-                    <div className="rd-contract-row__right">
-                        <span className={`rd-contract-status rd-contract-status--${c.status === "ACTIVE" || c.status === "SIGNED" ? "success" : c.status === "SUPERSEDED" || c.status === "CLOSED" ? "neutral" : "warning"}`}>
-                            {CONTRACT_STATUS_LABEL[c.status] || c.status}
-                        </span>
-                        {c.isLatest && (
-                            <span className="rd-contract-row__latest-tag">Hiện hành</span>
-                        )}
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-// ─── page ─────────────────────────────────────────────────────────────────────
-
-export default function RentalDetailPage() {
-    const { reservationId } = useParams();
-    const navigate = useNavigate();
-
-    const [reservation, setReservation] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Sprint 2 Modals State (US-18, US-19, US-20)
-    const [showExtensionModal, setShowExtensionModal] = useState(false);
-    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-    const [toastMessage, setToastMessage] = useState(null);
-    const load = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await getReservation(reservationId);
-            setReservation(data);
-        } catch (err) {
-            if (err?.status === 404) {
-                setError("Không tìm thấy đơn thuê này.");
-            } else if (err?.status === 403) {
-                navigate("/403", { replace: true });
-            } else {
-                setError(err?.message || "Không thể tải thông tin đơn thuê.");
-            }
-        } finally {
-            setLoading(false);
-        }
-    }, [reservationId, navigate]);
-
-    useEffect(() => {
-        let isMounted = true;
-        async function fetchDetail() {
-            try {
-                const data = await getReservation(reservationId);
-                if (isMounted) setReservation(data);
-            } catch (err) {
-                if (!isMounted) return;
-                if (err?.status === 404) {
-                    setError("Không tìm thấy đơn thuê này.");
-                } else if (err?.status === 403) {
-                    navigate("/403", { replace: true });
-                } else {
-                    setError(err?.message || "Không thể tải thông tin đơn thuê.");
-                }
-            } finally {
-                if (isMounted) setLoading(false);
-            }
-        }
-        fetchDetail();
-        return () => {
-            isMounted = false;
-        };
-    }, [reservationId, navigate]);
-
-    // Tự tắt Toast sau 4 giây (theo chuẩn US-17 / FR-33)
-    useEffect(() => {
-        if (!toastMessage) return;
-        const timer = setTimeout(() => {
-            setToastMessage(null);
-        }, 4000);
-        return () => clearTimeout(timer);
-    }, [toastMessage]);
-
-    // Xử lý xác nhận gia hạn (US-18 & US-19)
-    const handleConfirmExtension = async (extensionData) => {
-        setReservation((prev) => {
-            const existingContracts = prev.contracts || [];
-            const originalContract = existingContracts.find((c) => c.kind === "ORIGINAL") || existingContracts[0];
-            const newAddendumCode = originalContract ? `${originalContract.code}-A1` : "CT-1042-A1";
-
-            const updatedContracts = existingContracts.map((c) => ({
-                ...c,
-                isLatest: false,
-            }));
-
-            updatedContracts.push({
-                id: Date.now(),
-                code: newAddendumCode,
-                kind: "ADDENDUM",
-                status: "AWAITING_SIGNATURE",
-                isLatest: true,
-                signatureDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-            });
-
-            const newPayments = [
-                ...(prev.payments || []),
-                {
-                    id: Date.now(),
-                    purpose: "EXTENSION_FEE",
-                    method: "CARD",
-                    amount: extensionData.totalPayable,
-                    status: "SUCCEEDED",
-                    receiptCode: `RT-EXT-${Date.now().toString().slice(-4)}`,
-                    paidAt: new Date().toISOString(),
-                },
-            ];
-
-            return {
-                ...prev,
-                endDate: extensionData.newEndDate,
-                durationMonths: (prev.durationMonths || 3) + extensionData.addedMonths,
-                depositAmount: extensionData.newDepositHeld,
-                contracts: updatedContracts,
-                payments: newPayments,
-            };
-        });
-
-        setToastMessage({
-            type: "success",
-            text: `Gia hạn thành công! Ngày trả kho mới: ${fmtDate(extensionData.newEndDate)}. Phụ lục hợp đồng đã sinh ra (hẹn ký tại quầy trong 7 ngày).`,
-        });
-    };
-
-    // Xử lý gửi yêu cầu trả kho (US-20)
-    const handleConfirmCheckoutRequest = async (checkoutData) => {
-        setReservation((prev) => ({
-            ...prev,
-            status: "CHECKOUT_REQUESTED",
-            checkoutRequestedDate: checkoutData.requestedDate,
-            checkoutTimeSlot: checkoutData.timeSlot,
-            checkoutReason: checkoutData.reason,
-        }));
-
-        setToastMessage({
-            type: "success",
-            text: `Đã gửi yêu cầu trả kho cho ngày ${fmtDate(checkoutData.requestedDate)}. Nhân viên ca trực sẽ tiến hành kiểm tra và tất toán cọc tại quầy.`,
-        });
-    };
-
-    // Hủy yêu cầu trả kho
-    const handleCancelCheckoutRequest = () => {
-        setReservation((prev) => ({
-            ...prev,
-            status: "CHECKED_IN",
-        }));
-
-        setToastMessage({
-            type: "info",
-            text: "Đã hủy yêu cầu trả kho. Trạng thái đơn tiếp tục duy trì Đang thuê kho.",
-        });
-    };
-
-    const canCheckIn = reservation?.status === "RESERVED";
-    const needsPayment = reservation?.status === "PENDING_PAYMENT";
-    const isExpired = reservation?.status === "EXPIRED";
-    const unsignedAddendum = reservation?.contracts?.find(
-        (c) => c.kind === "ADDENDUM" && c.status !== "SIGNED" && c.status !== "CLOSED" && c.status !== "SUPERSEDED"
-    );
-
-    return (
-        <AppShell>
-            <div className="rental-detail-page">
-                {/* ─ Back nav ─ */}
-                <Link to="/rentals" className="rd-back-link">
-                    <ArrowLeft size={16} weight="bold" />
-                    Về danh sách đơn thuê
-                </Link>
-
-                {/* ─ Loading ─ */}
-                {loading && (
-                    <div className="rd-skeleton-wrap">
-                        <div className="rd-skeleton rd-skeleton--hero" />
-                        <div className="rd-skeleton rd-skeleton--section" />
-                        <div className="rd-skeleton rd-skeleton--section" />
-                    </div>
-                )}
-
-                {/* ─ Error ─ */}
-                {error && (
-                    <div className="rd-error">
-                        <WarningCircle size={20} weight="fill" />
-                        <span>{error}</span>
-                        <button onClick={load} className="rd-error__retry">
-                            <ArrowClockwise size={14} /> Thử lại
-                        </button>
-                    </div>
-                )}
-
-                {/* ─ Content ─ */}
-                {!loading && !error && reservation && (
-                    <>
-                        {/* ── Hero ── */}
-                        <div className={`rd-hero rd-hero--${STATUS_COLOR[reservation.status] || "neutral"}`}>
-                            <div className="rd-hero__left">
-                                <div className="rd-hero__code">{reservation.code}</div>
-                                <div className="rd-hero__unit">
-                                    <Package size={20} weight="fill" />
-                                    <span>{reservation.unit?.code}</span>
-                                    {reservation.unit?.typeName && (
-                                        <span className="rd-hero__unit-type">{reservation.unit.typeName}</span>
-                                    )}
-                                    {reservation.unit?.sizeM2 && (
-                                        <span className="rd-hero__unit-size">{reservation.unit.sizeM2} m²</span>
-                                    )}
-                                </div>
-                                <span className={`rd-badge rd-badge--${STATUS_COLOR[reservation.status] || "neutral"} rd-badge--lg`}>
-                                    {STATUS_LABEL[reservation.status] || reservation.status}
-                                </span>
-                            </div>
-
-                            <div className="rd-hero__actions">
-                                {needsPayment && (
-                                    <Link
-                                        to={`/payment/${reservationId}`}
-                                        className="rd-hero__btn rd-hero__btn--warning"
-                                    >
-                                        Thanh toán cọc
-                                        <ArrowRight size={14} weight="bold" />
-                                    </Link>
-                                )}
-                                {canCheckIn && (
-                                    <Link
-                                        to={`/rentals/${reservationId}/check-in-pass`}
-                                        className="rd-hero__btn rd-hero__btn--primary"
-                                    >
-                                        <QrCode size={16} weight="bold" />
-                                        Check-in Pass
-                                        <ArrowRight size={14} weight="bold" />
-                                    </Link>
-                                )}
-
-                                {/* Sprint 2: Actions cho trạng thái CHECKED_IN */}
-                                {reservation.status === "CHECKED_IN" && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            className="rd-hero__btn rd-hero__btn--primary"
-                                            onClick={() => setShowExtensionModal(true)}
-                                            title="Gia hạn thời gian thuê kho"
-                                        >
-                                            <CalendarPlus size={16} weight="bold" />
-                                            Gia hạn thuê kho
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="rd-hero__btn rd-hero__btn--outline-white"
-                                            onClick={() => setShowCheckoutModal(true)}
-                                            title="Gửi yêu cầu trả kho"
-                                        >
-                                            <SignOut size={16} weight="bold" />
-                                            Yêu cầu trả kho
-                                        </button>
-                                    </>
-                                )}
-
-                                <button onClick={load} className="rd-hero__btn rd-hero__btn--ghost" title="Tải lại">
-                                    <ArrowClockwise size={14} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* ── Toast notification nổi (US-17) ── */}
-                        {toastMessage && (
-                            <div className={`rd-toast rd-toast--${toastMessage.type}`}>
-                                <CheckCircle size={18} weight="fill" />
-                                <span>{toastMessage.text}</span>
-                                <button className="rd-toast__close" onClick={() => setToastMessage(null)}>×</button>
-                            </div>
-                        )}
-
-                        {/* ── Checkout Requested Callout (US-20) ── */}
-                        {reservation.status === "CHECKOUT_REQUESTED" && (
-                            <div className="rd-checkout-requested-banner">
-                                <div className="rd-checkout-requested-banner__content">
-                                    <Clock size={22} weight="fill" className="rd-checkout-icon" />
-                                    <div>
-                                        <strong>Đang chờ làm thủ tục trả kho tại quầy Tân Bình Depot</strong>
-                                        <p>
-                                            Yêu cầu trả kho đã gửi cho ngày{" "}
-                                            <strong>{fmtDate(reservation.checkoutRequestedDate || reservation.endDate)}</strong>.
-                                            Vui lòng mang thẻ từ, khóa kho đến quầy để kiểm tra và nhận hoàn tiền cọc minh bạch.
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="rd-btn-cancel-checkout"
-                                    onClick={handleCancelCheckoutRequest}
-                                >
-                                    Hủy yêu cầu
-                                </button>
-                            </div>
-                        )}
-
-                        {/* ── Expired callout ── */}
-                        {isExpired && reservation.depositForfeitReason && (
-                            <div className="rd-expired-callout">
-                                <XCircle size={20} weight="fill" />
-                                <div>
-                                    <strong>Cọc đã bị tịch thu</strong>
-                                    <p>{reservation.depositForfeitReason}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ── Unsigned addendum callout (US-13 & US-19 rule) ── */}
-                        {unsignedAddendum && (
-                            <div className="rd-warning-callout">
-                                <WarningCircle size={20} weight="fill" />
-                                <div>
-                                    <strong>Phụ lục gia hạn ({unsignedAddendum.code}) đang chờ ký tại quầy</strong>
-                                    <p>
-                                        Vui lòng đến quầy Tân Bình Depot ký phụ lục hợp đồng giấy trước ngày{" "}
-                                        <strong>{fmtDate(unsignedAddendum.signatureDueDate)}</strong> để hoàn tất hồ sơ.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ── 3-col grid ── */}
-                        <div className="rd-main-grid">
-                            {/* Left: info + quote */}
-                            <div className="rd-main-grid__left">
-                                <SectionCard title="Thông tin đặt chỗ" icon={ClockCountdown}>
-                                    <MetaRow label="Mã đặt chỗ" value={<code className="rd-code">{reservation.code}</code>} />
-                                    <MetaRow label="Ô kho" value={reservation.unit?.code} />
-                                    <MetaRow label="Ngày bắt đầu" value={fmtDate(reservation.startDate)} />
-                                    <MetaRow label="Ngày kết thúc" value={fmtDate(reservation.endDate)} />
-                                    <MetaRow label="Thời hạn" value={`${reservation.durationMonths} tháng`} />
-                                    {reservation.checkInDeadline && (
-                                        <MetaRow
-                                            label="Hạn nhận kho"
-                                            value={
-                                                <span className={new Date(reservation.checkInDeadline) < new Date() && reservation.status === "RESERVED" ? "rd-deadline--danger" : ""}>
-                                                    {fmtDate(reservation.checkInDeadline)}
-                                                </span>
-                                            }
-                                        />
-                                    )}
-                                </SectionCard>
-
-                                {reservation.quote && (
-                                    <SectionCard title="Bảng giá & Cọc" icon={Receipt}>
-                                        <MetaRow label="Tiền thuê 1 tháng" value={fmtMoney(reservation.quote.monthlyRent)} />
-                                        <MetaRow label="Tổng tiền thuê" value={fmtMoney(reservation.quote.totalRent)} />
-                                        <MetaRow
-                                            label="Tiền cọc (10%)"
-                                            value={
-                                                <strong className="rd-deposit-amount">
-                                                    {fmtMoney(reservation.quote.depositAmount || reservation.depositAmount)}
-                                                </strong>
-                                            }
-                                        />
-                                        <MetaRow
-                                            label="Phải trả ngay"
-                                            value={
-                                                <strong className={reservation.depositStatus === "HELD" || reservation.depositStatus === "SETTLED" ? "rd-amount--paid" : "rd-amount--due"}>
-                                                    {fmtMoney(reservation.quote.dueNow)}
-                                                </strong>
-                                            }
-                                        />
-                                        {reservation.depositStatus && (
-                                            <MetaRow
-                                                label="Trạng thái cọc"
-                                                value={
-                                                    <span className={`rd-deposit-status rd-deposit-status--${reservation.depositStatus === "HELD" ? "success" : reservation.depositStatus === "FORFEITED" ? "danger" : "neutral"}`}>
-                                                        {reservation.depositStatus}
-                                                    </span>
-                                                }
-                                            />
-                                        )}
-                                        {reservation.quote.policyVersion && (
-                                            <MetaRow label="Chính sách giá" value={`Policy ${reservation.quote.policyVersion}`} />
-                                        )}
-                                    </SectionCard>
-                                )}
-
-                                {reservation.accessCode && (
-                                    <SectionCard title="Mã truy cập kho" icon={CheckCircle}>
-                                        <div className="rd-access-code">{reservation.accessCode}</div>
-                                        <p className="rd-access-code__hint">Nhập mã này tại bảng điều khiển cửa kho của bạn.</p>
-                                    </SectionCard>
-                                )}
-                            </div>
-
-                            {/* Right: payments + contracts */}
-                            <div className="rd-main-grid__right">
-                                <SectionCard title="Lịch sử thanh toán" icon={Receipt}>
-                                    <PaymentsSection payments={reservation.payments} />
-                                </SectionCard>
-
-                                <SectionCard title="Chuỗi hợp đồng" icon={FileText}>
-                                    <ContractsSection contracts={reservation.contracts} />
-                                </SectionCard>
-                            </div>
-                        </div>
-                        {/* ── Sprint 2 Modals ── */}
-                        <ExtensionModal
-                            isOpen={showExtensionModal}
-                            onClose={() => setShowExtensionModal(false)}
-                            reservation={reservation}
-                            onConfirmExtension={handleConfirmExtension}
-                        />
-
-                        <CheckoutRequestModal
-                            isOpen={showCheckoutModal}
-                            onClose={() => setShowCheckoutModal(false)}
-                            reservation={reservation}
-                            onConfirmCheckoutRequest={handleConfirmCheckoutRequest}
-                        />
-                    </>
-                )}
+                  <Eye size={14} weight="bold" />
+                  Xem bản ký
+                </a>
+              )}
             </div>
-        </AppShell>
-    );
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── 3. MAIN COMPONENT: RENTAL DETAIL PAGE ───────────────────────────────────
+export default function RentalDetailPage() {
+  const { reservationId } = useParams();
+  const navigate = useNavigate();
+
+  const [reservation, setReservation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Sprint 2 Modals State (US-18, US-19, US-20)
+  const [showExtensionModal, setShowExtensionModal] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getReservation(reservationId);
+      setReservation(data);
+    } catch (err) {
+      if (err?.status === 404) {
+        setError("Không tìm thấy đơn thuê này.");
+      } else if (err?.status === 403) {
+        navigate("/403", { replace: true });
+      } else {
+        setError(err?.message || "Không thể tải thông tin đơn thuê.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let ignore = false;
+    async function fetchDetail() {
+      try {
+        const data = await getReservation(reservationId);
+        if (!ignore) setReservation(data);
+      } catch (err) {
+        if (!ignore) {
+          if (err?.status === 404) {
+            setError("Không tìm thấy đơn thuê này.");
+          } else if (err?.status === 403) {
+            navigate("/403", { replace: true });
+          } else {
+            setError(err?.message || "Không thể tải thông tin đơn thuê.");
+          }
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+
+    fetchDetail();
+
+    return () => {
+      ignore = true;
+    };
+  }, [reservationId, navigate]);
+
+  // Tự tắt Toast sau 4 giây (theo chuẩn US-17 / FR-33)
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  // Xử lý xác nhận gia hạn (US-18 & US-19)
+  const handleConfirmExtension = async (extensionData) => {
+    setReservation((prev) => {
+      const existingContracts = prev.contracts || [];
+      const originalContract =
+        existingContracts.find((c) => c.kind === "ORIGINAL") || existingContracts[0];
+      const newAddendumCode = originalContract
+        ? `${originalContract.code}-A1`
+        : "CT-1042-A1";
+
+      const updatedContracts = existingContracts.map((c) => ({
+        ...c,
+        isLatest: false,
+      }));
+
+      updatedContracts.push({
+        id: Date.now(),
+        code: newAddendumCode,
+        kind: "ADDENDUM",
+        status: "AWAITING_SIGNATURE",
+        isLatest: true,
+        signatureDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+      });
+
+      const newPayments = [
+        ...(prev.payments || []),
+        {
+          id: Date.now(),
+          purpose: "EXTENSION_FEE",
+          method: "CARD",
+          amount: extensionData.totalPayable,
+          status: "SUCCEEDED",
+          receiptCode: `RT-EXT-${Date.now().toString().slice(-4)}`,
+          paidAt: new Date().toISOString(),
+        },
+      ];
+
+      return {
+        ...prev,
+        endDate: extensionData.newEndDate,
+        durationMonths: (prev.durationMonths || 3) + extensionData.addedMonths,
+        depositAmount: extensionData.newDepositHeld,
+        contracts: updatedContracts,
+        payments: newPayments,
+      };
+    });
+
+    setToastMessage({
+      type: "success",
+      text: `Gia hạn thành công! Ngày trả kho mới: ${fmtDate(
+        extensionData.newEndDate
+      )}. Phụ lục hợp đồng đã sinh ra (hẹn ký tại quầy trong 7 ngày).`,
+    });
+  };
+
+  // Xử lý gửi yêu cầu trả kho (US-20)
+  const handleConfirmCheckoutRequest = async (checkoutData) => {
+    setReservation((prev) => ({
+      ...prev,
+      status: "CHECKOUT_REQUESTED",
+      checkoutRequestedDate: checkoutData.requestedDate,
+      checkoutTimeSlot: checkoutData.timeSlot,
+      checkoutReason: checkoutData.reason,
+    }));
+
+    setToastMessage({
+      type: "success",
+      text: `Đã gửi yêu cầu trả kho cho ngày ${fmtDate(
+        checkoutData.requestedDate
+      )}. Nhân viên ca trực sẽ tiến hành kiểm tra và tất toán cọc tại quầy.`,
+    });
+  };
+
+  // Hủy yêu cầu trả kho
+  const handleCancelCheckoutRequest = () => {
+    setReservation((prev) => ({
+      ...prev,
+      status: "CHECKED_IN",
+    }));
+
+    setToastMessage({
+      type: "info",
+      text: "Đã hủy yêu cầu trả kho. Trạng thái đơn tiếp tục duy trì Đang thuê kho.",
+    });
+  };
+
+  const canCheckIn = reservation?.status === "RESERVED";
+  const needsPayment = reservation?.status === "PENDING_PAYMENT";
+  const isExpired = reservation?.status === "EXPIRED";
+  const isCheckedIn =
+    reservation?.status === "CHECKED_IN" ||
+    reservation?.status === "CHECKOUT_REQUESTED";
+
+  const unsignedAddendum = reservation?.contracts?.find(
+    (c) =>
+      c.kind === "ADDENDUM" &&
+      c.status !== "SIGNED" &&
+      c.status !== "CLOSED" &&
+      c.status !== "SUPERSEDED"
+  );
+
+  const statusColor = STATUS_COLOR[reservation?.status] || "neutral";
+  const statusLabel = STATUS_LABEL[reservation?.status] || reservation?.status;
+  const depositText =
+    DEPOSIT_STATUS_LABEL[reservation?.depositStatus] ||
+    reservation?.depositStatus ||
+    "—";
+
+  return (
+    <AppShell>
+      <div className="rental-detail-page">
+        {/* Breadcrumb Navigation */}
+        <div className="rd-subbar">
+          <nav className="rd-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/rentals" className="rd-breadcrumb__back">
+              <ArrowLeft size={14} weight="bold" />
+              <span>Đơn thuê của tôi</span>
+            </Link>
+            <span className="rd-breadcrumb__sep">/</span>
+            <span>Depot Tân Bình (VN-SGN-01)</span>
+            <span className="rd-breadcrumb__sep">/</span>
+            <span className="rd-breadcrumb__current font-mono">
+              {reservation?.code || `ID #${reservationId}`}
+            </span>
+          </nav>
+
+          <button
+            type="button"
+            className="rd-refresh-btn"
+            onClick={handleRefresh}
+            disabled={loading}
+            title="Tải lại chi tiết"
+          >
+            <ArrowClockwise
+              size={15}
+              weight="bold"
+              className={loading ? "is-spinning" : ""}
+            />
+            <span>Cập nhật</span>
+          </button>
+        </div>
+
+        {/* ── Toast notification nổi (US-17) ── */}
+        {toastMessage && (
+          <div className={`rd-toast rd-toast--${toastMessage.type}`}>
+            <CheckCircle size={18} weight="fill" />
+            <span>{toastMessage.text}</span>
+            <button
+              className="rd-toast__close"
+              onClick={() => setToastMessage(null)}
+              aria-label="Đóng thông báo"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ── Checkout Requested Callout (US-20) ── */}
+        {!loading && reservation?.status === "CHECKOUT_REQUESTED" && (
+          <div className="rd-checkout-requested-banner">
+            <div className="rd-checkout-requested-banner__content">
+              <Clock size={22} weight="fill" className="rd-checkout-icon" />
+              <div>
+                <strong>Đang chờ làm thủ tục trả kho tại quầy Tân Bình Depot</strong>
+                <p>
+                  Yêu cầu trả kho đã gửi cho ngày{" "}
+                  <strong>
+                    {fmtDate(
+                      reservation.checkoutRequestedDate || reservation.endDate
+                    )}
+                  </strong>
+                  . Vui lòng mang thẻ từ, khóa kho đến quầy để kiểm tra và nhận hoàn tiền cọc minh bạch.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="rd-btn-cancel-checkout"
+              onClick={handleCancelCheckoutRequest}
+            >
+              Hủy yêu cầu
+            </button>
+          </div>
+        )}
+
+        {/* Loading Skeletons */}
+        {loading && (
+          <div className="rd-skeleton-list" aria-label="Đang tải dữ liệu đơn thuê">
+            <div className="rd-skeleton rd-skeleton--hero" />
+            <div className="rd-skeleton-grid">
+              <div className="rd-skeleton rd-skeleton--box" />
+              <div className="rd-skeleton rd-skeleton--box" />
+            </div>
+          </div>
+        )}
+
+        {/* Error Notification */}
+        {error && (
+          <div className="rd-error" role="alert">
+            <WarningCircle size={20} weight="fill" className="rd-error__icon" />
+            <div className="rd-error__msg">
+              <strong>Đã có lỗi xảy ra:</strong> {error}
+            </div>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              className="rental-btn rental-btn--secondary rd-error__retry"
+            >
+              Thử lại
+            </button>
+          </div>
+        )}
+
+        {/* Main Content */}
+        {!loading && !error && reservation && (
+          <>
+            {/* ── 1. HERO OPERATIONAL BANNER ── */}
+            <article className={`rd-hero rd-hero--${statusColor}`}>
+              <div className="rd-hero__indicator" aria-hidden="true" />
+
+              <div className="rd-hero__inner">
+                <div className="rd-hero__left">
+                  <div className="rd-hero__badges">
+                    <span className="rd-hero__unit-code font-mono">
+                      UNIT {reservation.unit?.code || "—"}
+                    </span>
+
+                    <span className={`rd-badge rd-badge--${statusColor}`}>
+                      <span className="rd-badge__dot" aria-hidden="true" />
+                      {statusLabel}
+                    </span>
+
+                    {isCheckedIn && (
+                      <span className="rd-hero__telemetry rd-hero__telemetry--success font-mono">
+                        <Key size={13} weight="bold" />
+                        Mở khóa điện tử 24/7
+                      </span>
+                    )}
+
+                    {canCheckIn && (
+                      <span className="rd-hero__telemetry rd-hero__telemetry--info font-mono">
+                        <CheckCircle size={13} weight="bold" />
+                        Sẵn sàng nhận kho
+                      </span>
+                    )}
+
+                    {reservation.status === "CLOSED" && (
+                      <span className="rd-hero__telemetry rd-hero__telemetry--success font-mono">
+                        <CheckCircle size={13} weight="bold" />
+                        Đã tất toán &amp; Hoàn tất
+                      </span>
+                    )}
+                  </div>
+
+                  <h1 className="rd-hero__title">
+                    <span className="font-mono">{reservation.code}</span>
+                    <span className="rd-hero__sep">·</span>
+                    <span>
+                      {reservation.unit?.sizeM2
+                        ? `${reservation.unit.sizeM2} m²`
+                        : "Kho tiêu chuẩn"}
+                    </span>
+                    <span className="rd-hero__sep">·</span>
+                    <span className="rd-hero__type">
+                      {reservation.unit?.typeName
+                        ? `Loại ${reservation.unit.typeName}`
+                        : "Kho cá nhân"}
+                    </span>
+                  </h1>
+
+                  <p className="rd-hero__location">
+                    Cơ sở: <strong>Tân Bình Gateway (VN-SGN-01)</strong>
+                    {reservation.unit?.floor && (
+                      <> · Tầng {reservation.unit.floor}</>
+                    )}
+                    {reservation.unit?.zoneCode && (
+                      <> · Phân khu {reservation.unit.zoneCode}</>
+                    )}
+                  </p>
+                </div>
+
+                <div className="rd-hero__actions">
+                  {needsPayment && (
+                    <Link
+                      to={`/payment/${reservationId}`}
+                      className="rental-btn rental-btn--primary"
+                    >
+                      Thanh toán cọc ngay
+                      <ArrowRight size={14} weight="bold" />
+                    </Link>
+                  )}
+
+                  {canCheckIn && (
+                    <Link
+                      to={`/rentals/${reservationId}/check-in-pass`}
+                      className="rental-btn rental-btn--primary"
+                    >
+                      <QrCode size={16} weight="bold" />
+                      Mở Check-in Pass
+                      <ArrowRight size={14} weight="bold" />
+                    </Link>
+                  )}
+
+                  {/* Sprint 2: Actions cho trạng thái CHECKED_IN */}
+                  {reservation.status === "CHECKED_IN" && (
+                    <>
+                      <button
+                        type="button"
+                        className="rental-btn rental-btn--primary"
+                        onClick={() => setShowExtensionModal(true)}
+                        title="Gia hạn thời gian thuê kho"
+                      >
+                        <CalendarPlus size={16} weight="bold" />
+                        Gia hạn thuê kho
+                      </button>
+                      <button
+                        type="button"
+                        className="rental-btn rental-btn--secondary"
+                        onClick={() => setShowCheckoutModal(true)}
+                        title="Gửi yêu cầu trả kho"
+                      >
+                        <SignOut size={16} weight="bold" />
+                        Yêu cầu trả kho
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </article>
+
+            {/* ── 2. ALERT CALLOUTS ── */}
+            {isExpired && reservation.depositForfeitReason && (
+              <div className="rd-callout rd-callout--danger">
+                <XCircle size={20} weight="fill" className="rd-callout__icon" />
+                <div className="rd-callout__body">
+                  <strong>Cọc đã bị tịch thu:</strong>
+                  <p>{reservation.depositForfeitReason}</p>
+                </div>
+              </div>
+            )}
+
+            {unsignedAddendum && (
+              <div className="rd-callout rd-callout--warning">
+                <WarningCircle size={20} weight="fill" className="rd-callout__icon" />
+                <div className="rd-callout__body">
+                  <strong>
+                    Phụ lục gia hạn ({unsignedAddendum.code}) đang chờ ký tại quầy
+                  </strong>
+                  <p>
+                    Vui lòng đến quầy vận hành Tân Bình Gateway ký phụ lục hợp đồng giấy trước ngày{" "}
+                    <strong>{fmtDate(unsignedAddendum.signatureDueDate)}</strong> để hoàn tất hồ sơ.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ── 3. BENTO 2-COLUMN MAIN DETAILS ── */}
+            <div className="rd-bento-grid">
+              {/* CỘT TRÁI: TIỀN CỌC & THÔNG SỐ */}
+              <div className="rd-bento-col">
+                {/* Khối Tiền Cọc & Ký Quỹ */}
+                <article className="rd-card">
+                  <header className="rd-card__header">
+                    <div className="rd-card__title-wrap">
+                      <Receipt size={18} weight="bold" />
+                      <h2 className="rd-card__title">Tiền cọc &amp; Ký quỹ</h2>
+                    </div>
+                    <span className="rd-card__sub-badge">10% GIỮ CHỖ</span>
+                  </header>
+
+                  <div className="rd-card__body">
+                    <div className="rd-deposit-headline">
+                      <span className="rd-deposit-label">Tiền cọc quy định</span>
+                      <div className="rd-deposit-amount font-mono">
+                        {fmtMoney(
+                          reservation.depositAmount ||
+                            reservation.quote?.deposit ||
+                            0
+                        )}
+                      </div>
+                      <div className="rd-deposit-status-row">
+                        <span className="rd-badge__dot" aria-hidden="true" />
+                        <span>Trạng thái: <strong>{depositText}</strong></span>
+                      </div>
+                    </div>
+
+                    <div className="rd-meta-list">
+                      <div className="rd-meta-row">
+                        <span className="rd-meta-row__label">Giá thuê theo tháng</span>
+                        <span className="rd-meta-row__value font-mono">
+                          {fmtMoney(
+                            reservation.quote?.monthlyRent ||
+                              reservation.unit?.baseMonthlyRent
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="rd-meta-row">
+                        <span className="rd-meta-row__label">Tổng cam kết hợp đồng</span>
+                        <span className="rd-meta-row__value font-mono">
+                          {fmtMoney(reservation.quote?.totalRent)}
+                        </span>
+                      </div>
+
+                      <div className="rd-meta-row rd-meta-row--highlight">
+                        <span className="rd-meta-row__label">Số tiền cần thanh toán</span>
+                        <span className="rd-meta-row__value font-mono font-bold">
+                          {fmtMoney(reservation.quote?.dueNow || 0)}
+                        </span>
+                      </div>
+
+                      {reservation.quote?.policyVersion && (
+                        <div className="rd-meta-row">
+                          <span className="rd-meta-row__label">Phiên bản chính sách</span>
+                          <span className="rd-meta-row__value font-mono">
+                            Policy {reservation.quote.policyVersion}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="rd-card__hint">
+                      Khoản tiền cọc được lưu giữ an toàn (Escrow Safe) và sẽ được hoàn trả đầy đủ khi thanh lý hợp đồng nếu không phát sinh vi phạm.
+                    </p>
+                  </div>
+                </article>
+
+                {/* Khối Thông Tin Đặt Chỗ (Specs Card) */}
+                <article className="rd-card">
+                  <header className="rd-card__header">
+                    <div className="rd-card__title-wrap">
+                      <ClockCountdown size={18} weight="bold" />
+                      <h2 className="rd-card__title">Thông số hợp đồng</h2>
+                    </div>
+                  </header>
+
+                  <div className="rd-card__body">
+                    <div className="rd-meta-list">
+                      <div className="rd-meta-row">
+                        <span className="rd-meta-row__label">Mã đặt chỗ</span>
+                        <span className="rd-meta-row__value font-mono font-bold">
+                          {reservation.code}
+                        </span>
+                      </div>
+
+                      <div className="rd-meta-row">
+                        <span className="rd-meta-row__label">Mã ô kho</span>
+                        <span className="rd-meta-row__value font-mono font-bold">
+                          Unit {reservation.unit?.code}
+                        </span>
+                      </div>
+
+                      <div className="rd-meta-row">
+                        <span className="rd-meta-row__label">Thời hạn thuê</span>
+                        <span className="rd-meta-row__value">
+                          {reservation.durationMonths} tháng
+                        </span>
+                      </div>
+
+                      <div className="rd-meta-row">
+                        <span className="rd-meta-row__label">Ngày bắt đầu</span>
+                        <span className="rd-meta-row__value">
+                          {fmtDate(reservation.startDate)}
+                        </span>
+                      </div>
+
+                      <div className="rd-meta-row">
+                        <span className="rd-meta-row__label">Ngày kết thúc</span>
+                        <span className="rd-meta-row__value">
+                          {fmtDate(reservation.endDate)}
+                        </span>
+                      </div>
+
+                      {reservation.checkInDeadline && (
+                        <div className="rd-meta-row">
+                          <span className="rd-meta-row__label">Hạn nhận kho (Check-in)</span>
+                          <span
+                            className={`rd-meta-row__value ${
+                              new Date(reservation.checkInDeadline) <
+                                new Date() && reservation.status === "RESERVED"
+                                ? "text-danger font-bold"
+                                : ""
+                            }`}
+                          >
+                            {fmtDate(reservation.checkInDeadline)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </article>
+
+                {/* Khối Mã Truy Cập PIN (Nếu có) */}
+                {reservation.accessCode && (
+                  <article className="rd-card rd-card--access">
+                    <header className="rd-card__header">
+                      <div className="rd-card__title-wrap">
+                        <Key size={18} weight="bold" />
+                        <h2 className="rd-card__title">Mã số mở khóa (Smart PIN)</h2>
+                      </div>
+                      <span className="rd-card__sub-badge">24/7 KEYLESS</span>
+                    </header>
+
+                    <div className="rd-card__body">
+                      <div className="rd-access-box">
+                        <span className="rd-access-box__code font-mono">
+                          {reservation.accessCode}
+                        </span>
+                      </div>
+                      <p className="rd-card__hint">
+                        Nhập mã này tại bàn phím số gắn trên cửa kho hoặc trạm kiểm soát ra vào Depot để mở khóa.
+                      </p>
+                    </div>
+                  </article>
+                )}
+              </div>
+
+              {/* CỘT PHẢI: LỊCH SỬ THANH TOÁN & HỢP ĐỒNG */}
+              <div className="rd-bento-col">
+                {/* Lịch sử thanh toán */}
+                <article className="rd-card">
+                  <header className="rd-card__header">
+                    <div className="rd-card__title-wrap">
+                      <CreditCard size={18} weight="bold" />
+                      <h2 className="rd-card__title">Lịch sử thanh toán &amp; Hóa đơn</h2>
+                    </div>
+                    <span className="font-mono rd-card__sub-badge">
+                      {reservation.payments?.length || 0} GIAO DỊCH
+                    </span>
+                  </header>
+
+                  <div className="rd-card__body rd-card__body--flush">
+                    <PaymentsSection payments={reservation.payments} />
+                  </div>
+                </article>
+
+                {/* Chuỗi hợp đồng */}
+                <article className="rd-card">
+                  <header className="rd-card__header">
+                    <div className="rd-card__title-wrap">
+                      <FileText size={18} weight="bold" />
+                      <h2 className="rd-card__title">Chuỗi hợp đồng lưu trữ</h2>
+                    </div>
+                    <span className="font-mono rd-card__sub-badge">
+                      {reservation.contracts?.length || 0} HỒ SƠ
+                    </span>
+                  </header>
+
+                  <div className="rd-card__body">
+                    <ContractsSection contracts={reservation.contracts} />
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            {/* ── Sprint 2 Modals ── */}
+            <ExtensionModal
+              isOpen={showExtensionModal}
+              onClose={() => setShowExtensionModal(false)}
+              reservation={reservation}
+              onConfirmExtension={handleConfirmExtension}
+            />
+
+            <CheckoutRequestModal
+              isOpen={showCheckoutModal}
+              onClose={() => setShowCheckoutModal(false)}
+              reservation={reservation}
+              onConfirmCheckoutRequest={handleConfirmCheckoutRequest}
+            />
+          </>
+        )}
+      </div>
+    </AppShell>
+  );
 }

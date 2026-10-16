@@ -17,21 +17,7 @@ import AppShell from "../../components/AppShell/AppShell.jsx";
 import { getCheckInPass } from "../../services/rentalService.js";
 import "./CheckInPassPage.css";
 
-function fmtDate(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString("vi-VN", {
-        weekday: "long",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-    });
-}
-
-function daysUntil(dateStr) {
-    if (!dateStr) return null;
-    const diff = new Date(dateStr) - new Date();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-}
+import { formatDateLong as fmtDate, daysUntil } from "../../utils/formatters.js";
 
 const INSTRUCTION_TRANSLATIONS = {
     "Show this code at the Tân Bình depot desk upon arrival.":
@@ -109,25 +95,22 @@ export default function CheckInPassPage() {
     }, [reservationId, navigate]);
 
     useEffect(() => {
+        if (!pass?.code) return;
         let active = true;
-        if (pass?.code) {
-            QRCode.toDataURL(pass.code, {
-                width: 180,
-                margin: 2,
-                color: {
-                    dark: "#0F172A",
-                    light: "#FFFFFF",
-                },
+        QRCode.toDataURL(pass.code, {
+            width: 180,
+            margin: 2,
+            color: {
+                dark: "#000000",
+                light: "#FFFFFF",
+            },
+        })
+            .then((url) => {
+                if (active) setQrDataUrl(url);
             })
-                .then((url) => {
-                    if (active) setQrDataUrl(url);
-                })
-                .catch((err) => {
-                    console.error("Lỗi sinh QR Check-in:", err);
-                });
-        } else {
-            setQrDataUrl("");
-        }
+            .catch((err) => {
+                console.error("Lỗi sinh QR Check-in:", err);
+            });
         return () => {
             active = false;
         };
