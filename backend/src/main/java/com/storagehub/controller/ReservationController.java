@@ -1,6 +1,8 @@
 package com.storagehub.controller;
 
 import com.storagehub.dto.reservation.CheckInPassResponse;
+import com.storagehub.dto.reservation.CheckInRequest;
+import com.storagehub.dto.reservation.CheckInResultResponse;
 import com.storagehub.dto.reservation.CreateReservationRequest;
 import com.storagehub.dto.reservation.ReservationDetailResponse;
 import com.storagehub.dto.reservation.ReservationPageResponse;
@@ -83,6 +85,22 @@ public class ReservationController {
                         email,
                         reservationId
                 )
+        );
+    }
+
+    /**
+     * US-15 (FR-11/14/15): staff hoàn tất check-in tại quầy — hợp đồng ký kèm
+     * ảnh bản ký, rent đã thu đủ → Access Code + CHECKED_IN + Unit RENTED.
+     */
+    @PostMapping("/{reservationId}/check-in")
+    public ResponseEntity<CheckInResultResponse> checkIn(
+            @PathVariable("reservationId") Long reservationId,
+            @Valid @RequestBody CheckInRequest request,
+            Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        return ResponseEntity.ok(
+                reservationService.checkIn(email, reservationId, request.signedPhotoUrl())
         );
     }
 }
