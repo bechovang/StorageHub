@@ -33,6 +33,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
@@ -65,6 +66,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentGateway gateway;
     private final List<PaymentSuccessHandler> handlers;
     private final TransactionTemplate transactionTemplate;
+    private final com.storagehub.service.PricingEngine pricingEngine;
 
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -72,7 +74,8 @@ public class PaymentServiceImpl implements PaymentService {
             UserRepository userRepository,
             PaymentGateway gateway,
             List<PaymentSuccessHandler> handlers,
-            PlatformTransactionManager transactionManager
+            PlatformTransactionManager transactionManager,
+            com.storagehub.service.PricingEngine pricingEngine
     ) {
         this.paymentRepository = paymentRepository;
         this.reservationRepository = reservationRepository;
@@ -80,6 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.gateway = gateway;
         this.handlers = handlers;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.pricingEngine = pricingEngine;
     }
 
     @Override
@@ -128,10 +132,18 @@ public class PaymentServiceImpl implements PaymentService {
                     "Đặt chỗ này không ở trạng thái chờ thanh toán.");
         }
 
-        // RENT chờ check-in task Sprint 2 (US-15) — endpoint dùng chung đã sẵn.
+        // US-15 (FR-15): rent thu 100% tại quầy check-in — chỉ mở khi đặt chỗ
+        // đã cọc (RESERVED) và chưa quá hạn nhận kho (FR-36 tính theo giờ ICT).
         if (request.purpose() == Payment.Purpose.RENT) {
-            throw new PaymentInvalidStateException(
-                    "Thanh toán rent sẽ mở cùng bước check-in (Sprint 2).");
+            LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+            if (reservation.getStatus() != Reservation.Status.RESERVED) {
+                throw new PaymentInvalidStateException(
+                        "Đặt chỗ này chưa xác nhận cọc — không thể trả tiền thuê.");
+            }
+            if (today.isAfter(reservation.getStartDate())) {
+                throw new PaymentInvalidStateException(
+                        "Đặt chỗ đã quá hạn nhận kho (no-show) — không thể trả tiền thuê.");
+            }
         }
 
         return createWithRetry(payer, reservation, request);
@@ -150,13 +162,21 @@ public class PaymentServiceImpl implements PaymentService {
         for (int attempt = 0; attempt < 3; attempt++) {
             try {
                 return transactionTemplate.execute(tx -> {
+                    // Reservation nạp ngoài tx (createPayment không @Transactional)
+                    // nên proxy Unit là detached — nạp lại trong tx để lazy-load
+                    // được khi tính amount RENT theo quote.
+                    Reservation managed = reservationRepository
+                            .findById(reservation.getReservationId())
+                            .orElseThrow();
+
                     Payment payment = new Payment();
                     payment.setPayer(payer);
-                    payment.setReservation(reservation);
+                    payment.setReservation(managed);
                     payment.setPurpose(request.purpose());
                     payment.setMethod(request.method());
                     // AD-11: server tính từ quote snapshot — FE không gửi được amount.
-                    payment.setAmount(reservation.getDepositAmount());
+                    // DEPOSIT = cọc đang giữ; RENT = 100% tổng tiền thuê (FR-15).
+                    payment.setAmount(resolveAmount(managed, request.purpose()));
                     payment.setStatus(Payment.Status.PENDING);
                     // Cấp từ lúc tạo (cột NOT NULL), chỉ hiển thị khi SUCCEEDED.
                     payment.setReceiptCode(allocateReceiptCode());
@@ -181,6 +201,25 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
         throw new IllegalStateException("Could not allocate receipt code");
+    }
+
+    /** DEPOSIT = cọc đang giữ; RENT (US-15/FR-15) = 100% tổng tiền thuê theo quote. */
+    private java.math.BigDecimal resolveAmount(
+            Reservation reservation,
+            Payment.Purpose purpose
+    ) {
+        if (purpose != Payment.Purpose.RENT) {
+            return reservation.getDepositAmount();
+        }
+        int months = (int) java.time.temporal.ChronoUnit.MONTHS.between(
+                reservation.getStartDate().withDayOfMonth(1),
+                reservation.getEndDate().plusDays(1).withDayOfMonth(1));
+        if (months < 1) {
+            months = 1;
+        }
+        com.storagehub.dto.quote.QuoteResponse quote = pricingEngine.calculateQuote(
+                reservation.getUnit(), reservation.getStartDate(), months);
+        return java.math.BigDecimal.valueOf(quote.totalRent());
     }
 
     @Override
