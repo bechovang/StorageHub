@@ -17,12 +17,13 @@ import {
 } from "../../components";
 import { useAuth } from "../../context/AuthContext";
 import { getUnitFilterOptions, searchUnits } from "../../services/unitService";
+import { formatVND, PLACEHOLDER_UNIT_IMAGE } from "../../utils/formatters";
 import "./BrowsePage.css";
 
 function DrawerVisual({ unit }) {
   const sizeM2 = unit?.sizeM2 || 3.5;
   const volumeM3 = (sizeM2 * 2.8).toFixed(1);
-  const photo = unit?.photoUrls?.[0] || unit?.photoUrl || "/placeholder.svg";
+  const photo = unit?.photoUrls?.[0] || unit?.photoUrl || PLACEHOLDER_UNIT_IMAGE;
 
   return (
     <div className="browse-drawer-visual" aria-label={`Hình ảnh không gian kho ${sizeM2} m²`}>
@@ -32,7 +33,7 @@ function DrawerVisual({ unit }) {
         className="browse-drawer-visual__img"
         onError={(e) => {
           e.currentTarget.onerror = null;
-          e.currentTarget.src = "/placeholder.svg";
+          e.currentTarget.src = PLACEHOLDER_UNIT_IMAGE;
         }}
         loading="lazy"
       />
@@ -175,7 +176,35 @@ export default function BrowsePage() {
 
   // Tải danh sách kho mặc định ban đầu
   useEffect(() => {
-    fetchUnits(activeFilters, sortOrder);
+    let ignore = false;
+    async function loadInitialUnits() {
+      try {
+        const data = await searchUnits({
+          typeId: activeFilters.typeId,
+          sizeM2: activeFilters.sizeM2,
+          startDate: activeFilters.startDate,
+          facilityId: activeFilters.facilityId,
+          sort: sortOrder,
+        });
+        if (!ignore) {
+          const sorted = sortUnitsWithAvailableFirst(data.items || [], sortOrder);
+          setUnits(sorted);
+        }
+      } catch {
+        if (!ignore) {
+          setUnits([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    loadInitialUnits();
+    return () => {
+      ignore = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Xử lý submit form tìm kiếm
@@ -520,12 +549,11 @@ export default function BrowsePage() {
               <div className="browse-drawer-footer__price">
                 <div className="browse-drawer-footer__price-val">
                   <strong>
-                    {new Intl.NumberFormat("vi-VN").format(
+                    {formatVND(
                       selectedUnitForDrawer.baseMonthlyRent ||
                         selectedUnitForDrawer.monthlyPrice ||
                         0,
-                    )}{" "}
-                    ₫
+                    )}
                   </strong>
                   <span className="browse-drawer-footer__price-period">
                     / tháng
@@ -596,7 +624,7 @@ export default function BrowsePage() {
                       {isSoon ? "Sắp khả dụng" : "Còn trống · Nhận kho ngay"}
                     </Badge>
                     <span className="browse-drawer-rent-pill">
-                      {new Intl.NumberFormat("vi-VN").format(price)} ₫ / tháng
+                      {formatVND(price)} / tháng
                     </span>
                   </div>
                 </div>
@@ -677,14 +705,13 @@ export default function BrowsePage() {
                       <dd
                         style={{ color: "var(--color-ink)", fontWeight: 700 }}
                       >
-                        {new Intl.NumberFormat("vi-VN").format(price)} ₫ / tháng
+                        {formatVND(price)} / tháng
                       </dd>
                     </div>
                     <div className="spec-row">
                       <dt>Tiền đặt cọc (hoàn lại khi trả kho)</dt>
                       <dd>
-                        {new Intl.NumberFormat("vi-VN").format(price)} ₫ (1
-                        tháng)
+                        {formatVND(price)} (1 tháng)
                       </dd>
                     </div>
                     <div className="spec-row">
