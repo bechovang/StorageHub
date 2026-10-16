@@ -49,6 +49,7 @@ tags:
   - name: Reservations
   - name: Payments
   - name: Contracts
+  - name: Tasks
   - name: Notifications
 
 # ---------------------------------------------------------------------------
@@ -415,6 +416,106 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
               example: { code: RESERVATION_INVALID_STATE, message: "Check-in pass chỉ khả dụng khi đặt chỗ đã xác nhận.", fieldErrors: [] }
 
+  /reservations/{reservationId}/check-in:
+    post:
+      tags: [Reservations]
+      summary: "US-15 (FR-11/14/15): staff hoàn tất check-in tại quầy"
+      description: |
+        Ritual: hợp đồng hiện hành DRAFT/PRINTED → SIGNED kèm ảnh bản ký
+        (FR-11 — action CONTRACT_SIGNED ghi ActivityLog), sinh Access Code,
+        Reservation → CHECKED_IN, Unit → RENTED, task CHECK_IN → DONE,
+        notification CHECK_IN_COMPLETED. Tiền đề đã validate với lý do cụ thể:
+        deposit đã trả, rent 100% đã thu qua Payment Modal (purpose RENT),
+        chưa quá hạn nhận kho. Attachments upload thuộc Sprint 2 khác —
+        signedPhotoUrl giữ shape URL như seed.
+      operationId: checkInReservation
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signedPhotoUrl]
+              properties:
+                signedPhotoUrl: { type: string, example: "/storage/contracts/CT-1046-signed.jpg" }
+      responses:
+        "200":
+          description: Check-in hoàn tất — accessCode trao khách tại quầy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationId: { type: integer, format: int64, example: 20 }
+                  code: { type: string, example: BK-1046 }
+                  status: { type: string, example: CHECKED_IN }
+                  accessCode: { type: string, example: "482913" }
+                  unitCode: { type: string, example: LOCK-1 }
+                  unitStatus: { type: string, example: RENTED }
+                  contractCode: { type: string, example: CT-1046 }
+                  contractStatus: { type: string, example: SIGNED }
+                  signedPhotoUrl: { type: string, example: "/storage/contracts/CT-1046-signed.jpg" }
+                  taskStatus: { type: string, nullable: true, example: DONE }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+        "409":
+          description: "FR-14 — lý do cụ thể: chưa trả cọc / chưa thu 100% rent / đã check-in / quá hạn no-show / hợp đồng không ký được"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: RESERVATION_INVALID_STATE, message: "Chưa thu tiền thuê — trả 100% rent qua Payment Modal trước khi check-in.", fieldErrors: [] }
+
+  # --------------------------- TASKS (US-15, FR-25) ------------------------
+
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: "US-15 (FR-25): Task Board của ca trực — staff only"
+      description: |
+        Task theo ngày (mặc định hôm nay giờ ICT). Task CHECK_IN kèm ritual
+        flags derive-on-read (AD-4): depositVerified, rentCollected,
+        rentAmountDue, depositPaid, contractSigned, contractPhotoUrl,
+        accessCodeHanded — FE bật/tắt nút ritual theo flags, không tự tính.
+      operationId: listTasks
+      parameters:
+        - { name: date, in: query, schema: { type: string, format: date }, description: "Mặc định: hôm nay (ICT)" }
+      responses:
+        "200":
+          description: Danh sách task trong ngày
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    taskId: { type: integer, format: int64 }
+                    type: { type: string, enum: [CHECK_IN, CHECKOUT, CLEANING, SUPPORT, CONTRACT] }
+                    refCode: { type: string, nullable: true, example: BK-1046 }
+                    unitCode: { type: string, nullable: true, example: LOCK-1 }
+                    customerName: { type: string, nullable: true, example: "Nguyễn Thị Lan" }
+                    customerPhone: { type: string, nullable: true, example: "0901 234 567" }
+                    workDate: { type: string, format: date }
+                    status: { type: string, enum: [TODO, IN_PROGRESS, DONE] }
+                    ritual:
+                      type: object
+                      nullable: true
+                      description: "Chỉ có với type CHECK_IN"
+                      properties:
+                        depositVerified: { type: boolean }
+                        rentCollected: { type: boolean }
+                        rentAmountDue: { type: integer, nullable: true, example: 300000 }
+                        depositPaid: { type: integer, nullable: true, example: 30000 }
+                        contractSigned: { type: boolean }
+                        contractPhotoUrl: { type: string, nullable: true }
+                        accessCodeHanded: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   # --------------------------- PAYMENTS (US-8, AD-9) ----------------------
 
   /payments:
@@ -422,9 +523,9 @@ paths:
       tags: [Payments]
       summary: Bắt đầu thanh toán (Payment Modal) — FR-8
       description: |
-        Sprint 1 chỉ nhận purpose DEPOSIT (booking) và RENT (check-in —
-        endpoint này dùng chung, check-in task Sprint 2 gọi tiếp). EXTENSION_FEE
-        / EXTRA_FEE / DAMAGE_FEE thuộc sprint sau.
+        Nhận purpose DEPOSIT (booking) và RENT (check-in tại quầy — US-15:
+        chỉ mở khi reservation đã RESERVED và chưa quá hạn nhận kho).
+        EXTENSION_FEE / EXTRA_FEE / DAMAGE_FEE thuộc sprint sau.
         Kết quả thanh toán (thành công/thất bại) do MockPaymentGateway quyết
         định theo cấu hình server-side — KHÔNG có field outcome trong request.
         Flows: CARD → trả PROCESSING, FE poll GET; MOMO → trả PENDING +

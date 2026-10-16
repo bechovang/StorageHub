@@ -4,6 +4,7 @@ import com.storagehub.dto.contract.ContractChainItemResponse;
 import com.storagehub.dto.payment.PaymentRecordResponse;
 import com.storagehub.dto.quote.QuoteResponse;
 import com.storagehub.dto.reservation.CheckInPassResponse;
+import com.storagehub.dto.reservation.CheckInResultResponse;
 import com.storagehub.dto.reservation.CreateReservationRequest;
 import com.storagehub.dto.reservation.ReservationDetailResponse;
 import com.storagehub.dto.reservation.ReservationPageResponse;
@@ -12,10 +13,12 @@ import com.storagehub.dto.reservation.ReservationUnitSummaryResponse;
 import com.storagehub.dto.unit.UnitAvailabilityResponse;
 import com.storagehub.dto.unit.UnitSummaryResponse;
 import com.storagehub.entity.Contract;
+import com.storagehub.entity.Payment;
 import com.storagehub.entity.PolicyRule;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Role;
+import com.storagehub.entity.Task;
 import com.storagehub.entity.Unit;
 import com.storagehub.entity.User;
 import com.storagehub.exception.BookingUnitTakenException;
@@ -37,6 +40,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -49,6 +53,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,6 +75,7 @@ public class ReservationService {
     private final ActivityLogRepository activityLogRepository;
     private final PlatformTransactionManager transactionManager;
     private final ContractAddendumRepository contractAddendumRepository;
+    private final TaskService taskService;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -557,6 +563,9 @@ public class ReservationService {
         }
         reservation.setStatus(Reservation.Status.RESERVED);
         reservationRepository.save(reservation);
+
+        // US-15 (FR-25): cọc xong → sinh task CHECK_IN cho ca trực ngày nhận kho.
+        taskService.createCheckInTask(reservation.getCustomer(), reservation);
     }
 
     /**
@@ -620,6 +629,153 @@ public class ReservationService {
         logService.log(actor, "RESERVATION", reservation.getReservationId(),
                 "RESERVATION_EXPIRED", "RESERVED", "EXPIRED",
                 "Deposit forfeited — no-show");
+    }
+
+    /**
+     * US-15 (FR-11/14/15): staff hoàn tất ritual check-in tại quầy — ký hợp đồng
+     * (ảnh bản ký), đã thu 100% rent qua Payment Modal, rồi bàn giao Access Code.
+     * Thiết kế: action tường minh của staff (không auto-flip trong payment handler)
+     * để bảo đảm FR-11 — không cấp code khi contract chưa Signed. Validate FR-14
+     * từng lỗi một lý do; action tx lock dòng reservation chống double-click.
+     */
+    public CheckInResultResponse checkIn(String email, Long reservationId, String signedPhotoUrl) {
+        User actor = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(InvalidCredentialsException::new);
+        if (actor.getRole().getName() == Role.Name.CUSTOMER) {
+            throw new AccessDeniedException("Chỉ nhân viên mới được thực hiện check-in.");
+        }
+
+        // findWithDetailsById fetch-join unit/zone/customer — method này không
+        // @Transactional nên proxy lazy sẽ LazyInitializationException (OSIV off).
+        Reservation reservation = reservationRepository.findWithDetailsById(reservationId)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found."));
+
+        LocalDate today = LocalDate.now(ICT_ZONE);
+
+        // FR-36/AD-4: quá hạn nhận kho → áp side-effect no-show exactly-once rồi chặn.
+        if (reservation.getStatus() == Reservation.Status.RESERVED
+                && today.isAfter(reservation.getStartDate())) {
+            expireNoShowIfDue(email, reservationId);
+            throw new ReservationInvalidStateException(
+                    "Đặt chỗ " + reservation.getCode()
+                            + " đã quá hạn nhận kho (no-show) — cọc không hoàn lại.");
+        }
+
+        // FR-14: validate tiền đề trước khi mở transaction — mỗi lỗi một lý do cụ thể.
+        if (reservation.getStatus() == Reservation.Status.PENDING_PAYMENT) {
+            throw new ReservationInvalidStateException(
+                    "Đặt chỗ " + reservation.getCode() + " chưa trả cọc — không thể check-in.");
+        }
+        if (reservation.getStatus() != Reservation.Status.RESERVED) {
+            throw new ReservationInvalidStateException(
+                    "Đặt chỗ " + reservation.getCode() + " đã check-in hoặc đã kết thúc.");
+        }
+        validateRentCollected(reservation);
+        validateLatestContractSignable(reservation);
+
+        // Action tx: lock dòng reservation + re-check — 2 staff bấm cùng lúc thì
+        // bên sau ăn 409 (giống exactly-once pattern của expireNoShowIfDue).
+        TransactionTemplate checkInTx = new TransactionTemplate(transactionManager);
+        checkInTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        return checkInTx.execute(tx -> {
+            Reservation locked = reservationRepository.findByIdForUpdate(reservationId)
+                    .orElseThrow();
+            if (locked.getStatus() != Reservation.Status.RESERVED) {
+                throw new ReservationInvalidStateException(
+                        "Đặt chỗ " + locked.getCode()
+                                + " vừa được check-in bởi nhân viên khác.");
+            }
+            return applyCheckIn(actor, locked, signedPhotoUrl);
+        });
+    }
+
+    /** FR-11/15: flips theo ownership matrix — mọi owner trong cùng transaction. */
+    private CheckInResultResponse applyCheckIn(
+            User actor,
+            Reservation reservation,
+            String signedPhotoUrl
+    ) {
+        // FR-11: hợp đồng SIGNED + ảnh ký TRƯỚC — điều kiện cấp Access Code.
+        Contract signed = contractService.signContractAtCheckIn(actor, reservation, signedPhotoUrl);
+
+        unitService.markRentedAtCheckIn(actor, reservation.getUnit());
+
+        // FR-15: sinh + trao Access Code, rental ACTIVE.
+        reservation.setAccessCode(generateAccessCode());
+        reservation.setStatus(Reservation.Status.CHECKED_IN);
+        reservationRepository.save(reservation);
+
+        notificationService.notifyCheckInCompleted(reservation);
+        Task task = taskService.completeCheckInTask(actor, reservation.getCode());
+
+        logService.log(actor, "RESERVATION", reservation.getReservationId(),
+                "STATUS_CHANGED", "RESERVED", "CHECKED_IN",
+                "Check-in " + reservation.getCode() + " — rent paid in full");
+
+        return new CheckInResultResponse(
+                reservation.getReservationId(),
+                reservation.getCode(),
+                reservation.getStatus().name(),
+                reservation.getAccessCode(),
+                reservation.getUnit().getCode(),
+                reservation.getUnit().getStatus().name(),
+                signed.getCode(),
+                signed.getStatus().name(),
+                signed.getSignedPhotoUrl(),
+                task != null ? task.getStatus().name() : null
+        );
+    }
+
+    /** FR-15: phải có payment RENT SUCCEEDED đủ 100% tổng tiền thuê (quote tính lại). */
+    private void validateRentCollected(Reservation reservation) {
+        List<Payment> rentPayments = paymentRepository
+                .findByReservation_ReservationId(reservation.getReservationId()).stream()
+                .filter(p -> p.getPurpose() == Payment.Purpose.RENT
+                        && p.getStatus() == Payment.Status.SUCCEEDED)
+                .toList();
+        if (rentPayments.isEmpty()) {
+            throw new ReservationInvalidStateException(
+                    "Chưa thu tiền thuê — trả 100% rent qua Payment Modal trước khi check-in.");
+        }
+        QuoteResponse quote = pricingEngine.calculateQuote(
+                reservation.getUnit(), reservation.getStartDate(), durationMonthsOf(reservation));
+        BigDecimal paid = rentPayments.stream()
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (paid.compareTo(BigDecimal.valueOf(quote.totalRent())) < 0) {
+            throw new ReservationInvalidStateException(
+                    "Tiền thuê thu chưa đủ — cần " + quote.totalRent()
+                            + " ₫, đã thu " + paid.toPlainString() + " ₫.");
+        }
+    }
+
+    /** FR-11: phải có hợp đồng hiện hành DRAFT/PRINTED để ký tại quầy. */
+    private void validateLatestContractSignable(Reservation reservation) {
+        Contract latest = contractRepository
+                .findByReservation_ReservationIdAndIsLatestTrue(reservation.getReservationId())
+                .orElseThrow(() -> new ReservationInvalidStateException(
+                        "Đặt chỗ " + reservation.getCode()
+                                + " chưa có hợp đồng — không thể check-in."));
+        if (latest.getStatus() != Contract.Status.DRAFT
+                && latest.getStatus() != Contract.Status.PRINTED) {
+            throw new ReservationInvalidStateException(
+                    "Hợp đồng " + latest.getCode() + " ở trạng thái "
+                            + latest.getStatus() + " — không thể ký tại quầy.");
+        }
+    }
+
+    /** FR-15: mã truy cập 6 chữ số — chỉ sinh 1 lần lúc check-in. */
+    private String generateAccessCode() {
+        return String.format("%06d", ThreadLocalRandom.current().nextInt(1_000_000));
+    }
+
+    /** Cùng công thức duration với Rental Detail. */
+    private int durationMonthsOf(Reservation reservation) {
+        int months = (int) ChronoUnit.MONTHS.between(
+                reservation.getStartDate().withDayOfMonth(1),
+                reservation.getEndDate().plusDays(1).withDayOfMonth(1)
+        );
+        return Math.max(months, 1);
     }
 
     private synchronized String generateReservationCode() {
