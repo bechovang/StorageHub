@@ -89,13 +89,11 @@ export default function ReportsPage() {
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">
                 <span className="dot-pulse-green" />
-                <span className="text-success font-medium">Đối soát kế toán & sổ cái: Trực tuyến</span>
+                <span className="text-success font-medium">Đối soát sổ cái: Đã đồng bộ</span>
               </div>
             </div>
             <div className="reports-telemetry__right">
-              <span>MÚI GIỜ: UTC+07:00</span>
-              <span>|</span>
-              <span className="font-mono">NODE: sgn01-gw-prod-3</span>
+              <span>MÚI GIỜ: TP. HỒ CHÍ MINH (UTC+07)</span>
             </div>
           </div>
         </aside>
@@ -123,13 +121,13 @@ export default function ReportsPage() {
               <div className="reports-breadcrumb">
                 <span>StorageHub VN</span>
                 <span>/</span>
-                <span>Financial Operations</span>
+                <span>Quản lý kinh doanh</span>
                 <span>/</span>
-                <span className="reports-breadcrumb__active">Báo cáo kiểm toán & Đối soát</span>
+                <span className="reports-breadcrumb__active">Báo cáo tài chính & Đối soát</span>
               </div>
               <h1 className="reports-title">Báo cáo tài chính & Vận hành</h1>
               <p className="reports-subtitle">
-                Tổng hợp kế toán tự động, đối chiếu sổ cái doanh thu và kiểm soát quỹ tiền cọc
+                Tổng hợp doanh thu, đối chiếu sổ cái và theo dõi quỹ tiền cọc.
               </p>
             </div>
 

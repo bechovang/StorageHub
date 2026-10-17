@@ -186,7 +186,7 @@ export default function ExtensionModal({
                     {/* Ngày trả kho mới */}
                     <div className="rd-form-group">
                         <label htmlFor="newEndDate" className="rd-form-label">
-                            Ngày trả kho mới dự kiến (New Checkout Date)
+                            Ngày kết thúc thuê mới
                         </label>
                         <input
                             type="date"
@@ -206,20 +206,20 @@ export default function ExtensionModal({
                         <div className="rd-conflict-alert">
                             <Warning size={20} weight="fill" className="rd-conflict-alert__icon" />
                             <div>
-                                <h4 className="rd-conflict-alert__title">Xung đột lịch đặt chỗ kế tiếp!</h4>
+                                <h4 className="rd-conflict-alert__title">Kho đã có khách đặt trước</h4>
                                 <p className="rd-conflict-alert__text">
-                                    Kho <strong>{reservation.unit?.code}</strong> đã có khách đặt trước bắt đầu từ ngày{" "}
+                                    Kho <strong>{reservation.unit?.code}</strong> đã có khách đặt trước từ ngày{" "}
                                     <strong>{fmtDate(conflictStartDateStr)}</strong>.
                                 </p>
                                 <p className="rd-conflict-alert__boundary">
-                                    Giới hạn gia hạn muộn nhất cho phép: <strong>{fmtDate(latestAllowedCheckoutStr)}</strong> (Latest new checkout).
+                                    Bạn có thể gia hạn tối đa đến ngày: <strong>{fmtDate(latestAllowedCheckoutStr)}</strong>.
                                 </p>
                                 <button
                                     type="button"
                                     className="rd-btn-fix-conflict"
                                     onClick={() => setSelectedDateStr(latestAllowedCheckoutStr)}
                                 >
-                                    Đặt lại ngày {fmtDate(latestAllowedCheckoutStr)}
+                                    Chọn ngày {fmtDate(latestAllowedCheckoutStr)}
                                 </button>
                             </div>
                         </div>
@@ -230,7 +230,7 @@ export default function ExtensionModal({
                         <div className="rd-price-breakdown">
                             <div className="rd-price-breakdown__header">
                                 <Receipt size={16} weight="bold" />
-                                <span>Bảng tính chi phí gia hạn minh bạch (FR-16)</span>
+                                <span>Chi tiết chi phí gia hạn</span>
                             </div>
 
                             <div className="rd-price-breakdown__rows">
@@ -240,8 +240,8 @@ export default function ExtensionModal({
                                 </div>
                                 <div className="rd-price-row">
                                     <span>
-                                        Tiền cọc bổ sung (Top-up cọc 10%)
-                                        <Info size={13} className="rd-info-icon" title="Cọc nâng từ mức cũ lên mức tỷ lệ với tổng giá trị hợp đồng mới" />
+                                        Tiền cọc bổ sung (đạt 10% hợp đồng mới)
+                                        <Info size={13} className="rd-info-icon" title="Cọc nâng từ mức cũ lên mức tương ứng với tổng giá trị hợp đồng mới" />
                                     </span>
                                     <span className="rd-topup-value">
                                         +{fmtMoney(calculation.topUpDeposit)}
@@ -261,8 +261,7 @@ export default function ExtensionModal({
                             <div className="rd-notice-box">
                                 <CheckCircle size={16} weight="fill" color="#16a34a" />
                                 <span>
-                                    Sau khi thanh toán, ngày kết thúc thuê sẽ được cập nhật ngay lập tức. Hệ thống sẽ sinh
-                                    phụ lục hợp đồng gia hạn (<strong>Addendum CT-...-A1</strong>) hẹn ký tại quầy trong vòng 7 ngày.
+                                    Sau khi thanh toán, thời hạn thuê mới sẽ có hiệu lực ngay lập tức. Bạn vui lòng ghé quầy ký phụ lục hợp đồng giấy trong vòng 7 ngày tới nhé.
                                 </span>
                             </div>
                         </div>

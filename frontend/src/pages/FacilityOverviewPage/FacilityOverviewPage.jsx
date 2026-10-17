@@ -139,8 +139,8 @@ export default function FacilityOverviewPage() {
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">
                 <span className="dot-pulse-green" />
-                <span className="text-success font-semibold">Systems Nominal</span>
-                <span className="text-muted">· Gate Automation Online</span>
+                <span className="text-success font-semibold">Hệ thống ổn định</span>
+                <span className="text-muted">· Cổng ra vào hoạt động tốt</span>
               </div>
             </div>
 
@@ -154,7 +154,7 @@ export default function FacilityOverviewPage() {
               <div className="telemetry-item">
                 <ShieldCheck size={16} className="text-primary" />
                 <span className="telemetry-bold">Ca trực:</span>
-                <span>Tuấn on duty (Facility Manager)</span>
+                <span>Tuấn (Quản lý trực ca)</span>
               </div>
             </div>
           </div>
@@ -166,13 +166,13 @@ export default function FacilityOverviewPage() {
           <header className="facility-header">
             <div>
               <div className="facility-breadcrumb">
-                <span>Facility Control Room</span>
+                <span>Vận hành cơ sở</span>
                 <span className="facility-breadcrumb__sep">/</span>
-                <span className="facility-breadcrumb__curr">Overview</span>
+                <span className="facility-breadcrumb__curr">Tổng quan kho</span>
               </div>
-              <h1 className="facility-title">Tổng quan vận hành cơ sở (Facility Overview)</h1>
+              <h1 className="facility-title">Tổng quan vận hành cơ sở</h1>
               <p className="facility-subtitle">
-                Giám sát tỷ lệ lấp đầy, điều phối trạng thái kho và hàng đợi bàn giao ca trực hôm nay (FR-32).
+                Theo dõi tỷ lệ lấp đầy, tình trạng từng kho và các lượt bàn giao trong ngày.
               </p>
             </div>
 
@@ -199,7 +199,7 @@ export default function FacilityOverviewPage() {
                 }}
               >
                 <FileArrowDown size={16} weight="bold" />
-                <span>Xuất file Audit CSV</span>
+                <span>Xuất file CSV kiểm kê</span>
               </button>
               <button
                 type="button"
@@ -211,18 +211,18 @@ export default function FacilityOverviewPage() {
             </div>
           </header>
 
-          {/* ── 4 KPI Summary Cards (Bấm vào để drill-down theo FR-32) ── */}
+          {/* ── 4 KPI Summary Cards (Bấm vào để xem chi tiết) ── */}
           <section className="facility-kpi-grid">
             {/* KPI 1: Occupancy */}
             <article
               className="kpi-card kpi-card--interactive"
               onClick={() => handleOpenDrilldown("RENTED")}
-              title="Nhấp để xem danh sách các phòng đang được thuê (Drill-down)"
+              title="Nhấp để xem danh sách các phòng đang được thuê"
               tabIndex={0}
               role="button"
             >
               <div className="kpi-card__head">
-                <span className="kpi-card__label">TỶ LỆ LẤP ĐẦY (OCCUPANCY)</span>
+                <span className="kpi-card__label">TỶ LỆ LẤP ĐẦY KHO</span>
                 <span className="badge badge--success">
                   <TrendUp size={12} weight="bold" /> +1.4%
                 </span>
@@ -240,7 +240,7 @@ export default function FacilityOverviewPage() {
                 />
               </div>
               <div className="kpi-card__footer-hint">
-                <span>Bấm để lọc danh sách kho Đang thuê (Rented) →</span>
+                <span>Xem danh sách kho đang thuê →</span>
               </div>
             </article>
 
@@ -328,9 +328,9 @@ export default function FacilityOverviewPage() {
           <section className="facility-status-panel">
             <div className="facility-status-panel__head">
               <div>
-                <h2 className="facility-status-panel__title">Cơ cấu trạng thái kho (Units by status)</h2>
+                <h2 className="facility-status-panel__title">Phân bổ trạng thái kho</h2>
                 <p className="facility-status-panel__desc">
-                  Phân bố tỷ trọng vận hành thực tế trên toàn bộ diện tích depot. Bấm từng trạng thái để mở danh sách chi tiết (Drill-down).
+                  Tỷ lệ kho trống, đã cọc và đang thuê tại cơ sở. Bấm vào từng nhóm để xem danh sách chi tiết.
                 </p>
               </div>
               <div className="facility-status-panel__total">
@@ -424,11 +424,11 @@ export default function FacilityOverviewPage() {
             </div>
           </section>
 
-          {/* ── Operational Turnover Queue (Hàng đợi xoay vòng kho hôm nay) ── */}
+          {/* ── Operational Turnover Queue (Lịch bàn giao & vệ sinh kho hôm nay) ── */}
           <section className="turnover-section">
             <div className="turnover-section__head">
               <div className="turnover-section__title-group">
-                <h2 className="turnover-section__title">Hàng đợi xoay vòng kho hôm nay (Turnover queue)</h2>
+                <h2 className="turnover-section__title">Lịch bàn giao & vệ sinh kho hôm nay</h2>
                 <span className="badge badge--info">{TURNOVER_QUEUE.length} ca chuyển trạng thái</span>
               </div>
               <div className="turnover-section__refresh">
