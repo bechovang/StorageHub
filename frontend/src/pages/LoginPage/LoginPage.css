@@ -150,54 +150,51 @@
   font-family: var(--font-mono);
 }
 
-/* Cột phải: form (căn giữa hoàn toàn trong phần nền sáng) */
+/* Cột phải: form */
 .login-form-col {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-6) var(--space-5);
-  background: #f4f4f5;
+  padding: var(--space-7) var(--space-7);
+  background: var(--color-neutral);
 }
 
-/* Card login (tăng width thêm ~35px thành 420px, brutalist offset shadow) */
 .login-card {
   width: 100%;
-  max-width: 420px;
-  background: #ffffff;
-  border: 1.5px solid #18181b;
-  box-shadow: 4px 4px 0px #18181b;
+  max-width: 400px;
+  background: var(--color-surface);
+  border: var(--border-strong);
   border-radius: var(--radius-none, 0px);
-  position: relative;
-  overflow: hidden;
-}
-
-.login-card__accent-bar {
-  height: 3px;
-  background: var(--color-accent);
-  width: 100%;
 }
 
 .login-card__header {
-  padding: 24px 26px 18px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: var(--border-strong);
+}
+
+.login-card__eyebrow {
+  margin: 0 0 var(--space-2) 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  color: var(--color-secondary);
 }
 
 .login-card__title {
-  font: 700 1.35rem / 1.25 var(--font-display);
+  font: 700 var(--text-h2) / 1.1 var(--font-display);
   color: var(--color-ink);
-  margin: 0 0 5px 0;
-  letter-spacing: -0.015em;
+  margin: 0;
 }
 
 .login-card__subtitle {
   font-size: 0.83rem;
-  color: #71717a;
-  margin: 0;
+  color: var(--color-secondary);
+  margin: var(--space-1) 0 0 0;
   line-height: 1.4;
 }
 
 .login-card__body {
-  padding: 24px 26px;
+  padding: var(--space-5);
 }
 
 /* Alert lỗi chung — không tiết lộ field nào sai */
@@ -219,53 +216,98 @@
   line-height: 1.4;
 }
 
-/* Form fields: hiện đại, mềm mại, chuẩn 44-48px */
+/* Form fields (đồng bộ .form-field trong mẫu) */
 .login-form {
   display: flex;
   flex-direction: column;
 }
 
 .login-field {
+  --label-tx: 12px;
+  --label-ty: 36px;
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
-  padding: 0;
-  border-bottom: none;
+  padding: 14px 0 16px;
+  border-bottom: var(--border);
+  position: relative;
+}
+
+.login-field:first-of-type {
+  padding-top: 0;
 }
 
 .login-field__label {
-  font-size: 0.81rem;
-  font-weight: 600;
-  color: #27272a;
-  margin-bottom: 6px;
-  letter-spacing: 0.01em;
-}
-
-.login-field__label-row {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  min-height: 18px;
+  line-height: 18px;
+  margin-bottom: 7px;
+  font-size: 0.86rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--color-muted);
+  transform: translate(var(--label-tx), var(--label-ty));
+  transform-origin: left top;
+  transition: transform 160ms cubic-bezier(0.4, 0, 0.2, 1),
+              font-size 160ms ease,
+              font-weight 160ms ease,
+              color 160ms ease;
+  pointer-events: none;
+  z-index: 1;
+  width: fit-content;
 }
 
-.login-field__label-row .login-field__label {
-  margin-bottom: 0;
-}
-
-.login-field__req {
+.login-field__label span,
+.login-field__label .login-field__req {
   color: var(--color-accent);
-  margin-left: 2px;
+  margin-left: 3px;
+  display: none;
+}
+
+/* Khi có dữ liệu hoặc autofill: giữ nguyên vị trí trên đầu */
+.login-field--has-value .login-field__label,
+.login-field:has(.login-field__input:not(:placeholder-shown)) .login-field__label,
+.login-field:has(.login-field__input:-webkit-autofill) .login-field__label {
+  transform: translate(0, 0);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  color: var(--color-ink);
+}
+
+.login-field--has-value .login-field__label span,
+.login-field--has-value .login-field__label .login-field__req,
+.login-field:has(.login-field__input:not(:placeholder-shown)) .login-field__label span,
+.login-field:has(.login-field__input:not(:placeholder-shown)) .login-field__label .login-field__req,
+.login-field:has(.login-field__input:-webkit-autofill) .login-field__label span,
+.login-field:has(.login-field__input:-webkit-autofill) .login-field__label .login-field__req {
+  display: inline;
+}
+
+/* Khi đang focus: label bay lên đầu và chuyển sang màu đỏ thương hiệu */
+.login-field:focus-within .login-field__label {
+  transform: translate(0, 0);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  color: var(--color-accent);
+}
+
+.login-field:focus-within .login-field__label span,
+.login-field:focus-within .login-field__label .login-field__req {
+  display: inline;
 }
 
 .login-field__input {
   width: 100%;
-  height: 46px;
-  padding: 0 14px;
-  font-size: 0.92rem;
-  color: #18181b;
-  background: #ffffff;
-  border: 1px solid #d4d4d8;
+  min-height: 40px;
+  padding: 8px 12px;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: var(--border-strong);
   border-radius: var(--radius-none, 0px);
+  font: inherit;
+  font-size: var(--text-body);
   transition: border-color 140ms ease, box-shadow 140ms ease;
   box-sizing: border-box;
 }
@@ -275,67 +317,72 @@
 .login-field__input:-webkit-autofill:hover,
 .login-field__input:-webkit-autofill:focus,
 .login-field__input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 50px #ffffff inset !important;
-  -webkit-text-fill-color: #18181b !important;
-  box-shadow: 0 0 0 50px #ffffff inset !important;
-  caret-color: #18181b;
+  -webkit-box-shadow: 0 0 0 50px var(--color-surface) inset !important;
+  -webkit-text-fill-color: var(--color-ink) !important;
+  box-shadow: 0 0 0 50px var(--color-surface) inset !important;
+  caret-color: var(--color-ink);
 }
 
+/* Placeholder ẩn khi chưa focus, hiện ra khi focus */
 .login-field__input::placeholder {
-  color: #a1a1aa;
+  color: var(--color-muted);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.login-field:focus-within .login-field__input::placeholder {
   opacity: 1;
 }
 
+/* Viền đỏ sắc nét khi focus — triệt tiêu hoàn toàn viền đen bên trong, không có khoảng hở thô */
 .login-field__input:focus,
 .login-field__input:focus-visible {
   outline: none;
-  background: #ffffff;
-  border-color: #18181b;
-  box-shadow: 0 0 0 1px #18181b;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
 }
 
 .login-field__input:disabled {
   background: var(--color-disabled);
+  border-color: var(--color-line);
   cursor: not-allowed;
   color: var(--color-muted);
 }
 
-/* Submit button: Giảm shadow tránh double emphasis với card */
+.login-field__header {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+/* Submit button */
 .login-submit {
-  margin-top: 8px;
-  height: 46px;
+  margin-top: var(--space-5);
+  min-height: 44px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 10px 18px;
   background: var(--color-accent);
   border: 1px solid var(--color-accent);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
   border-radius: var(--radius-none, 0px);
   color: white;
-  font: 700 0.85rem/1 var(--font-body);
-  letter-spacing: 0.02em;
+  font: 700 0.78rem/1 var(--font-body);
+  letter-spacing: 0.025em;
   cursor: pointer;
-  transition: background-color 120ms ease, box-shadow 120ms ease, transform 100ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 .login-submit:hover:not(:disabled) {
   background: var(--color-accent-dark);
   border-color: var(--color-accent-dark);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
-}
-
-.login-submit:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
 .login-submit:disabled {
   background: var(--color-disabled);
-  border-color: #d4d4d8;
-  box-shadow: none;
-  color: #a1a1aa;
+  border-color: var(--color-line);
+  color: var(--color-muted);
   cursor: not-allowed;
 }
 
