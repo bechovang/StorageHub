@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -130,7 +131,7 @@ class UnitServiceTest {
         UnitPageResponse response = unitService.searchUnits(
                 null,
                 null,
-                LocalDate.of(2026, 10, 3),
+                LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")),
                 3,
                 "price-asc",
                 1,

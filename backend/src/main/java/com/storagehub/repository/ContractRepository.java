@@ -32,4 +32,15 @@ public interface ContractRepository extends JpaRepository<Contract, Long> {
     Optional<Contract> findWithDetailsById(@Param("contractId") Long contractId);
 
     boolean existsByCode(String code);
+
+    @Query("""
+        SELECT c FROM Contract c
+        JOIN FETCH c.reservation r
+        JOIN FETCH r.customer cust
+        JOIN FETCH r.unit u
+        JOIN FETCH u.zone z
+        JOIN FETCH z.facility f
+        WHERE c.code = :code
+    """)
+    Optional<Contract> findByCode(@Param("code") String code);
 }

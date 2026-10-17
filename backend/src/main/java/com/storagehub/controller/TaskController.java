@@ -1,55 +1,91 @@
 package com.storagehub.controller;
 
+import com.storagehub.dto.task.CreateTaskRequest;
 import com.storagehub.dto.task.TaskResponse;
-import com.storagehub.entity.Role;
-import com.storagehub.entity.User;
-import com.storagehub.exception.InvalidCredentialsException;
-import com.storagehub.repository.UserRepository;
+import com.storagehub.dto.task.UpdateTaskStatusRequest;
+import com.storagehub.entity.StaffAssignment;
+import com.storagehub.entity.Task;
 import com.storagehub.service.TaskService;
+import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 
 /**
- * US-15 (FR-25): Task Board của ca trực — chỉ staff trở lên được xem.
- * FE (fe/tuan_anh) đang gọi endpoint này với fallback mock localStorage.
+ * Controller quản lý Task Board kanban (FR-21 / FR-22 / NFR-2).
+ * Hỗ trợ 3 cột To do / In progress / Done và 5 loại thẻ:
+ * Check-in / Checkout / Cleaning / Support / Contract-signature.
  */
 @RestController
 @RequestMapping("/api/v1/tasks")
 public class TaskController {
 
     private final TaskService taskService;
-    private final UserRepository userRepository;
 
-    private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
-
-    public TaskController(TaskService taskService, UserRepository userRepository) {
+    public TaskController(TaskService taskService) {
         this.taskService = taskService;
-        this.userRepository = userRepository;
     }
 
+    /**
+     * Lấy danh sách nhiệm vụ kanban.
+     * Mặc định: hiện thẻ trong ngày/ca hiện tại của staff đăng nhập.
+     */
     @GetMapping
-    public ResponseEntity<List<TaskResponse>> listTasks(
-            @RequestParam(name = "date", required = false) LocalDate date,
+    public ResponseEntity<List<TaskResponse>> getTasks(
+            @RequestParam(name = "workDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
+            @RequestParam(name = "shift", required = false) StaffAssignment.Shift shift,
+            @RequestParam(name = "type", required = false) Task.Type type,
+            @RequestParam(name = "status", required = false) Task.Status status,
             Authentication authentication
     ) {
         String email = authentication != null ? authentication.getName() : "";
-        User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(InvalidCredentialsException::new);
+        List<TaskResponse> tasks = taskService.getTasks(email, workDate, shift, type, status);
+        return ResponseEntity.ok(tasks);
+    }
 
-        if (user.getRole().getName() == Role.Name.CUSTOMER) {
-            throw new AccessDeniedException("Task board is staff-only.");
-        }
+    /**
+     * Chi tiết 1 nhiệm vụ.
+     */
+    @GetMapping("/{taskId}")
+    public ResponseEntity<TaskResponse> getTaskDetail(
+            @PathVariable("taskId") Long taskId,
+            Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        TaskResponse task = taskService.getTaskDetail(email, taskId);
+        return ResponseEntity.ok(task);
+    }
 
-        LocalDate workDate = date != null ? date : LocalDate.now(ICT_ZONE);
-        return ResponseEntity.ok(taskService.listTasksForDate(workDate));
+    /**
+     * Chuyển trạng thái nhiệm vụ (To do -> In progress -> Done).
+     * Bị chặn bởi Snap-back (FR-22) nếu thiếu closing steps khi kéo sang Done.
+     */
+    @PatchMapping("/{taskId}/status")
+    public ResponseEntity<TaskResponse> updateTaskStatus(
+            @PathVariable("taskId") Long taskId,
+            @Valid @RequestBody UpdateTaskStatusRequest request,
+            Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        TaskResponse updated = taskService.updateTaskStatus(email, taskId, request.status());
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Hệ thống tự động phân sinh task cho staff trực ca và phụ trách Zone chứa Unit (FR-21).
+     * Không hỗ trợ giao task thủ công.
+     */
+    @PostMapping
+    public ResponseEntity<TaskResponse> createTask(
+            @Valid @RequestBody CreateTaskRequest request
+    ) {
+        TaskResponse created = taskService.autoCreateTask(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 }
