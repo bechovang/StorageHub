@@ -7,9 +7,11 @@ import com.storagehub.entity.Reservation;
 import com.storagehub.repository.NotificationRepository;
 import com.storagehub.service.NotificationService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.LocalDate;
 import java.util.Locale;
 
 /** TỐI THIỂU cho US-8 — US-17 (Toast/Bell/Feed) mở rộng list + unread. */
@@ -19,6 +21,8 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String TYPE_RESERVATION_CONFIRMED = "RESERVATION_CONFIRMED";
     private static final String TYPE_RESERVATION_EXPIRED = "RESERVATION_EXPIRED";
     private static final String TYPE_CHECK_IN_COMPLETED = "CHECK_IN_COMPLETED";
+    private static final String TYPE_CHECKOUT_REQUESTED = "CHECKOUT_REQUESTED";
+    private static final String TYPE_CHECKOUT_REQUEST_CANCELLED = "CHECKOUT_REQUEST_CANCELLED";
 
     private final NotificationRepository notificationRepository;
 
@@ -100,7 +104,55 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.save(row);
 
         return new NotificationEventResponse(
-                "CHECK_IN_COMPLETED",
+                TYPE_CHECK_IN_COMPLETED,
+                title,
+                body,
+                deepLink
+        );
+    }
+
+    @Override
+    @Transactional
+    public NotificationEventResponse notifyCheckoutRequested(Reservation reservation, LocalDate requestedDate) {
+        String title = "Yêu cầu trả kho — " + reservation.getCode();
+        String body = "Đã gửi yêu cầu trả kho cho ngày " + requestedDate
+                + ". Nhân viên ca trực sẽ tiến hành kiểm tra và tất toán cọc tại quầy.";
+        String deepLink = "/rentals/" + reservation.getReservationId();
+
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_CHECKOUT_REQUESTED);
+        row.setTitle(title);
+        row.setDeepLink(deepLink);
+        row.setIsRead(false);
+        notificationRepository.save(row);
+
+        return new NotificationEventResponse(
+                TYPE_CHECKOUT_REQUESTED,
+                title,
+                body,
+                deepLink
+        );
+    }
+
+    @Override
+    @Transactional
+    public NotificationEventResponse notifyCheckoutRequestCancelled(Reservation reservation) {
+        String title = "Hủy yêu cầu trả kho — " + reservation.getCode();
+        String body = "Đã hủy yêu cầu trả kho cho đơn " + reservation.getCode()
+                + ". Trạng thái đơn tiếp tục duy trì Đang thuê kho.";
+        String deepLink = "/rentals/" + reservation.getReservationId();
+
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_CHECKOUT_REQUEST_CANCELLED);
+        row.setTitle(title);
+        row.setDeepLink(deepLink);
+        row.setIsRead(false);
+        notificationRepository.save(row);
+
+        return new NotificationEventResponse(
+                TYPE_CHECKOUT_REQUEST_CANCELLED,
                 title,
                 body,
                 deepLink
