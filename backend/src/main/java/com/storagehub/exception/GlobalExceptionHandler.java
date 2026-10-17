@@ -139,8 +139,32 @@ public class GlobalExceptionHandler {
     }
 
     // ------------------------------------------------------------------
-    // Payment (US-8 — An)
+    // Task Board (US-14, FR-21 / FR-22 snap-back — Phúc)
     // ------------------------------------------------------------------
+
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ApiError> handleTaskNotFound(
+            TaskNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "TASK_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Không tìm thấy nhiệm vụ này."
+                ));
+    }
+
+    @ExceptionHandler(TaskSnapBackException.class)
+    public ResponseEntity<ApiError> handleTaskSnapBack(
+            TaskSnapBackException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "TASK_SNAP_BACK",
+                        exception.getMessage() != null ? exception.getMessage() : "Chặn Done ảo: thiếu bước chốt nghiệp vụ."
+                ));
+    }
 
     @ExceptionHandler(PaymentNotFoundException.class)
     public ResponseEntity<ApiError> handlePaymentNotFound(

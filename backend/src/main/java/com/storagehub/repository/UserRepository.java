@@ -13,6 +13,8 @@ public interface UserRepository
     @EntityGraph(attributePaths = "role")
     Optional<User> findByEmailIgnoreCase(String email);
 
-    /** US-15: fallback gán task khi zone/date chưa có StaffAssignment. */
+    @EntityGraph(attributePaths = "role")
+    Optional<User> findFirstByRole_NameAndStatus(Role.Name roleName, Integer status);
+
     Optional<User> findFirstByRole_NameAndStatusOrderByUserIdAsc(Role.Name name, Integer status);
 }

@@ -121,8 +121,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     boolean existsByCode(String code);
 
-    /** US-15: task refCode trỏ mã BK-... — tra reservation từ refCode của task. */
-    Optional<Reservation> findByCode(String code);
+    @Query("SELECT r FROM Reservation r JOIN FETCH r.unit u JOIN FETCH u.zone z JOIN FETCH z.facility f JOIN FETCH r.customer c WHERE r.code = :code")
+    Optional<Reservation> findByCode(@Param("code") String code);
 
     /** Ownership check (US-8 payment) — chỉ chủ reservation mới được thanh toán/đọc. */
     Optional<Reservation> findByReservationIdAndCustomer_EmailIgnoreCase(

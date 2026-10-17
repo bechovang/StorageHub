@@ -1,32 +1,29 @@
 package com.storagehub.dto.task;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.storagehub.entity.StaffAssignment;
+import com.storagehub.entity.Task;
+
 import java.time.LocalDate;
 
-/**
- * US-15 (FR-11/14/15): card Task Board cho staff. Ritual flags là derive-on-read
- * (AD-4) — tính từ reservation/payments/contract ngay lúc GET, không lưu cột UI.
- */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record TaskResponse(
         Long taskId,
-        String type,
+        Task.Type type,
         String refCode,
         String unitCode,
         String customerName,
         String customerPhone,
+        String dueTime,
+        Task.Status status,
         LocalDate workDate,
-        String status,
-        CheckInRitualResponse ritual
-) {
-
-    /** Chỉ có với type CHECK_IN — 4 bước ritual để FE bật/tắt nút (FR-11/15). */
-    public record CheckInRitualResponse(
-            boolean depositVerified,
-            boolean rentCollected,
-            Long rentAmountDue,
-            Long depositPaid,
-            boolean contractSigned,
-            String contractPhotoUrl,
-            boolean accessCodeHanded
-    ) {
-    }
-}
+        StaffAssignment.Shift shift,
+        String accessPin,
+        Long rentAmount,
+        Long depositPaid,
+        String priority,
+        String issueDescription,
+        String alertNote,
+        AssignedStaffDto assignedStaff,
+        TaskRitualDto ritual
+) {}
