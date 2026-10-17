@@ -77,7 +77,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   padding: 3px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-none, 0px);
   background-color: #ecfdf5;
   color: #059669;
   border: 1px solid #a7f3d0;
@@ -135,9 +135,9 @@
   font-size: 0.68rem;
   font-weight: 700;
   padding: 2px 6px;
-  border-radius: 9999px;
-  background-color: #e2e8f0;
-  color: #334155;
+  border-radius: var(--radius-none, 0px);
+  background-color: var(--color-disabled, #e8e8e8);
+  color: var(--color-ink, #000000);
 }
 
 .filter-tab-btn.is-active .filter-tab-badge {
@@ -154,8 +154,8 @@
 }
 
 .kanban-column {
-  background-color: #f1f5f9;
-  border: 1px solid #cbd5e1;
+  background-color: var(--color-surface);
+  border: var(--border);
   display: flex;
   flex-direction: column;
   min-height: 480px;
@@ -165,9 +165,9 @@
 }
 
 .kanban-column.is-drag-over {
-  background-color: #e2e8f0;
-  border-color: #4f46e5;
-  box-shadow: inset 0 0 0 1px #4f46e5;
+  background-color: var(--color-surface);
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 2px var(--color-accent);
 }
 
 .kanban-column-header {
@@ -175,7 +175,7 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: 8px;
-  border-bottom: 1px solid #cbd5e1;
+  border-bottom: var(--border-strong);
 }
 
 .kanban-column-title {
@@ -194,11 +194,11 @@
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 700;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
+  background-color: var(--color-neutral);
+  border: var(--border);
   padding: 2px 7px;
-  border-radius: 9999px;
-  color: #475569;
+  border-radius: var(--radius-none, 0px);
+  color: var(--color-secondary);
 }
 
 .kanban-cards-list {
@@ -234,7 +234,7 @@
 }
 
 .task-card--done {
-  background-color: #f8fafc;
+  background-color: var(--color-surface-page, #f5f5f5);
   border-color: #e2e8f0;
   opacity: 0.85;
 }
@@ -260,7 +260,7 @@
   font-size: 0.65rem;
   font-weight: 800;
   padding: 2px 6px;
-  border-radius: 2px;
+  border-radius: var(--radius-none, 0px);
   text-transform: uppercase;
 }
 
@@ -295,7 +295,7 @@
   font-family: var(--font-mono);
   padding: 3px 6px;
   margin-top: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-none, 0px);
 }
 
 .task-card__extra-badge--pin {
@@ -478,7 +478,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #f8fafc;
+  background-color: var(--color-surface-page, #f5f5f5);
   cursor: pointer;
   gap: 6px;
   font-size: 0.78rem;
@@ -498,7 +498,7 @@
   color: #ffffff;
   padding: 16px;
   text-align: center;
-  border-radius: 2px;
+  border-radius: var(--radius-none, 0px);
 }
 
 .access-pin-number {
@@ -525,7 +525,7 @@
 }
 
 .inspection-table th {
-  background-color: #f8fafc;
+  background-color: var(--color-surface-page, #f5f5f5);
   font-weight: 700;
   color: #475569;
 }
@@ -616,7 +616,7 @@
   background-color: #fef2f2;
   border: 1px solid #fecaca;
   padding: 3px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-none, 0px);
   width: fit-content;
   letter-spacing: 0.04em;
 }
@@ -664,7 +664,7 @@
   font-size: 0.8rem;
   font-weight: 700;
   padding: 8px 14px;
-  border-radius: 2px;
+  border-radius: var(--radius-none, 0px);
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
@@ -679,7 +679,7 @@
   color: #64748b;
   cursor: pointer;
   padding: 6px;
-  border-radius: 2px;
+  border-radius: var(--radius-none, 0px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -698,7 +698,7 @@
   font-size: 0.72rem;
   font-weight: 600;
   padding: 4px 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-none, 0px);
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;

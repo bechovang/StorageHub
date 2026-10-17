@@ -66,11 +66,11 @@ const TURNOVER_QUEUE = [
 const STATUS_CONFIGS = {
   ALL: { label: "Tất cả kho", color: "#475569", bg: "#f1f5f9" },
   AVAILABLE: { label: "Trống (Available)", color: "#059669", bg: "#ecfdf5", barWidth: "22%" },
-  RESERVED: { label: "Đã đặt chỗ (Reserved)", color: "#4f46e5", bg: "#eef2ff", barWidth: "12%" },
+  RESERVED: { label: "Đã đặt chỗ (Reserved)", color: "#1e40af", bg: "#f1f5f9", barWidth: "12%" },
   RENTED: { label: "Đang thuê (Rented)", color: "#334155", bg: "#f1f5f9", barWidth: "50%" },
   PREPARING: { label: "Đang xử lý (Preparing)", color: "#0284c7", bg: "#f0f9ff", barWidth: "8%" },
   MAINTENANCE: { label: "Bảo trì (Maintenance)", color: "#c2410c", bg: "#fff7ed", barWidth: "4%" },
-  RETIRED: { label: "Ngừng thuê (Retired)", color: "#94a3b8", bg: "#f8fafc", barWidth: "4%" },
+  RETIRED: { label: "Ngừng thuê (Retired)", color: "#767676", bg: "#f5f5f5", barWidth: "4%" },
 };
 
 export default function FacilityOverviewPage() {
