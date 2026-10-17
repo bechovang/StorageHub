@@ -18,6 +18,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private static final String TYPE_RESERVATION_CONFIRMED = "RESERVATION_CONFIRMED";
     private static final String TYPE_RESERVATION_EXPIRED = "RESERVATION_EXPIRED";
+    private static final String TYPE_CHECK_IN_COMPLETED = "CHECK_IN_COMPLETED";
 
     private final NotificationRepository notificationRepository;
 
@@ -73,6 +74,33 @@ public class NotificationServiceImpl implements NotificationService {
 
         return new NotificationEventResponse(
                 TYPE_RESERVATION_EXPIRED,
+                title,
+                body,
+                deepLink
+        );
+    }
+
+    @Override
+    public NotificationEventResponse notifyCheckInCompleted(Reservation reservation) {
+        // NFR-7 microcopy 3 phần. AD-5: KHÔNG đưa access code vào notification —
+        // code chỉ nằm trong Rental Detail của chủ reservation.
+        String title = "Rental active — "
+                + reservation.getUnit().getCode() + " checked in";
+        String body = "Check-in " + reservation.getCode()
+                + " hoàn tất, hợp đồng đã ký và tiền thuê đã nhận đủ. "
+                + "Mã truy cập của bạn sẵn sàng trong Chi tiết thuê kho.";
+        String deepLink = "/rentals/" + reservation.getReservationId();
+
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_CHECK_IN_COMPLETED);
+        row.setTitle(title);
+        row.setDeepLink(deepLink);
+        row.setIsRead(false);
+        notificationRepository.save(row);
+
+        return new NotificationEventResponse(
+                "CHECK_IN_COMPLETED",
                 title,
                 body,
                 deepLink

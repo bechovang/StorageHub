@@ -13,6 +13,17 @@ import java.util.Optional;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
+    List<Task> findByWorkDateOrderByCreatedAtAsc(LocalDate workDate);
+
+    /** refCode đa hình (BK-/CL-/SR-) không FK nên tra theo cặp type + refCode. */
+    Optional<Task> findFirstByTypeAndRefCodeOrderByCreatedAtDesc(Task.Type type, String refCode);
+
+    Optional<Task> findFirstByTypeAndRefCodeAndStatusIn(
+            Task.Type type,
+            String refCode,
+            List<Task.Status> statuses
+    );
+
     @Query("SELECT t FROM Task t JOIN FETCH t.assignedStaff s WHERE t.taskId = :taskId")
     Optional<Task> findWithStaffById(@Param("taskId") Long taskId);
 

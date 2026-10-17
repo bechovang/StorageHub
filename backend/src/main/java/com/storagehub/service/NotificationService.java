@@ -19,4 +19,7 @@ public interface NotificationService {
 
     /** US-10 (FR-36): no-show hết hạn → reservation EXPIRED, cọc không hoàn lại. */
     NotificationEventResponse notifyReservationExpired(Reservation reservation);
+
+    /** US-15 (FR-15): check-in hoàn tất → rental ACTIVE, access code sẵn sàng. */
+    NotificationEventResponse notifyCheckInCompleted(Reservation reservation);
 }
