@@ -27,7 +27,9 @@ import {
   completeCheckinRitual,
   completeCheckoutRitual,
   completeCleaningRitual,
+  completeContractRitual,
   resolveSupportTicket,
+  resetLocalTasks,
 } from "../../services/taskService.js";
 import { formatVND as formatVnd, PLACEHOLDER_UNIT_IMAGE } from "../../utils/formatters.js";
 import "./TaskBoardPage.css";
@@ -37,14 +39,16 @@ export default function TaskBoardPage() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [loading, setLoading] = useState(true);
 
-  // Snap-back notification toast state
-  const [toastMessage, setToastMessage] = useState(null);
+  // Snap-back notification toast state & visual snap-back trigger
+  const [toastData, setToastData] = useState(null); // { message, task }
+  const [snappingBackTaskId, setSnappingBackTaskId] = useState(null);
 
   // Active ritual drawers
   const [activeCheckinTask, setActiveCheckinTask] = useState(null);
   const [activeCheckoutTask, setActiveCheckoutTask] = useState(null);
   const [activeCleaningTask, setActiveCleaningTask] = useState(null);
   const [activeSupportTask, setActiveSupportTask] = useState(null);
+  const [activeContractTask, setActiveContractTask] = useState(null);
 
   // Drag and drop state
   const [draggingTaskId, setDraggingTaskId] = useState(null);
@@ -58,6 +62,15 @@ export default function TaskBoardPage() {
       console.error("Lỗi khi tải danh sách công việc:", err);
     }
   }, []);
+
+  // Auto-dismiss Snap-back toast notification sau 4.5s
+  useEffect(() => {
+    if (!toastData) return;
+    const timer = setTimeout(() => {
+      setToastData(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [toastData]);
 
   useEffect(() => {
     let ignore = false;
@@ -85,7 +98,14 @@ export default function TaskBoardPage() {
       if (targetStatus === "DONE") {
         const violation = checkSnapBackViolation(task);
         if (violation) {
-          setToastMessage(violation);
+          setSnappingBackTaskId(task.taskId);
+          setToastData({
+            message: violation,
+            task,
+          });
+          setTimeout(() => {
+            setSnappingBackTaskId(null);
+          }, 800);
           return;
         }
       }
@@ -93,7 +113,14 @@ export default function TaskBoardPage() {
       await updateTaskStatus(task.taskId, targetStatus);
       await reloadTasks();
     } catch (err) {
-      setToastMessage(err.message || "Không thể chuyển trạng thái");
+      setSnappingBackTaskId(task.taskId);
+      setToastData({
+        message: err.message || "Không thể chuyển trạng thái",
+        task,
+      });
+      setTimeout(() => {
+        setSnappingBackTaskId(null);
+      }, 800);
     }
   };
 
@@ -171,6 +198,17 @@ export default function TaskBoardPage() {
           </div>
 
           <div className="taskboard-context-right">
+            <button
+              type="button"
+              className="btn-reset-demo"
+              title="Đặt lại các thẻ nhiệm vụ mẫu ban đầu để test Snap-back"
+              onClick={async () => {
+                resetLocalTasks();
+                await reloadTasks();
+              }}
+            >
+              ↺ Đặt lại dữ liệu mẫu
+            </button>
             <Clock size={15} weight="bold" />
             <span>Thời gian trực ca: <strong>08:42 ICT (UTC+7)</strong></span>
           </div>
@@ -257,11 +295,12 @@ export default function TaskBoardPage() {
                       const typeConfig = TASK_TYPES[task.type] || TASK_TYPES.CHECK_IN;
                       const isDragging = draggingTaskId === task.taskId;
                       const isDone = task.status === "DONE";
+                      const isSnapBack = snappingBackTaskId === task.taskId;
 
                       return (
                         <article
                           key={task.taskId}
-                          className={`task-card ${isDragging ? "is-dragging" : ""} ${isDone ? "task-card--done" : ""}`}
+                          className={`task-card ${isDragging ? "is-dragging" : ""} ${isDone ? "task-card--done" : ""} ${isSnapBack ? "is-snap-back" : ""}`}
                           draggable={!isDone}
                           onDragStart={(e) => handleDragStart(e, task.taskId)}
                           onDragEnd={handleDragEnd}
@@ -383,6 +422,17 @@ export default function TaskBoardPage() {
                                 </button>
                               )}
 
+                              {task.type === "CONTRACT" && task.status !== "DONE" && (
+                                <button
+                                  type="button"
+                                  className="card-ritual-btn"
+                                  onClick={() => setActiveContractTask(task)}
+                                >
+                                  <span>Ký phụ lục</span>
+                                  <ArrowRight size={12} weight="bold" />
+                                </button>
+                              )}
+
                               {/* Right navigation arrow (move to Next) */}
                               {task.status === "TODO" && (
                                 <button
@@ -396,7 +446,7 @@ export default function TaskBoardPage() {
                                 </button>
                               )}
 
-                              {task.status === "IN_PROGRESS" && task.type !== "CHECK_IN" && task.type !== "CHECKOUT" && (
+                              {task.status === "IN_PROGRESS" && (
                                 <button
                                   type="button"
                                   className="card-nav-btn"
@@ -422,21 +472,42 @@ export default function TaskBoardPage() {
       </div>
 
       {/* ── Snap-back Toast Notification (Chống Done ảo FR-22) ── */}
-      {toastMessage && (
+      {toastData && (
         <aside className="snapback-toast" role="alert">
-          <WarningCircle size={24} weight="bold" className="snapback-toast__icon" />
-          <div className="snapback-toast__text">
-            <strong>THÔNG BÁO TỪ HỆ THỐNG:</strong>
-            <div>{toastMessage}</div>
+          <div className="snapback-toast__badge">
+            <WarningCircle size={16} weight="fill" />
+            <span>SNAP-BACK · CHỐNG DONE ẢO (FR-22)</span>
           </div>
-          <button
-            type="button"
-            className="snapback-toast__close"
-            onClick={() => setToastMessage(null)}
-            aria-label="Đóng thông báo"
-          >
-            ×
-          </button>
+          <div className="snapback-toast__body">
+            <p className="snapback-toast__title">Thao tác bị từ chối & nảy về cột cũ:</p>
+            <p className="snapback-toast__desc">{toastData.message}</p>
+          </div>
+          <div className="snapback-toast__actions">
+            <button
+              type="button"
+              className="snapback-toast__btn-fix"
+              onClick={() => {
+                const targetTask = toastData.task;
+                setToastData(null);
+                if (targetTask.type === "CHECK_IN") setActiveCheckinTask(targetTask);
+                else if (targetTask.type === "CHECKOUT") setActiveCheckoutTask(targetTask);
+                else if (targetTask.type === "CLEANING") setActiveCleaningTask(targetTask);
+                else if (targetTask.type === "SUPPORT") setActiveSupportTask(targetTask);
+                else if (targetTask.type === "CONTRACT") setActiveContractTask(targetTask);
+              }}
+            >
+              <span>Mở quy trình xử lý ngay</span>
+              <ArrowRight size={14} weight="bold" />
+            </button>
+            <button
+              type="button"
+              className="snapback-toast__close"
+              onClick={() => setToastData(null)}
+              aria-label="Đóng thông báo"
+            >
+              <X size={16} weight="bold" />
+            </button>
+          </div>
         </aside>
       )}
 
@@ -483,6 +554,18 @@ export default function TaskBoardPage() {
           onClose={() => setActiveSupportTask(null)}
           onSuccess={async () => {
             setActiveSupportTask(null);
+            await reloadTasks();
+          }}
+        />
+      )}
+
+      {/* ── US-19: Contract / Addendum Signature Drawer ── */}
+      {activeContractTask && (
+        <ContractRitualDrawer
+          task={activeContractTask}
+          onClose={() => setActiveContractTask(null)}
+          onSuccess={async () => {
+            setActiveContractTask(null);
             await reloadTasks();
           }}
         />
@@ -1087,6 +1170,102 @@ function SupportTicketDrawer({ task, onClose, onSuccess }) {
           </Button>
           <Button onClick={handleResolve}>
             {escalate ? "CHUYỂN TIẾP LÊN QUẢN LÝ" : "HOÀN TẤT XỬ LÝ SỰ CỐ"}
+          </Button>
+        </div>
+      </div>
+    </Drawer>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUB-COMPONENT: CONTRACT / ADDENDUM SIGNATURE DRAWER (US-19)
+// ─────────────────────────────────────────────────────────────────────────────
+function ContractRitualDrawer({ task, onClose, onSuccess }) {
+  const [photoUrl, setPhotoUrl] = useState(task.ritual?.contractPhotoUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleCapturePhoto = () => {
+    setIsUploading(true);
+    setTimeout(() => {
+      setPhotoUrl(PLACEHOLDER_UNIT_IMAGE);
+      setIsUploading(false);
+    }, 400);
+  };
+
+  const handleConfirmSignature = async () => {
+    if (!photoUrl) return;
+    setIsSubmitting(true);
+    try {
+      await completeContractRitual(task.taskId, { contractPhotoUrl: photoUrl });
+      alert(`Đã hoàn tất lưu hồ sơ hợp đồng/phụ lục ${task.refCode}!`);
+      onSuccess();
+    } catch (err) {
+      alert(err.message || "Lỗi khi lưu chữ ký hợp đồng");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Drawer open={Boolean(task)} headerLabel={`KÝ HỢP ĐỒNG / PHỤ LỤC · ${task.refCode}`} onClose={onClose}>
+      <div className="ritual-flow">
+        {/* Thông tin hợp đồng / phụ lục */}
+        <div className="ritual-step-card">
+          <span className="ritual-step-title">
+            <FileText size={18} weight="bold" />
+            Hồ sơ pháp lý cần đối chiếu chữ ký
+          </span>
+          <div style={{ fontSize: "0.82rem" }}>
+            <p style={{ margin: "4px 0" }}>Khách hàng: <strong>{task.customerName}</strong> ({task.customerPhone || "Khách tại quầy"})</p>
+            <p style={{ margin: "4px 0" }}>Vị trí kho: <strong>{task.unitCode}</strong> · Mã hồ sơ: <strong>{task.refCode}</strong></p>
+            {task.alertNote && (
+              <div style={{ backgroundColor: "#ecfdf5", padding: "8px 10px", border: "1px solid #a7f3d0", marginTop: "8px", color: "#065f46" }}>
+                <strong>Ghi chú:</strong> {task.alertNote}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Chụp / Tải ảnh bản hợp đồng giấy có chữ ký */}
+        <div className="ritual-step-card">
+          <span className="ritual-step-title">
+            <UploadSimple size={18} weight="bold" />
+            Đính kèm ảnh chụp bản hợp đồng giấy đã ký tên (Bắt buộc FR-12)
+          </span>
+          <p style={{ margin: "4px 0 10px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
+            Nhân viên đối chiếu chữ ký của khách hàng trên bản in giấy và chụp lại trang có chữ ký để lưu vào hệ thống.
+          </p>
+
+          <div
+            className="ritual-photo-dropzone"
+            onClick={handleCapturePhoto}
+            title="Bấm để chụp hoặc tải ảnh bản ký"
+          >
+            {photoUrl ? (
+              <div className="ritual-photo-preview">
+                <img src={photoUrl} alt="Hợp đồng đã ký" />
+                <span className="photo-preview-tag">✓ Đã chụp ảnh hợp đồng có chữ ký</span>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "24px 12px" }}>
+                <UploadSimple size={32} weight="bold" color="#64748b" />
+                <p style={{ margin: "6px 0 0 0", fontWeight: 600 }}>
+                  {isUploading ? "Đang tải ảnh lên..." : "Chụp ảnh bản hợp đồng đã ký tên"}
+                </p>
+                <small style={{ color: "#94a3b8" }}>Hỗ trợ camera quầy hoặc tệp ảnh JPG/PNG</small>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Nút hành động */}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
+          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+            Hủy
+          </Button>
+          <Button onClick={handleConfirmSignature} disabled={!photoUrl || isSubmitting}>
+            {isSubmitting ? "Đang lưu..." : "XÁC NHẬN ĐÃ KÝ & HOÀN TẤT"}
           </Button>
         </div>
       </div>
