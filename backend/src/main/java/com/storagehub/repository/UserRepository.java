@@ -11,4 +11,7 @@ public interface UserRepository
 
     @EntityGraph(attributePaths = "role")
     Optional<User> findByEmailIgnoreCase(String email);
+
+    @EntityGraph(attributePaths = "role")
+    Optional<User> findFirstByRole_NameAndStatus(com.storagehub.entity.Role.Name roleName, Integer status);
 }
