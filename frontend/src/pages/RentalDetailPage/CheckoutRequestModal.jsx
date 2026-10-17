@@ -2,27 +2,11 @@ import { useState } from "react";
 import {
     X,
     SignOut,
-    CalendarCheck,
-    Receipt,
     ShieldCheck,
-    Clock,
     WarningCircle,
     ArrowRight,
 } from "@phosphor-icons/react";
-
-function fmtDate(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-    });
-}
-
-function fmtMoney(n) {
-    if (n == null) return "0 ₫";
-    return n.toLocaleString("vi-VN") + " ₫";
-}
+import { formatDate as fmtDate, formatVND as fmtMoney } from "../../utils/formatters.js";
 
 /**
  * CheckoutRequestModal — US-20 (FR-17)
@@ -42,10 +26,8 @@ export default function CheckoutRequestModal({
     reservation,
     onConfirmCheckoutRequest,
 }) {
-    if (!isOpen || !reservation) return null;
-
     const todayStr = new Date().toISOString().split("T")[0];
-    const defaultDate = reservation.endDate || todayStr;
+    const defaultDate = reservation?.endDate || todayStr;
 
     const [requestedDate, setRequestedDate] = useState(defaultDate);
     const [timeSlot, setTimeSlot] = useState("MORNING");
@@ -53,6 +35,8 @@ export default function CheckoutRequestModal({
     const [agreedTerms, setAgreedTerms] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
+
+    if (!isOpen || !reservation) return null;
 
     const depositAmount = reservation.depositAmount || 103500;
 
