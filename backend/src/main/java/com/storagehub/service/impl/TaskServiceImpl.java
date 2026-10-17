@@ -551,4 +551,89 @@ public class TaskServiceImpl implements TaskService {
                 "Check-in completed — " + reservationCode);
         return saved;
     }
+
+    @Override
+    public Task createOrUpdateCheckoutTask(
+            User actor,
+            Reservation reservation,
+            LocalDate requestedDate,
+            String timeSlot,
+            String reason
+    ) {
+        StaffAssignment.Shift shift;
+        if ("MORNING".equalsIgnoreCase(timeSlot)) {
+            shift = StaffAssignment.Shift.MORNING;
+        } else if ("AFTERNOON".equalsIgnoreCase(timeSlot)) {
+            shift = StaffAssignment.Shift.AFTERNOON;
+        } else if ("EVENING".equalsIgnoreCase(timeSlot)) {
+            shift = StaffAssignment.Shift.EVENING;
+        } else {
+            shift = getCurrentShift();
+        }
+
+        Task existing = taskRepository
+                .findFirstByTypeAndRefCodeAndStatusIn(
+                        Task.Type.CHECKOUT,
+                        reservation.getCode(),
+                        List.of(Task.Status.TODO, Task.Status.IN_PROGRESS))
+                .orElse(null);
+
+        if (existing != null) {
+            existing.setWorkDate(requestedDate);
+            try {
+                User assignee = autoAssignStaff(reservation.getUnit(), requestedDate, shift);
+                if (assignee != null) {
+                    existing.setAssignedStaff(assignee);
+                }
+            } catch (Exception ignored) {
+            }
+            Task saved = taskRepository.save(existing);
+            logService.log(actor != null ? actor : existing.getAssignedStaff(), "TASK", saved.getTaskId(),
+                    "STATUS_CHANGED", saved.getStatus().name(), saved.getStatus().name(),
+                    "Cập nhật ngày hẹn trả kho: " + requestedDate + (reason != null ? " (" + reason + ")" : ""));
+            return saved;
+        }
+
+        User assignee;
+        try {
+            assignee = autoAssignStaff(reservation.getUnit(), requestedDate, shift);
+        } catch (Exception e) {
+            assignee = userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1).orElse(null);
+        }
+
+        if (assignee == null) {
+            assignee = actor;
+        }
+
+        Task task = new Task();
+        task.setType(Task.Type.CHECKOUT);
+        task.setRefCode(reservation.getCode());
+        task.setAssignedStaff(assignee);
+        task.setWorkDate(requestedDate);
+        task.setStatus(Task.Status.TODO);
+        Task saved = taskRepository.save(task);
+
+        logService.log(actor != null ? actor : assignee, "TASK", saved.getTaskId(),
+                "CREATED", null, Task.Status.TODO.name(),
+                "Auto checkout task for " + reservation.getCode() + " on " + requestedDate);
+        return saved;
+    }
+
+    @Override
+    public void cancelCheckoutTask(User actor, String reservationCode) {
+        Task task = taskRepository
+                .findFirstByTypeAndRefCodeAndStatusIn(
+                        Task.Type.CHECKOUT,
+                        reservationCode,
+                        List.of(Task.Status.TODO, Task.Status.IN_PROGRESS))
+                .orElse(null);
+        if (task != null) {
+            Long taskId = task.getTaskId();
+            String fromStatus = task.getStatus().name();
+            taskRepository.delete(task);
+            logService.log(actor, "TASK", taskId,
+                    "DELETED", fromStatus, null,
+                    "Hủy checkout task cho " + reservationCode);
+        }
+    }
 }
