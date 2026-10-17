@@ -54,4 +54,20 @@ public interface TaskService {
      * US-15: Hoàn tất task CHECK_IN khi staff hoàn thành Check-in ritual tại quầy.
      */
     Task completeCheckInTask(User actor, String reservationCode);
+
+    /**
+     * US-20: Tự động sinh hoặc cập nhật task CHECKOUT khi khách gửi yêu cầu trả kho.
+     */
+    Task createOrUpdateCheckoutTask(
+            User actor,
+            Reservation reservation,
+            LocalDate requestedDate,
+            String timeSlot,
+            String reason
+    );
+
+    /**
+     * US-20: Hủy task CHECKOUT khi khách hủy yêu cầu trả kho.
+     */
+    void cancelCheckoutTask(User actor, String reservationCode);
 }

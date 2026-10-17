@@ -4,6 +4,8 @@ import com.storagehub.dto.notification.NotificationEventResponse;
 import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
 
+import java.time.LocalDate;
+
 /**
  * Điểm ghi duy nhất cho NOTIFICATIONS (arch spine) — cấm module tự INSERT.
  * Sinh cùng transaction nghiệp vụ + trả event cho FE bắn toast (Conventions).
@@ -22,4 +24,10 @@ public interface NotificationService {
 
     /** US-15 (FR-15): check-in hoàn tất → rental ACTIVE, access code sẵn sàng. */
     NotificationEventResponse notifyCheckInCompleted(Reservation reservation);
+
+    /** US-20 (FR-17): Khách gửi yêu cầu trả kho. */
+    NotificationEventResponse notifyCheckoutRequested(Reservation reservation, LocalDate requestedDate);
+
+    /** US-20 (FR-17): Khách hủy yêu cầu trả kho. */
+    NotificationEventResponse notifyCheckoutRequestCancelled(Reservation reservation);
 }
