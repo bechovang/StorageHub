@@ -13,6 +13,9 @@ import java.util.Optional;
 @Repository
 public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment, Long> {
 
+    /** Staff trực ca tại zone trong ngày — dùng gán task CHECK_IN tự động (FR-25). */
+    Optional<StaffAssignment> findFirstByZone_ZoneIdAndWorkDate(Integer zoneId, LocalDate workDate);
+
     @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.staff JOIN FETCH sa.zone WHERE sa.zone.zoneId = :zoneId AND sa.workDate = :workDate AND sa.shift = :shift")
     Optional<StaffAssignment> findByZone_ZoneIdAndWorkDateAndShift(
             @Param("zoneId") Integer zoneId,

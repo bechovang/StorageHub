@@ -325,6 +325,25 @@ public class UnitService {
         return true;
     }
 
+    /**
+     * US-15 (FR-15): check-in thành công → kho chính thức được thuê.
+     * Chấp nhận từ RESERVED (hold) hoặc AVAILABLE (cột thường không giữ hold
+     * vì availability derive-on-read) — idempotent nếu đã RENTED.
+     */
+    @Transactional
+    public boolean markRentedAtCheckIn(User actor, Unit unit) {
+        if (unit.getStatus() == Unit.Status.RENTED) {
+            return false;
+        }
+        Unit.Status from = unit.getStatus();
+        unit.setStatus(Unit.Status.RENTED);
+        unitRepository.save(unit);
+        logService.log(actor, "UNIT", unit.getUnitId(),
+                "STATUS_CHANGED", from.name(), "RENTED",
+                "Check-in — unit handed over");
+        return true;
+    }
+
     private String resolveDimensions(BigDecimal sizeM2) {
         if (sizeM2 == null) {
             return "2.0 × 2.5 × 2.2 m";

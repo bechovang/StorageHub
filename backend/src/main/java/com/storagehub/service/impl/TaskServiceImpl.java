@@ -493,4 +493,62 @@ public class TaskServiceImpl implements TaskService {
                 ritual
         );
     }
+
+    @Override
+    public Task createCheckInTask(User actor, Reservation reservation) {
+        Task existing = taskRepository
+                .findFirstByTypeAndRefCodeOrderByCreatedAtDesc(
+                        Task.Type.CHECK_IN, reservation.getCode())
+                .orElse(null);
+        if (existing != null) {
+            return existing;
+        }
+
+        StaffAssignment.Shift shift = getCurrentShift();
+        User assignee;
+        try {
+            assignee = autoAssignStaff(reservation.getUnit(), reservation.getStartDate(), shift);
+        } catch (Exception e) {
+            assignee = userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1).orElse(null);
+        }
+
+        if (assignee == null) {
+            return null;
+        }
+
+        Task task = new Task();
+        task.setType(Task.Type.CHECK_IN);
+        task.setRefCode(reservation.getCode());
+        task.setAssignedStaff(assignee);
+        task.setWorkDate(reservation.getStartDate());
+        task.setStatus(Task.Status.TODO);
+        Task saved = taskRepository.save(task);
+
+        logService.log(actor != null ? actor : assignee, "TASK", saved.getTaskId(),
+                "CREATED", null, "TODO",
+                "Auto check-in task for " + reservation.getCode());
+        return saved;
+    }
+
+    @Override
+    public Task completeCheckInTask(User actor, String reservationCode) {
+        Task task = taskRepository
+                .findFirstByTypeAndRefCodeAndStatusIn(
+                        Task.Type.CHECK_IN,
+                        reservationCode,
+                        List.of(Task.Status.TODO, Task.Status.IN_PROGRESS))
+                .orElse(null);
+        if (task == null) {
+            return null;
+        }
+
+        String fromStatus = task.getStatus().name();
+        task.setStatus(Task.Status.DONE);
+        Task saved = taskRepository.save(task);
+
+        logService.log(actor, "TASK", saved.getTaskId(),
+                "STATUS_CHANGED", fromStatus, "DONE",
+                "Check-in completed — " + reservationCode);
+        return saved;
+    }
 }

@@ -2,8 +2,10 @@ package com.storagehub.service;
 
 import com.storagehub.dto.task.CreateTaskRequest;
 import com.storagehub.dto.task.TaskResponse;
+import com.storagehub.entity.Reservation;
 import com.storagehub.entity.StaffAssignment;
 import com.storagehub.entity.Task;
+import com.storagehub.entity.User;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -42,4 +44,14 @@ public interface TaskService {
      * Không hỗ trợ giao task thủ công.
      */
     TaskResponse autoCreateTask(CreateTaskRequest request);
+
+    /**
+     * US-15: Tự động sinh task CHECK_IN khi reservation hoàn tất trả cọc.
+     */
+    Task createCheckInTask(User actor, Reservation reservation);
+
+    /**
+     * US-15: Hoàn tất task CHECK_IN khi staff hoàn thành Check-in ritual tại quầy.
+     */
+    Task completeCheckInTask(User actor, String reservationCode);
 }
