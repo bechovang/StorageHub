@@ -251,7 +251,15 @@ export default function RegisterPage() {
                                         disabled={submitting}
                                     />
                                     <span>
-                                        Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của StorageHub
+                                        Tôi đồng ý với{" "}
+                                        <a href="#terms" onClick={(e) => e.preventDefault()}>
+                                            Điều khoản dịch vụ
+                                        </a>{" "}
+                                        và{" "}
+                                        <a href="#privacy" onClick={(e) => e.preventDefault()}>
+                                            Chính sách bảo mật
+                                        </a>{" "}
+                                        của StorageHub
                                     </span>
                                 </label>
 
