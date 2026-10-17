@@ -59,6 +59,7 @@ export default function ForgotPasswordPage() {
                 <div className="login-form-col">
                     <div className="login-card">
                         <div className="login-card__header">
+                            <p className="login-card__eyebrow">StorageHub</p>
                             <h2 className="login-card__title">Quên mật khẩu</h2>
                         </div>
 
