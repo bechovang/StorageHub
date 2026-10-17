@@ -200,7 +200,32 @@ const INITIAL_TASKS = [
       accessCodeHanded: true,
     },
   },
+  {
+    taskId: 1049,
+    type: "CONTRACT",
+    refCode: "CT-1042-A1",
+    unitCode: "Unit S-3",
+    customerName: "Nguyễn Thị Lan",
+    customerPhone: "0901 234 567",
+    dueTime: "Hạn 7 ngày",
+    status: "IN_PROGRESS",
+    workDate: "2026-10-08",
+    alertNote: "Phụ lục gia hạn +2 tháng (chờ ký tại quầy)",
+    ritual: {
+      contractSigned: false,
+      contractPhotoUrl: null,
+    },
+  },
 ];
+
+export function resetLocalTasks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_TASKS));
+  } catch (err) {
+    console.error("Lỗi khi reset tasks vào localStorage:", err);
+  }
+  return INITIAL_TASKS;
+}
 
 function loadLocalTasks() {
   try {
@@ -266,6 +291,8 @@ export async function updateTaskStatus(taskId, newStatus) {
  * @returns {string|null} Thông báo lỗi nếu vi phạm, null nếu hợp lệ
  */
 export function checkSnapBackViolation(task) {
+  if (!task) return null;
+
   if (task.type === "CHECK_IN") {
     if (!task.ritual?.depositVerified) {
       return "Chặn Done ảo: Đơn chưa xác nhận thanh toán tiền cọc!";
@@ -273,7 +300,7 @@ export function checkSnapBackViolation(task) {
     if (!task.ritual?.rentCollected) {
       return "Chặn Done ảo: Chưa thu 100% tiền thuê kho tại quầy!";
     }
-    if (!task.ritual?.contractSigned) {
+    if (!task.ritual?.contractSigned || !task.ritual?.contractPhotoUrl) {
       return "Chặn Done ảo: Chưa hoàn tất ký hợp đồng và đính kèm ảnh bản ký!";
     }
     if (!task.ritual?.accessCodeHanded) {
@@ -282,6 +309,10 @@ export function checkSnapBackViolation(task) {
   }
 
   if (task.type === "CHECKOUT") {
+    const checklist = task.ritual?.checklist;
+    if (!checklist || !checklist.accessCard || !checklist.padlock || !checklist.cleanliness || !checklist.structure) {
+      return "Chặn Done ảo: Chưa hoàn tất biên bản kiểm tra 4 hạng mục kho (Thẻ, Khóa, Sàn, Kết cấu)!";
+    }
     const hasUnresolvedDamage = (task.ritual?.damageCharges || []).some(
       (c) => !c.reason || !c.amount || c.amount <= 0
     );
@@ -291,15 +322,66 @@ export function checkSnapBackViolation(task) {
     if (!task.ritual?.settlementConfirmed) {
       return "Chặn Done ảo: Chưa hoàn tất đối soát tất toán cọc và phụ phí!";
     }
+    if (!task.ritual?.receiptPrinted) {
+      return "Chặn Done ảo: Chưa xuất biên nhận tất toán thanh lý hợp đồng!";
+    }
+  }
+
+  if (task.type === "CLEANING") {
+    if (!task.ritual?.sweptFloor) {
+      return "Chặn Done ảo: Chưa quét dọn và hút bụi sạch sẽ sàn kho!";
+    }
+    if (!task.ritual?.dehumidifierChecked) {
+      return "Chặn Done ảo: Chưa kiểm tra máy hút ẩm và độ thông gió của kho!";
+    }
+    if (!task.ritual?.lockLubricated) {
+      return "Chặn Done ảo: Chưa tra dầu chốt khóa và reset mã ổ khóa về mặc định!";
+    }
+    if (!task.ritual?.readyForTenant) {
+      return "Chặn Done ảo: Kho chưa được nghiệm thu sẵn sàng giao khách (Ready for tenant)!";
+    }
+  }
+
+  if (task.type === "SUPPORT") {
+    if (task.ritual?.escalated) {
+      if (!task.ritual?.escalationReason || !task.ritual.escalationReason.trim()) {
+        return "Chặn Done ảo: Báo cáo sự cố lên Quản lý bắt buộc phải có lý do chi tiết!";
+      }
+    } else {
+      if (!task.ritual?.resolvedNote || !task.ritual.resolvedNote.trim()) {
+        return "Chặn Done ảo: Yêu cầu hỗ trợ phải có ghi chú biện pháp xử lý sự cố trước khi đóng!";
+      }
+    }
   }
 
   if (task.type === "CONTRACT") {
-    if (!task.ritual?.contractSigned) {
-      return "Chặn Done ảo: Thiếu ảnh chụp bản hợp đồng đã ký tên!";
+    if (!task.ritual?.contractSigned || !task.ritual?.contractPhotoUrl) {
+      return "Chặn Done ảo: Thiếu ảnh chụp hồ sơ phụ lục hợp đồng đã ký tên tại quầy!";
     }
   }
 
   return null;
+}
+
+/**
+ * Thực hiện ký hợp đồng / phụ lục tại quầy (US-19)
+ */
+export async function completeContractRitual(taskId, { contractPhotoUrl }) {
+  const tasks = loadLocalTasks();
+  const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
+  if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ Ký hợp đồng");
+
+  const task = tasks[idx];
+  task.ritual = {
+    ...task.ritual,
+    contractSigned: true,
+    contractPhotoUrl: contractPhotoUrl || "/placeholder.svg",
+  };
+  task.status = "DONE";
+
+  tasks[idx] = task;
+  saveLocalTasks(tasks);
+  return task;
 }
 
 /**
