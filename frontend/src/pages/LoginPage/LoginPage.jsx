@@ -100,7 +100,7 @@ export default function LoginPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         disabled={submitting}
-                                        placeholder="example@storagehub.vn"
+                                        placeholder="ban@example.com"
                                         aria-required="true"
                                     />
                                 </div>
@@ -136,7 +136,7 @@ export default function LoginPage() {
                                     disabled={submitting}
                                 >
                                     <span>
-                                        {submitting ? "Đang xác thực..." : "Đăng nhập"}
+                                        {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
                                     </span>
                                     <span className="login-submit__arrow" aria-hidden="true">
                                         →

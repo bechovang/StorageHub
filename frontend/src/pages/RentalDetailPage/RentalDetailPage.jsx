@@ -450,15 +450,15 @@ export default function RentalDetailPage() {
             <div className="rd-checkout-requested-banner__content">
               <Clock size={22} weight="fill" className="rd-checkout-icon" />
               <div>
-                <strong>Đang chờ làm thủ tục trả kho tại quầy Tân Bình Depot</strong>
+                <strong>Đang chờ làm thủ tục trả kho tại cơ sở Tân Bình</strong>
                 <p>
-                  Yêu cầu trả kho đã gửi cho ngày{" "}
+                  Yêu cầu trả kho đã ghi nhận cho ngày{" "}
                   <strong>
                     {fmtDate(
                       reservation.checkoutRequestedDate || reservation.endDate
                     )}
                   </strong>
-                  . Vui lòng mang thẻ từ, khóa kho đến quầy để kiểm tra và nhận hoàn tiền cọc minh bạch.
+                  . Vui lòng mang khóa kho đến quầy để hoàn tất bàn giao và nhận lại tiền cọc.
                 </p>
               </div>
             </div>
@@ -709,7 +709,7 @@ export default function RentalDetailPage() {
                     </div>
 
                     <p className="rd-card__hint">
-                      Khoản tiền cọc được lưu giữ an toàn (Escrow Safe) và sẽ được hoàn trả đầy đủ khi thanh lý hợp đồng nếu không phát sinh vi phạm.
+                      Tiền cọc được giữ an toàn và sẽ được hoàn trả 100% vào tài khoản khi bạn kết thúc hợp đồng.
                     </p>
                   </div>
                 </article>
