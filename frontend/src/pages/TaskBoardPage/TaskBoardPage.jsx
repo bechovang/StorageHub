@@ -27,7 +27,9 @@ import {
   completeCheckinRitual,
   completeCheckoutRitual,
   completeCleaningRitual,
+  completeContractRitual,
   resolveSupportTicket,
+  resetLocalTasks,
 } from "../../services/taskService.js";
 import { formatVND as formatVnd, PLACEHOLDER_UNIT_IMAGE } from "../../utils/formatters.js";
 import "./TaskBoardPage.css";
@@ -37,14 +39,16 @@ export default function TaskBoardPage() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [loading, setLoading] = useState(true);
 
-  // Snap-back notification toast state
-  const [toastMessage, setToastMessage] = useState(null);
+  // Snap-back notification toast state & visual snap-back trigger
+  const [toastData, setToastData] = useState(null); // { message, task }
+  const [snappingBackTaskId, setSnappingBackTaskId] = useState(null);
 
   // Active ritual drawers
   const [activeCheckinTask, setActiveCheckinTask] = useState(null);
   const [activeCheckoutTask, setActiveCheckoutTask] = useState(null);
   const [activeCleaningTask, setActiveCleaningTask] = useState(null);
   const [activeSupportTask, setActiveSupportTask] = useState(null);
+  const [activeContractTask, setActiveContractTask] = useState(null);
 
   // Drag and drop state
   const [draggingTaskId, setDraggingTaskId] = useState(null);
@@ -58,6 +62,15 @@ export default function TaskBoardPage() {
       console.error("Lỗi khi tải danh sách công việc:", err);
     }
   }, []);
+
+  // Auto-dismiss Snap-back toast notification sau 4.5s
+  useEffect(() => {
+    if (!toastData) return;
+    const timer = setTimeout(() => {
+      setToastData(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [toastData]);
 
   useEffect(() => {
     let ignore = false;
@@ -85,7 +98,14 @@ export default function TaskBoardPage() {
       if (targetStatus === "DONE") {
         const violation = checkSnapBackViolation(task);
         if (violation) {
-          setToastMessage(violation);
+          setSnappingBackTaskId(task.taskId);
+          setToastData({
+            message: violation,
+            task,
+          });
+          setTimeout(() => {
+            setSnappingBackTaskId(null);
+          }, 800);
           return;
         }
       }
@@ -93,7 +113,14 @@ export default function TaskBoardPage() {
       await updateTaskStatus(task.taskId, targetStatus);
       await reloadTasks();
     } catch (err) {
-      setToastMessage(err.message || "Không thể chuyển trạng thái");
+      setSnappingBackTaskId(task.taskId);
+      setToastData({
+        message: err.message || "Không thể chuyển trạng thái",
+        task,
+      });
+      setTimeout(() => {
+        setSnappingBackTaskId(null);
+      }, 800);
     }
   };
 
@@ -171,6 +198,17 @@ export default function TaskBoardPage() {
           </div>
 
           <div className="taskboard-context-right">
+            <button
+              type="button"
+              className="btn-reset-demo"
+              title="Khôi phục danh sách nhiệm vụ mẫu ban đầu"
+              onClick={async () => {
+                resetLocalTasks();
+                await reloadTasks();
+              }}
+            >
+              ↺ Đặt lại nhiệm vụ mẫu
+            </button>
             <Clock size={15} weight="bold" />
             <span>Thời gian trực ca: <strong>08:42 ICT (UTC+7)</strong></span>
           </div>
@@ -257,11 +295,12 @@ export default function TaskBoardPage() {
                       const typeConfig = TASK_TYPES[task.type] || TASK_TYPES.CHECK_IN;
                       const isDragging = draggingTaskId === task.taskId;
                       const isDone = task.status === "DONE";
+                      const isSnapBack = snappingBackTaskId === task.taskId;
 
                       return (
                         <article
                           key={task.taskId}
-                          className={`task-card ${isDragging ? "is-dragging" : ""} ${isDone ? "task-card--done" : ""}`}
+                          className={`task-card ${isDragging ? "is-dragging" : ""} ${isDone ? "task-card--done" : ""} ${isSnapBack ? "is-snap-back" : ""}`}
                           draggable={!isDone}
                           onDragStart={(e) => handleDragStart(e, task.taskId)}
                           onDragEnd={handleDragEnd}
@@ -383,6 +422,17 @@ export default function TaskBoardPage() {
                                 </button>
                               )}
 
+                              {task.type === "CONTRACT" && task.status !== "DONE" && (
+                                <button
+                                  type="button"
+                                  className="card-ritual-btn"
+                                  onClick={() => setActiveContractTask(task)}
+                                >
+                                  <span>Ký phụ lục</span>
+                                  <ArrowRight size={12} weight="bold" />
+                                </button>
+                              )}
+
                               {/* Right navigation arrow (move to Next) */}
                               {task.status === "TODO" && (
                                 <button
@@ -396,7 +446,7 @@ export default function TaskBoardPage() {
                                 </button>
                               )}
 
-                              {task.status === "IN_PROGRESS" && task.type !== "CHECK_IN" && task.type !== "CHECKOUT" && (
+                              {task.status === "IN_PROGRESS" && (
                                 <button
                                   type="button"
                                   className="card-nav-btn"
@@ -421,22 +471,43 @@ export default function TaskBoardPage() {
         </main>
       </div>
 
-      {/* ── Snap-back Toast Notification (Chống Done ảo FR-22) ── */}
-      {toastMessage && (
+      {/* ── Snap-back Toast Notification (Chống Done ảo) ── */}
+      {toastData && (
         <aside className="snapback-toast" role="alert">
-          <WarningCircle size={24} weight="bold" className="snapback-toast__icon" />
-          <div className="snapback-toast__text">
-            <strong>THÔNG BÁO TỪ HỆ THỐNG:</strong>
-            <div>{toastMessage}</div>
+          <div className="snapback-toast__badge">
+            <WarningCircle size={16} weight="fill" />
+            <span>CHƯA ĐỦ ĐIỀU KIỆN HOÀN THÀNH</span>
           </div>
-          <button
-            type="button"
-            className="snapback-toast__close"
-            onClick={() => setToastMessage(null)}
-            aria-label="Đóng thông báo"
-          >
-            ×
-          </button>
+          <div className="snapback-toast__body">
+            <p className="snapback-toast__title">Chưa thể đánh dấu hoàn thành:</p>
+            <p className="snapback-toast__desc">{toastData.message}</p>
+          </div>
+          <div className="snapback-toast__actions">
+            <button
+              type="button"
+              className="snapback-toast__btn-fix"
+              onClick={() => {
+                const targetTask = toastData.task;
+                setToastData(null);
+                if (targetTask.type === "CHECK_IN") setActiveCheckinTask(targetTask);
+                else if (targetTask.type === "CHECKOUT") setActiveCheckoutTask(targetTask);
+                else if (targetTask.type === "CLEANING") setActiveCleaningTask(targetTask);
+                else if (targetTask.type === "SUPPORT") setActiveSupportTask(targetTask);
+                else if (targetTask.type === "CONTRACT") setActiveContractTask(targetTask);
+              }}
+            >
+              <span>Xử lý ngay</span>
+              <ArrowRight size={14} weight="bold" />
+            </button>
+            <button
+              type="button"
+              className="snapback-toast__close"
+              onClick={() => setToastData(null)}
+              aria-label="Đóng thông báo"
+            >
+              <X size={16} weight="bold" />
+            </button>
+          </div>
         </aside>
       )}
 
@@ -487,6 +558,18 @@ export default function TaskBoardPage() {
           }}
         />
       )}
+
+      {/* ── US-19: Contract / Addendum Signature Drawer ── */}
+      {activeContractTask && (
+        <ContractRitualDrawer
+          task={activeContractTask}
+          onClose={() => setActiveContractTask(null)}
+          onSuccess={async () => {
+            setActiveContractTask(null);
+            await reloadTasks();
+          }}
+        />
+      )}
     </AppShell>
   );
 }
@@ -522,7 +605,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
   return (
     <Drawer
       open={Boolean(task)}
-      headerLabel={`NGHI THỨC CHECK-IN · ${task.refCode}`}
+      headerLabel={`QUY TRÌNH NHẬN KHO · ${task.refCode}`}
       onClose={onClose}
     >
       <div className="ritual-flow">
@@ -558,7 +641,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
             </strong>
           </div>
           <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--color-secondary)" }}>
-            Quy định nghiệp vụ (FR-15): Tiền cọc và tiền thuê là hai khoản tách biệt. Phải thu đủ 100% tiền thuê trước khi bàn giao kho.
+            Quy định: Thu đủ tiền thuê kỳ đầu trước khi bàn giao kho cho khách.
           </p>
           <div>
             <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "6px" }}>
@@ -648,7 +731,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
             </div>
           ) : (
             <div style={{ backgroundColor: "#f1f5f9", padding: "12px", fontSize: "0.78rem", color: "#64748b", textAlign: "center" }}>
-              🔒 Mã PIN đang bị khóa theo quy tắc bảo mật (AD-5). Hoàn tất chụp ảnh hợp đồng đã ký ở Bước 3 để mở khóa mã PIN.
+              🔒 Mã PIN sẽ hiển thị sau khi tải lên ảnh hợp đồng đã ký ở Bước 3.
             </div>
           )}
         </div>
@@ -662,7 +745,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
             onClick={handleSubmit}
             disabled={!photoUploaded || isSubmitting}
           >
-            {isSubmitting ? "Đang xử lý..." : "HOÀN TẤT CHECK-IN & BÀN GIAO"}
+            {isSubmitting ? "Đang xử lý..." : "Hoàn tất nhận kho & Bàn giao"}
           </Button>
         </div>
       </div>
@@ -752,7 +835,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
   return (
     <Drawer
       open={Boolean(task)}
-      headerLabel={`TẤT TOÁN TRẢ KHO · ${task.refCode}`}
+      headerLabel={`THỦ TỤC TRẢ KHO · ${task.refCode}`}
       onClose={onClose}
     >
       <div className="ritual-flow">
@@ -879,7 +962,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
             </div>
             <input
               type="text"
-              placeholder="Lý do hư hại cụ thể (bắt buộc theo quy định FR-18)"
+              placeholder="Ghi rõ lý do hư hại cụ thể..."
               value={newChargeReason}
               onChange={(e) => setNewChargeReason(e.target.value)}
               style={{ padding: "6px 8px", fontSize: "0.78rem", border: "1px solid #cbd5e1" }}
@@ -924,7 +1007,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
             Hủy / Đóng
           </Button>
           <Button onClick={handleConfirmCheckout} disabled={isSubmitting}>
-            {isSubmitting ? "Đang xử lý..." : "XÁC NHẬN TẤT TOÁN & ĐÓNG HỢP ĐỒNG"}
+            {isSubmitting ? "Đang xử lý..." : "Xác nhận trả kho & Đóng hợp đồng"}
           </Button>
         </div>
       </div>
@@ -955,7 +1038,7 @@ function CleaningRitualDrawer({ task, onClose, onSuccess }) {
   };
 
   return (
-    <Drawer open={Boolean(task)} headerLabel={`DỌN KHO · ${task.unitCode}`} onClose={onClose}>
+    <Drawer open={Boolean(task)} headerLabel={`VỆ SINH KHO · ${task.unitCode}`} onClose={onClose}>
       <div className="ritual-flow">
         <div className="ritual-step-card">
           <span className="ritual-step-title">
@@ -998,7 +1081,7 @@ function CleaningRitualDrawer({ task, onClose, onSuccess }) {
             Hủy
           </Button>
           <Button onClick={handleComplete} disabled={!allChecked}>
-            HOÀN TẤT VỆ SINH (AVAILABLE)
+            Hoàn tất vệ sinh · Sẵn sàng đón khách
           </Button>
         </div>
       </div>
@@ -1064,14 +1147,14 @@ function SupportTicketDrawer({ task, onClose, onSuccess }) {
                 checked={escalate}
                 onChange={(e) => setEscalate(e.target.checked)}
               />
-              Báo cáo sự cố nghiêm trọng lên Quản lý cơ sở (Escalate)
+              Chuyển lên Quản lý cơ sở xử lý
             </label>
 
             {escalate && (
               <div style={{ marginTop: "8px" }}>
                 <input
                   type="text"
-                  placeholder="Lý do bắt buộc chuyển tiếp lên Quản lý..."
+                  placeholder="Ghi rõ lý do cần chuyển lên Quản lý..."
                   value={escalateReason}
                   onChange={(e) => setEscalateReason(e.target.value)}
                   style={{ width: "100%", padding: "6px 8px", fontSize: "0.78rem", border: "1px solid #dc2626" }}
@@ -1086,7 +1169,103 @@ function SupportTicketDrawer({ task, onClose, onSuccess }) {
             Hủy
           </Button>
           <Button onClick={handleResolve}>
-            {escalate ? "CHUYỂN TIẾP LÊN QUẢN LÝ" : "HOÀN TẤT XỬ LÝ SỰ CỐ"}
+            {escalate ? "Chuyển lên Quản lý" : "Hoàn tất xử lý sự cố"}
+          </Button>
+        </div>
+      </div>
+    </Drawer>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUB-COMPONENT: CONTRACT / ADDENDUM SIGNATURE DRAWER (US-19)
+// ─────────────────────────────────────────────────────────────────────────────
+function ContractRitualDrawer({ task, onClose, onSuccess }) {
+  const [photoUrl, setPhotoUrl] = useState(task.ritual?.contractPhotoUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleCapturePhoto = () => {
+    setIsUploading(true);
+    setTimeout(() => {
+      setPhotoUrl(PLACEHOLDER_UNIT_IMAGE);
+      setIsUploading(false);
+    }, 400);
+  };
+
+  const handleConfirmSignature = async () => {
+    if (!photoUrl) return;
+    setIsSubmitting(true);
+    try {
+      await completeContractRitual(task.taskId, { contractPhotoUrl: photoUrl });
+      alert(`Đã hoàn tất lưu hồ sơ hợp đồng/phụ lục ${task.refCode}!`);
+      onSuccess();
+    } catch (err) {
+      alert(err.message || "Lỗi khi lưu chữ ký hợp đồng");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Drawer open={Boolean(task)} headerLabel={`KÝ HỢP ĐỒNG / PHỤ LỤC · ${task.refCode}`} onClose={onClose}>
+      <div className="ritual-flow">
+        {/* Thông tin hợp đồng / phụ lục */}
+        <div className="ritual-step-card">
+          <span className="ritual-step-title">
+            <FileText size={18} weight="bold" />
+            Hồ sơ pháp lý cần đối chiếu chữ ký
+          </span>
+          <div style={{ fontSize: "0.82rem" }}>
+            <p style={{ margin: "4px 0" }}>Khách hàng: <strong>{task.customerName}</strong> ({task.customerPhone || "Khách tại quầy"})</p>
+            <p style={{ margin: "4px 0" }}>Vị trí kho: <strong>{task.unitCode}</strong> · Mã hồ sơ: <strong>{task.refCode}</strong></p>
+            {task.alertNote && (
+              <div style={{ backgroundColor: "#ecfdf5", padding: "8px 10px", border: "1px solid #a7f3d0", marginTop: "8px", color: "#065f46" }}>
+                <strong>Ghi chú:</strong> {task.alertNote}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Chụp / Tải ảnh bản hợp đồng giấy có chữ ký */}
+        <div className="ritual-step-card">
+          <span className="ritual-step-title">
+            <UploadSimple size={18} weight="bold" />
+            Đính kèm ảnh chụp hợp đồng đã ký
+          </span>
+          <p style={{ margin: "4px 0 10px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
+            Nhân viên đối chiếu chữ ký của khách hàng trên bản in giấy và chụp lại trang có chữ ký để lưu vào hệ thống.
+          </p>
+
+          <div
+            className="ritual-photo-dropzone"
+            onClick={handleCapturePhoto}
+            title="Bấm để chụp hoặc tải ảnh bản ký"
+          >
+            {photoUrl ? (
+              <div className="ritual-photo-preview">
+                <img src={photoUrl} alt="Hợp đồng đã ký" />
+                <span className="photo-preview-tag">✓ Đã chụp ảnh hợp đồng có chữ ký</span>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "24px 12px" }}>
+                <UploadSimple size={32} weight="bold" color="#64748b" />
+                <p style={{ margin: "6px 0 0 0", fontWeight: 600 }}>
+                  {isUploading ? "Đang tải ảnh lên..." : "Chụp ảnh bản hợp đồng đã ký tên"}
+                </p>
+                <small style={{ color: "#94a3b8" }}>Hỗ trợ camera quầy hoặc tệp ảnh JPG/PNG</small>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Nút hành động */}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
+          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+            Hủy
+          </Button>
+          <Button onClick={handleConfirmSignature} disabled={!photoUrl || isSubmitting}>
+            {isSubmitting ? "Đang lưu..." : "Xác nhận & Lưu hồ sơ"}
           </Button>
         </div>
       </div>

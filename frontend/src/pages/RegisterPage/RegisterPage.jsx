@@ -182,7 +182,7 @@ export default function RegisterPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         disabled={submitting}
-                                        placeholder="storagehub@example.com"
+                                        placeholder="ban@example.com"
                                         aria-required="true"
                                     />
                                 </div>
@@ -251,7 +251,15 @@ export default function RegisterPage() {
                                         disabled={submitting}
                                     />
                                     <span>
-                                        Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của StorageHub
+                                        Tôi đồng ý với{" "}
+                                        <a href="#terms" onClick={(e) => e.preventDefault()}>
+                                            Điều khoản dịch vụ
+                                        </a>{" "}
+                                        và{" "}
+                                        <a href="#privacy" onClick={(e) => e.preventDefault()}>
+                                            Chính sách bảo mật
+                                        </a>{" "}
+                                        của StorageHub
                                     </span>
                                 </label>
 
@@ -262,7 +270,7 @@ export default function RegisterPage() {
                                     disabled={submitting}
                                 >
                                     <span>
-                                        {submitting ? "Đang xử lý..." : "Đăng ký tài khoản"}
+                                        {submitting ? "Đang tạo tài khoản..." : "Đăng ký tài khoản"}
                                     </span>
                                     <span className="login-submit__arrow" aria-hidden="true">
                                         →
