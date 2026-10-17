@@ -4,10 +4,54 @@ import { apiClient, tokenStorage, safeParseJson } from "../services/apiClient";
 
 const AuthContext = createContext(null);
 
+function parseJwt(token) {
+    try {
+        if (!token) return null;
+        const base64Url = token.split('.')[1];
+        if (!base64Url) return null;
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+        return JSON.parse(jsonPayload);
+    } catch {
+        return null;
+    }
+}
+
+const ROLE_LANDINGS = {
+    CUSTOMER: "/browse",
+    STAFF: "/tasks",
+    FACILITY_MANAGER: "/facility",
+    BUSINESS_OPS: "/overview",
+    SYSTEM_ADMIN: "/users",
+};
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(() => {
-        const saved = localStorage.getItem("storagehub_user");
-        return saved ? JSON.parse(saved) : null;
+        try {
+            const saved = localStorage.getItem("storagehub_user");
+            if (saved && saved !== "undefined" && saved !== "null") {
+                return JSON.parse(saved);
+            }
+        } catch {
+            // ignore JSON error
+        }
+        const existingToken = tokenStorage.get();
+        if (existingToken) {
+            const payload = parseJwt(existingToken);
+            if (payload) {
+                return {
+                    id: payload.userId,
+                    email: payload.sub,
+                    role: payload.role,
+                };
+            }
+        }
+        return null;
     });
     const [token, setToken] = useState(() => tokenStorage.get());
     const [loading, setLoading] = useState(false);
@@ -33,15 +77,32 @@ export function AuthProvider({ children }) {
                 };
             }
 
+            const payload = parseJwt(data.token);
+            const userObj = data.user || (payload ? {
+                id: payload.userId,
+                email: payload.sub,
+                role: payload.role,
+            } : null);
+
+            const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/browse";
+
             // Lưu trữ session (Backend JWT có TTL 24h)
             tokenStorage.set(data.token);
-            localStorage.setItem("storagehub_user", JSON.stringify(data.user));
-            localStorage.setItem("storagehub_expires_at", data.expiresAt);
+            if (userObj) {
+                localStorage.setItem("storagehub_user", JSON.stringify(userObj));
+            }
+            if (data.expiresAt) {
+                localStorage.setItem("storagehub_expires_at", data.expiresAt);
+            }
 
             setToken(data.token);
-            setUser(data.user);
+            setUser(userObj);
 
-            return data; // Chứa { token, user, landingRoute, expiresAt }
+            return {
+                ...data,
+                user: userObj,
+                landingRoute: landing,
+            };
         } finally {
             setLoading(false);
         }
@@ -74,14 +135,31 @@ export function AuthProvider({ children }) {
                 };
             }
 
+            const payload = parseJwt(data.token);
+            const userObj = data.user || (payload ? {
+                id: payload.userId,
+                email: payload.sub,
+                role: payload.role,
+            } : null);
+
+            const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/browse";
+
             tokenStorage.set(data.token);
-            localStorage.setItem("storagehub_user", JSON.stringify(data.user));
-            localStorage.setItem("storagehub_expires_at", data.expiresAt);
+            if (userObj) {
+                localStorage.setItem("storagehub_user", JSON.stringify(userObj));
+            }
+            if (data.expiresAt) {
+                localStorage.setItem("storagehub_expires_at", data.expiresAt);
+            }
 
             setToken(data.token);
-            setUser(data.user);
+            setUser(userObj);
 
-            return data;
+            return {
+                ...data,
+                user: userObj,
+                landingRoute: landing,
+            };
         } finally {
             setLoading(false);
         }

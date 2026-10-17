@@ -1,5 +1,3 @@
-import { apiClient, safeParseJson } from "./apiClient";
-
 /**
  * Cấu hình 5 loại Task theo chuẩn nghiệp vụ (FR-21 / StateChart-6)
  */
@@ -250,15 +248,6 @@ function saveLocalTasks(tasks) {
  * Lấy danh sách nhiệm vụ của ca trực
  */
 export async function getStaffTasks() {
-  try {
-    const res = await apiClient("/api/v1/tasks");
-    if (res.ok) {
-      const data = await safeParseJson(res);
-      if (Array.isArray(data) && data.length > 0) return data;
-    }
-  } catch {
-    // Backend endpoint chưa sẵn sàng -> fallback mock data
-  }
   return loadLocalTasks();
 }
 
