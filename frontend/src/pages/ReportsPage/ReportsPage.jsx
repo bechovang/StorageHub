@@ -392,31 +392,31 @@ export default function ReportsPage() {
                       <svg className="svg-curves" viewBox="0 0 600 220" preserveAspectRatio="none">
                         <defs>
                           <linearGradient id="primaryAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.12" />
-                            <stop offset="100%" stopColor="#4F46E5" stopOpacity="0.0" />
+                            <stop offset="0%" stopColor="#DC2626" stopOpacity="0.12" />
+                            <stop offset="100%" stopColor="#DC2626" stopOpacity="0.0" />
                           </linearGradient>
                         </defs>
                         {/* Area */}
                         <path d="M 60,58 L 300,66 L 540,75 L 540,220 L 60,220 Z" fill="url(#primaryAreaGrad)" />
                         {/* Gross Rent Line */}
-                        <path d="M 60,58 C 180,62 180,62 300,66 C 420,70 420,70 540,75" fill="none" stroke="#4F46E5" strokeWidth="2.5" />
+                        <path d="M 60,58 C 180,62 180,62 300,66 C 420,70 420,70 540,75" fill="none" stroke="#DC2626" strokeWidth="2.5" />
                         {/* Deposits Line (Dashed) */}
                         <path d="M 60,193 C 180,193 180,193 300,193 C 420,193 420,198 540,201" fill="none" stroke="#0284C7" strokeDasharray="4,4" strokeWidth="2" />
                         {/* Surcharges Line */}
                         <path d="M 60,213 C 180,212 180,212 300,212 C 420,212 420,214 540,215" fill="none" stroke="#F59E0B" strokeWidth="2" />
 
                         {/* Jul Data Points */}
-                        <circle cx="60" cy="58" r="4" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="2" />
+                        <circle cx="60" cy="58" r="4" fill="#FFFFFF" stroke="#DC2626" strokeWidth="2" />
                         <circle cx="60" cy="193" r="3" fill="#FFFFFF" stroke="#0284C7" strokeWidth="2" />
                         <circle cx="60" cy="213" r="3" fill="#FFFFFF" stroke="#F59E0B" strokeWidth="2" />
 
                         {/* Aug Data Points */}
-                        <circle cx="300" cy="66" r="4" fill="#FFFFFF" stroke="#4F46E5" strokeWidth="2" />
+                        <circle cx="300" cy="66" r="4" fill="#FFFFFF" stroke="#DC2626" strokeWidth="2" />
                         <circle cx="300" cy="193" r="3" fill="#FFFFFF" stroke="#0284C7" strokeWidth="2" />
                         <circle cx="300" cy="212" r="3" fill="#FFFFFF" stroke="#F59E0B" strokeWidth="2" />
 
                         {/* Sep Data Points */}
-                        <circle cx="540" cy="75" r="5" fill="#4F46E5" stroke="#FFFFFF" strokeWidth="2.5" />
+                        <circle cx="540" cy="75" r="5" fill="#DC2626" stroke="#FFFFFF" strokeWidth="2.5" />
                         <circle cx="540" cy="201" r="4" fill="#0284C7" stroke="#FFFFFF" strokeWidth="2" />
                         <circle cx="540" cy="215" r="4" fill="#F59E0B" stroke="#FFFFFF" strokeWidth="2" />
                       </svg>
