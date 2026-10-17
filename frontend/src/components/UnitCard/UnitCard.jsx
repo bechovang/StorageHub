@@ -33,8 +33,8 @@ export default function UnitCard({
     : "Đang có sẵn · Nhận kho ngay";
 
   const subline = isSoon
-    ? "Đang hoàn tất vệ sinh & kiểm tra kỹ thuật"
-    : "Tự quản bằng mã PIN riêng 24/7";
+    ? "Đang dọn dẹp để bàn giao cho khách mới"
+    : "Ra vào chủ động bằng mã PIN riêng 24/7";
 
   const price = unit.baseMonthlyRent ?? unit.monthlyPrice ?? 0;
   const typeLabel = unit.typeName || unit.type || "Tiêu chuẩn";

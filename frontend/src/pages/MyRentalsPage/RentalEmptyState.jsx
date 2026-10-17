@@ -57,11 +57,10 @@ export default function RentalEmptyState({
       </div>
       <h3 className="rental-empty-state__title">Chưa có đơn thuê nào</h3>
       <p className="rental-empty-state__desc">
-        Bạn chưa có đơn đặt chỗ hoặc hợp đồng thuê kho nào. Hãy khám phá danh mục
-        kho tại StorageHub để chọn không gian lưu trữ phù hợp nhất.
+        Bạn chưa có đơn thuê nào. Hãy dạo xem danh sách kho để chọn không gian lưu trữ phù hợp với bạn nhé.
       </p>
       <Link to="/browse" className="rental-btn rental-btn--primary">
-        Khám phá kho lưu trữ
+        Xem danh sách kho
         <ArrowRight size={14} weight="bold" />
       </Link>
     </div>

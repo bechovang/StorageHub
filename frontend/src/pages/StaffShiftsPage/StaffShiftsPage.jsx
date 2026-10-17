@@ -169,13 +169,13 @@ export default function StaffShiftsPage() {
           <header className="shifts-header">
             <div>
               <div className="shifts-breadcrumb">
-                <span>Facility Control Room</span>
+                <span>Vận hành cơ sở</span>
                 <span className="shifts-breadcrumb__sep">/</span>
-                <span className="shifts-breadcrumb__curr">Staff & Shifts</span>
+                <span className="shifts-breadcrumb__curr">Lịch trực nhân viên</span>
               </div>
               <h1 className="shifts-title">Phân công ca trực & Rà soát xung đột</h1>
               <p className="shifts-subtitle">
-                Điều phối ca làm việc hàng tuần, phân bổ khu vực Zone và tự động chặn trùng lặp lịch trực (FR-27).
+                Phân công ca trực theo khu vực và tự động phát hiện lịch trực bị trùng.
               </p>
             </div>
             <div className="shifts-header__actions">
@@ -380,7 +380,7 @@ export default function StaffShiftsPage() {
                   ) : (
                     <div className="valid-badge-inline">
                       <CheckCircle size={16} weight="fill" />
-                      <span>Khung giờ hợp lệ — không có xung đột lịch</span>
+                      <span>Khung giờ hợp lệ — không bị trùng lịch</span>
                     </div>
                   )}
                 </div>
@@ -436,10 +436,10 @@ export default function StaffShiftsPage() {
                 </div>
                 <div>
                   <strong className="conflict-banner__title">
-                    Phát hiện xung đột lịch trực ({totalConflicts} ca va chạm):
+                    Phát hiện trùng lịch trực ({totalConflicts} ca):
                   </strong>
                   <p className="conflict-banner__msg">
-                    Minh Nguyễn hiện đang có 2 ca trùng vào Thứ 2 (12/10). Vui lòng nhấp vào biểu tượng thùng rác ở bảng lịch trực bên dưới để gỡ bỏ ca thừa nhằm bảo đảm an toàn vận hành.
+                    Minh Nguyễn hiện đang có 2 ca trùng vào Thứ 2 (12/10). Bấm vào biểu tượng thùng rác ở bảng lịch bên dưới để điều chỉnh lại.
                   </p>
                 </div>
               </div>

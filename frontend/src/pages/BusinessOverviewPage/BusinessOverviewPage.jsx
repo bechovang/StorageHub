@@ -79,13 +79,11 @@ export default function BusinessOverviewPage() {
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">
                 <span className="dot-pulse-green" />
-                <span className="text-success font-medium">Hệ thống tài chính & kiểm toán: Trực tuyến</span>
+                <span className="text-success font-medium">Dữ liệu kế toán: Đã đồng bộ</span>
               </div>
             </div>
             <div className="biz-telemetry__right">
-              <span>ĐỘ TRỄ: 18ms</span>
-              <span>•</span>
-              <span className="tabular-clock">MÚI GIỜ: UTC+07:00 (HCMC)</span>
+              <span className="tabular-clock">MÚI GIỜ: TP. HỒ CHÍ MINH (UTC+07)</span>
             </div>
           </div>
         </aside>
@@ -113,11 +111,11 @@ export default function BusinessOverviewPage() {
               <div className="biz-breadcrumb">
                 <span>StorageHub VN</span>
                 <span>/</span>
-                <span className="biz-breadcrumb__active">Financial Operations</span>
+                <span className="biz-breadcrumb__active">Quản lý kinh doanh</span>
                 <span>/</span>
-                <span className="text-muted">Executive Telemetry</span>
+                <span className="text-muted">Số liệu tài chính</span>
               </div>
-              <h1 className="biz-title">Business Overview</h1>
+              <h1 className="biz-title">Tổng quan kinh doanh</h1>
             </div>
 
             {/* Action Controls */}
@@ -143,7 +141,7 @@ export default function BusinessOverviewPage() {
                 onClick={handleExportCSV}
               >
                 <DownloadSimple size={15} weight="bold" />
-                <span>Xuất CSV kiểm toán tài chính</span>
+                <span>Xuất file CSV tài chính</span>
               </button>
             </div>
           </section>
@@ -185,11 +183,11 @@ export default function BusinessOverviewPage() {
               <div className="kpi-indicator kpi-indicator--indigo" />
               <div className="biz-kpi-header">
                 <span className="kpi-label">Tiền cọc đang giữ</span>
-                <span className="kpi-badge kpi-badge--indigo">100% Escrow vaulted</span>
+                <span className="kpi-badge kpi-badge--indigo">Ký quỹ an toàn</span>
               </div>
               <div className="biz-kpi-value">{formatVND(summary.depositsHeld)}</div>
               <div className="biz-kpi-footer">
-                <span className="text-muted-dark">Giữ tại VNPay Escrow (Không gộp vào doanh thu)</span>
+                <span className="text-muted-dark">Giữ an toàn qua cổng thanh toán (Không tính vào doanh thu)</span>
                 <span className="kpi-drill-hint">
                   Chi tiết <ArrowRight size={12} />
                 </span>
@@ -212,7 +210,7 @@ export default function BusinessOverviewPage() {
               </div>
               <div className="biz-kpi-value">{formatVND(summary.surcharges)}</div>
               <div className="biz-kpi-footer">
-                <span>Phí gia hạn muộn & vệ sinh tồn dư</span>
+                <span>Phí gia hạn muộn & phí vệ sinh (nếu có)</span>
                 <span className="kpi-drill-hint">
                   Chi tiết <ArrowRight size={12} />
                 </span>
@@ -335,7 +333,7 @@ export default function BusinessOverviewPage() {
               <div>
                 <h2 className="biz-table-title">Chính sách vận hành & Biểu giá</h2>
                 <p className="biz-table-subtitle">
-                  Quy chế vận hành, quy chuẩn hoàn cọc và biểu phí phạt trễ hạn được đóng dấu phiên bản
+                  Lịch sử các phiên bản chính sách thuê, mức cọc và biểu phí quy định
                 </p>
               </div>
               <button
@@ -390,7 +388,7 @@ export default function BusinessOverviewPage() {
                           className="btn-view-diff"
                           onClick={() => setDiffModalVersion(pv)}
                         >
-                          Xem chi tiết diff
+                          So sánh thay đổi
                         </button>
                       </td>
                     </tr>

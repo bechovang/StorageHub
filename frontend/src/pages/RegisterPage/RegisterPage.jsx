@@ -182,7 +182,7 @@ export default function RegisterPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         disabled={submitting}
-                                        placeholder="storagehub@example.com"
+                                        placeholder="ban@example.com"
                                         aria-required="true"
                                     />
                                 </div>
@@ -270,7 +270,7 @@ export default function RegisterPage() {
                                     disabled={submitting}
                                 >
                                     <span>
-                                        {submitting ? "Đang xử lý..." : "Đăng ký tài khoản"}
+                                        {submitting ? "Đang tạo tài khoản..." : "Đăng ký tài khoản"}
                                     </span>
                                     <span className="login-submit__arrow" aria-hidden="true">
                                         →

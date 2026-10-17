@@ -309,8 +309,8 @@ export default function BrowsePage() {
               <span className="browse-banner__zone-tag">Khu A & B</span>
             </h1>
             <p className="browse-banner__desc">
-              Lựa chọn và đặt chỗ kho tự quản thông minh, bảo mật cao với mã PIN
-              24/7 và kiểm soát nhiệt độ tại cơ sở Tân Bình.
+              Kho tự quản sạch sẽ, an ninh 24/7, ra vào chủ động bằng mã PIN
+              riêng tại cơ sở Tân Bình.
             </p>
           </div>
         </section>
@@ -440,7 +440,7 @@ export default function BrowsePage() {
                 }}
                 aria-hidden="true"
               />
-              <span>{units.length} kho khả dụng · trực tiếp</span>
+              <span>{units.length} kho đang sẵn sàng</span>
             </div>
 
             {/* Active filter chips */}
@@ -724,7 +724,7 @@ export default function BrowsePage() {
                     </div>
                     <div className="spec-row">
                       <dt>Thời hạn thuê</dt>
-                      <dd>Linh hoạt theo tháng · Gia hạn tự động</dd>
+                      <dd>Thuê theo tháng · Gia hạn linh hoạt khi có nhu cầu</dd>
                     </div>
                   </dl>
                 </div>

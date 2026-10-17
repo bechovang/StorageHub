@@ -201,13 +201,13 @@ export default function TaskBoardPage() {
             <button
               type="button"
               className="btn-reset-demo"
-              title="Đặt lại các thẻ nhiệm vụ mẫu ban đầu để test Snap-back"
+              title="Khôi phục danh sách nhiệm vụ mẫu ban đầu"
               onClick={async () => {
                 resetLocalTasks();
                 await reloadTasks();
               }}
             >
-              ↺ Đặt lại dữ liệu mẫu
+              ↺ Đặt lại nhiệm vụ mẫu
             </button>
             <Clock size={15} weight="bold" />
             <span>Thời gian trực ca: <strong>08:42 ICT (UTC+7)</strong></span>
@@ -471,15 +471,15 @@ export default function TaskBoardPage() {
         </main>
       </div>
 
-      {/* ── Snap-back Toast Notification (Chống Done ảo FR-22) ── */}
+      {/* ── Snap-back Toast Notification (Chống Done ảo) ── */}
       {toastData && (
         <aside className="snapback-toast" role="alert">
           <div className="snapback-toast__badge">
             <WarningCircle size={16} weight="fill" />
-            <span>SNAP-BACK · CHỐNG DONE ẢO (FR-22)</span>
+            <span>CHƯA ĐỦ ĐIỀU KIỆN HOÀN THÀNH</span>
           </div>
           <div className="snapback-toast__body">
-            <p className="snapback-toast__title">Thao tác bị từ chối & nảy về cột cũ:</p>
+            <p className="snapback-toast__title">Chưa thể đánh dấu hoàn thành:</p>
             <p className="snapback-toast__desc">{toastData.message}</p>
           </div>
           <div className="snapback-toast__actions">
@@ -496,7 +496,7 @@ export default function TaskBoardPage() {
                 else if (targetTask.type === "CONTRACT") setActiveContractTask(targetTask);
               }}
             >
-              <span>Mở quy trình xử lý ngay</span>
+              <span>Xử lý ngay</span>
               <ArrowRight size={14} weight="bold" />
             </button>
             <button
@@ -605,7 +605,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
   return (
     <Drawer
       open={Boolean(task)}
-      headerLabel={`NGHI THỨC CHECK-IN · ${task.refCode}`}
+      headerLabel={`QUY TRÌNH NHẬN KHO · ${task.refCode}`}
       onClose={onClose}
     >
       <div className="ritual-flow">
@@ -641,7 +641,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
             </strong>
           </div>
           <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--color-secondary)" }}>
-            Quy định nghiệp vụ (FR-15): Tiền cọc và tiền thuê là hai khoản tách biệt. Phải thu đủ 100% tiền thuê trước khi bàn giao kho.
+            Quy định: Thu đủ tiền thuê kỳ đầu trước khi bàn giao kho cho khách.
           </p>
           <div>
             <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "6px" }}>
@@ -731,7 +731,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
             </div>
           ) : (
             <div style={{ backgroundColor: "#f1f5f9", padding: "12px", fontSize: "0.78rem", color: "#64748b", textAlign: "center" }}>
-              🔒 Mã PIN đang bị khóa theo quy tắc bảo mật (AD-5). Hoàn tất chụp ảnh hợp đồng đã ký ở Bước 3 để mở khóa mã PIN.
+              🔒 Mã PIN sẽ hiển thị sau khi tải lên ảnh hợp đồng đã ký ở Bước 3.
             </div>
           )}
         </div>
@@ -745,7 +745,7 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
             onClick={handleSubmit}
             disabled={!photoUploaded || isSubmitting}
           >
-            {isSubmitting ? "Đang xử lý..." : "HOÀN TẤT CHECK-IN & BÀN GIAO"}
+            {isSubmitting ? "Đang xử lý..." : "Hoàn tất nhận kho & Bàn giao"}
           </Button>
         </div>
       </div>
@@ -835,7 +835,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
   return (
     <Drawer
       open={Boolean(task)}
-      headerLabel={`TẤT TOÁN TRẢ KHO · ${task.refCode}`}
+      headerLabel={`THỦ TỤC TRẢ KHO · ${task.refCode}`}
       onClose={onClose}
     >
       <div className="ritual-flow">
@@ -962,7 +962,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
             </div>
             <input
               type="text"
-              placeholder="Lý do hư hại cụ thể (bắt buộc theo quy định FR-18)"
+              placeholder="Ghi rõ lý do hư hại cụ thể..."
               value={newChargeReason}
               onChange={(e) => setNewChargeReason(e.target.value)}
               style={{ padding: "6px 8px", fontSize: "0.78rem", border: "1px solid #cbd5e1" }}
@@ -1007,7 +1007,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
             Hủy / Đóng
           </Button>
           <Button onClick={handleConfirmCheckout} disabled={isSubmitting}>
-            {isSubmitting ? "Đang xử lý..." : "XÁC NHẬN TẤT TOÁN & ĐÓNG HỢP ĐỒNG"}
+            {isSubmitting ? "Đang xử lý..." : "Xác nhận trả kho & Đóng hợp đồng"}
           </Button>
         </div>
       </div>
@@ -1038,7 +1038,7 @@ function CleaningRitualDrawer({ task, onClose, onSuccess }) {
   };
 
   return (
-    <Drawer open={Boolean(task)} headerLabel={`DỌN KHO · ${task.unitCode}`} onClose={onClose}>
+    <Drawer open={Boolean(task)} headerLabel={`VỆ SINH KHO · ${task.unitCode}`} onClose={onClose}>
       <div className="ritual-flow">
         <div className="ritual-step-card">
           <span className="ritual-step-title">
@@ -1081,7 +1081,7 @@ function CleaningRitualDrawer({ task, onClose, onSuccess }) {
             Hủy
           </Button>
           <Button onClick={handleComplete} disabled={!allChecked}>
-            HOÀN TẤT VỆ SINH (AVAILABLE)
+            Hoàn tất vệ sinh · Sẵn sàng đón khách
           </Button>
         </div>
       </div>
@@ -1147,14 +1147,14 @@ function SupportTicketDrawer({ task, onClose, onSuccess }) {
                 checked={escalate}
                 onChange={(e) => setEscalate(e.target.checked)}
               />
-              Báo cáo sự cố nghiêm trọng lên Quản lý cơ sở (Escalate)
+              Chuyển lên Quản lý cơ sở xử lý
             </label>
 
             {escalate && (
               <div style={{ marginTop: "8px" }}>
                 <input
                   type="text"
-                  placeholder="Lý do bắt buộc chuyển tiếp lên Quản lý..."
+                  placeholder="Ghi rõ lý do cần chuyển lên Quản lý..."
                   value={escalateReason}
                   onChange={(e) => setEscalateReason(e.target.value)}
                   style={{ width: "100%", padding: "6px 8px", fontSize: "0.78rem", border: "1px solid #dc2626" }}
@@ -1169,7 +1169,7 @@ function SupportTicketDrawer({ task, onClose, onSuccess }) {
             Hủy
           </Button>
           <Button onClick={handleResolve}>
-            {escalate ? "CHUYỂN TIẾP LÊN QUẢN LÝ" : "HOÀN TẤT XỬ LÝ SỰ CỐ"}
+            {escalate ? "Chuyển lên Quản lý" : "Hoàn tất xử lý sự cố"}
           </Button>
         </div>
       </div>
@@ -1231,7 +1231,7 @@ function ContractRitualDrawer({ task, onClose, onSuccess }) {
         <div className="ritual-step-card">
           <span className="ritual-step-title">
             <UploadSimple size={18} weight="bold" />
-            Đính kèm ảnh chụp bản hợp đồng giấy đã ký tên (Bắt buộc FR-12)
+            Đính kèm ảnh chụp hợp đồng đã ký
           </span>
           <p style={{ margin: "4px 0 10px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
             Nhân viên đối chiếu chữ ký của khách hàng trên bản in giấy và chụp lại trang có chữ ký để lưu vào hệ thống.
@@ -1265,7 +1265,7 @@ function ContractRitualDrawer({ task, onClose, onSuccess }) {
             Hủy
           </Button>
           <Button onClick={handleConfirmSignature} disabled={!photoUrl || isSubmitting}>
-            {isSubmitting ? "Đang lưu..." : "XÁC NHẬN ĐÃ KÝ & HOÀN TẤT"}
+            {isSubmitting ? "Đang lưu..." : "Xác nhận & Lưu hồ sơ"}
           </Button>
         </div>
       </div>
