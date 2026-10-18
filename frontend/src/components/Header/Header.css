@@ -280,19 +280,47 @@
   background: #fef2f2;
 }
 
-/* Dropdown Notification */
+/* Dropdown Notification (Swiss Grid / tokens.css) */
 .header-dropdown__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: var(--color-surface-subtle);
-  border-bottom: var(--border);
+  background: var(--color-surface);
+  border-bottom: var(--border-strong);
 }
 
 .header-dropdown__title {
-  font: 700 0.78rem / 1 var(--font-display);
+  font: 700 0.8rem / 1 var(--font-display);
   color: var(--color-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.header-dropdown__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-dropdown__mark-read-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: var(--border);
+  padding: 2px 6px;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  border-radius: var(--radius-none, 0px);
+  transition: background 0.12s;
+}
+
+.header-dropdown__mark-read-btn:hover {
+  background: var(--color-neutral);
 }
 
 .header-dropdown__tag {
@@ -300,11 +328,12 @@
   padding: 2px 6px;
   background: var(--color-accent);
   color: white;
-  border-radius: 10px;
+  border-radius: var(--radius-none, 0px);
+  text-transform: uppercase;
 }
 
 .header-dropdown__list {
-  max-height: 280px;
+  max-height: 290px;
   overflow-y: auto;
 }
 
@@ -314,7 +343,13 @@
   gap: 10px;
   padding: 12px 14px;
   border-bottom: var(--border);
+  background: var(--color-surface);
   transition: background 0.12s;
+}
+
+.header-notif-item.is-unread {
+  background: #fffafa;
+  border-left: 3px solid var(--color-accent);
 }
 
 .header-notif-item:last-child {
@@ -322,17 +357,29 @@
 }
 
 .header-notif-item:hover {
-  background: var(--color-surface-subtle);
+  background: var(--color-neutral);
+}
+
+.header-notif-item__link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 .header-notif-item__icon--success {
-  color: #16a34a;
+  color: var(--color-status-success, #16a34a);
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .header-notif-item__icon--warning {
-  color: #ca8a04;
+  color: var(--color-status-warning, #f59e0b);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.header-notif-item__icon--danger {
+  color: var(--color-status-danger, #dc2626);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -342,15 +389,27 @@
 }
 
 .header-notif-item__text {
-  font-size: 0.78rem;
-  line-height: 1.4;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: var(--color-ink);
   margin: 0 0 4px 0;
 }
 
 .header-notif-item__time {
+  font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--color-muted);
+}
+
+.header-notif-item--empty {
+  padding: 20px;
+  text-align: center;
+  justify-content: center;
+}
+
+.header-notif-item--empty .header-notif-item__text {
+  color: var(--color-muted);
+  margin: 0;
 }
 
 @media (max-width: 900px) {

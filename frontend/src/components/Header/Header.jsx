@@ -7,8 +7,15 @@ import {
   CaretDown,
   CheckCircle,
   WarningCircle,
+  Info,
+  Check,
 } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext.jsx";
+import {
+  getNotifications,
+  getUnreadNotificationCount,
+  markAllNotificationsRead,
+} from "../../services/notificationService.js";
 import "./Header.css";
 
 const ROLE_CONFIGS = {
@@ -109,6 +116,71 @@ export default function Header({
           { label: "Bảng giá & Demo", href: "/demo" },
         ]);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+
+  // Poll unread count (FR-33)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let isMounted = true;
+    async function fetchUnread() {
+      try {
+        const data = await getUnreadNotificationCount();
+        if (isMounted && data) {
+          setUnreadCount(Number(data.count || 0));
+        }
+      } catch (err) {
+        // Fallback im lặng khi chưa có dữ liệu
+      }
+    }
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 15000); // 15s poll nhẹ
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [isAuthenticated]);
+
+  // Fetch notification list when dropdown opens (FR-34)
+  useEffect(() => {
+    if (!showNotificationMenu || !isAuthenticated) return;
+
+    let isMounted = true;
+    async function fetchList() {
+      setLoadingNotifs(true);
+      try {
+        const data = await getNotifications({ page: 1, pageSize: 20 });
+        if (isMounted && data?.items) {
+          setNotifications(data.items);
+        }
+      } catch (err) {
+        console.warn("Could not load notifications:", err);
+      } finally {
+        if (isMounted) setLoadingNotifs(false);
+      }
+    }
+
+    fetchList();
+    return () => {
+      isMounted = false;
+    };
+  }, [showNotificationMenu, isAuthenticated]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsRead();
+      setUnreadCount(0);
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, isRead: true }))
+      );
+    } catch (err) {
+      console.warn("Failed to mark all as read:", err);
+    }
+  };
+
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(e) {
@@ -187,34 +259,73 @@ export default function Header({
                     aria-expanded={showNotificationMenu}
                   >
                     <Bell size={18} weight="bold" />
-                    <span className="header-notif-badge">2</span>
+                    {unreadCount > 0 && (
+                      <span className="header-notif-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                    )}
                   </button>
 
                   {showNotificationMenu && (
                     <div className="header-dropdown header-dropdown--notif">
                       <div className="header-dropdown__header">
                         <span className="header-dropdown__title">Thông báo hệ thống</span>
-                        <span className="header-dropdown__tag">2 mới</span>
+                        <div className="header-dropdown__actions">
+                          {unreadCount > 0 && (
+                            <button
+                              type="button"
+                              className="header-dropdown__mark-read-btn"
+                              onClick={handleMarkAllRead}
+                              title="Đánh dấu đã đọc tất cả"
+                            >
+                              <Check size={12} weight="bold" />
+                              Đã đọc
+                            </button>
+                          )}
+                          <span className="header-dropdown__tag">
+                            {unreadCount > 0 ? `${unreadCount} mới` : "Tất cả đã đọc"}
+                          </span>
+                        </div>
                       </div>
                       <div className="header-dropdown__list">
-                        <div className="header-notif-item">
-                          <CheckCircle size={16} className="header-notif-item__icon--success" weight="fill" />
-                          <div className="header-notif-item__content">
-                            <p className="header-notif-item__text">
-                              Cổng thanh toán Card / MoMo / VNPay QR sẵn sàng.
-                            </p>
-                            <span className="header-notif-item__time">Vừa xong</span>
+                        {loadingNotifs ? (
+                          <div className="header-notif-item header-notif-item--empty">
+                            <p className="header-notif-item__text">Đang tải thông báo...</p>
                           </div>
-                        </div>
-                        <div className="header-notif-item">
-                          <WarningCircle size={16} className="header-notif-item__icon--warning" weight="fill" />
-                          <div className="header-notif-item__content">
-                            <p className="header-notif-item__text">
-                              Đơn đặt chỗ RSV-1 tại kho Tân Bình đang chờ thanh toán cọc.
-                            </p>
-                            <span className="header-notif-item__time">5 phút trước</span>
+                        ) : notifications.length === 0 ? (
+                          <div className="header-notif-item header-notif-item--empty">
+                            <p className="header-notif-item__text">Chưa có thông báo nào.</p>
                           </div>
-                        </div>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              className={`header-notif-item ${!n.isRead ? "is-unread" : ""}`}
+                            >
+                              {n.type?.includes("CONFIRMED") || n.type?.includes("COMPLETED") || n.type?.includes("SIGNED") ? (
+                                <CheckCircle size={16} className="header-notif-item__icon--success" weight="fill" />
+                              ) : n.type?.includes("EXPIRED") || n.type?.includes("FAILED") ? (
+                                <WarningCircle size={16} className="header-notif-item__icon--danger" weight="fill" />
+                              ) : (
+                                <Info size={16} className="header-notif-item__icon--warning" weight="fill" />
+                              )}
+                              <div className="header-notif-item__content">
+                                {n.deepLink ? (
+                                  <Link
+                                    to={n.deepLink}
+                                    className="header-notif-item__link"
+                                    onClick={() => setShowNotificationMenu(false)}
+                                  >
+                                    <p className="header-notif-item__text">{n.title}</p>
+                                  </Link>
+                                ) : (
+                                  <p className="header-notif-item__text">{n.title}</p>
+                                )}
+                                <span className="header-notif-item__time">
+                                  {n.createdAt ? new Date(n.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "Vừa xong"}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                   )}
