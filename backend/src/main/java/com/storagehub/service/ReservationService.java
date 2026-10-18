@@ -778,6 +778,52 @@ public class ReservationService {
         return Math.max(months, 1);
     }
 
+    /**
+     * US-20 (FR-17): Chuyển trạng thái reservation sang CHECKOUT_REQUESTED (AD-6: ReservationService là owner duy nhất).
+     */
+    @Transactional
+    public Reservation transitionToCheckoutRequested(User actor, Long reservationId, String reason) {
+        Reservation res = reservationRepository.findById(reservationId)
+                .orElseThrow(ReservationNotFoundException::new);
+        Reservation.Status prevStatus = res.getStatus();
+        res.setStatus(Reservation.Status.CHECKOUT_REQUESTED);
+        Reservation saved = reservationRepository.save(res);
+
+        logService.log(
+                actor,
+                "RESERVATION",
+                saved.getReservationId(),
+                "STATUS_CHANGED",
+                prevStatus.name(),
+                Reservation.Status.CHECKOUT_REQUESTED.name(),
+                reason != null && !reason.isBlank() ? reason : "Khách gửi yêu cầu trả kho"
+        );
+        return saved;
+    }
+
+    /**
+     * US-20 (FR-17): Hoàn tác trạng thái reservation về CHECKED_IN khi khách hủy yêu cầu trả kho.
+     */
+    @Transactional
+    public Reservation revertFromCheckoutRequested(User actor, Long reservationId, String reason) {
+        Reservation res = reservationRepository.findById(reservationId)
+                .orElseThrow(ReservationNotFoundException::new);
+        Reservation.Status prevStatus = res.getStatus();
+        res.setStatus(Reservation.Status.CHECKED_IN);
+        Reservation saved = reservationRepository.save(res);
+
+        logService.log(
+                actor,
+                "RESERVATION",
+                saved.getReservationId(),
+                "STATUS_CHANGED",
+                prevStatus.name(),
+                Reservation.Status.CHECKED_IN.name(),
+                reason != null && !reason.isBlank() ? reason : "Khách hủy yêu cầu trả kho"
+        );
+        return saved;
+    }
+
     private synchronized String generateReservationCode() {
         int year = LocalDate.now(ICT_ZONE).getYear();
         long count = reservationRepository.count() + 1;
