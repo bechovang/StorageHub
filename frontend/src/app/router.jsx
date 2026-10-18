@@ -17,6 +17,7 @@ import StaffShiftsPage from "../pages/StaffShiftsPage/StaffShiftsPage.jsx";
 import FacilityOverviewPage from "../pages/FacilityOverviewPage/FacilityOverviewPage.jsx";
 import BusinessOverviewPage from "../pages/BusinessOverviewPage/BusinessOverviewPage.jsx";
 import ReportsPage from "../pages/ReportsPage/ReportsPage.jsx";
+import UnitManagementPage from "../pages/UnitManagementPage/UnitManagementPage.jsx";
 
 const ROLE_LANDINGS = {
   CUSTOMER: "/browse",
@@ -130,6 +131,14 @@ export default function AppRouter() {
         element={
           <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
             <FacilityOverviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/facility/units"
+        element={
+          <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
+            <UnitManagementPage />
           </ProtectedRoute>
         }
       />
