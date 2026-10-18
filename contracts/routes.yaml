@@ -54,3 +54,5 @@ deep-links:
   PAYMENT_SUCCEEDED: rental-detail
   CONTRACT_DRAFTED: rental-detail
   RESERVATION_EXPIRED: rental-detail
+  CHECKOUT_REQUESTED: rental-detail
+  CHECKOUT_REQUEST_CANCELLED: rental-detail

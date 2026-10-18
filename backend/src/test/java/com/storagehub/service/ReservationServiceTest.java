@@ -34,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -197,10 +198,11 @@ class ReservationServiceTest {
     @Test
     @DisplayName("createReservation ném BookingUnitTakenException khi unit đã RENTED và báo số unit tương tự còn trống")
     void testCreateReservation_UnitTaken_StatusRented() {
+        LocalDate futureDate = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).plusDays(5);
         unitS3.setStatus(Unit.Status.RENTED);
         CreateReservationRequest request = new CreateReservationRequest(
                 3L,
-                LocalDate.of(2026, 10, 3),
+                futureDate,
                 3
         );
 
@@ -267,12 +269,13 @@ class ReservationServiceTest {
     @DisplayName("getReservationDetail trả về chi tiết đầy đủ khi người dùng là chủ đơn")
     void testGetReservationDetail_Success() {
         Reservation reservation = new Reservation();
+        LocalDate futureStart = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).plusDays(5);
         reservation.setReservationId(1042L);
         reservation.setCode("BK-1042");
         reservation.setCustomer(customerUser);
         reservation.setUnit(unitS3);
-        reservation.setStartDate(LocalDate.of(2026, 10, 3));
-        reservation.setEndDate(LocalDate.of(2027, 1, 2));
+        reservation.setStartDate(futureStart);
+        reservation.setEndDate(futureStart.plusMonths(3).minusDays(1));
         reservation.setDepositAmount(new BigDecimal("103500"));
         reservation.setStatus(Reservation.Status.RESERVED);
 
@@ -281,8 +284,8 @@ class ReservationServiceTest {
 
         QuoteResponse quote = new QuoteResponse(
                 3L,
-                LocalDate.of(2026, 10, 3),
-                LocalDate.of(2027, 1, 2),
+                futureStart,
+                futureStart.plusMonths(3).minusDays(1),
                 3,
                 List.of(),
                 1035000L,
@@ -290,7 +293,7 @@ class ReservationServiceTest {
                 103500L,
                 "v3"
         );
-        when(pricingEngine.calculateQuote(eq(unitS3), eq(LocalDate.of(2026, 10, 3)), eq(3)))
+        when(pricingEngine.calculateQuote(eq(unitS3), eq(futureStart), eq(3)))
                 .thenReturn(quote);
         when(paymentRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(1042L)).thenReturn(List.of());
         when(contractRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(1042L)).thenReturn(List.of());

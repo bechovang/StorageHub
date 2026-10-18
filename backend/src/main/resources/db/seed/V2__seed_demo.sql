@@ -149,6 +149,7 @@ INSERT INTO units (unit_id, code, type_id, zone_id, size_m2, floor, access_type,
 
 INSERT INTO staff_assignments (staff_id, zone_id, shift, work_date) VALUES
     (2, 2, 'MORNING',   '2026-10-12'),
+    (2, 2, 'MORNING',   '2026-10-13'),
     (2, 1, 'MORNING',   '2026-10-19'),
     (2, 1, 'MORNING',   '2026-10-20'),
     (2, 2, 'MORNING',   '2026-10-21'),
@@ -223,11 +224,16 @@ INSERT INTO support_tickets (ticket_id, code, customer_id, unit_id, reservation_
 -- Kanban hôm 2026-10-20: SUPPORT (TODO) + CLEANING (TODO); còn lại là history.
 
 INSERT INTO tasks (task_id, type, ref_code, assigned_staff_id, work_date, status, created_at) VALUES
-    (1, 'CHECK_IN',  'BK-1043', 2, '2026-08-01',  'DONE', '2026-08-01 07:00:00.000000'),
-    (2, 'CHECK_IN',  'BK-1044', 2, '2026-10-19',  'DONE', '2026-10-19 07:00:00.000000'),
-    (3, 'CHECKOUT',  'BK-1042', 2, '2026-10-18',  'DONE', '2026-10-18 07:00:00.000000'),
-    (4, 'CLEANING',  NULL,      2, '2026-10-20',  'TODO', '2026-10-19 18:00:00.000000'), -- M-4 sau maintenance
-    (5, 'SUPPORT',   'SR-0033', 2, '2026-10-20',  'TODO', '2026-10-20 08:05:00.000000');
+    (1, 'CHECK_IN',  'BK-1043', 2, '2026-08-01',  'DONE',        '2026-08-01 07:00:00.000000'),
+    (2, 'CHECK_IN',  'BK-1044', 2, '2026-10-19',  'DONE',        '2026-10-19 07:00:00.000000'),
+    (3, 'CHECKOUT',  'BK-1042', 2, '2026-10-18',  'DONE',        '2026-10-18 07:00:00.000000'),
+    (4, 'CLEANING',  NULL,      2, '2026-10-20',  'TODO',        '2026-10-19 18:00:00.000000'), -- M-4 sau maintenance
+    (5, 'SUPPORT',   'SR-0033', 2, '2026-10-20',  'TODO',        '2026-10-20 08:05:00.000000'),
+    (6, 'CHECK_IN',  'BK-1042', 2, '2026-10-13',  'TODO',        '2026-10-13 07:15:00.000000'),
+    (7, 'CLEANING',  'S-1',     2, '2026-10-13',  'TODO',        '2026-10-13 07:30:00.000000'),
+    (8, 'SUPPORT',   'SR-0032', 2, '2026-10-13',  'TODO',        '2026-10-13 08:00:00.000000'),
+    (9, 'CHECKOUT',  'BK-1043', 2, '2026-10-13',  'IN_PROGRESS', '2026-10-13 08:30:00.000000'),
+    (10, 'CONTRACT', 'CT-1042', 2, '2026-10-13',  'DONE',        '2026-10-13 09:00:00.000000');
 
 -- ------------------------------------------------------ NOTIFICATIONS ----
 
