@@ -131,7 +131,7 @@ export default function Header({
         if (isMounted && data) {
           setUnreadCount(Number(data.count || 0));
         }
-      } catch (err) {
+      } catch {
         // Fallback im lặng khi chưa có dữ liệu
       }
     }
