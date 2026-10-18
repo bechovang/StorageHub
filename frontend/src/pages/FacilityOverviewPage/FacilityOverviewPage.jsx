@@ -12,6 +12,7 @@ import {
   Thermometer,
   Car,
   FileArrowDown,
+  SlidersHorizontal,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import Drawer from "../../components/Drawer/Drawer.jsx";
@@ -200,6 +201,14 @@ export default function FacilityOverviewPage() {
               >
                 <FileArrowDown size={16} weight="bold" />
                 <span>Xuất file CSV kiểm kê</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn--outline"
+                onClick={() => navigate("/facility/units")}
+              >
+                <SlidersHorizontal size={16} />
+                <span>Quản lý kho</span>
               </button>
               <button
                 type="button"
@@ -563,6 +572,16 @@ export default function FacilityOverviewPage() {
             </div>
 
             <div className="drilldown-footer">
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => {
+                  const targetStatus = drilldownStatus && drilldownStatus !== "ALL" ? drilldownStatus : "";
+                  navigate(targetStatus ? `/facility/units?status=${targetStatus}` : "/facility/units");
+                }}
+              >
+                <span>Mở trong Quản lý kho (Unit Management) →</span>
+              </button>
               <button
                 type="button"
                 className="btn btn--secondary"
