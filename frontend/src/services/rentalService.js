@@ -58,3 +58,30 @@ export async function getContract(contractId) {
     if (!res.ok) throw { status: res.status, ...data };
     return data;
 }
+
+/**
+ * POST /api/v1/reservations/{reservationId}/checkout-request
+ * Gửi yêu cầu trả kho (US-20 / FR-17)
+ */
+export async function createCheckoutRequest(reservationId, { requestedDate, timeSlot, reason }) {
+    const res = await apiClient(`/api/v1/reservations/${reservationId}/checkout-request`, {
+        method: "POST",
+        body: JSON.stringify({ requestedDate, timeSlot, reason }),
+    });
+    const data = await safeParseJson(res);
+    if (!res.ok) throw { status: res.status, ...data };
+    return data;
+}
+
+/**
+ * DELETE /api/v1/reservations/{reservationId}/checkout-request
+ * Hủy yêu cầu trả kho (US-20 / FR-17)
+ */
+export async function cancelCheckoutRequest(reservationId) {
+    const res = await apiClient(`/api/v1/reservations/${reservationId}/checkout-request`, {
+        method: "DELETE",
+    });
+    const data = await safeParseJson(res);
+    if (!res.ok) throw { status: res.status, ...data };
+    return data;
+}
