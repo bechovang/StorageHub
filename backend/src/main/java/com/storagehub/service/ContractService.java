@@ -135,6 +135,36 @@ public class ContractService {
     }
 
     /**
+     * US-15 (FR-11): staff chụp ảnh bản ký tại quầy và đính kèm — bản isLatest
+     * DRAFT/PRINTED → SIGNED. Action CONTRACT_SIGNED theo FR-11; đây là điều
+     * kiện để cấp Access Code (nút trao code vô hiệu đến khi có ảnh ký).
+     */
+    @Transactional
+    public Contract signContractAtCheckIn(User actor, Reservation reservation, String signedPhotoUrl) {
+        Contract latest = contractRepository
+                .findByReservation_ReservationIdAndIsLatestTrue(reservation.getReservationId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Không tìm thấy hợp đồng hiện hành của " + reservation.getCode()));
+
+        if (latest.getStatus() != Contract.Status.DRAFT
+                && latest.getStatus() != Contract.Status.PRINTED) {
+            throw new IllegalStateException(
+                    "Hợp đồng " + latest.getCode() + " ở trạng thái "
+                            + latest.getStatus() + " — không thể ký tại quầy.");
+        }
+
+        Contract.Status from = latest.getStatus();
+        latest.setStatus(Contract.Status.SIGNED);
+        latest.setSignedPhotoUrl(signedPhotoUrl);
+        contractRepository.save(latest);
+
+        logService.log(actor, "CONTRACT", latest.getContractId(),
+                "CONTRACT_SIGNED", from.name(), "SIGNED",
+                "Signed photo uploaded at desk — " + reservation.getCode());
+        return latest;
+    }
+
+    /**
      * Re-draft hợp đồng khi có sai sót ở bản nháp (FR-10).
      * Bản cũ chuyển sang SUPERSEDED, bản mới sinh ra trỏ về bản cũ trong chuỗi (FR-13).
      */

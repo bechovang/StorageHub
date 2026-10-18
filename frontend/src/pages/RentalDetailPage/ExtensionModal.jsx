@@ -259,7 +259,7 @@ export default function ExtensionModal({
                             </div>
 
                             <div className="rd-notice-box">
-                                <CheckCircle size={16} weight="fill" color="#16a34a" />
+                                <CheckCircle size={16} weight="fill" color="var(--color-status-success, #16a34a)" />
                                 <span>
                                     Sau khi thanh toán, thời hạn thuê mới sẽ có hiệu lực ngay lập tức. Bạn vui lòng ghé quầy ký phụ lục hợp đồng giấy trong vòng 7 ngày tới nhé.
                                 </span>
