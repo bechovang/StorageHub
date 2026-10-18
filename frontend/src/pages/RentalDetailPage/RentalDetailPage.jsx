@@ -20,7 +20,11 @@ import {
   Clock,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
-import { getReservation } from "../../services/rentalService.js";
+import {
+  getReservation,
+  createCheckoutRequest,
+  cancelCheckoutRequest,
+} from "../../services/rentalService.js";
 import ExtensionModal from "./ExtensionModal.jsx";
 import CheckoutRequestModal from "./CheckoutRequestModal.jsx";
 import {
@@ -344,6 +348,16 @@ export default function RentalDetailPage() {
 
   // Xử lý gửi yêu cầu trả kho (US-20)
   const handleConfirmCheckoutRequest = async (checkoutData) => {
+    try {
+      await createCheckoutRequest(reservationId, {
+        requestedDate: checkoutData.requestedDate,
+        timeSlot: checkoutData.timeSlot,
+        reason: checkoutData.reason,
+      });
+    } catch (err) {
+      console.warn("Backend checkout request failed or mock mode:", err);
+    }
+
     setReservation((prev) => ({
       ...prev,
       status: "CHECKOUT_REQUESTED",
@@ -361,7 +375,13 @@ export default function RentalDetailPage() {
   };
 
   // Hủy yêu cầu trả kho
-  const handleCancelCheckoutRequest = () => {
+  const handleCancelCheckoutRequest = async () => {
+    try {
+      await cancelCheckoutRequest(reservationId);
+    } catch (err) {
+      console.warn("Backend cancel checkout request failed or mock mode:", err);
+    }
+
     setReservation((prev) => ({
       ...prev,
       status: "CHECKED_IN",
