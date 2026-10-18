@@ -469,6 +469,78 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
               example: { code: RESERVATION_INVALID_STATE, message: "Chưa thu tiền thuê — trả 100% rent qua Payment Modal trước khi check-in.", fieldErrors: [] }
 
+  /reservations/{reservationId}/checkout-request:
+    post:
+      tags: [Reservations]
+      summary: "US-20 (FR-17): Khách gửi yêu cầu trả kho (Checkout Request)"
+      description: |
+        Khách gửi yêu cầu trả kho từ Rental Detail kèm giải thích logic tất toán cọc.
+        Reservation -> CHECKOUT_REQUESTED, Checkout Task sinh ra cho ca trực.
+        Request mới thay thế request cũ (request cũ tự hủy).
+        Ngày xin trả bị chặn trên biên Reservation kế tiếp (như Extension).
+      operationId: createCheckoutRequest
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCheckoutRequest" }
+      responses:
+        "200":
+          description: Yêu cầu trả kho đã được tiếp nhận
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckoutRequestResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+        "409":
+          description: Đơn không ở trạng thái CHECKED_IN hoặc ngày trả bị xung đột với reservation kế tiếp
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    delete:
+      tags: [Reservations]
+      summary: "US-20 (FR-17): Khách hủy yêu cầu trả kho"
+      description: |
+        Hủy yêu cầu trả kho đang chờ (PENDING) -> Reservation trở lại CHECKED_IN,
+        Checkout Task tương ứng bị hủy khỏi Task board.
+      operationId: cancelCheckoutRequest
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Hủy yêu cầu trả kho thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CancelCheckoutResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+        "409":
+          description: Đơn không ở trạng thái CHECKOUT_REQUESTED
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    get:
+      tags: [Reservations]
+      summary: "US-20 (FR-17): Xem yêu cầu trả kho hiện tại (PENDING) của đơn thuê"
+      operationId: getLatestCheckoutRequest
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chi tiết yêu cầu trả kho đang chờ xử lý
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckoutRequestResponse" }
+        "204": { description: "Không có yêu cầu trả kho nào đang chờ" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+
   # --------------------------- TASKS (US-15, FR-25) ------------------------
 
   /tasks:
@@ -1107,6 +1179,76 @@ components:
         pageSize: { type: integer }
         total: { type: integer }
 
+    CreateCheckoutRequest:
+      type: object
+      required: [requestedDate]
+      properties:
+        requestedDate:
+          type: string
+          format: date
+          example: "2026-10-25"
+        timeSlot:
+          type: string
+          enum: [MORNING, AFTERNOON, EVENING]
+          example: "MORNING"
+        reason:
+          type: string
+          nullable: true
+          example: "EXPIRED_NEED"
+
+    CheckoutRequestResponse:
+      type: object
+      properties:
+        requestId:
+          type: integer
+          format: int64
+          example: 1
+        reservationId:
+          type: integer
+          format: int64
+          example: 10
+        requestedDate:
+          type: string
+          format: date
+          example: "2026-10-25"
+        timeSlot:
+          type: string
+          nullable: true
+          example: "MORNING"
+        reason:
+          type: string
+          nullable: true
+          example: "EXPIRED_NEED"
+        status:
+          type: string
+          example: "PENDING"
+        createdAt:
+          type: string
+          format: date-time
+        reservationStatus:
+          type: string
+          example: "CHECKOUT_REQUESTED"
+        taskId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 105
+        notification:
+          $ref: "#/components/schemas/NotificationEvent"
+
+    CancelCheckoutResponse:
+      type: object
+      properties:
+        reservationId:
+          type: integer
+          format: int64
+          example: 10
+        reservationStatus:
+          type: string
+          example: "CHECKED_IN"
+        notification:
+          $ref: "#/components/schemas/NotificationEvent"
+
     # ------------------------------ Payments ------------------------------
 
     PaymentPurpose:
@@ -1241,8 +1383,8 @@ components:
 
     NotificationType:
       type: string
-      enum: [RESERVATION_CONFIRMED, PAYMENT_SUCCEEDED, CONTRACT_DRAFTED, RESERVATION_EXPIRED]
-      description: "Sprint 1. Deep-link registry: contracts/routes.yaml (AD-6)"
+      enum: [RESERVATION_CONFIRMED, PAYMENT_SUCCEEDED, CONTRACT_DRAFTED, RESERVATION_EXPIRED, CHECKOUT_REQUESTED, CHECKOUT_REQUEST_CANCELLED]
+      description: "Deep-link registry: contracts/routes.yaml (AD-6)"
 
     Notification:
       type: object

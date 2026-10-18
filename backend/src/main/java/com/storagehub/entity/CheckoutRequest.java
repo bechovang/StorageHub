@@ -26,7 +26,8 @@ public class CheckoutRequest {
 
     public enum Status {
         PENDING,
-        DONE
+        DONE,
+        CANCELLED
     }
 
     @Id
