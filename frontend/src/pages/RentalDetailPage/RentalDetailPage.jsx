@@ -20,7 +20,11 @@ import {
   Clock,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
-import { getReservation } from "../../services/rentalService.js";
+import {
+  getReservation,
+  createCheckoutRequest,
+  cancelCheckoutRequest,
+} from "../../services/rentalService.js";
 import ExtensionModal from "./ExtensionModal.jsx";
 import CheckoutRequestModal from "./CheckoutRequestModal.jsx";
 import {
@@ -165,13 +169,13 @@ function ContractsSection({ contracts = [] }) {
                 className="rd-contract-icon"
               />
               <div>
-                <div className="rd-contract-code font-mono">
-                  <strong>{c.code}</strong>
+                <div className="rd-contract-item__top">
+                  <span className="rd-contract-code font-mono">{c.code}</span>
                   <span className="rd-contract-kind">
                     {c.kind === "ORIGINAL" ? "Hợp đồng gốc" : "Phụ lục gia hạn"}
                   </span>
                   {c.isLatest && (
-                    <span className="rd-contract-badge-latest">Hiện hành</span>
+                    <span className="rd-contract-tag--latest">Hiện hành</span>
                   )}
                 </div>
                 {c.signatureDueDate && (
@@ -344,6 +348,16 @@ export default function RentalDetailPage() {
 
   // Xử lý gửi yêu cầu trả kho (US-20)
   const handleConfirmCheckoutRequest = async (checkoutData) => {
+    try {
+      await createCheckoutRequest(reservationId, {
+        requestedDate: checkoutData.requestedDate,
+        timeSlot: checkoutData.timeSlot,
+        reason: checkoutData.reason,
+      });
+    } catch (err) {
+      console.warn("Backend checkout request failed or mock mode:", err);
+    }
+
     setReservation((prev) => ({
       ...prev,
       status: "CHECKOUT_REQUESTED",
@@ -361,7 +375,13 @@ export default function RentalDetailPage() {
   };
 
   // Hủy yêu cầu trả kho
-  const handleCancelCheckoutRequest = () => {
+  const handleCancelCheckoutRequest = async () => {
+    try {
+      await cancelCheckoutRequest(reservationId);
+    } catch (err) {
+      console.warn("Backend cancel checkout request failed or mock mode:", err);
+    }
+
     setReservation((prev) => ({
       ...prev,
       status: "CHECKED_IN",

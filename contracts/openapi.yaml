@@ -49,6 +49,7 @@ tags:
   - name: Reservations
   - name: Payments
   - name: Contracts
+  - name: Tasks
   - name: Notifications
 
 # ---------------------------------------------------------------------------
@@ -415,6 +416,178 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
               example: { code: RESERVATION_INVALID_STATE, message: "Check-in pass chỉ khả dụng khi đặt chỗ đã xác nhận.", fieldErrors: [] }
 
+  /reservations/{reservationId}/check-in:
+    post:
+      tags: [Reservations]
+      summary: "US-15 (FR-11/14/15): staff hoàn tất check-in tại quầy"
+      description: |
+        Ritual: hợp đồng hiện hành DRAFT/PRINTED → SIGNED kèm ảnh bản ký
+        (FR-11 — action CONTRACT_SIGNED ghi ActivityLog), sinh Access Code,
+        Reservation → CHECKED_IN, Unit → RENTED, task CHECK_IN → DONE,
+        notification CHECK_IN_COMPLETED. Tiền đề đã validate với lý do cụ thể:
+        deposit đã trả, rent 100% đã thu qua Payment Modal (purpose RENT),
+        chưa quá hạn nhận kho. Attachments upload thuộc Sprint 2 khác —
+        signedPhotoUrl giữ shape URL như seed.
+      operationId: checkInReservation
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signedPhotoUrl]
+              properties:
+                signedPhotoUrl: { type: string, example: "/storage/contracts/CT-1046-signed.jpg" }
+      responses:
+        "200":
+          description: Check-in hoàn tất — accessCode trao khách tại quầy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationId: { type: integer, format: int64, example: 20 }
+                  code: { type: string, example: BK-1046 }
+                  status: { type: string, example: CHECKED_IN }
+                  accessCode: { type: string, example: "482913" }
+                  unitCode: { type: string, example: LOCK-1 }
+                  unitStatus: { type: string, example: RENTED }
+                  contractCode: { type: string, example: CT-1046 }
+                  contractStatus: { type: string, example: SIGNED }
+                  signedPhotoUrl: { type: string, example: "/storage/contracts/CT-1046-signed.jpg" }
+                  taskStatus: { type: string, nullable: true, example: DONE }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+        "409":
+          description: "FR-14 — lý do cụ thể: chưa trả cọc / chưa thu 100% rent / đã check-in / quá hạn no-show / hợp đồng không ký được"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: RESERVATION_INVALID_STATE, message: "Chưa thu tiền thuê — trả 100% rent qua Payment Modal trước khi check-in.", fieldErrors: [] }
+
+  /reservations/{reservationId}/checkout-request:
+    post:
+      tags: [Reservations]
+      summary: "US-20 (FR-17): Khách gửi yêu cầu trả kho (Checkout Request)"
+      description: |
+        Khách gửi yêu cầu trả kho từ Rental Detail kèm giải thích logic tất toán cọc.
+        Reservation -> CHECKOUT_REQUESTED, Checkout Task sinh ra cho ca trực.
+        Request mới thay thế request cũ (request cũ tự hủy).
+        Ngày xin trả bị chặn trên biên Reservation kế tiếp (như Extension).
+      operationId: createCheckoutRequest
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCheckoutRequest" }
+      responses:
+        "200":
+          description: Yêu cầu trả kho đã được tiếp nhận
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckoutRequestResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+        "409":
+          description: Đơn không ở trạng thái CHECKED_IN hoặc ngày trả bị xung đột với reservation kế tiếp
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    delete:
+      tags: [Reservations]
+      summary: "US-20 (FR-17): Khách hủy yêu cầu trả kho"
+      description: |
+        Hủy yêu cầu trả kho đang chờ (PENDING) -> Reservation trở lại CHECKED_IN,
+        Checkout Task tương ứng bị hủy khỏi Task board.
+      operationId: cancelCheckoutRequest
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Hủy yêu cầu trả kho thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CancelCheckoutResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+        "409":
+          description: Đơn không ở trạng thái CHECKOUT_REQUESTED
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    get:
+      tags: [Reservations]
+      summary: "US-20 (FR-17): Xem yêu cầu trả kho hiện tại (PENDING) của đơn thuê"
+      operationId: getLatestCheckoutRequest
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chi tiết yêu cầu trả kho đang chờ xử lý
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckoutRequestResponse" }
+        "204": { description: "Không có yêu cầu trả kho nào đang chờ" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+
+  # --------------------------- TASKS (US-15, FR-25) ------------------------
+
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: "US-15 (FR-25): Task Board của ca trực — staff only"
+      description: |
+        Task theo ngày (mặc định hôm nay giờ ICT). Task CHECK_IN kèm ritual
+        flags derive-on-read (AD-4): depositVerified, rentCollected,
+        rentAmountDue, depositPaid, contractSigned, contractPhotoUrl,
+        accessCodeHanded — FE bật/tắt nút ritual theo flags, không tự tính.
+      operationId: listTasks
+      parameters:
+        - { name: date, in: query, schema: { type: string, format: date }, description: "Mặc định: hôm nay (ICT)" }
+      responses:
+        "200":
+          description: Danh sách task trong ngày
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    taskId: { type: integer, format: int64 }
+                    type: { type: string, enum: [CHECK_IN, CHECKOUT, CLEANING, SUPPORT, CONTRACT] }
+                    refCode: { type: string, nullable: true, example: BK-1046 }
+                    unitCode: { type: string, nullable: true, example: LOCK-1 }
+                    customerName: { type: string, nullable: true, example: "Nguyễn Thị Lan" }
+                    customerPhone: { type: string, nullable: true, example: "0901 234 567" }
+                    workDate: { type: string, format: date }
+                    status: { type: string, enum: [TODO, IN_PROGRESS, DONE] }
+                    ritual:
+                      type: object
+                      nullable: true
+                      description: "Chỉ có với type CHECK_IN"
+                      properties:
+                        depositVerified: { type: boolean }
+                        rentCollected: { type: boolean }
+                        rentAmountDue: { type: integer, nullable: true, example: 300000 }
+                        depositPaid: { type: integer, nullable: true, example: 30000 }
+                        contractSigned: { type: boolean }
+                        contractPhotoUrl: { type: string, nullable: true }
+                        accessCodeHanded: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   # --------------------------- PAYMENTS (US-8, AD-9) ----------------------
 
   /payments:
@@ -422,9 +595,9 @@ paths:
       tags: [Payments]
       summary: Bắt đầu thanh toán (Payment Modal) — FR-8
       description: |
-        Sprint 1 chỉ nhận purpose DEPOSIT (booking) và RENT (check-in —
-        endpoint này dùng chung, check-in task Sprint 2 gọi tiếp). EXTENSION_FEE
-        / EXTRA_FEE / DAMAGE_FEE thuộc sprint sau.
+        Nhận purpose DEPOSIT (booking) và RENT (check-in tại quầy — US-15:
+        chỉ mở khi reservation đã RESERVED và chưa quá hạn nhận kho).
+        EXTENSION_FEE / EXTRA_FEE / DAMAGE_FEE thuộc sprint sau.
         Kết quả thanh toán (thành công/thất bại) do MockPaymentGateway quyết
         định theo cấu hình server-side — KHÔNG có field outcome trong request.
         Flows: CARD → trả PROCESSING, FE poll GET; MOMO → trả PENDING +
@@ -652,6 +825,101 @@ paths:
         "204": { description: "Đã đánh dấu tất cả là đã đọc" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
+  # ---------------------------- TASKS (FR-21/22, NFR-2) -----------------------
+
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: Lấy danh sách task board cho staff trực ca (FR-21 / NFR-2)
+      description: |
+        Mặc định: hiện thẻ trong ngày/ca hiện tại của staff đăng nhập.
+        Board đúng 3 cột: To do / In progress / Done.
+        Thẻ đúng 5 loại: Check-in / Checkout / Cleaning / Support / Contract-signature.
+        Hỗ trợ lọc theo workDate, shift, type, status.
+      operationId: getTasks
+      parameters:
+        - { name: workDate, in: query, schema: { type: string, format: date }, description: "Ngày làm việc (mặc định hôm nay ICT)" }
+        - { name: shift, in: query, schema: { type: string, enum: [MORNING, AFTERNOON, EVENING] }, description: "Ca trực (mặc định ca hiện tại ICT)" }
+        - { name: type, in: query, schema: { $ref: "#/components/schemas/TaskType" }, description: "Lọc theo 1 trong 5 loại thẻ" }
+        - { name: status, in: query, schema: { $ref: "#/components/schemas/TaskStatus" }, description: "Lọc theo trạng thái kanban" }
+      responses:
+        "200":
+          description: Danh sách thẻ kanban cho ca trực
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TaskCard" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+    post:
+      tags: [Tasks]
+      summary: Hệ thống sinh task tự động gán cho staff trực ca phụ trách Zone (FR-21)
+      description: |
+        Task được tự động phân cho staff đang trực ca và phụ trách Zone chứa Unit
+        tại thời điểm task phát sinh. Không hỗ trợ giao task thủ công.
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateTaskRequest" }
+      responses:
+        "201":
+          description: Thẻ task được tạo và tự động phân công thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskCard" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /tasks/{taskId}:
+    get:
+      tags: [Tasks]
+      summary: Chi tiết 1 nhiệm vụ task board
+      operationId: getTaskDetail
+      parameters:
+        - { name: taskId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chi tiết nhiệm vụ
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskCard" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+
+  /tasks/{taskId}/status:
+    patch:
+      tags: [Tasks]
+      summary: Cập nhật trạng thái nhiệm vụ (To do -> In progress -> Done, snap-back FR-22)
+      description: |
+        Kéo thả hoặc bấm nút Move để chuyển trạng thái thẻ.
+        Snap-back (FR-22): Chặn kéo sang Done khi còn thiếu bước chốt nghiệp vụ
+        (payment/settlement/ảnh bản ký) -> trả 409 TASK_SNAP_BACK kèm lý do cụ thể.
+      operationId: updateTaskStatus
+      parameters:
+        - { name: taskId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateTaskStatusRequest" }
+      responses:
+        "200":
+          description: Đã cập nhật trạng thái nhiệm vụ
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskCard" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+        "409": { $ref: "#/components/responses/TaskSnapBack" }
+
 # ---------------------------------------------------------------------------
 components:
 
@@ -692,6 +960,18 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
           example: { code: RESERVATION_NOT_FOUND, message: "Không tìm thấy đặt chỗ này.", fieldErrors: [] }
+    TaskNotFound:
+      description: Task không tồn tại
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: TASK_NOT_FOUND, message: "Không tìm thấy nhiệm vụ này.", fieldErrors: [] }
+    TaskSnapBack:
+      description: Vi phạm snap-back chống Done ảo (FR-22)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: TASK_SNAP_BACK, message: "Chặn Done ảo: Đơn chưa xác nhận thanh toán tiền cọc!", fieldErrors: [] }
 
   schemas:
 
@@ -704,7 +984,7 @@ components:
         code:
           type: string
           description: Machine code UPPER_SNAKE
-          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, INTERNAL_ERROR]
+          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, INTERNAL_ERROR]
         message: { type: string, description: "Message human-readable theo khuôn NFR-7 (chuyện gì + hệ quả + 1 bước kế)" }
         fieldErrors:
           type: array
@@ -899,6 +1179,76 @@ components:
         pageSize: { type: integer }
         total: { type: integer }
 
+    CreateCheckoutRequest:
+      type: object
+      required: [requestedDate]
+      properties:
+        requestedDate:
+          type: string
+          format: date
+          example: "2026-10-25"
+        timeSlot:
+          type: string
+          enum: [MORNING, AFTERNOON, EVENING]
+          example: "MORNING"
+        reason:
+          type: string
+          nullable: true
+          example: "EXPIRED_NEED"
+
+    CheckoutRequestResponse:
+      type: object
+      properties:
+        requestId:
+          type: integer
+          format: int64
+          example: 1
+        reservationId:
+          type: integer
+          format: int64
+          example: 10
+        requestedDate:
+          type: string
+          format: date
+          example: "2026-10-25"
+        timeSlot:
+          type: string
+          nullable: true
+          example: "MORNING"
+        reason:
+          type: string
+          nullable: true
+          example: "EXPIRED_NEED"
+        status:
+          type: string
+          example: "PENDING"
+        createdAt:
+          type: string
+          format: date-time
+        reservationStatus:
+          type: string
+          example: "CHECKOUT_REQUESTED"
+        taskId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 105
+        notification:
+          $ref: "#/components/schemas/NotificationEvent"
+
+    CancelCheckoutResponse:
+      type: object
+      properties:
+        reservationId:
+          type: integer
+          format: int64
+          example: 10
+        reservationStatus:
+          type: string
+          example: "CHECKED_IN"
+        notification:
+          $ref: "#/components/schemas/NotificationEvent"
+
     # ------------------------------ Payments ------------------------------
 
     PaymentPurpose:
@@ -1033,8 +1383,8 @@ components:
 
     NotificationType:
       type: string
-      enum: [RESERVATION_CONFIRMED, PAYMENT_SUCCEEDED, CONTRACT_DRAFTED, RESERVATION_EXPIRED]
-      description: "Sprint 1. Deep-link registry: contracts/routes.yaml (AD-6)"
+      enum: [RESERVATION_CONFIRMED, PAYMENT_SUCCEEDED, CONTRACT_DRAFTED, RESERVATION_EXPIRED, CHECKOUT_REQUESTED, CHECKOUT_REQUEST_CANCELLED]
+      description: "Deep-link registry: contracts/routes.yaml (AD-6)"
 
     Notification:
       type: object
@@ -1058,3 +1408,78 @@ components:
         page: { type: integer }
         pageSize: { type: integer }
         total: { type: integer }
+
+    # ------------------------------- Tasks (FR-21/22) ---------------------
+
+    TaskType:
+      type: string
+      enum: [CHECK_IN, CHECKOUT, CLEANING, SUPPORT, CONTRACT]
+      description: "5 loại thẻ kanban theo FR-21 / StateChart-6"
+
+    TaskStatus:
+      type: string
+      enum: [TODO, IN_PROGRESS, DONE]
+      description: "3 cột kanban theo FR-21: To do / In progress / Done"
+
+    TaskCard:
+      type: object
+      required: [taskId, type, status, workDate, assignedStaff]
+      properties:
+        taskId: { type: integer, format: int64 }
+        type: { $ref: "#/components/schemas/TaskType" }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        refCode: { type: string, nullable: true, example: "BK-1042" }
+        unitCode: { type: string, nullable: true, example: "Unit S-3" }
+        customerName: { type: string, nullable: true, example: "Nguyễn Thị Lan" }
+        customerPhone: { type: string, nullable: true, example: "0901 234 567" }
+        dueTime: { type: string, nullable: true, example: "09:00" }
+        workDate: { type: string, format: date, example: "2026-10-13" }
+        shift: { type: string, enum: [MORNING, AFTERNOON, EVENING], example: "MORNING" }
+        accessPin: { type: string, nullable: true, example: "8842-Active" }
+        rentAmount: { type: integer, format: int64, nullable: true, example: 1800000 }
+        depositPaid: { type: integer, format: int64, nullable: true, example: 180000 }
+        priority: { type: string, nullable: true, example: "Medium" }
+        issueDescription: { type: string, nullable: true }
+        alertNote: { type: string, nullable: true }
+        assignedStaff:
+          type: object
+          required: [staffId, fullName]
+          properties:
+            staffId: { type: integer, format: int64 }
+            fullName: { type: string }
+        ritual:
+          type: object
+          nullable: true
+          properties:
+            depositVerified: { type: boolean }
+            rentCollected: { type: boolean }
+            contractSigned: { type: boolean }
+            contractPhotoUrl: { type: string, nullable: true }
+            accessCodeHanded: { type: boolean }
+            settlementConfirmed: { type: boolean }
+            receiptPrinted: { type: boolean }
+            readyForTenant: { type: boolean }
+            resolvedNote: { type: string, nullable: true }
+            escalated: { type: boolean }
+            escalationReason: { type: string, nullable: true }
+
+    UpdateTaskStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: "#/components/schemas/TaskStatus" }
+
+    CreateTaskRequest:
+      type: object
+      required: [type]
+      description: "Hệ thống tự động xác định assignedStaff qua Zone và shift của Unit; cấm gán thủ công."
+      properties:
+        type: { $ref: "#/components/schemas/TaskType" }
+        unitId: { type: integer, format: int64, nullable: true }
+        refCode: { type: string, nullable: true }
+        workDate: { type: string, format: date, nullable: true }
+        shift: { type: string, enum: [MORNING, AFTERNOON, EVENING], nullable: true }
+        dueTime: { type: string, nullable: true }
+        priority: { type: string, nullable: true }
+        alertNote: { type: string, nullable: true }
+        issueDescription: { type: string, nullable: true }
