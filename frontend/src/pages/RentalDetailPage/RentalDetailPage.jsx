@@ -169,13 +169,13 @@ function ContractsSection({ contracts = [] }) {
                 className="rd-contract-icon"
               />
               <div>
-                <div className="rd-contract-code font-mono">
-                  <strong>{c.code}</strong>
+                <div className="rd-contract-item__top">
+                  <span className="rd-contract-code font-mono">{c.code}</span>
                   <span className="rd-contract-kind">
                     {c.kind === "ORIGINAL" ? "Hợp đồng gốc" : "Phụ lục gia hạn"}
                   </span>
                   {c.isLatest && (
-                    <span className="rd-contract-badge-latest">Hiện hành</span>
+                    <span className="rd-contract-tag--latest">Hiện hành</span>
                   )}
                 </div>
                 {c.signatureDueDate && (
