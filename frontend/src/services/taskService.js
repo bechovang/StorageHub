@@ -241,6 +241,33 @@ export async function getStaffTasks() {
  * Cập nhật trạng thái nhiệm vụ (To do -> In progress -> Done)
  */
 export async function updateTaskStatus(taskId, newStatus) {
+  try {
+    const res = await apiClient(`/api/v1/tasks/${taskId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (res.ok) {
+      const updated = await safeParseJson(res);
+      const tasks = loadLocalTasks();
+      const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
+      if (idx !== -1) {
+        tasks[idx] = { ...tasks[idx], ...updated };
+        saveLocalTasks(tasks);
+      }
+      return updated;
+    } else {
+      const errData = await safeParseJson(res);
+      if (errData && errData.message) {
+        throw new Error(errData.message);
+      }
+    }
+  } catch (err) {
+    if (err.message && (err.message.includes("Chặn Done ảo") || err.message.includes("nhiệm vụ"))) {
+      throw err;
+    }
+  }
+
   const tasks = loadLocalTasks();
   const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
   if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ");
