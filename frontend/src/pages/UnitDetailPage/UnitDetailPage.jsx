@@ -459,10 +459,10 @@ export default function UnitDetailPage() {
             <article className="unit-detail-card">
               <div className="unit-detail-card__header">
                 <h2 className="unit-detail-card__title">
-                  TIÊU CHUẨN VẬN HÀNH CƠ SỞ (RENTAL POLICY V3)
+                  TIÊU CHUẨN KHO & TIỆN ÍCH CƠ SỞ
                 </h2>
                 <span className="unit-detail-badge-mono">
-                  HIỆU LỰC TOÀN HỆ THỐNG
+                  AN TÂM LƯU TRỮ
                 </span>
               </div>
               <div className="unit-detail-card__body">
@@ -485,10 +485,10 @@ export default function UnitDetailPage() {
                       <Key size={20} weight="bold" />
                     </div>
                     <div>
-                      <strong>Tự quản bằng mã PIN riêng</strong>
+                      <strong>Ra vào bằng mã PIN riêng</strong>
                       <p>
-                        Không qua trung gian, nhận mã PIN số bảo mật kích hoạt
-                        ngay khi cọc.
+                        Chủ động vào kho 24/7 bằng mã PIN riêng, kích hoạt ngay
+                        sau khi đặt cọc.
                       </p>
                     </div>
                   </div>
@@ -511,10 +511,10 @@ export default function UnitDetailPage() {
                       <Sparkle size={20} weight="bold" />
                     </div>
                     <div>
-                      <strong>Khử khuẩn & Đệm bàn giao sạch</strong>
+                      <strong>Khử khuẩn & Vệ sinh sạch sẽ</strong>
                       <p>
-                        Quy trình vệ sinh ozone và kiểm tra kỹ thuật trước mỗi
-                        đợt bàn giao.
+                        Kho luôn được quét dọn, khử khuẩn sạch sẽ trước khi bàn
+                        giao cho bạn.
                       </p>
                     </div>
                   </div>
@@ -529,9 +529,9 @@ export default function UnitDetailPage() {
               {/* Header bảng giá */}
               <div className="pricing-panel-header">
                 <div>
-                  <h2 className="pricing-panel-title">BẢNG GIÁ</h2>
+                  <h2 className="pricing-panel-title">DỰ TOÁN CHI PHÍ THUÊ</h2>
                   <p className="pricing-panel-sub">
-                    Chính sách: Rental Policy {policyVersion} (Hiệu lực 2026)
+                    Giá thuê rõ ràng, không phụ phí ẩn
                   </p>
                 </div>
               </div>
@@ -603,7 +603,7 @@ export default function UnitDetailPage() {
               {/* ── TỪNG DÒNG CHI PHÍ THEO RENTAL POLICY ĐANG HIỆU LỰC ── */}
               <div className="pricing-breakdown-list">
                 <span className="pricing-breakdown-heading">
-                  CHI TIẾT DÒNG TIỀN (RENTAL POLICY {policyVersion})
+                  CHI TIẾT CHI PHÍ
                 </span>
 
                 {/* 1. Dòng tiền thuê cơ bản: Rent × Duration */}
@@ -653,10 +653,10 @@ export default function UnitDetailPage() {
                 <div className="pricing-breakdown-row">
                   <div className="pricing-row-left">
                     <span className="pricing-row-label">
-                      Khởi tạo mã PIN khoá tự quản
+                      Khởi tạo mã PIN vào kho
                     </span>
                     <span className="pricing-row-sub">
-                      Cấp phát tự động tức thời
+                      Cấp mã PIN miễn phí
                     </span>
                   </div>
                   <div className="pricing-row-waived">
@@ -684,7 +684,7 @@ export default function UnitDetailPage() {
                         Tiền đặt cọc giữ kho (10%)
                       </span>
                       <span className="deposit-box-badge-refundable">
-                        HOÀN LẠI (REFUNDABLE)
+                        HOÀN TRẢ KHI TRẢ KHO
                       </span>
                     </div>
                   </div>
@@ -694,9 +694,9 @@ export default function UnitDetailPage() {
                 </div>
 
                 <p className="deposit-box-explanation">
-                  ✓ Khoản tiền cọc này bảo đảm khóa vị trí kho và được{" "}
-                  <strong>hoàn trả 100%</strong> vào tài khoản của quý khách
-                  ngay khi thanh lý hợp đồng và bàn giao kho nguyên trạng.
+                  ✓ Tiền cọc giúp giữ chỗ kho cho bạn và được{" "}
+                  <strong>hoàn trả 100%</strong> vào tài khoản của bạn ngay khi
+                  kết thúc hợp đồng.
                 </p>
               </div>
 
@@ -705,10 +705,10 @@ export default function UnitDetailPage() {
                 <div className="due-now-row">
                   <div>
                     <span className="due-now-label">
-                      CẦN THANH TOÁN HÔM NAY (DUE NOW):
+                      THANH TOÁN HÔM NAY:
                     </span>
                     <span className="due-now-sub">
-                      Tiền cọc giữ chỗ để khóa vị trí kho
+                      Tiền cọc giữ chỗ kho
                     </span>
                   </div>
                   <strong className="due-now-amount">
@@ -728,7 +728,7 @@ export default function UnitDetailPage() {
                 onClick={handleBookNow}
                 disabled={quoteLoading}
               >
-                <span>TIẾN HÀNH ĐẶT KHO & THANH TOÁN CỌC</span>
+                <span>Đặt kho & Thanh toán cọc</span>
                 <span className="pricing-submit-btn__arrow">→</span>
               </button>
 

@@ -25,7 +25,7 @@ const INSTRUCTION_TRANSLATIONS = {
     "Bring your valid national ID card (CCCD) or Passport to sign the contract.":
         "Mang theo CCCD/CMND hoặc Hộ chiếu gốc để đối chiếu và ký hợp đồng thuê kho.",
     "Pay the remaining rent balance at the front operational desk prior to access activation.":
-        "Thanh toán 100% tiền thuê còn lại tại quầy trước khi kích hoạt nhận kho.",
+        "Thanh toán tiền thuê còn lại tại quầy trước khi nhận kho.",
 };
 
 function formatInstruction(text) {
@@ -127,17 +127,17 @@ export default function CheckInPassPage() {
                 <div className="cip__nav">
                     <Link to={`/rentals/${reservationId}`} className="cip__back-link">
                         <ArrowLeft size={16} weight="bold" />
-                        Về chi tiết đơn thuê
+                        Quay lại đơn thuê
                     </Link>
 
                     {pass && (
                         <button
                             className="cip__print-btn"
                             onClick={() => window.print()}
-                            title="In Check-in Pass"
+                            title="In thẻ nhận kho"
                         >
                             <Printer size={16} weight="bold" />
-                            In ra
+                            In thẻ nhận kho
                         </button>
                     )}
                 </div>
@@ -179,7 +179,7 @@ export default function CheckInPassPage() {
                                 <Package size={24} weight="fill" />
                                 StorageHub
                             </div>
-                            <div className="cip__pass-header__label">THẺ NHẬN KHO (CHECK-IN PASS)</div>
+                            <div className="cip__pass-header__label">THẺ NHẬN KHO</div>
                         </div>
 
                         {/* Code & QR – central focus */}
@@ -201,7 +201,7 @@ export default function CheckInPassPage() {
 
                             <div className="cip__code">{pass.code}</div>
                             <p className="cip__code-hint">
-                                Quét mã QR hoặc đọc mã này cho nhân viên khi đến nhận kho để ký hợp đồng và nhận chìa/mã mở kho.
+                                Xuất trình mã này cho nhân viên quầy khi đến nhận kho để ký hợp đồng và nhận mã mở kho.
                             </p>
                         </div>
 
@@ -270,8 +270,8 @@ export default function CheckInPassPage() {
                             <div className={`cip__deadline-banner ${isOverdue ? "cip__deadline-banner--overdue" : "cip__deadline-banner--urgent"}`}>
                                 <Warning size={18} weight="fill" />
                                 {isOverdue
-                                    ? "Đơn này đã quá hạn nhận kho. Vui lòng liên hệ nhân viên ngay."
-                                    : `Chú ý: Chỉ còn ${days} ngày để nhận kho — quá hạn sẽ mất cọc.`}
+                                    ? "Đơn này đã quá hạn nhận kho. Vui lòng liên hệ nhân viên quầy để được hỗ trợ nhé."
+                                    : `Lưu ý: Bạn còn ${days} ngày để đến nhận kho trước khi đơn bị hủy.`}
                             </div>
                         )}
 
@@ -283,7 +283,7 @@ export default function CheckInPassPage() {
                             <div className="cip__instructions">
                                 <div className="cip__instructions__title">
                                     <ListChecks size={16} weight="bold" />
-                                    Hướng dẫn check-in tại quầy cho khách hàng
+                                    Các bước cần chuẩn bị khi đến quầy
                                 </div>
                                 <ul className="cip__instructions__list">
                                     {pass.instructions.map((inst, i) => (

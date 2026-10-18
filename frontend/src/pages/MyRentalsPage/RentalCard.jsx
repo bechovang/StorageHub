@@ -135,8 +135,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__prompt rental-card__prompt--warning">
             <WarningCircle size={16} weight="fill" />
             <span>
-              <strong>Yêu cầu hoàn tất:</strong> Vui lòng thanh toán cọc 10% để xác
-              nhận giữ chỗ trước khi hết hạn.
+              <strong>Cần thanh toán:</strong> Vui lòng hoàn tất thanh toán tiền cọc để giữ chỗ kho này nhé.
             </span>
           </div>
         )}
@@ -145,8 +144,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__prompt rental-card__prompt--info">
             <CheckCircle size={16} weight="fill" />
             <span>
-              <strong>Sẵn sàng:</strong> Đã xác nhận giữ chỗ. Vui lòng mang CCCD và
-              mở Check-in Pass tại quầy khi đến nhận kho.
+              <strong>Đã giữ chỗ:</strong> Bạn chỉ cần mang theo CCCD và mở thẻ nhận kho khi đến quầy.
             </span>
           </div>
         )}
@@ -170,7 +168,7 @@ export default function RentalCard({ item }) {
                 className="rental-btn rental-btn--primary"
               >
                 <QrCode size={15} weight="bold" />
-                Check-in Pass
+                Mở thẻ nhận kho
                 <ArrowRight size={14} weight="bold" />
               </Link>
             )}

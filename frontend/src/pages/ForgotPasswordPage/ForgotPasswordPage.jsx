@@ -59,6 +59,7 @@ export default function ForgotPasswordPage() {
                 <div className="login-form-col">
                     <div className="login-card">
                         <div className="login-card__header">
+                            <p className="login-card__eyebrow">StorageHub</p>
                             <h2 className="login-card__title">Quên mật khẩu</h2>
                         </div>
 
@@ -110,7 +111,7 @@ export default function ForgotPasswordPage() {
                                 /* ── Form nhập email khôi phục ── */
                                 <>
                                     <p className="forgot-desc">
-                                        Nhập email đăng ký của bạn. Hệ thống sẽ gửi hướng dẫn đặt lại mật khẩu an toàn.
+                                        Nhập địa chỉ email của bạn để nhận liên kết đặt lại mật khẩu.
                                     </p>
 
                                     {/* Alert lỗi validation hoặc server */}
@@ -148,7 +149,7 @@ export default function ForgotPasswordPage() {
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
                                                 disabled={submitting}
-                                                placeholder="storagehub@example.com"
+                                                placeholder="ban@example.com"
                                                 aria-required="true"
                                             />
                                         </div>
@@ -160,7 +161,7 @@ export default function ForgotPasswordPage() {
                                             disabled={submitting}
                                         >
                                             <span>
-                                                {submitting ? "Đang gửi yêu cầu..." : "Gửi liên kết khôi phục"}
+                                                {submitting ? "Đang gửi liên kết..." : "Gửi liên kết khôi phục"}
                                             </span>
                                             <span className="login-submit__arrow" aria-hidden="true">
                                                 →

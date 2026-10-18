@@ -151,13 +151,13 @@ export default function PaymentModal({
             <p className="payment-modal__subtitle">
               {isTerminalSuccess
                 ? `Đã nhận tiền cọc cho kho ${unit.code || "S-3"} tại ${
-                    unit.depot || "Tân Bình Gateway"
+                    unit.depot || "Cơ sở Tân Bình"
                   }.`
                 : isTerminalFailed
-                ? "Không có khoản tiền nào bị trừ khỏi tài khoản của bạn (No money was taken)."
+                ? "Giao dịch chưa hoàn tất và tài khoản của bạn chưa bị trừ tiền."
                 : isTerminalExpired
-                ? "Thời gian hiệu lực của mã QR / OTP đã hết hạn bảo mật (5 phút)."
-                : `Giữ kho ${unit.code || "S-3"} tại ${unit.depot || "Tân Bình Gateway"} · REF: ${
+                ? "Mã thanh toán đã hết thời gian hiệu lực sau 5 phút."
+                : `Giữ kho ${unit.code || "S-3"} tại ${unit.depot || "Cơ sở Tân Bình"} · REF: ${
                     reservation?.code || "RSV-2026-S3"
                   }`}
             </p>
@@ -203,7 +203,7 @@ export default function PaymentModal({
                 <div className="status-icon-wrap status-icon-wrap--success">
                   <CheckCircle size={28} weight="fill" />
                 </div>
-                <Badge tone="success">Deposit Confirmed</Badge>
+                <Badge tone="success">Đã nhận tiền cọc</Badge>
               </div>
 
               <div className="terminal-content">
@@ -213,8 +213,8 @@ export default function PaymentModal({
                 <p className="terminal-desc">
                   Khoản đặt cọc giữ chỗ đã được xác nhận. Kho <strong>{unit.code || "S-3"}</strong>{" "}
                   được đảm bảo giữ cho bạn đến ngày nhận kho{" "}
-                  <strong>{reservation?.startDate}</strong>. Mã PIN cửa ra vào (Access Code) sẽ kích
-                  hoạt vào lúc 08:00 AM ngày nhận kho.
+                  <strong>{reservation?.startDate}</strong>. Mã PIN vào kho sẽ tự động kích
+                  hoạt lúc 08:00 sáng ngày nhận kho.
                 </p>
               </div>
 
@@ -257,21 +257,20 @@ export default function PaymentModal({
                 <div className="status-icon-wrap status-icon-wrap--danger">
                   <XCircle size={28} weight="fill" />
                 </div>
-                <Badge tone="danger">Payment Declined</Badge>
+                <Badge tone="danger">Chưa hoàn tất</Badge>
               </div>
 
               <div className="terminal-content">
-                <h3 className="terminal-title">Giao dịch bị từ chối</h3>
+                <h3 className="terminal-title">Giao dịch chưa thành công</h3>
                 <p className="terminal-desc">
-                  Giao dịch không thành công.{" "}
-                  <strong>Không có khoản tiền nào bị trừ khỏi tài khoản của bạn</strong>. Cổng thanh
-                  toán hoặc ngân hàng phát hành đã từ chối giao dịch (ERR_CARD_DECLINED hoặc OTP không
-                  khớp).
+                  <strong>Tài khoản của bạn chưa bị trừ tiền</strong>. Cổng thanh
+                  toán hoặc ngân hàng chưa thể hoàn tất giao dịch. Bạn vui lòng kiểm tra lại số dư thẻ,
+                  mã OTP hoặc đổi phương thức thanh toán khác nhé.
                 </p>
               </div>
 
               <div className="decline-code-box">
-                <span className="decline-code-box__label">Gateway response code:</span>
+                <span className="decline-code-box__label">Mã phản hồi từ cổng:</span>
                 <code className="decline-code-box__code">DECLINE_CODE_51</code>
               </div>
 
@@ -297,14 +296,13 @@ export default function PaymentModal({
                 <div className="status-icon-wrap status-icon-wrap--warning">
                   <Clock size={28} weight="fill" />
                 </div>
-                <Badge tone="warning">Session Expired</Badge>
+                <Badge tone="warning">Hết thời gian</Badge>
               </div>
 
               <div className="terminal-content">
-                <h3 className="terminal-title">Phiên thanh toán đã hết hạn</h3>
+                <h3 className="terminal-title">Hết thời gian thanh toán</h3>
                 <p className="terminal-desc">
-                  Mã QR hoặc mã OTP đã quá thời gian hiệu lực bảo mật (5 phút). Vui lòng khởi tạo phiên
-                  mới để hoàn tất thanh toán cọc.
+                  Mã thanh toán đã hết hạn sau 5 phút. Bạn vui lòng bấm nút bên dưới để tạo mã mới và hoàn tất giữ chỗ nhé.
                 </p>
               </div>
 
@@ -319,10 +317,9 @@ export default function PaymentModal({
             /* ── 4. TRẠNG THÁI: ĐANG XỬ LÝ (PROCESSING) ── */
             <div className="processing-view">
               <CircleNotch size={48} className="spinner-rotate" />
-              <h3 className="processing-title">Đang xác thực giao dịch...</h3>
+              <h3 className="processing-title">Đang kiểm tra thanh toán...</h3>
               <p className="processing-desc">
-                Hệ thống đang kết nối bảo mật với cổng thanh toán. Trạng thái sẽ được cập nhật tự động
-                trong giây lát. Vui lòng không đóng trang.
+                Hệ thống đang kết nối an toàn với cổng thanh toán. Quá trình này thường mất vài giây, bạn vui lòng đợi trong giây lát nhé.
               </p>
               <div className="processing-progress-bar">
                 <div className="processing-progress-fill" />
@@ -534,7 +531,7 @@ export default function PaymentModal({
 
                   {/* Mock Gateway Test Chips */}
                   <div className="mock-presets-row">
-                    <span className="mock-presets-label">Kiểm thử Mock Gateway:</span>
+                    <span className="mock-presets-label">Thẻ thử nghiệm:</span>
                     <button
                       type="button"
                       className="preset-chip preset-chip--success"

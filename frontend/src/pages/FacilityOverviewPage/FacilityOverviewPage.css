@@ -1,0 +1,721 @@
+/* ==========================================================================
+   FacilityOverviewPage.css — Swiss Grid / Design Tokens
+   US-32: Facility Overview + drill-down (FR-32)
+   ========================================================================== */
+
+.facility-overview-page {
+  background-color: var(--color-surface-page, #f5f5f5);
+  min-height: calc(100vh - 54px);
+  padding-bottom: 48px;
+}
+
+/* ── Telemetry Context Subheader ── */
+.facility-telemetry {
+  background: var(--color-surface, #ffffff);
+  border-bottom: var(--border);
+  padding: 8px 24px;
+  font-size: 0.78rem;
+  color: var(--color-muted, #64748b);
+}
+
+.facility-telemetry__inner {
+  width: min(calc(100% - 48px), var(--page-width, 1200px));
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.facility-telemetry__left,
+.facility-telemetry__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.telemetry-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.telemetry-bold {
+  font-weight: 700;
+  color: var(--color-ink, #000000);
+}
+
+.tag-facility {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--color-surface);
+  border: var(--border);
+  padding: 1px 6px;
+  border-radius: var(--radius-none, 0px);
+  color: var(--color-ink);
+}
+
+.telemetry-divider {
+  color: var(--color-line);
+}
+
+.dot-pulse-green {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-status-success, #16a34a);
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+}
+
+.tabular-clock {
+  font-weight: 700;
+  color: var(--color-ink, #000000);
+  font-family: var(--font-mono);
+}
+
+/* ── Canvas ── */
+.facility-canvas {
+  width: min(calc(100% - 48px), var(--page-width, 1200px));
+  margin: 0 auto;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Header ── */
+.facility-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.facility-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  margin-bottom: 4px;
+}
+
+.facility-breadcrumb__sep {
+  color: var(--color-line);
+}
+
+.facility-breadcrumb__curr {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.facility-title {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.facility-subtitle {
+  font-size: 0.86rem;
+  color: var(--color-secondary);
+  margin-top: 4px;
+}
+
+.facility-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-selector-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--color-surface, #ffffff);
+  border: var(--border);
+  border-radius: var(--radius-none, 0px);
+  font-size: 0.8rem;
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* ── KPI Summary Cards ── */
+.facility-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  background: var(--color-surface, #ffffff);
+  border: var(--border-strong);
+  border-radius: var(--radius-none, 0px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+}
+
+.kpi-card--interactive {
+  cursor: pointer;
+}
+
+.kpi-card--interactive:hover {
+  border-color: var(--color-ink);
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.kpi-card--alert {
+  border-left: 4px solid var(--color-accent, #dc2626);
+  background: #fffafa;
+  cursor: pointer;
+}
+
+.kpi-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-card__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  text-transform: uppercase;
+}
+
+.kpi-card__main-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 10px 0 6px 0;
+}
+
+.kpi-card__val {
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.kpi-card__meta {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: var(--color-disabled, #e8e8e8);
+  border-radius: var(--radius-none, 0px);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.progress-bar-fill--primary {
+  height: 100%;
+  background: var(--color-accent, #dc2626);
+  border-radius: var(--radius-none, 0px);
+}
+
+.kpi-card__alert-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--color-accent, #dc2626);
+  margin-top: 6px;
+}
+
+.kpi-card__breakdown {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  margin-top: 6px;
+}
+
+.kpi-card__footer-hint {
+  font-size: 0.72rem;
+  color: var(--color-accent, #dc2626);
+  font-weight: 700;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: var(--border);
+}
+
+/* ── Units by Status Distribution Panel ── */
+.facility-status-panel {
+  background: var(--color-surface, #ffffff);
+  border: var(--border-strong);
+  border-radius: var(--radius-none, 0px);
+  padding: 20px;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
+}
+
+.facility-status-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.facility-status-panel__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.facility-status-panel__desc {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+  margin-top: 3px;
+}
+
+.facility-status-panel__total {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.tag-total-units {
+  background: var(--color-surface-page, #f5f5f5);
+  border: var(--border);
+  border-radius: var(--radius-none, 0px);
+  padding: 2px 8px;
+  font-size: 0.76rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* Stacked Proportional Bar */
+.stacked-status-bar {
+  width: 100%;
+  height: 22px;
+  background: var(--color-surface-page, #f5f5f5);
+  border: var(--border);
+  border-radius: var(--radius-none, 0px);
+  padding: 2px;
+  display: flex;
+  gap: 2px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.status-segment {
+  height: 100%;
+  border-radius: var(--radius-none, 0px);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.status-segment:hover {
+  opacity: 0.85;
+}
+
+.status-segment--available {
+  background: #059669;
+}
+
+.status-segment--reserved {
+  background: #1e40af;
+}
+
+.status-segment--rented {
+  background: #334155;
+}
+
+.status-segment--preparing {
+  background: #0284c7;
+}
+
+.status-segment--maintenance {
+  background: #c2410c;
+}
+
+.status-segment--retired {
+  background: #767676;
+}
+
+/* Interactive Status Pills Row */
+.status-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: var(--border);
+}
+
+.status-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--color-surface, #ffffff);
+  border: var(--border);
+  border-radius: var(--radius-none, 0px);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.status-pill-btn:hover {
+  background: var(--color-surface-page, #f5f5f5);
+  border-color: var(--color-ink);
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+.status-pill-btn__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  flex-shrink: 0;
+}
+
+.status-pill-btn__info {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-pill-btn__label {
+  font-size: 0.74rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.status-pill-btn__nums {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* Zone Telemetry Sub-strip */
+.zone-telemetry-bar {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--color-surface-page, #f5f5f5);
+  border: var(--border);
+  border-radius: var(--radius-none, 0px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.8rem;
+}
+
+.zone-telemetry-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Turnover Queue Section ── */
+.turnover-section {
+  background: var(--color-surface, #ffffff);
+  border: var(--border-strong);
+  border-radius: var(--radius-none, 0px);
+  overflow: hidden;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
+}
+
+.turnover-section__head {
+  padding: 16px 20px;
+  border-bottom: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.turnover-section__title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.turnover-section__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.turnover-section__refresh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: var(--color-muted);
+}
+
+.turnover-table-wrap {
+  overflow-x: auto;
+}
+
+.turnover-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
+}
+
+.turnover-table thead tr th {
+  padding: 10px 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  letter-spacing: 0.05em;
+  background: var(--color-surface-page, #f5f5f5);
+  border-bottom: var(--border-strong);
+  text-align: left;
+}
+
+.turnover-table tbody tr td {
+  padding: 14px 20px;
+  border-bottom: var(--border);
+  vertical-align: middle;
+  font-size: 0.82rem;
+}
+
+.turnover-table tbody tr:hover {
+  background-color: var(--color-surface-page, #f5f5f5);
+}
+
+.unit-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unit-code-box {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-none, 0px);
+  padding: 2px 8px;
+  color: var(--color-ink);
+}
+
+.unit-spec-sub {
+  font-size: 0.74rem;
+  color: var(--color-secondary);
+}
+
+.transition-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-chip {
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  border-radius: var(--radius-none, 0px);
+  border: 1px solid transparent;
+}
+
+.status-chip--rented {
+  background: var(--color-surface-page, #f5f5f5);
+  color: #334155;
+  border-color: var(--color-line);
+}
+
+.status-chip--preparing {
+  background: #f0f9ff;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+.status-chip--available {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.status-chip--reserved {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.status-chip--maintenance {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+
+.status-chip--retired {
+  background: var(--color-surface-page, #f5f5f5);
+  color: var(--color-muted);
+  border-color: var(--color-line);
+}
+
+.task-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-name {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.task-ref {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--color-muted);
+}
+
+.staff-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar-mini {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-none, 0px);
+  background: var(--color-ink);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-ink);
+}
+
+.due-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  color: var(--color-ink);
+}
+
+/* ── Interactive Drill-down Drawer (FR-32) ── */
+.drilldown-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.drilldown-search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.drilldown-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  border: var(--border);
+  border-radius: var(--radius-none, 0px);
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.drilldown-input:focus {
+  border-color: var(--color-ink);
+}
+
+.drilldown-count {
+  font-size: 0.76rem;
+  background: var(--color-surface-page, #f5f5f5);
+  border: var(--border);
+  color: var(--color-ink);
+  padding: 4px 10px;
+  border-radius: var(--radius-none, 0px);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.drilldown-table-wrap {
+  overflow-x: auto;
+  max-height: 480px;
+  border: var(--border);
+  border-radius: var(--radius-none, 0px);
+}
+
+.drilldown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.drilldown-table thead tr th {
+  padding: 10px 12px;
+  background: var(--color-surface-page, #f5f5f5);
+  color: var(--color-muted);
+  border-bottom: var(--border-strong);
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.drilldown-table tbody tr td {
+  padding: 10px 12px;
+  border-bottom: var(--border);
+}
+
+.tenant-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.tenant-name {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.tenant-event {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
+.drilldown-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: var(--border);
+}
