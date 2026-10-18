@@ -329,7 +329,6 @@
   background: var(--color-accent);
   color: white;
   border-radius: var(--radius-none, 0px);
-  text-transform: uppercase;
 }
 
 .header-dropdown__list {

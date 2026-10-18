@@ -167,7 +167,7 @@
 /* ── Trình chiếu ảnh Slider thuần túy (Chỉ ảnh, không mô tả) ── */
 .unit-detail-slider-card {
   position: relative;
-  background: #f8fafc;
+  background: var(--color-surface-page, #f5f5f5);
   border: var(--border-strong);
   overflow: hidden;
 }
@@ -183,7 +183,7 @@
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: #f8fafc;
+  background: var(--color-surface-page, #f5f5f5);
 }
 
 .unit-slider__track {

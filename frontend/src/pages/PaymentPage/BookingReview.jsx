@@ -45,12 +45,12 @@ export default function BookingReview({
       {/* ── BREADCRUMB & WORKFLOW STEP ── */}
       <div className="booking-subbar">
         <nav className="booking-breadcrumb" aria-label="Breadcrumb">
-          <Link to="/browse">Depot Directory</Link>
+          <Link to="/browse">Danh sách kho</Link>
           <CaretRight size={13} weight="bold" />
-          <span>{unit.depot || "Tân Bình Gateway"}</span>
+          <span>{unit.depot || "Cơ sở Tân Bình"}</span>
           <CaretRight size={13} weight="bold" />
           <span className="booking-breadcrumb__current">
-            {unit.code ? `Unit ${unit.code}` : "Kho"} Đặt chỗ
+            {unit.code ? `Kho ${unit.code}` : "Kho"} · Đặt chỗ
           </span>
         </nav>
 
@@ -77,10 +77,10 @@ export default function BookingReview({
                   </Badge>
                 </div>
                 <h1 className="unit-title">
-                  {unit.typeName || "Indoor Climate-Controlled Storage"} ({unit.sizeM2 || 5} m²)
+                  {unit.typeName || "Kho Tiêu chuẩn"} ({unit.sizeM2 || 5} m²)
                 </h1>
                 <p className="unit-location">
-                  {unit.building || "Building B · Level 2"} · {unit.depot || "Tân Bình Gateway"}
+                  {unit.building || "Tầng 2 · Khu B"} · {unit.depot || "Cơ sở Tân Bình"}
                 </p>
               </div>
 
@@ -95,19 +95,19 @@ export default function BookingReview({
               <div className="param-cell">
                 <span className="param-cell__label">Thời hạn thuê</span>
                 <p className="param-cell__value">{reservation?.durationMonths || 3} Tháng</p>
-                <span className="param-cell__sub">Hợp đồng tiêu chuẩn</span>
+                <span className="param-cell__sub">Hợp đồng linh hoạt</span>
               </div>
 
               <div className="param-cell">
                 <span className="param-cell__label">Bắt đầu thuê</span>
                 <p className="param-cell__value">{formatDate(reservation?.startDate)}</p>
-                <span className="param-cell__sub">Quyền ra vào từ 08:00 AM</span>
+                <span className="param-cell__sub">Nhận kho từ 08:00</span>
               </div>
 
               <div className="param-cell">
                 <span className="param-cell__label">Kết thúc thuê</span>
                 <p className="param-cell__value">{formatDate(reservation?.endDate)}</p>
-                <span className="param-cell__sub">Tự động gia hạn</span>
+                <span className="param-cell__sub">Gia hạn linh hoạt</span>
               </div>
             </div>
 
@@ -126,7 +126,7 @@ export default function BookingReview({
 
               <div className="gate-pin-hint">
                 <Clock size={14} />
-                <span>Mã PIN cổng tự động kích hoạt vào ngày bắt đầu</span>
+                <span>Mã PIN vào kho kích hoạt vào ngày bắt đầu</span>
               </div>
             </div>
           </article>
@@ -142,7 +142,7 @@ export default function BookingReview({
                 <span className="dimension-volume">· Thể tích {unit.volume || "14.0 m³"}</span>
               </div>
             </div>
-            <span className="feature-pill">RFID &amp; Khóa số thông minh</span>
+            <span className="feature-pill">Ra vào 24/7 · Khóa số điện tử</span>
           </div>
         </div>
 
@@ -190,12 +190,12 @@ export default function BookingReview({
               </div>
 
               <div className="ledger-item">
-                <span className="ledger-item__label">Khóa số thông minh &amp; Smart PIN</span>
-                <span className="ledger-item__val ledger-item__val--free">0 ₫</span>
+                <span className="ledger-item__label">Mã PIN điện tử tự quản</span>
+                <span className="ledger-item__val ledger-item__val--free">Miễn phí (0 ₫)</span>
               </div>
 
               <div className="ledger-item ledger-item--total">
-                <span className="ledger-item__label">Tổng cam kết hợp đồng</span>
+                <span className="ledger-item__label">Tổng giá trị hợp đồng ({reservation?.durationMonths || 3} tháng)</span>
                 <span className="ledger-item__val">{formatVND(totalRent)}</span>
               </div>
             </div>
@@ -213,7 +213,7 @@ export default function BookingReview({
               <p className="deposit-highlight__note">
                 {isAlreadyPaid
                   ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống để đảm bảo hiệu lực đơn đặt chỗ."
-                  : "Hoàn trả đầy đủ khi thanh lý hợp đồng (Move-out Inspection) hoặc cấn trừ vào kỳ thanh toán đầu tiên theo quy định StorageHub."}
+                  : "Hoàn trả 100% khi kết thúc hợp đồng hoặc cấn trừ vào kỳ thanh toán đầu tiên theo nhu cầu của bạn."}
               </p>
             </div>
 
@@ -239,7 +239,7 @@ export default function BookingReview({
                 disabled={loadingReservation}
               >
                 <PlusCircle size={15} />
-                <span>Khởi tạo đơn đặt chỗ mẫu (PENDING) để test</span>
+                <span>Tạo đơn đặt chỗ thử nghiệm (Demo)</span>
               </button>
             </div>
           </article>

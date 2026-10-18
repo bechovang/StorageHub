@@ -82,7 +82,7 @@ export default function CheckoutRequestModal({
                     <div className="rd-modal-header__title-group">
                         <SignOut size={22} weight="bold" className="rd-modal-icon rd-modal-icon--orange" />
                         <div>
-                            <h3 className="rd-modal-title">Gửi yêu cầu trả kho (Checkout Request)</h3>
+                            <h3 className="rd-modal-title">Gửi yêu cầu trả kho</h3>
                             <p className="rd-modal-subtitle">
                                 Đơn {reservation.code} · Ô kho {reservation.unit?.code} (Hạn thuê: {fmtDate(reservation.endDate)})
                             </p>
@@ -159,7 +159,7 @@ export default function CheckoutRequestModal({
                     <div className="rd-settlement-guide">
                         <div className="rd-settlement-guide__header">
                             <ShieldCheck size={18} weight="bold" color="#1d4ed8" />
-                            <span>Quy trình & Logic tất toán cọc minh bạch (FR-17 / FR-18)</span>
+                            <span>Quy trình kiểm tra & hoàn tiền cọc</span>
                         </div>
 
                         <div className="rd-settlement-guide__content">
@@ -174,7 +174,7 @@ export default function CheckoutRequestModal({
 
                             <ul className="rd-settlement-checklist">
                                 <li>
-                                    <strong>Thẻ / Mã ra vào & Khóa:</strong> Bàn giao lại đầy đủ thẻ từ, ổ khóa kho.
+                                    <strong>Khóa & Thẻ ra vào:</strong> Bàn giao lại chìa khóa hoặc khóa số.
                                 </li>
                                 <li>
                                     <strong>Vệ sinh kho:</strong> Kho đã dọn sạch sẽ, không còn đồ đạc lưu lại.
@@ -185,13 +185,12 @@ export default function CheckoutRequestModal({
                             </ul>
 
                             <div className="rd-settlement-formula-box">
-                                <div className="rd-formula-title">Công thức hoàn cọc:</div>
+                                <div className="rd-formula-title">Cách tính tiền hoàn lại:</div>
                                 <div className="rd-formula-code">
                                     Tiền hoàn lại = Tiền cọc đang giữ − Phí hư hại phát sinh (nếu có)
                                 </div>
                                 <small>
-                                    Mọi khoản phí khấu trừ (nếu có) bắt buộc phải có hình ảnh và lý do cụ thể. Biên nhận
-                                    tất toán sẽ được lưu vĩnh viễn trên hệ thống để bạn tra cứu.
+                                    Nếu có phát sinh chi phí vệ sinh hay hư hại, nhân viên sẽ gửi kèm ảnh chụp và giải thích rõ ràng trước khi trừ cọc. Biên nhận hoàn cọc sẽ được lưu trên tài khoản để bạn tra cứu bất kỳ lúc nào.
                                 </small>
                             </div>
                         </div>
@@ -206,7 +205,7 @@ export default function CheckoutRequestModal({
                                 onChange={(e) => setAgreedTerms(e.target.checked)}
                             />
                             <span>
-                                Tôi xác nhận sẽ dọn sạch đồ đạc và có mặt tại quầy Tân Bình Depot theo ngày hẹn để bàn giao kho.
+                                Tôi xác nhận sẽ dọn sạch đồ đạc và có mặt tại quầy cơ sở Tân Bình theo ngày hẹn để bàn giao kho.
                             </span>
                         </label>
                     </div>
@@ -226,7 +225,7 @@ export default function CheckoutRequestModal({
                             className="rd-btn-checkout-submit"
                             disabled={submitting || !agreedTerms}
                         >
-                            {submitting ? "Đang gửi..." : "Xác nhận gửi yêu cầu trả kho"}
+                            {submitting ? "Đang gửi..." : "Gửi yêu cầu trả kho"}
                             <ArrowRight size={16} weight="bold" />
                         </button>
                     </div>

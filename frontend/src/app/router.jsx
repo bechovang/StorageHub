@@ -13,6 +13,10 @@ import MyRentalsPage from "../pages/MyRentalsPage/MyRentalsPage.jsx";
 import RentalDetailPage from "../pages/RentalDetailPage/RentalDetailPage.jsx";
 import CheckInPassPage from "../pages/CheckInPassPage/CheckInPassPage.jsx";
 import TaskBoardPage from "../pages/TaskBoardPage/TaskBoardPage.jsx";
+import StaffShiftsPage from "../pages/StaffShiftsPage/StaffShiftsPage.jsx";
+import FacilityOverviewPage from "../pages/FacilityOverviewPage/FacilityOverviewPage.jsx";
+import BusinessOverviewPage from "../pages/BusinessOverviewPage/BusinessOverviewPage.jsx";
+import ReportsPage from "../pages/ReportsPage/ReportsPage.jsx";
 
 const ROLE_LANDINGS = {
   CUSTOMER: "/browse",
@@ -125,7 +129,15 @@ export default function AppRouter() {
         path="/facility"
         element={
           <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/facility" />
+            <FacilityOverviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/facility/shifts"
+        element={
+          <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
+            <StaffShiftsPage />
           </ProtectedRoute>
         }
       />
@@ -143,7 +155,7 @@ export default function AppRouter() {
         path="/overview"
         element={
           <ProtectedRoute allowedRoles={["BUSINESS_OPS", "SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/overview" />
+            <BusinessOverviewPage />
           </ProtectedRoute>
         }
       />
@@ -151,7 +163,7 @@ export default function AppRouter() {
         path="/policy"
         element={
           <ProtectedRoute allowedRoles={["BUSINESS_OPS", "SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/overview" />
+            <BusinessOverviewPage />
           </ProtectedRoute>
         }
       />
@@ -159,7 +171,7 @@ export default function AppRouter() {
         path="/reports"
         element={
           <ProtectedRoute allowedRoles={["BUSINESS_OPS", "SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/overview" />
+            <ReportsPage />
           </ProtectedRoute>
         }
       />
