@@ -1,6 +1,8 @@
 package com.storagehub.service;
 
 import com.storagehub.dto.notification.NotificationEventResponse;
+import com.storagehub.dto.notification.NotificationPageResponse;
+import com.storagehub.dto.notification.UnreadCountResponse;
 import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
 
@@ -30,4 +32,13 @@ public interface NotificationService {
 
     /** US-20 (FR-17): Khách hủy yêu cầu trả kho. */
     NotificationEventResponse notifyCheckoutRequestCancelled(Reservation reservation);
+
+    /** FR-34: Lấy danh sách feed thông báo của user (unread trước). */
+    NotificationPageResponse listNotifications(String email, boolean unreadOnly, int page, int pageSize);
+
+    /** FR-33: Đếm số thông báo chưa đọc cho bell badge. */
+    UnreadCountResponse getUnreadCount(String email);
+
+    /** FR-34: Đánh dấu tất cả thông báo của user là đã đọc. */
+    void markAllRead(String email);
 }
