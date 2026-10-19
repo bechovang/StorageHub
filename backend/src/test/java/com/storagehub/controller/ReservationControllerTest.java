@@ -90,7 +90,8 @@ class ReservationControllerTest {
                 null,
                 null,
                 List.of(),
-                List.of()
+                List.of(),
+                null
         );
 
         when(reservationService.createReservation(eq("lan@demo.vn"), any(CreateReservationRequest.class)))
@@ -165,7 +166,8 @@ class ReservationControllerTest {
                 null,
                 null,
                 List.of(),
-                List.of()
+                List.of(),
+                null
         );
 
         when(reservationService.getReservationDetail("lan@demo.vn", 1042L)).thenReturn(response);

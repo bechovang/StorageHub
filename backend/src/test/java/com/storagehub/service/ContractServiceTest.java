@@ -1,9 +1,15 @@
 package com.storagehub.service;
 
+import com.storagehub.dto.contract.ContractAddendumResponse;
+import com.storagehub.dto.contract.ContractAddendumSignRequest;
 import com.storagehub.dto.contract.ContractChainItemResponse;
+import com.storagehub.dto.contract.ContractChainResponse;
 import com.storagehub.dto.contract.ContractDetailResponse;
 import com.storagehub.dto.quote.QuoteResponse;
 import com.storagehub.entity.Contract;
+import com.storagehub.entity.ContractAddendum;
+import com.storagehub.exception.ContractAddendumInvalidStateException;
+import com.storagehub.exception.ContractAddendumNotFoundException;
 import com.storagehub.entity.Facility;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
@@ -61,6 +67,9 @@ class ContractServiceTest {
 
     @Mock
     private ContractAddendumRepository contractAddendumRepository;
+
+    @Mock
+    private LogService logService;
 
     @InjectMocks
     private ContractService contractService;
@@ -365,5 +374,152 @@ class ContractServiceTest {
 
         assertThatThrownBy(() -> contractService.getContract("other@demo.vn", 101L))
                 .isInstanceOf(ContractNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("signAddendum ký thành công tại quầy và chuyển trạng thái sang SIGNED (US-19)")
+    void testSignAddendum_Success() {
+        Contract contract = new Contract();
+        contract.setContractId(101L);
+        contract.setCode("CT-1042");
+
+        ContractAddendum addendum = new ContractAddendum();
+        addendum.setAddendumId(1L);
+        addendum.setContract(contract);
+        addendum.setCode("CT-1042-A1");
+        addendum.setStatus(ContractAddendum.Status.AWAITING_SIGNATURE);
+        addendum.setSignatureDueDate(LocalDate.now().plusDays(5));
+
+        when(userRepository.findByEmailIgnoreCase("staff@demo.vn")).thenReturn(Optional.of(staffUser));
+        when(contractAddendumRepository.findById(1L)).thenReturn(Optional.of(addendum));
+        when(contractAddendumRepository.save(any(ContractAddendum.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ContractAddendumSignRequest request = new ContractAddendumSignRequest(
+                "https://storagehub.com/signed-addendum.jpg",
+                "Khách Lan ký tại quầy"
+        );
+
+        ContractAddendumResponse response = contractService.signAddendum("staff@demo.vn", 1L, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.addendumId()).isEqualTo(1L);
+        assertThat(response.code()).isEqualTo("CT-1042-A1");
+        assertThat(response.status()).isEqualTo("SIGNED");
+        assertThat(response.signedPhotoUrl()).isEqualTo("https://storagehub.com/signed-addendum.jpg");
+        verify(contractAddendumRepository).save(addendum);
+    }
+
+    @Test
+    @DisplayName("signAddendum ném IllegalArgumentException khi thiếu signedPhotoUrl (Snap-back rule)")
+    void testSignAddendum_MissingPhoto_ThrowsIllegalArgumentException() {
+        when(userRepository.findByEmailIgnoreCase("staff@demo.vn")).thenReturn(Optional.of(staffUser));
+
+        ContractAddendumSignRequest request = new ContractAddendumSignRequest(
+                "",
+                "Thiếu ảnh"
+        );
+
+        assertThatThrownBy(() -> contractService.signAddendum("staff@demo.vn", 1L, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ảnh chụp bản ký phụ lục (signedPhotoUrl) là bắt buộc.");
+    }
+
+    @Test
+    @DisplayName("signAddendum ném ContractAddendumNotFoundException khi không tìm thấy phụ lục")
+    void testSignAddendum_NotFound_ThrowsException() {
+        when(userRepository.findByEmailIgnoreCase("staff@demo.vn")).thenReturn(Optional.of(staffUser));
+        when(contractAddendumRepository.findById(999L)).thenReturn(Optional.empty());
+
+        ContractAddendumSignRequest request = new ContractAddendumSignRequest(
+                "https://storagehub.com/signed.jpg",
+                null
+        );
+
+        assertThatThrownBy(() -> contractService.signAddendum("staff@demo.vn", 999L, request))
+                .isInstanceOf(ContractAddendumNotFoundException.class)
+                .hasMessageContaining("Không tìm thấy phụ lục hợp đồng #999");
+    }
+
+    @Test
+    @DisplayName("signAddendum ném ContractAddendumInvalidStateException khi phụ lục đã được ký")
+    void testSignAddendum_AlreadySigned_ThrowsInvalidStateException() {
+        ContractAddendum addendum = new ContractAddendum();
+        addendum.setAddendumId(1L);
+        addendum.setCode("CT-1042-A1");
+        addendum.setStatus(ContractAddendum.Status.SIGNED);
+
+        when(userRepository.findByEmailIgnoreCase("staff@demo.vn")).thenReturn(Optional.of(staffUser));
+        when(contractAddendumRepository.findById(1L)).thenReturn(Optional.of(addendum));
+
+        ContractAddendumSignRequest request = new ContractAddendumSignRequest(
+                "https://storagehub.com/signed.jpg",
+                null
+        );
+
+        assertThatThrownBy(() -> contractService.signAddendum("staff@demo.vn", 1L, request))
+                .isInstanceOf(ContractAddendumInvalidStateException.class)
+                .hasMessageContaining("đã được ký trước đó");
+    }
+
+    @Test
+    @DisplayName("signAddendum chuyển sang EXPIRED và ném exception khi quá hạn 7 ngày")
+    void testSignAddendum_Expired_UpdatesStatusAndThrowsException() {
+        ContractAddendum addendum = new ContractAddendum();
+        addendum.setAddendumId(1L);
+        addendum.setCode("CT-1042-A1");
+        addendum.setStatus(ContractAddendum.Status.AWAITING_SIGNATURE);
+        addendum.setSignatureDueDate(LocalDate.now().minusDays(1)); // Quá hạn hôm qua
+
+        when(userRepository.findByEmailIgnoreCase("staff@demo.vn")).thenReturn(Optional.of(staffUser));
+        when(contractAddendumRepository.findById(1L)).thenReturn(Optional.of(addendum));
+
+        ContractAddendumSignRequest request = new ContractAddendumSignRequest(
+                "https://storagehub.com/signed.jpg",
+                null
+        );
+
+        assertThatThrownBy(() -> contractService.signAddendum("staff@demo.vn", 1L, request))
+                .isInstanceOf(ContractAddendumInvalidStateException.class)
+                .hasMessageContaining("đã quá hạn ký 7 ngày");
+
+        assertThat(addendum.getStatus()).isEqualTo(ContractAddendum.Status.EXPIRED);
+        verify(contractAddendumRepository).save(addendum);
+    }
+
+    @Test
+    @DisplayName("getContractChain trả về hợp đồng gốc và danh sách toàn bộ phụ lục (US-19)")
+    void testGetContractChain_Success() {
+        Contract contract = new Contract();
+        contract.setContractId(101L);
+        contract.setCode("CT-1042");
+        contract.setStatus(Contract.Status.SIGNED);
+        contract.setIsLatest(true);
+        contract.setReservation(reservation);
+        contract.setPolicy(activePolicy);
+        contract.setContentSnapshot("Nội dung gốc");
+        contract.setCreatedAt(LocalDateTime.of(2026, 10, 3, 10, 0));
+
+        ContractAddendum addendum1 = new ContractAddendum();
+        addendum1.setAddendumId(1L);
+        addendum1.setContract(contract);
+        addendum1.setCode("CT-1042-A1");
+        addendum1.setStatus(ContractAddendum.Status.SIGNED);
+        addendum1.setContentSnapshot("Gia hạn 1");
+        addendum1.setSignatureDueDate(LocalDate.of(2026, 10, 26));
+        addendum1.setCreatedAt(LocalDateTime.of(2026, 10, 19, 14, 0));
+
+        when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customerUser));
+        when(contractRepository.findWithDetailsById(101L)).thenReturn(Optional.of(contract));
+        when(contractAddendumRepository.findByContract_ContractIdOrderByCreatedAtAsc(101L))
+                .thenReturn(List.of(addendum1));
+
+        ContractChainResponse response = contractService.getContractChain("lan@demo.vn", 101L);
+
+        assertThat(response).isNotNull();
+        assertThat(response.contract().code()).isEqualTo("CT-1042");
+        assertThat(response.contract().status()).isEqualTo("SIGNED");
+        assertThat(response.addendums()).hasSize(1);
+        assertThat(response.addendums().get(0).code()).isEqualTo("CT-1042-A1");
+        assertThat(response.addendums().get(0).status()).isEqualTo("SIGNED");
     }
 }
