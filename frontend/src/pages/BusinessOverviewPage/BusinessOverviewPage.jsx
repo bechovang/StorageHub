@@ -79,7 +79,7 @@ export default function BusinessOverviewPage() {
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">
                 <span className="dot-pulse-green" />
-                <span className="text-success font-medium">Dữ liệu kế toán: Đã đồng bộ</span>
+                <span className="text-success font-medium">Dữ liệu vận hành & sổ cái: Đã đồng bộ</span>
               </div>
             </div>
             <div className="biz-telemetry__right">
@@ -111,9 +111,9 @@ export default function BusinessOverviewPage() {
               <div className="biz-breadcrumb">
                 <span>StorageHub VN</span>
                 <span>/</span>
-                <span className="biz-breadcrumb__active">Quản lý kinh doanh</span>
+                <span>Quản lý kinh doanh</span>
                 <span>/</span>
-                <span className="text-muted">Số liệu tài chính</span>
+                <span className="biz-breadcrumb__active">Tổng quan số liệu</span>
               </div>
               <h1 className="biz-title">Tổng quan kinh doanh</h1>
             </div>
@@ -137,7 +137,7 @@ export default function BusinessOverviewPage() {
 
               <button
                 type="button"
-                className="btn-export-csv"
+                className="biz-btn biz-btn--primary"
                 onClick={handleExportCSV}
               >
                 <DownloadSimple size={15} weight="bold" />
@@ -164,9 +164,9 @@ export default function BusinessOverviewPage() {
               </div>
               <div className="biz-kpi-value">{formatVND(summary.grossRevenue)}</div>
               <div className="biz-kpi-footer">
-                <span>Thuê cơ bản: {formatVND(summary.baseRentCollected)}</span>
+                <span className="biz-kpi-footer-text">Thuê cơ bản: {formatVND(summary.baseRentCollected)}</span>
                 <span className="kpi-drill-hint">
-                  Chi tiết <ArrowRight size={12} />
+                  Chi tiết <ArrowRight size={12} weight="bold" />
                 </span>
               </div>
             </div>
@@ -187,9 +187,11 @@ export default function BusinessOverviewPage() {
               </div>
               <div className="biz-kpi-value">{formatVND(summary.depositsHeld)}</div>
               <div className="biz-kpi-footer">
-                <span className="text-muted-dark">Giữ an toàn qua cổng thanh toán (Không tính vào doanh thu)</span>
+                <span className="kpi-escrow-highlight" title="Ký quỹ phong tỏa · Không tính vào doanh thu">
+                  100% Escrow
+                </span>
                 <span className="kpi-drill-hint">
-                  Chi tiết <ArrowRight size={12} />
+                  Chi tiết <ArrowRight size={12} weight="bold" />
                 </span>
               </div>
             </div>
@@ -210,9 +212,9 @@ export default function BusinessOverviewPage() {
               </div>
               <div className="biz-kpi-value">{formatVND(summary.surcharges)}</div>
               <div className="biz-kpi-footer">
-                <span>Phí gia hạn muộn & phí vệ sinh (nếu có)</span>
+                <span className="biz-kpi-footer-text">Phí quá hạn & Dịch vụ phát sinh</span>
                 <span className="kpi-drill-hint">
-                  Chi tiết <ArrowRight size={12} />
+                  Chi tiết <ArrowRight size={12} weight="bold" />
                 </span>
               </div>
             </div>
@@ -238,9 +240,9 @@ export default function BusinessOverviewPage() {
                 </span>
               </div>
               <div className="biz-kpi-footer">
-                <span>{summary.occupiedUnits} kho đang thuê / 42 kho tổng</span>
+                <span className="biz-kpi-footer-text">{summary.occupiedUnits} / {summary.totalUnits} kho đang thuê</span>
                 <span className="kpi-drill-hint">
-                  Chi tiết <ArrowRight size={12} />
+                  Chi tiết <ArrowRight size={12} weight="bold" />
                 </span>
               </div>
             </div>
@@ -338,7 +340,7 @@ export default function BusinessOverviewPage() {
               </div>
               <button
                 type="button"
-                className="btn-link-action"
+                className="biz-btn biz-btn--secondary biz-btn--sm"
                 onClick={() => navigate("/policy")}
               >
                 Quản lý chính sách →
@@ -364,28 +366,37 @@ export default function BusinessOverviewPage() {
                         <span className="badge-version">{pv.version}</span>
                       </td>
                       <td className="text-secondary whitespace-nowrap">{pv.effectiveDate}</td>
-                      <td>
+                      <td className="td-author">
                         <div className="author-cell">
                           <div className="author-avatar">{pv.changedBy.slice(0, 1)}</div>
-                          <span className="font-medium text-ink">{pv.changedBy}</span>
+                          <span className="author-name font-medium text-ink">{pv.changedBy}</span>
                         </div>
                       </td>
-                      <td>
+                      <td className="td-status">
                         {pv.status === "ACTIVE" && (
-                          <span className="badge-status-active">Đang áp dụng</span>
+                          <span className="badge-status-active">
+                            <span className="status-dot status-dot--active" />
+                            Đang áp dụng
+                          </span>
                         )}
                         {pv.status === "SUPERSEDED" && (
-                          <span className="badge-status-superseded">Đã thay thế</span>
+                          <span className="badge-status-superseded">
+                            <span className="status-dot status-dot--superseded" />
+                            Đã thay thế
+                          </span>
                         )}
                         {pv.status === "ARCHIVED" && (
-                          <span className="badge-status-archived">Lưu trữ</span>
+                          <span className="badge-status-archived">
+                            <span className="status-dot status-dot--archived" />
+                            Lưu trữ
+                          </span>
                         )}
                       </td>
                       <td className="text-secondary">{pv.scope}</td>
                       <td className="text-right">
                         <button
                           type="button"
-                          className="btn-view-diff"
+                          className="biz-btn-diff"
                           onClick={() => setDiffModalVersion(pv)}
                         >
                           So sánh thay đổi

@@ -1,0 +1,387 @@
+/* ==========================================================================
+   SupportPage.css — Swiss Grid / Control Room Design Tokens
+   US-23: Support Ticket — Tạo, Điều phối, Xử lý & Escalate (FR-23 / FR-24)
+   ========================================================================== */
+
+.support-page {
+  background-color: var(--color-surface-page, #f5f5f5);
+  min-height: calc(100vh - 64px);
+  padding-bottom: var(--space-8, 64px);
+}
+
+.support-container {
+  max-width: var(--page-width, 1200px);
+  margin: 0 auto;
+  padding: var(--space-6, 32px) var(--space-5, 24px);
+}
+
+.support-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4, 16px);
+  border-bottom: var(--border-strong);
+  padding-bottom: var(--space-4, 16px);
+  margin-bottom: var(--space-6, 32px);
+  flex-wrap: wrap;
+}
+
+.support-header__super {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted, #767676);
+  margin-bottom: var(--space-1, 4px);
+  display: block;
+}
+
+.support-header__title {
+  font-family: var(--font-display);
+  font-size: var(--text-h1, 2.2rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-ink, #000000);
+  line-height: var(--line-height-tight, 1.1);
+  margin: 0 0 var(--space-2, 8px) 0;
+  letter-spacing: -0.02em;
+}
+
+.support-header__desc {
+  font-family: var(--font-body);
+  font-size: var(--text-body, 0.95rem);
+  color: var(--color-secondary, #555555);
+  margin: 0;
+}
+
+/* ── KPI Grid ── */
+.support-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4, 16px);
+  margin-bottom: var(--space-6, 32px);
+}
+
+.support-stat-card {
+  background: var(--color-surface, #ffffff);
+  border: var(--border);
+  padding: var(--space-4, 16px);
+}
+
+.support-stat-card__label {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-muted, #767676);
+  text-transform: uppercase;
+  margin-bottom: var(--space-1, 4px);
+  display: block;
+}
+
+.support-stat-card__val {
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl, 2rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-ink, #000000);
+}
+
+/* ── Filter bar ── */
+.support-toolbar {
+  background: var(--color-surface, #ffffff);
+  border: var(--border-strong);
+  padding: var(--space-4, 16px);
+  margin-bottom: var(--space-4, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.support-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.support-tab-btn {
+  background: transparent;
+  border: var(--border);
+  padding: 6px 14px;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-secondary, #555555);
+  cursor: pointer;
+}
+
+.support-tab-btn--active {
+  background: var(--color-ink, #000000);
+  color: var(--color-surface, #ffffff);
+  border-color: var(--color-line-strong, #000000);
+}
+
+/* ── Ticket Cards Grid ── */
+.ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+}
+
+.ticket-card {
+  background: var(--color-surface, #ffffff);
+  border: var(--border);
+  padding: var(--space-4, 16px) var(--space-5, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color var(--duration-fast, 120ms);
+}
+
+.ticket-card:hover {
+  border-color: var(--color-line-strong, #000000);
+}
+
+.ticket-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ticket-card__code {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-ink, #000000);
+}
+
+.ticket-card__unit-tag {
+  background: var(--color-neutral, #f5f5f5);
+  border: 1px solid var(--color-line, #d7d7d7);
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.ticket-card__body {
+  font-size: 0.9rem;
+  color: var(--color-ink, #000000);
+  line-height: 1.5;
+}
+
+.ticket-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--color-muted, #767676);
+  padding-top: 10px;
+  border-top: var(--border);
+  flex-wrap: wrap;
+}
+
+.ticket-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+}
+
+.ticket-meta-party {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ticket-meta-label {
+  color: var(--color-muted, #64748b);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.ticket-meta-name {
+  color: var(--color-ink, #0f172a);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.ticket-meta-sub {
+  color: var(--color-muted, #64748b);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+}
+
+.ticket-meta-divider {
+  color: var(--color-line, #cbd5e1);
+  font-size: 0.8rem;
+}
+
+.staff-role-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+
+.staff-role-chip--staff {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.staff-role-chip--manager {
+  background-color: #fef3c7;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.ticket-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Badges ── */
+.status-ticket-chip {
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid var(--color-line-strong, #000000);
+}
+
+.status-ticket--open { background: #eff6ff; color: #1e40af; border-color: #3b82f6; }
+.status-ticket--progress { background: #fefce8; color: #854d0e; border-color: #eab308; }
+.status-ticket--resolved { background: #ecfdf5; color: #047857; border-color: #10b981; }
+.status-ticket--escalated { background: #fef2f2; color: #991b1b; border-color: #dc2626; }
+
+.incident-badge {
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid var(--color-line, #d7d7d7);
+  background: #ffffff;
+}
+
+/* ── Resolution Box ── */
+.ticket-resolution-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #166534;
+  margin-top: 6px;
+}
+
+.ticket-escalate-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #991b1b;
+  margin-top: 6px;
+}
+
+/* ── Buttons (Swiss Grid Action Affordance) ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  height: 38px;
+  padding: 0 16px;
+  border: 1.5px solid #334155;
+  background-color: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Outline Button with strong button affordance */
+.btn--outline {
+  background-color: #ffffff;
+  border: 1.5px solid #0f172a;
+  color: #0f172a;
+}
+
+.btn--outline:hover {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
+
+/* Primary Button */
+.btn--primary {
+  background-color: #4f46e5;
+  border-color: #4338ca;
+  color: #ffffff;
+}
+
+.btn--primary:hover {
+  background-color: #4338ca;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+}
+
+/* Danger Button */
+.btn--danger {
+  background-color: #ffffff;
+  border: 1.5px solid #dc2626;
+  color: #dc2626;
+}
+
+.btn--danger:hover {
+  background-color: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.22);
+}
+
+/* Custom styling for Ticket Card Action Buttons */
+.ticket-card__actions .btn--outline {
+  background-color: #f0fdf4;
+  border: 1.5px solid #16a34a;
+  color: #15803d;
+}
+
+.ticket-card__actions .btn--outline:hover {
+  background-color: #16a34a;
+  color: #ffffff;
+  border-color: #16a34a;
+}
+
+.ticket-card__actions .btn--danger {
+  background-color: #fef2f2;
+  border: 1.5px solid #dc2626;
+  color: #b91c1c;
+}
+
+.ticket-card__actions .btn--danger:hover {
+  background-color: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+

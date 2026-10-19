@@ -83,17 +83,17 @@ export default function ReportsPage() {
             <div className="reports-telemetry__left">
               <div className="telemetry-item">
                 <Warehouse size={15} weight="duotone" className="text-muted" />
-                <span className="telemetry-bold">VN-SGN-01</span>
+                <span className="telemetry-bold">Facility VN-SGN-01</span>
                 <span className="text-muted">(Tân Bình Gateway)</span>
               </div>
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">
                 <span className="dot-pulse-green" />
-                <span className="text-success font-medium">Đối soát sổ cái: Đã đồng bộ</span>
+                <span className="text-success font-medium">Dữ liệu vận hành & sổ cái: Đã đồng bộ</span>
               </div>
             </div>
             <div className="reports-telemetry__right">
-              <span>MÚI GIỜ: TP. HỒ CHÍ MINH (UTC+07)</span>
+              <span className="tabular-clock">MÚI GIỜ: TP. HỒ CHÍ MINH (UTC+07)</span>
             </div>
           </div>
         </aside>
@@ -170,7 +170,7 @@ export default function ReportsPage() {
                 className={`btn-custom-range ${selectedPeriod === "CUSTOM" ? "btn-custom-range--active" : ""}`}
                 onClick={() => setShowCustomRangeModal(true)}
               >
-                <Calendar size={15} />
+                <Calendar size={15} weight="bold" />
                 <span>
                   {selectedPeriod === "CUSTOM"
                     ? `${customRange.startDate} → ${customRange.endDate}`
@@ -180,7 +180,7 @@ export default function ReportsPage() {
 
               <button
                 type="button"
-                className="btn-export-csv"
+                className="reports-btn reports-btn--primary"
                 onClick={handleExportCSV}
               >
                 <DownloadSimple size={15} weight="bold" />
@@ -260,7 +260,7 @@ export default function ReportsPage() {
                   {summary.revenueGrowth}
                 </span>
                 <span className="kpi-drill-hint">
-                  Chi tiết <ArrowRight size={12} />
+                  Chi tiết <ArrowRight size={12} weight="bold" />
                 </span>
               </div>
             </div>
@@ -281,9 +281,11 @@ export default function ReportsPage() {
               </div>
               <div className="reports-kpi-amount">{formatVND(summary.depositsHeld)}</div>
               <div className="reports-kpi-bottom">
-                <span className="badge-escrow">100% Escrow phong tỏa</span>
+                <span className="kpi-escrow-highlight" title="100% Escrow · Ký quỹ phong tỏa (Không tính vào doanh thu)">
+                  100% Escrow
+                </span>
                 <span className="kpi-drill-hint">
-                  Chi tiết <ArrowRight size={12} />
+                  Chi tiết <ArrowRight size={12} weight="bold" />
                 </span>
               </div>
             </div>
@@ -309,7 +311,7 @@ export default function ReportsPage() {
                   {summary.surchargeGrowth}
                 </span>
                 <span className="kpi-drill-hint">
-                  Chi tiết <ArrowRight size={12} />
+                  Chi tiết <ArrowRight size={12} weight="bold" />
                 </span>
               </div>
             </div>
@@ -335,7 +337,7 @@ export default function ReportsPage() {
               <div className="reports-kpi-bottom">
                 <span className="badge-occupancy">{summary.occupancyRate}% công suất</span>
                 <span className="kpi-drill-hint">
-                  Chi tiết <ArrowRight size={12} />
+                  Chi tiết <ArrowRight size={12} weight="bold" />
                 </span>
               </div>
             </div>
@@ -352,7 +354,7 @@ export default function ReportsPage() {
                 <div className="bento-chart-card">
                   <div className="bento-chart-header">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="bento-title-cluster">
                         <h2 className="bento-title">Biểu đồ đối soát doanh thu</h2>
                         <span className="badge-audited">Đã kiểm toán</span>
                       </div>
@@ -433,48 +435,53 @@ export default function ReportsPage() {
                 <div className="bento-side-column">
                   <div className="side-card">
                     <div className="side-card-header">
-                      <span className="font-semibold text-ink">Cổng thanh toán & Đối soát</span>
+                      <span className="side-card-title">Cổng thanh toán & Đối soát</span>
                       <span className="badge-sync">
                         <span className="dot-pulse-green" /> Đã đồng bộ
                       </span>
                     </div>
                     <div className="side-card-body">
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-muted">VietQR / NAPAS</span>
-                        <span className="font-semibold text-ink font-mono">92.4% (34.60M ₫)</span>
+                      <div className="side-metric-row">
+                        <span className="side-metric-label">VietQR / NAPAS</span>
+                        <span className="side-metric-val">92.4% (34.60M ₫)</span>
                       </div>
                       <div className="progress-bar-track">
                         <div className="progress-bar-fill" style={{ width: "92.4%" }} />
                       </div>
-                      <div className="flex justify-between text-xs mt-2 text-muted">
-                        <span>Chuyển khoản trực tiếp</span>
-                        <span className="font-medium text-ink font-mono">7.6% (2.85M ₫)</span>
+                      <div className="side-metric-row side-metric-row--sub">
+                        <span className="side-metric-label">Chuyển khoản trực tiếp</span>
+                        <span className="side-metric-val">7.6% (2.85M ₫)</span>
                       </div>
                     </div>
                     <div className="side-card-footer">
-                      <span>Lần quét tự động gần nhất:</span>
-                      <span className="font-mono text-ink">23:59:58 UTC+7</span>
+                      <span className="side-card-footer-label">Lần quét tự động gần nhất:</span>
+                      <span className="side-card-footer-val">23:59:58 UTC+7</span>
                     </div>
                   </div>
 
                   <div className="side-card">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ShieldCheck size={18} className="text-primary" weight="duotone" />
-                      <span className="font-semibold text-ink">Tuân thủ kiểm toán VN VAS</span>
-                    </div>
-                    <p className="text-xs text-muted leading-relaxed">
-                      Toàn bộ hóa đơn điện tử được ký số VNPT-CA và đồng bộ trực tiếp lên hệ thống Tổng cục Thuế.
-                    </p>
-                    <div className="mt-3 pt-2 border-t border-border flex items-center justify-between text-xs">
-                      <span className="text-success font-medium flex items-center gap-1">
-                        <CheckCircle size={14} weight="fill" /> 100% Xuất hóa đơn VAT
+                    <div className="side-card-header">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck size={18} className="text-primary" weight="duotone" />
+                        <span className="side-card-title">Tuân thủ kiểm toán VN VAS</span>
+                      </div>
+                      <span className="compliance-badge">
+                        <CheckCircle size={13} weight="fill" /> 100% VAT
                       </span>
+                    </div>
+                    <div className="side-card-body">
+                      <p className="side-card-desc">
+                        Toàn bộ hóa đơn điện tử được ký số VNPT-CA và đồng bộ trực tiếp lên hệ thống Tổng cục Thuế.
+                      </p>
+                    </div>
+                    <div className="side-card-footer-action">
                       <button
                         type="button"
-                        className="text-primary font-semibold hover:underline"
+                        className="btn-cert-download"
                         onClick={handleExportCSV}
                       >
-                        Tải chứng thư →
+                        <DownloadSimple size={14} weight="bold" />
+                        <span>Tải chứng thư kiểm toán (CSV)</span>
                       </button>
                     </div>
                   </div>
@@ -492,7 +499,7 @@ export default function ReportsPage() {
                   </div>
                   <button
                     type="button"
-                    className="btn-export-sub-csv"
+                    className="reports-btn reports-btn--secondary reports-btn--sm"
                     onClick={handleExportCSV}
                   >
                     <DownloadSimple size={14} weight="bold" />
@@ -515,10 +522,12 @@ export default function ReportsPage() {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="font-semibold text-ink flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-primary" />
-                          <span>Tháng 9/2026</span>
-                          <span className="text-xs text-muted font-normal">(Chốt sổ)</span>
+                        <td>
+                          <div className="period-cell">
+                            <span className="dot-period-active" />
+                            <span className="font-semibold text-ink">Tháng 9/2026</span>
+                            <span className="period-tag-closed">(Chốt sổ)</span>
+                          </div>
                         </td>
                         <td className="text-right font-mono text-secondary">9.860.000 ₫</td>
                         <td className="text-right font-mono text-secondary">1.240.000 ₫</td>
@@ -532,7 +541,7 @@ export default function ReportsPage() {
                         <td className="text-right">
                           <button
                             type="button"
-                            className="btn-view-breakdown"
+                            className="reports-btn-breakdown"
                             onClick={() => setActiveDrilldownKey("revenue")}
                           >
                             Xem chi tiết →
@@ -540,9 +549,11 @@ export default function ReportsPage() {
                         </td>
                       </tr>
                       <tr>
-                        <td className="font-semibold text-ink flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-slate-400" />
-                          <span>Tháng 8/2026</span>
+                        <td>
+                          <div className="period-cell">
+                            <span className="dot-period-past" />
+                            <span className="font-semibold text-ink">Tháng 8/2026</span>
+                          </div>
                         </td>
                         <td className="text-right font-mono text-secondary">10.450.000 ₫</td>
                         <td className="text-right font-mono text-secondary">1.820.000 ₫</td>
@@ -556,7 +567,7 @@ export default function ReportsPage() {
                         <td className="text-right">
                           <button
                             type="button"
-                            className="btn-view-breakdown"
+                            className="reports-btn-breakdown"
                             onClick={() => setActiveDrilldownKey("revenue")}
                           >
                             Xem chi tiết →
@@ -564,9 +575,11 @@ export default function ReportsPage() {
                         </td>
                       </tr>
                       <tr>
-                        <td className="font-semibold text-ink flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-slate-400" />
-                          <span>Tháng 7/2026</span>
+                        <td>
+                          <div className="period-cell">
+                            <span className="dot-period-past" />
+                            <span className="font-semibold text-ink">Tháng 7/2026</span>
+                          </div>
                         </td>
                         <td className="text-right font-mono text-secondary">11.010.000 ₫</td>
                         <td className="text-right font-mono text-secondary">1.830.000 ₫</td>
@@ -580,7 +593,7 @@ export default function ReportsPage() {
                         <td className="text-right">
                           <button
                             type="button"
-                            className="btn-view-breakdown"
+                            className="reports-btn-breakdown"
                             onClick={() => setActiveDrilldownKey("revenue")}
                           >
                             Xem chi tiết →
@@ -626,7 +639,7 @@ export default function ReportsPage() {
                   </div>
                   <button
                     type="button"
-                    className="btn-export-sub-csv"
+                    className="reports-btn reports-btn--secondary reports-btn--sm"
                     onClick={() => setActiveDrilldownKey("deposits")}
                   >
                     Xem toàn màn hình →
@@ -688,7 +701,7 @@ export default function ReportsPage() {
                   </div>
                   <button
                     type="button"
-                    className="btn-export-sub-csv"
+                    className="reports-btn reports-btn--secondary reports-btn--sm"
                     onClick={handleExportCSV}
                   >
                     <DownloadSimple size={14} weight="bold" />
@@ -747,7 +760,7 @@ export default function ReportsPage() {
                   </div>
                   <button
                     type="button"
-                    className="btn-export-sub-csv"
+                    className="reports-btn reports-btn--secondary reports-btn--sm"
                     onClick={() => setActiveDrilldownKey("occupancy")}
                   >
                     Xem 37 kho đang thuê →
@@ -907,7 +920,7 @@ export default function ReportsPage() {
                 </div>
                 <button
                   type="button"
-                  className="btn-export-sub-csv"
+                  className="reports-btn reports-btn--secondary reports-btn--sm"
                   onClick={handleExportCSV}
                 >
                   <DownloadSimple size={14} weight="bold" />
@@ -965,12 +978,12 @@ export default function ReportsPage() {
                 <div className="custom-range-footer">
                   <button
                     type="button"
-                    className="btn-secondary"
+                    className="reports-btn reports-btn--secondary"
                     onClick={() => setShowCustomRangeModal(false)}
                   >
                     Hủy bỏ
                   </button>
-                  <button type="submit" className="btn-primary">
+                  <button type="submit" className="reports-btn reports-btn--primary">
                     Áp dụng kỳ báo cáo
                   </button>
                 </div>
