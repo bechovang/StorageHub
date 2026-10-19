@@ -5,6 +5,7 @@ import com.storagehub.dto.contract.ContractDetailResponse;
 import com.storagehub.dto.quote.QuoteResponse;
 import com.storagehub.entity.Contract;
 import com.storagehub.entity.ContractAddendum;
+import com.storagehub.entity.Extension;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Role;
@@ -379,5 +380,57 @@ public class ContractService {
                 formattedTotalRent,
                 formattedDeposit
         );
+    }
+
+    /**
+     * US-18 (FR-12): phí gia hạn đã trả → sinh ngay addendum giấy CT-...-A{n}
+     * AWAITING_SIGNATURE, hẹn ký tại quầy 7 ngày. contentSnapshot bám shape seed
+     * demo (change/extension_fee/deposit_topup/deposit_held/policy) — bản in tại
+     * quầy US-19 đọc từ đây. Addendum không đụng is_latest của contract gốc.
+     */
+    @Transactional
+    public ContractAddendum createAddendumForExtension(
+            User actor,
+            Reservation reservation,
+            Extension extension,
+            long depositTopUp,
+            long newDepositHeld
+    ) {
+        Contract contract = contractRepository
+                .findByReservation_ReservationIdAndIsLatestTrue(reservation.getReservationId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Không tìm thấy hợp đồng đang hiệu lực cho " + reservation.getCode()));
+
+        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
+                .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
+
+        long sequence = contractAddendumRepository
+                .countByContract_ContractId(contract.getContractId()) + 1;
+        String addendumCode = contract.getCode() + "-A" + sequence;
+
+        String snapshot = String.format(Locale.ROOT,
+                "{\"change\":\"extend %s -> %s\",\"extension_fee\":%d,"
+                        + "\"deposit_topup\":%d,\"deposit_held\":%d,\"policy\":\"%s\"}",
+                extension.getOldEndDate(),
+                extension.getNewEndDate(),
+                extension.getExtensionFee().longValueExact(),
+                depositTopUp,
+                newDepositHeld,
+                activePolicy.getVersion()
+        );
+
+        ContractAddendum addendum = new ContractAddendum();
+        addendum.setContract(contract);
+        addendum.setExtension(extension);
+        addendum.setCode(addendumCode);
+        addendum.setContentSnapshot(snapshot);
+        addendum.setSignatureDueDate(LocalDate.now(ICT_ZONE).plusDays(7));
+        addendum.setStatus(ContractAddendum.Status.AWAITING_SIGNATURE);
+        ContractAddendum saved = contractAddendumRepository.save(addendum);
+
+        logService.log(actor, "ADDENDUM", saved.getAddendumId(), "CREATED",
+                null, "AWAITING_SIGNATURE",
+                "Addendum " + addendumCode + " — hạn ký tại quầy " + saved.getSignatureDueDate());
+        return saved;
     }
 }
