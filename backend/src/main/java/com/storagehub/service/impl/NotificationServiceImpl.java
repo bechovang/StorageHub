@@ -4,9 +4,11 @@ import com.storagehub.dto.notification.NotificationEventResponse;
 import com.storagehub.dto.notification.NotificationPageResponse;
 import com.storagehub.dto.notification.NotificationResponse;
 import com.storagehub.dto.notification.UnreadCountResponse;
+import com.storagehub.entity.ContractAddendum;
 import com.storagehub.entity.Notification;
 import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
+import com.storagehub.entity.Role;
 import com.storagehub.entity.User;
 import com.storagehub.exception.InvalidCredentialsException;
 import com.storagehub.repository.NotificationRepository;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,6 +39,10 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String TYPE_CHECK_IN_COMPLETED = "CHECK_IN_COMPLETED";
     private static final String TYPE_CHECKOUT_REQUESTED = "CHECKOUT_REQUESTED";
     private static final String TYPE_CHECKOUT_REQUEST_CANCELLED = "CHECKOUT_REQUEST_CANCELLED";
+    private static final String TYPE_EXTENSION_APPLIED = "EXTENSION_APPLIED";
+    private static final String TYPE_ADDENDUM_AWAITING_SIGNATURE = "ADDENDUM_AWAITING_SIGNATURE";
+
+    private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
@@ -246,6 +253,60 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(InvalidCredentialsException::new);
 
         notificationRepository.markAllAsReadByUser(user);
+    }
+
+    @Override
+    @Transactional
+    public NotificationEventResponse notifyExtensionApplied(
+            Reservation reservation,
+            com.storagehub.entity.Extension extension
+    ) {
+        // NFR-7 microcopy 3 phần. Ngày mới hiệu lực ngay khi phí được trả (FR-16)
+        // — EndDate đã được ReservationService.markExtensionApplied cập nhật
+        // trước khi gọi (cùng transaction), đọc từ extension cho chắc chắn.
+        LocalDate newEnd = extension.getNewEndDate();
+        String title = "Gia hạn thành công — checkout mới " + newEnd;
+        String body = "Đơn " + reservation.getCode() + " kéo dài đến " + newEnd
+                + ". Cọc đang giữ hiện là " + vnd(reservation.getDepositAmount())
+                + ". Phụ lục hợp đồng sẽ hẹn ký tại quầy trong 7 ngày.";
+        String deepLink = "/rentals/" + reservation.getReservationId();
+
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_EXTENSION_APPLIED);
+        row.setTitle(title);
+        row.setDeepLink(deepLink);
+        row.setIsRead(false);
+        notificationRepository.save(row);
+
+        return new NotificationEventResponse(
+                TYPE_EXTENSION_APPLIED,
+                title,
+                body,
+                deepLink
+        );
+    }
+
+    @Override
+    public void notifyAddendumAwaitingSignature(
+            Reservation reservation,
+            com.storagehub.entity.ContractAddendum addendum
+    ) {
+        // FR-12 "hai bên": staff nhận bell để chuẩn bị bản giấy tại quầy.
+        userRepository.findFirstByRole_NameAndStatusOrderByUserIdAsc(Role.Name.STAFF, 1)
+                .ifPresent(staff -> {
+                    String title = "Addendum " + addendum.getCode() + " chờ ký tại quầy";
+                    String body = "Khách " + reservation.getCustomer().getFullName()
+                            + " vừa gia hạn kho " + reservation.getUnit().getCode()
+                            + ". Hạn ký: " + addendum.getSignatureDueDate() + ".";
+                    Notification row = new Notification();
+                    row.setUser(staff);
+                    row.setType(TYPE_ADDENDUM_AWAITING_SIGNATURE);
+                    row.setTitle(title);
+                    row.setDeepLink("/rentals/" + reservation.getReservationId());
+                    row.setIsRead(false);
+                    notificationRepository.save(row);
+                });
     }
 
     /** VND theo AD-7/FR-6: "103.500 ₫" — nhóm 3 bằng dấu chấm. */

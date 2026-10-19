@@ -20,6 +20,7 @@ import com.storagehub.gateway.PaymentGateway;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UserRepository;
+import com.storagehub.service.ExtensionService;
 import com.storagehub.service.PaymentService;
 import com.storagehub.service.handler.PaymentSuccessHandler;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -67,6 +68,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final List<PaymentSuccessHandler> handlers;
     private final TransactionTemplate transactionTemplate;
     private final com.storagehub.service.PricingEngine pricingEngine;
+    private final ExtensionService extensionService;
 
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -75,7 +77,8 @@ public class PaymentServiceImpl implements PaymentService {
             PaymentGateway gateway,
             List<PaymentSuccessHandler> handlers,
             PlatformTransactionManager transactionManager,
-            com.storagehub.service.PricingEngine pricingEngine
+            com.storagehub.service.PricingEngine pricingEngine,
+            ExtensionService extensionService
     ) {
         this.paymentRepository = paymentRepository;
         this.reservationRepository = reservationRepository;
@@ -84,6 +87,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.handlers = handlers;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.pricingEngine = pricingEngine;
+        this.extensionService = extensionService;
     }
 
     @Override
@@ -101,11 +105,13 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new AccessDeniedException(
                         "Reservation belongs to another customer"));
 
-        // Sprint 1 scope theo openapi.yaml: DEPOSIT (booking) + RENT (khung).
+        // Scope theo openapi.yaml: DEPOSIT (booking) + RENT (check-in, US-15)
+        // + EXTENSION_FEE (gia hạn, US-18).
         if (request.purpose() != Payment.Purpose.DEPOSIT
-                && request.purpose() != Payment.Purpose.RENT) {
+                && request.purpose() != Payment.Purpose.RENT
+                && request.purpose() != Payment.Purpose.EXTENSION_FEE) {
             throw new PaymentBadRequestException(
-                    "Sprint 1 chỉ hỗ trợ purpose DEPOSIT và RENT.");
+                    "Chỉ hỗ trợ purpose DEPOSIT, RENT và EXTENSION_FEE.");
         }
 
         if (request.method() == Payment.Method.CARD && request.card() == null) {
@@ -121,8 +127,13 @@ public class PaymentServiceImpl implements PaymentService {
         // Duplicate check TRƯỚC state check: sau khi deposit thành công,
         // reservation đã flip RESERVED — vẫn phải trả 409 PAYMENT_DUPLICATE
         // ("Khoản này đã được thanh toán.") thay vì PAYMENT_INVALID_STATE.
+        // EXTENSION_FEE đặc biệt: cho phép chuỗi gia hạn liên tiếp nên SUCCEEDED
+        // không chặn — chỉ chặn payment còn sống (1 extension chờ trả tại 1 thời điểm).
+        Set<Payment.Status> duplicateBlock = request.purpose() == Payment.Purpose.EXTENSION_FEE
+                ? Set.of(Payment.Status.PENDING, Payment.Status.PROCESSING)
+                : BLOCKS_DUPLICATE;
         if (paymentRepository.existsByReservation_ReservationIdAndPurposeAndStatusIn(
-                request.reservationId(), request.purpose(), BLOCKS_DUPLICATE)) {
+                request.reservationId(), request.purpose(), duplicateBlock)) {
             throw new PaymentDuplicateException();
         }
 
@@ -144,6 +155,25 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new PaymentInvalidStateException(
                         "Đặt chỗ đã quá hạn nhận kho (no-show) — không thể trả tiền thuê.");
             }
+        }
+
+        // US-18 (FR-16): gia hạn chỉ mở cho thuê đang hoạt động, chưa qua EndDate
+        // (trễ → LATE_FEE lúc tất toán), và phải có extension PENDING_PAYMENT
+        // tạo từ POST /reservations/{id}/extensions — đóng modal chưa trả thì
+        // không ghi nhận gì.
+        if (request.purpose() == Payment.Purpose.EXTENSION_FEE) {
+            LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+            if (reservation.getStatus() != Reservation.Status.CHECKED_IN) {
+                throw new PaymentInvalidStateException(
+                        "Chỉ thuê đang hoạt động (CHECKED_IN) mới thanh toán gia hạn.");
+            }
+            if (today.isAfter(reservation.getEndDate())) {
+                throw new PaymentInvalidStateException(
+                        "Đã qua ngày kết thúc — gia hạn chỉ mở trước EndDate.");
+            }
+            extensionService.pendingExtensionOrNull(request.reservationId())
+                    .orElseThrow(() -> new PaymentInvalidStateException(
+                            "Chưa có yêu cầu gia hạn nào chờ thanh toán — hãy tạo gia hạn trước."));
         }
 
         return createWithRetry(payer, reservation, request);
@@ -203,11 +233,22 @@ public class PaymentServiceImpl implements PaymentService {
         throw new IllegalStateException("Could not allocate receipt code");
     }
 
-    /** DEPOSIT = cọc đang giữ; RENT (US-15/FR-15) = 100% tổng tiền thuê theo quote. */
+    /**
+     * DEPOSIT = cọc đang giữ; RENT (US-15/FR-15) = 100% tổng tiền thuê theo quote;
+     * EXTENSION_FEE (US-18/FR-16) = tiền thuê kỳ thêm + top-up cọc (bảng tính
+     * server-truth từ extension PENDING_PAYMENT).
+     */
     private java.math.BigDecimal resolveAmount(
             Reservation reservation,
             Payment.Purpose purpose
     ) {
+        if (purpose == Payment.Purpose.EXTENSION_FEE) {
+            com.storagehub.entity.Extension extension = extensionService
+                    .pendingExtensionFor(reservation.getReservationId());
+            ExtensionService.Breakdown breakdown = extensionService.breakdownFor(
+                    reservation, extension.getNewEndDate());
+            return java.math.BigDecimal.valueOf(breakdown.totalPayable());
+        }
         if (purpose != Payment.Purpose.RENT) {
             return reservation.getDepositAmount();
         }

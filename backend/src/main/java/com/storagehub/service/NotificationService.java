@@ -41,4 +41,10 @@ public interface NotificationService {
 
     /** FR-34: Đánh dấu tất cả thông báo của user là đã đọc. */
     void markAllRead(String email);
+
+    /** US-18 (FR-16): phí gia hạn đã trả → EndDate + cọc giữ dịch ngay. */
+    NotificationEventResponse notifyExtensionApplied(Reservation reservation, com.storagehub.entity.Extension extension);
+
+    /** US-18 (FR-12): addendum chờ ký tại quầy — bell cho staff. */
+    void notifyAddendumAwaitingSignature(Reservation reservation, com.storagehub.entity.ContractAddendum addendum);
 }
