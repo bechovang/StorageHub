@@ -1,8 +1,13 @@
 package com.storagehub.service;
 
+import com.storagehub.dto.contract.ContractAddendumResponse;
+import com.storagehub.dto.contract.ContractAddendumSignRequest;
 import com.storagehub.dto.contract.ContractChainItemResponse;
+import com.storagehub.dto.contract.ContractChainResponse;
 import com.storagehub.dto.contract.ContractDetailResponse;
 import com.storagehub.dto.quote.QuoteResponse;
+import com.storagehub.exception.ContractAddendumInvalidStateException;
+import com.storagehub.exception.ContractAddendumNotFoundException;
 import com.storagehub.entity.Contract;
 import com.storagehub.entity.ContractAddendum;
 import com.storagehub.entity.Extension;
@@ -432,5 +437,112 @@ public class ContractService {
                 null, "AWAITING_SIGNATURE",
                 "Addendum " + addendumCode + " — hạn ký tại quầy " + saved.getSignatureDueDate());
         return saved;
+    }
+
+    /**
+     * US-19 (FR-12): Ký phụ lục hợp đồng tại quầy (Snap-back photo ritual).
+     * - signedPhotoUrl là bắt buộc (400 nếu thiếu).
+     * - Hạn ký là 7 ngày: nếu hôm nay > signatureDueDate -> chuyển EXPIRED (409).
+     * - Status phải là AWAITING_SIGNATURE -> chuyển SIGNED (409 nếu đã ký/hủy).
+     */
+    @Transactional
+    public ContractAddendumResponse signAddendum(
+            String email,
+            Long addendumId,
+            ContractAddendumSignRequest request
+    ) {
+        User actor = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        if (request == null || request.signedPhotoUrl() == null || request.signedPhotoUrl().isBlank()) {
+            throw new IllegalArgumentException("Ảnh chụp bản ký phụ lục (signedPhotoUrl) là bắt buộc.");
+        }
+
+        ContractAddendum addendum = contractAddendumRepository.findById(addendumId)
+                .orElseThrow(() -> new ContractAddendumNotFoundException(
+                        "Không tìm thấy phụ lục hợp đồng #" + addendumId));
+
+        if (addendum.getStatus() == ContractAddendum.Status.SIGNED) {
+            throw new ContractAddendumInvalidStateException(
+                    "Phụ lục " + addendum.getCode() + " đã được ký trước đó.");
+        }
+        if (addendum.getStatus() == ContractAddendum.Status.VOIDED) {
+            throw new ContractAddendumInvalidStateException(
+                    "Phụ lục " + addendum.getCode() + " đã bị hủy (VOIDED).");
+        }
+        if (addendum.getStatus() == ContractAddendum.Status.EXPIRED) {
+            throw new ContractAddendumInvalidStateException(
+                    "Phụ lục " + addendum.getCode() + " đã quá hạn ký 7 ngày (EXPIRED).");
+        }
+
+        // Kiểm tra thời hạn 7 ngày
+        LocalDate today = LocalDate.now(ICT_ZONE);
+        if (addendum.getSignatureDueDate() != null && today.isAfter(addendum.getSignatureDueDate())) {
+            addendum.setStatus(ContractAddendum.Status.EXPIRED);
+            contractAddendumRepository.save(addendum);
+            logService.log(actor, "CONTRACT_ADDENDUM", addendum.getAddendumId(),
+                    "EXPIRED", ContractAddendum.Status.AWAITING_SIGNATURE.name(), "EXPIRED",
+                    "Addendum " + addendum.getCode() + " hết hạn ký 7 ngày (" + addendum.getSignatureDueDate() + ")");
+            throw new ContractAddendumInvalidStateException(
+                    "Phụ lục " + addendum.getCode() + " đã quá hạn ký 7 ngày ("
+                            + addendum.getSignatureDueDate() + "). Trạng thái chuyển sang EXPIRED.");
+        }
+
+        addendum.setStatus(ContractAddendum.Status.SIGNED);
+        addendum.setSignedPhotoUrl(request.signedPhotoUrl());
+        ContractAddendum saved = contractAddendumRepository.save(addendum);
+
+        String noteSuffix = request.notes() != null && !request.notes().isBlank()
+                ? " — " + request.notes() : "";
+        logService.log(actor, "CONTRACT_ADDENDUM", saved.getAddendumId(),
+                "ADDENDUM_SIGNED", ContractAddendum.Status.AWAITING_SIGNATURE.name(), "SIGNED",
+                "Ký phụ lục tại quầy thành công: " + saved.getCode() + noteSuffix);
+
+        return mapToAddendumResponse(saved);
+    }
+
+    /**
+     * US-19 (FR-13): Lấy chuỗi hợp đồng gốc + toàn bộ phụ lục theo thứ tự thời gian.
+     */
+    @Transactional(readOnly = true)
+    public ContractChainResponse getContractChain(String email, Long contractId) {
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        Contract contract = contractRepository.findWithDetailsById(contractId)
+                .orElseThrow(() -> new ContractNotFoundException("Không tìm thấy hợp đồng này."));
+
+        boolean isOwner = contract.getReservation().getCustomer().getUserId().equals(user.getUserId());
+        boolean isStaffOrAdmin = user.getRole().getName() != Role.Name.CUSTOMER;
+
+        if (!isOwner && !isStaffOrAdmin) {
+            throw new ContractNotFoundException("Không tìm thấy hợp đồng này.");
+        }
+
+        ContractDetailResponse contractDetail = mapToDetailResponse(contract);
+        List<ContractAddendum> addendums = contractAddendumRepository
+                .findByContract_ContractIdOrderByCreatedAtAsc(contractId);
+
+        List<ContractAddendumResponse> addendumResponses = addendums.stream()
+                .map(this::mapToAddendumResponse)
+                .toList();
+
+        return new ContractChainResponse(contractDetail, addendumResponses);
+    }
+
+    public ContractAddendumResponse mapToAddendumResponse(ContractAddendum addendum) {
+        Long extensionId = addendum.getExtension() != null
+                ? addendum.getExtension().getExtensionId() : null;
+        return new ContractAddendumResponse(
+                addendum.getAddendumId(),
+                addendum.getContract().getContractId(),
+                extensionId,
+                addendum.getCode(),
+                addendum.getContentSnapshot(),
+                addendum.getSignedPhotoUrl(),
+                addendum.getSignatureDueDate(),
+                addendum.getStatus() != null ? addendum.getStatus().name() : null,
+                addendum.getCreatedAt()
+        );
     }
 }

@@ -845,6 +845,65 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
               example: { code: CONTRACT_NOT_FOUND, message: "Không tìm thấy hợp đồng này.", fieldErrors: [] }
 
+  /contracts/{contractId}/chain:
+    get:
+      tags: [Contracts]
+      summary: Lấy chuỗi hợp đồng gốc + các phụ lục gia hạn (FR-13, US-19)
+      description: Trả về thông tin hợp đồng gốc kèm toàn bộ các phụ lục theo thứ tự thời gian.
+      operationId: getContractChain
+      parameters:
+        - { name: contractId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chuỗi hợp đồng và phụ lục
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContractChainResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Không tìm thấy hợp đồng
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /contract-addendums/{addendumId}/sign:
+    post:
+      tags: [Contracts]
+      summary: Ký phụ lục hợp đồng tại quầy (FR-12, US-19)
+      description: |
+        Staff tại quầy chụp ảnh bản ký giấy của phụ lục và upload lên.
+        Bắt buộc có signedPhotoUrl (Snap-back rule).
+        Deadline ký 7 ngày kể từ khi sinh phụ lục; quá hạn chuyển EXPIRED (409).
+        Ký thành công: status -> SIGNED, ghi Activity Log ADDENDUM_SIGNED.
+      operationId: signContractAddendum
+      parameters:
+        - { name: addendumId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContractAddendumSignRequest" }
+      responses:
+        "200":
+          description: Ký phụ lục thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContractAddendumResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Không tìm thấy phụ lục
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Xung đột trạng thái (đã ký hoặc quá hạn ký 7 ngày)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
   # ------------------------ NOTIFICATIONS (FR-33/34) ----------------------
 
   /notifications:
@@ -1447,6 +1506,46 @@ components:
               type: string
               description: "Snapshot điều khoản lúc draft — FE render print view từ đây (Contract print, không PDF service)"
             createdAt: { type: string, format: date-time }
+
+    ContractAddendumStatus:
+      type: string
+      enum: [AWAITING_SIGNATURE, SIGNED, EXPIRED, VOIDED]
+
+    ContractAddendumSignRequest:
+      type: object
+      required: [signedPhotoUrl]
+      properties:
+        signedPhotoUrl:
+          type: string
+          example: "https://storagehub.com/uploads/addendum-1042-a1.jpg"
+          description: "URL ảnh chụp bản phụ lục giấy có chữ ký khách tại quầy (bắt buộc)"
+        notes:
+          type: string
+          nullable: true
+          example: "Ký tại quầy ca sáng"
+
+    ContractAddendumResponse:
+      type: object
+      required: [addendumId, contractId, code, status, signatureDueDate, createdAt]
+      properties:
+        addendumId: { type: integer, format: int64 }
+        contractId: { type: integer, format: int64 }
+        extensionId: { type: integer, format: int64, nullable: true }
+        code: { type: string, example: "CT-1042-A1" }
+        contentSnapshot: { type: string }
+        signedPhotoUrl: { type: string, nullable: true }
+        signatureDueDate: { type: string, format: date }
+        status: { $ref: "#/components/schemas/ContractAddendumStatus" }
+        createdAt: { type: string, format: date-time }
+
+    ContractChainResponse:
+      type: object
+      required: [contract, addendums]
+      properties:
+        contract: { $ref: "#/components/schemas/ContractDetail" }
+        addendums:
+          type: array
+          items: { $ref: "#/components/schemas/ContractAddendumResponse" }
 
     # ---------------------------- Notifications ---------------------------
 
