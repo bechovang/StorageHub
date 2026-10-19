@@ -75,6 +75,9 @@ class ReservationServiceTest {
     @Mock
     private ContractAddendumRepository contractAddendumRepository;
 
+    @Mock
+    private ExtensionService extensionService;
+
     @InjectMocks
     private ReservationService reservationService;
 
