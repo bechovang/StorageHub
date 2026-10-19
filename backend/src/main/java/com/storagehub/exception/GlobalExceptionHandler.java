@@ -114,6 +114,30 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(ContractAddendumNotFoundException.class)
+    public ResponseEntity<ApiError> handleContractAddendumNotFound(
+            ContractAddendumNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "CONTRACT_ADDENDUM_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Không tìm thấy phụ lục này."
+                ));
+    }
+
+    @ExceptionHandler(ContractAddendumInvalidStateException.class)
+    public ResponseEntity<ApiError> handleContractAddendumInvalidState(
+            ContractAddendumInvalidStateException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiError.of(
+                        "CONTRACT_ADDENDUM_INVALID_STATE",
+                        exception.getMessage()
+                ));
+    }
+
     @ExceptionHandler(ReservationInvalidStateException.class)
     public ResponseEntity<ApiError> handleReservationInvalidState(
             ReservationInvalidStateException exception

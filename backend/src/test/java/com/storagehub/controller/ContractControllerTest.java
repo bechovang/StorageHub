@@ -19,12 +19,21 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.storagehub.dto.contract.ContractAddendumResponse;
+import com.storagehub.dto.contract.ContractAddendumSignRequest;
+import com.storagehub.dto.contract.ContractChainResponse;
+import com.storagehub.exception.ContractAddendumInvalidStateException;
+import com.storagehub.exception.ContractAddendumNotFoundException;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -149,5 +158,116 @@ class ContractControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CONTRACT_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("Không tìm thấy hợp đồng này."));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/contracts/{contractId}/chain trả về 200 OK và chuỗi hợp đồng gốc + phụ lục (US-19)")
+    void testGetContractChain_Success() throws Exception {
+        ContractDetailResponse detail = new ContractDetailResponse(
+                101L,
+                "CT-1042",
+                "ORIGINAL",
+                "SIGNED",
+                true,
+                "https://storagehub.com/contract.jpg",
+                null,
+                1042L,
+                "v3",
+                "{}",
+                LocalDateTime.of(2026, 10, 3, 10, 0, 0)
+        );
+        ContractAddendumResponse addendum = new ContractAddendumResponse(
+                1L,
+                101L,
+                5L,
+                "CT-1042-A1",
+                "{}",
+                "https://storagehub.com/addendum-signed.jpg",
+                LocalDate.of(2026, 10, 26),
+                "SIGNED",
+                LocalDateTime.of(2026, 10, 19, 14, 0, 0)
+        );
+
+        when(contractService.getContractChain(eq("lan@demo.vn"), eq(101L)))
+                .thenReturn(new ContractChainResponse(detail, List.of(addendum)));
+
+        mockMvc.perform(get("/api/v1/contracts/101/chain")
+                        .principal(auth)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contract.code").value("CT-1042"))
+                .andExpect(jsonPath("$.contract.status").value("SIGNED"))
+                .andExpect(jsonPath("$.addendums.length()").value(1))
+                .andExpect(jsonPath("$.addendums[0].code").value("CT-1042-A1"))
+                .andExpect(jsonPath("$.addendums[0].status").value("SIGNED"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/contract-addendums/{addendumId}/sign trả về 200 OK khi ký thành công tại quầy (US-19)")
+    void testSignContractAddendum_Success() throws Exception {
+        ContractAddendumSignRequest request = new ContractAddendumSignRequest(
+                "https://storagehub.com/signed-addendum.jpg",
+                "Khách Lan ký tại quầy"
+        );
+        ContractAddendumResponse response = new ContractAddendumResponse(
+                1L,
+                101L,
+                5L,
+                "CT-1042-A1",
+                "{}",
+                "https://storagehub.com/signed-addendum.jpg",
+                LocalDate.of(2026, 10, 26),
+                "SIGNED",
+                LocalDateTime.of(2026, 10, 19, 14, 0, 0)
+        );
+
+        when(contractService.signAddendum(eq("lan@demo.vn"), eq(1L), any(ContractAddendumSignRequest.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/contract-addendums/1/sign")
+                        .principal(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.addendumId").value(1))
+                .andExpect(jsonPath("$.code").value("CT-1042-A1"))
+                .andExpect(jsonPath("$.status").value("SIGNED"))
+                .andExpect(jsonPath("$.signedPhotoUrl").value("https://storagehub.com/signed-addendum.jpg"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/contract-addendums/{addendumId}/sign trả về 400 Bad Request khi thiếu signedPhotoUrl (Snap-back rule)")
+    void testSignContractAddendum_MissingPhoto_BadRequest() throws Exception {
+        ContractAddendumSignRequest request = new ContractAddendumSignRequest(
+                "", // Trống -> vi phạm @NotBlank
+                "Ghi chú"
+        );
+
+        mockMvc.perform(post("/api/v1/contract-addendums/1/sign")
+                        .principal(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/contract-addendums/{addendumId}/sign trả về 409 Conflict khi phụ lục đã ký hoặc quá hạn 7 ngày")
+    void testSignContractAddendum_InvalidState_Conflict() throws Exception {
+        ContractAddendumSignRequest request = new ContractAddendumSignRequest(
+                "https://storagehub.com/signed.jpg",
+                null
+        );
+
+        when(contractService.signAddendum(eq("lan@demo.vn"), eq(1L), any(ContractAddendumSignRequest.class)))
+                .thenThrow(new ContractAddendumInvalidStateException("Phụ lục CT-1042-A1 đã được ký trước đó."));
+
+        mockMvc.perform(post("/api/v1/contract-addendums/1/sign")
+                        .principal(auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONTRACT_ADDENDUM_INVALID_STATE"))
+                .andExpect(jsonPath("$.message").value("Phụ lục CT-1042-A1 đã được ký trước đó."));
     }
 }
