@@ -76,6 +76,7 @@ public class ReservationService {
     private final PlatformTransactionManager transactionManager;
     private final ContractAddendumRepository contractAddendumRepository;
     private final TaskService taskService;
+    private final ExtensionService extensionService;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -350,7 +351,8 @@ public class ReservationService {
                 null,
                 null,
                 List.of(),
-                List.of()
+                List.of(),
+                null
         );
     }
 
@@ -491,8 +493,30 @@ public class ReservationService {
                 depositForfeitReason,
                 accessCode,
                 payments,
-                contracts
+                contracts,
+                // US-18 (FR-16): mốc trả muộn nhất cho ExtensionModal — null khi
+                // không CHECKED_IN hoặc unit trống phía sau.
+                effectiveStatus == Reservation.Status.CHECKED_IN
+                        ? extensionService.latestAllowedCheckout(reservation)
+                        : null
         );
+    }
+
+    /**
+     * US-18 (FR-16): phí gia hạn đã trả — EndDate + cọc giữ dịch ngay (ngày mới
+     * hiệu lực ngay khi thanh toán). Gọi từ ExtensionPaymentSuccessHandler
+     * trong lock payment; unit giữ nguyên trạng thái RENTED (boundary FR-16 đã
+     * đảm bảo không đâm qua đơn kế tiếp).
+     */
+    @Transactional
+    public void markExtensionApplied(Reservation reservation, LocalDate newEndDate, long newDepositHeld) {
+        LocalDate oldEndDate = reservation.getEndDate();
+        reservation.setEndDate(newEndDate);
+        reservation.setDepositAmount(BigDecimal.valueOf(newDepositHeld));
+        reservationRepository.save(reservation);
+        logService.log(reservation.getCustomer(), "RESERVATION", reservation.getReservationId(),
+                "END_DATE_EXTENDED", oldEndDate.toString(), newEndDate.toString(),
+                "Gia hạn áp dụng — cọc giữ mới " + newDepositHeld + " ₫");
     }
 
     private int countSimilarAvailableUnits(Unit currentUnit, LocalDate startDate, int durationMonths, int bufferDays, LocalDate today) {

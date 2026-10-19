@@ -32,7 +32,9 @@ public record ReservationDetailResponse(
         String depositForfeitReason,
         String accessCode,
         List<PaymentRecordResponse> payments,
-        List<ContractChainItemResponse> contracts
+        List<ContractChainItemResponse> contracts,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        LocalDate latestNewCheckout
 ) {
 
     /**
@@ -44,6 +46,16 @@ public record ReservationDetailResponse(
             Reservation reservation,
             List<Payment> payments,
             String depositStatus
+    ) {
+        return from(reservation, payments, depositStatus, null);
+    }
+
+    /** US-18: overload cho flow có boundary gia hạn (Rental Detail). */
+    public static ReservationDetailResponse from(
+            Reservation reservation,
+            List<Payment> payments,
+            String depositStatus,
+            LocalDate latestNewCheckout
     ) {
         long months = ChronoUnit.MONTHS.between(
                 reservation.getStartDate(), reservation.getEndDate());
@@ -66,7 +78,8 @@ public record ReservationDetailResponse(
                 null,
                 null,
                 payments.stream().map(PaymentRecordResponse::from).toList(),
-                List.of()
+                List.of(),
+                latestNewCheckout
         );
     }
 }
