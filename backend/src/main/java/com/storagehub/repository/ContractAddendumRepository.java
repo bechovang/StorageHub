@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface ContractAddendumRepository extends JpaRepository<ContractAddendum, Long> {
     List<ContractAddendum> findByContract_Reservation_ReservationIdOrderByCreatedAtAsc(Long reservationId);
+
+    /** US-18: đánh số addendum CT-...-A{n} trong chuỗi của một contract. */
+    long countByContract_ContractId(Long contractId);
 }

@@ -469,6 +469,70 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
               example: { code: RESERVATION_INVALID_STATE, message: "Chưa thu tiền thuê — trả 100% rent qua Payment Modal trước khi check-in.", fieldErrors: [] }
 
+  # --------------------------- EXTENSIONS (US-18, FR-16/12) -----------------
+
+  /reservations/{reservationId}/extensions:
+    post:
+      tags: [Reservations]
+      summary: "US-18 (FR-16): tạo yêu cầu gia hạn — bước 1/2, trả bảng tính server-truth"
+      description: |
+        Customer-only. BE validate + tính toàn bộ chi phí theo AD-11 (FE không
+        gửi amount): addedRent = tiền thuê kỳ thêm theo policy active;
+        depositTopUp = max(0, Deposit% × tổng tiền thuê sau gia hạn − cọc đang giữ).
+        Boundary xung đột: latestNewCheckout = ngày bắt đầu của reservation kế
+        tiếp trên cùng unit − 1 (FR-16 — không buffer). Gia hạn chỉ mở trước
+        EndDate; qua EndDate giữ CHECKED_IN và tính LATE_FEE lúc tất toán.
+        Response kèm extensionId PENDING_PAYMENT → FE mở Payment Modal sẵn có
+        với purpose EXTENSION_FEE (bước 2/2). Thanh toán thành công mới dịch
+        EndDate + nâng cọc + sinh addendum CT-...-A{n} hẹn ký quầy 7 ngày (FR-12).
+      operationId: requestExtension
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newEndDate]
+              properties:
+                newEndDate: { type: string, format: date, example: "2026-12-19" }
+      responses:
+        "200":
+          description: Extension PENDING_PAYMENT đã sẵn sàng — mở Payment Modal purpose EXTENSION_FEE
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  extensionId: { type: integer, format: int64, example: 2 }
+                  oldEndDate: { type: string, format: date, example: "2026-10-18" }
+                  newEndDate: { type: string, format: date, example: "2026-12-18" }
+                  addedMonths: { type: integer, example: 2 }
+                  addedRent: { type: integer, example: 690000 }
+                  depositHeldCurrent: { type: integer, example: 103500 }
+                  depositTopUp: { type: integer, example: 69000 }
+                  newDepositHeld: { type: integer, example: 172500 }
+                  totalPayable: { type: integer, example: 759000 }
+                  latestNewCheckout:
+                    type: string
+                    format: date
+                    nullable: true
+                    example: "2026-10-18"
+                  policyVersion: { type: string, example: "v3" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ReservationNotFound" }
+        "409":
+          description: "Lý do cụ thể: không phải CHECKED_IN / đã qua EndDate (LATE_FEE) / newEndDate ≤ EndDate hiện tại / xung đột lịch với đơn kế tiếp"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: RESERVATION_INVALID_STATE, message: "Xung đột lịch — kho S-3 đã có khách đặt trước bắt đầu 2026-10-19. Latest new checkout: 2026-10-18.", fieldErrors: [] }
+
+  # --------------------------- CHECKOUT REQUEST (US-20, FR-17) --------------
+
   /reservations/{reservationId}/checkout-request:
     post:
       tags: [Reservations]
@@ -1167,6 +1231,11 @@ components:
             contracts:
               type: array
               items: { $ref: "#/components/schemas/ContractChainItem" }
+            latestNewCheckout:
+              type: string
+              format: date
+              nullable: true
+              description: "US-18 (FR-16): ngày trả muộn nhất được phép khi gia hạn = start của reservation kế tiếp trên cùng unit − 1; null khi không CHECKED_IN hoặc unit trống phía sau"
 
     ReservationPage:
       type: object
@@ -1254,7 +1323,7 @@ components:
     PaymentPurpose:
       type: string
       enum: [DEPOSIT, RENT, EXTENSION_FEE, DAMAGE_FEE, EXTRA_FEE]
-      description: "Sprint 1: BE chỉ chấp nhận DEPOSIT, RENT. 3 giá trị còn lại thuộc sprint sau (enum đầy đủ để ổn định wire format)"
+      description: "BE chấp nhận DEPOSIT, RENT (US-15) và EXTENSION_FEE (US-18). DAMAGE_FEE/EXTRA_FEE thuộc sprint sau (enum đầy đủ để ổn định wire format)"
 
     PaymentMethod:
       type: string
@@ -1383,8 +1452,8 @@ components:
 
     NotificationType:
       type: string
-      enum: [RESERVATION_CONFIRMED, PAYMENT_SUCCEEDED, CONTRACT_DRAFTED, RESERVATION_EXPIRED, CHECKOUT_REQUESTED, CHECKOUT_REQUEST_CANCELLED]
-      description: "Deep-link registry: contracts/routes.yaml (AD-6)"
+      enum: [RESERVATION_CONFIRMED, PAYMENT_SUCCEEDED, CONTRACT_DRAFTED, RESERVATION_EXPIRED, CHECK_IN_COMPLETED, EXTENSION_APPLIED, ADDENDUM_AWAITING_SIGNATURE, CHECKOUT_REQUESTED, CHECKOUT_REQUEST_CANCELLED]
+      description: "Deep-link registry: contracts/routes.yaml (AD-6). CHECK_IN_COMPLETED (US-15), EXTENSION_APPLIED + ADDENDUM_AWAITING_SIGNATURE (US-18), CHECKOUT_REQUESTED + CHECKOUT_REQUEST_CANCELLED (US-20)"
 
     Notification:
       type: object
