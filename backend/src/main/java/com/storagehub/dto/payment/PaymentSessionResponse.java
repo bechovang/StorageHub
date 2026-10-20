@@ -6,7 +6,8 @@ import java.time.Instant;
 
 /**
  * Response createPayment + getPayment (FE poll) — schema PaymentSession (openapi.yaml).
- * otpExpiresAt/qrExpiresAt/qrPayload/otpRequired do mock gateway trả (state in-memory).
+ * otpExpiresAt/qrExpiresAt/qrPayload/otpRequired/checkoutUrl do gateway trả.
+ * qrCode là alias PayOS của qrPayload (VietQR động) — chỉ set khi method=PAYOS.
  */
 public record PaymentSessionResponse(
         Long id,
@@ -18,6 +19,8 @@ public record PaymentSessionResponse(
         boolean otpRequired,
         Instant otpExpiresAt,
         String qrPayload,
+        String qrCode,
+        String checkoutUrl,
         Instant qrExpiresAt,
         String receiptCode,
         Instant paidAt,
@@ -33,6 +36,8 @@ public record PaymentSessionResponse(
             Long reservationId,
             GatewaySessionView gatewayView
     ) {
+        String qrPayload = gatewayView == null ? null : gatewayView.qrPayload();
+
         return new PaymentSessionResponse(
                 payment.getPaymentId(),
                 reservationId,
@@ -42,7 +47,9 @@ public record PaymentSessionResponse(
                 payment.getStatus(),
                 gatewayView != null && gatewayView.otpRequired(),
                 gatewayView == null ? null : gatewayView.otpExpiresAt(),
-                gatewayView == null ? null : gatewayView.qrPayload(),
+                qrPayload,
+                payment.getMethod() == Payment.Method.PAYOS ? qrPayload : null,
+                gatewayView == null ? null : gatewayView.checkoutUrl(),
                 gatewayView == null ? null : gatewayView.qrExpiresAt(),
                 // Receipt chỉ hiển thị khi SUCCEEDED (schema: "Sinh khi SUCCEEDED")
                 payment.getStatus() == Payment.Status.SUCCEEDED
@@ -54,12 +61,13 @@ public record PaymentSessionResponse(
         );
     }
 
-    /** Trường hiển thị gateway cấp cho session đang mở (mock in-memory). */
+    /** Trường hiển thị gateway cấp cho session đang mở (in-memory như mock). */
     public record GatewaySessionView(
             boolean otpRequired,
             Instant otpExpiresAt,
             String qrPayload,
-            Instant qrExpiresAt
+            Instant qrExpiresAt,
+            String checkoutUrl
     ) {
     }
 }

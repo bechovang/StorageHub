@@ -110,7 +110,7 @@ export function usePayment() {
 
   // Bắt đầu polling khi trạng thái cần chờ xác nhận (CARD / VNPAY)
   const startPolling = useCallback(
-    (paymentId) => {
+    (paymentId, intervalMs = 1500) => {
       stopPolling();
       setPolling(true);
 
@@ -140,7 +140,7 @@ export function usePayment() {
           stopPolling();
           setApiError(err.message || "Lỗi khi kiểm tra trạng thái thanh toán.");
         }
-      }, 1500);
+      }, intervalMs);
     },
     [stopPolling, loadPaymentHistory]
   );
@@ -173,8 +173,9 @@ export function usePayment() {
 
             if (isMounted) {
               setReservation({
-                id: u.id,
-                code: `RSV-2026-${u.code || u.id}`,
+                id: null,
+                draftUnitId: Number(paramUnitId),
+                code: `Đơn mới · ${u.code || u.id}`,
                 status: "PENDING_PAYMENT",
                 depositAmount: deposit,
                 depositStatus: "UNPAID",
@@ -290,20 +291,62 @@ export function usePayment() {
     if (targetPaymentId && isAuthenticated) {
       paymentService
         .getPayment(targetPaymentId)
-        .then((session) => {
+        .then(async (session) => {
           setPaymentSession(session);
+          if (session.method) setSelectedMethod(session.method);
+          setIsModalOpen(true);
+
+          if (session.reservationId) {
+            try {
+              const detail = await paymentService.getReservation(session.reservationId);
+              if (detail) {
+                const isPaid =
+                  detail.status === "RESERVED" || detail.depositStatus === "HELD";
+                setReservation({
+                  id: detail.id,
+                  code: detail.code || `RSV-${detail.id}`,
+                  status: detail.status,
+                  depositAmount: detail.depositAmount || 0,
+                  depositStatus: detail.depositStatus || (isPaid ? "HELD" : "UNPAID"),
+                  durationMonths: detail.durationMonths || 3,
+                  startDate: detail.startDate,
+                  endDate: detail.endDate,
+                  unit: {
+                    code: detail.unit?.code || "",
+                    sizeM2: detail.unit?.sizeM2 || 5,
+                    typeName: detail.unit?.typeName || "Kho tiêu chuẩn",
+                    monthlyPrice: Math.round(
+                      ((detail.depositAmount || 0) * 10) / (detail.durationMonths || 3)
+                    ),
+                    depot: "Tân Bình Gateway",
+                    building: "Building B · Level 2",
+                    dimensions: "",
+                    volume: "",
+                  },
+                });
+                loadPaymentHistory(session.reservationId);
+              }
+            } catch {
+              // vẫn giữ phiên thanh toán; reservation chỉ để hiển thị
+            }
+          }
+
           if (
             session.status === "PROCESSING" ||
-            (session.status === "PENDING" && session.method === "VNPAY")
+            (session.status === "PENDING" &&
+              (session.method === "VNPAY" || session.method === "PAYOS"))
           ) {
-            startPolling(session.id);
+            startPolling(
+              session.id,
+              session.method === "PAYOS" ? 5000 : 1500
+            );
           }
         })
         .catch((err) => {
           setApiError(err.message || "Không thể tải phiên thanh toán.");
         });
     }
-  }, [targetPaymentId, isAuthenticated, startPolling]);
+  }, [targetPaymentId, isAuthenticated, startPolling, loadPaymentHistory]);
 
   // 3. Render mã QR khi có qrPayload
   useEffect(() => {
@@ -426,10 +469,35 @@ export function usePayment() {
       }
 
       setSubmitting(true);
+      let reservationId = reservation.id;
       try {
+        // Flow /units/:unitId/book chưa có reservation — tạo thật trước khi trả
+        // tiền để backend ownership check có id đúng (không dùng unitId).
+        if (!reservationId && reservation.draftUnitId) {
+          const created = await paymentService.createReservation({
+            unitId: reservation.draftUnitId,
+            startDate: reservation.startDate,
+            durationMonths: reservation.durationMonths || 3,
+          });
+          reservationId = created.id;
+          setReservation((prev) => ({
+            ...prev,
+            id: created.id,
+            code: created.code,
+            status: created.status,
+            depositAmount: created.depositAmount,
+            draftUnitId: undefined,
+          }));
+          loadPaymentHistory(created.id);
+        }
+        if (!reservationId) {
+          setApiError("Chưa có đơn đặt chỗ để thanh toán. Hãy tạo đơn trước.");
+          return;
+        }
+
         const session = await paymentService.createPayment({
           purpose: "DEPOSIT",
-          reservationId: reservation.id,
+          reservationId,
           method: methodToUse,
           card: methodToUse === "CARD" ? cardForm : undefined,
           momoPhone: methodToUse === "MOMO" ? momoPhone : undefined,
@@ -437,23 +505,21 @@ export function usePayment() {
 
         setPaymentSession(session);
 
-        if (methodToUse === "CARD" || methodToUse === "VNPAY") {
-          startPolling(session.id);
-        }
+        // Demo CARD/MOMO/VNPAY auto-complete ~1 nhịp poll; PayOS chờ webhook.
+        startPolling(session.id, methodToUse === "PAYOS" ? 5000 : 800);
       } catch (err) {
         if (err.code === "PAYMENT_DUPLICATE") {
           setApiError(null);
-          if (reservation?.id) {
+          if (reservationId) {
             try {
-              const detail = await paymentService.getReservation(reservation.id);
+              const detail = await paymentService.getReservation(reservationId);
               if (detail) {
                 setReservation((prev) => ({
                   ...prev,
-                  status: detail.status,
                   depositStatus: detail.depositStatus || "HELD",
                 }));
               }
-              const history = await paymentService.listPayments({ reservationId: reservation.id });
+              const history = await paymentService.listPayments({ reservationId });
               const successPayment = history?.items?.find(
                 (p) => p.purpose === "DEPOSIT" && p.status === "SUCCEEDED"
               );
@@ -505,7 +571,7 @@ export function usePayment() {
         setSubmitting(false);
       }
     },
-    [cardForm, momoPhone, reservation, selectedMethod, startPolling]
+    [cardForm, momoPhone, reservation, selectedMethod, startPolling, loadPaymentHistory]
   );
 
   const handleConfirmOtp = async (e) => {
@@ -560,8 +626,8 @@ export function usePayment() {
     setFormErrors({});
     if (newMethod) {
       setSelectedMethod(newMethod);
-      if (newMethod === "VNPAY") {
-        handleInitiatePayment(null, "VNPAY");
+      if (newMethod === "VNPAY" || newMethod === "PAYOS") {
+        handleInitiatePayment(null, newMethod);
       }
     }
   };
@@ -571,13 +637,13 @@ export function usePayment() {
       setSelectedMethod(m);
       setFormErrors({});
       setApiError("");
-      if (m === "VNPAY") {
+      if (m === "VNPAY" || m === "PAYOS") {
         if (
           !paymentSession ||
-          paymentSession.method !== "VNPAY" ||
+          paymentSession.method !== m ||
           paymentSession.status !== "PENDING"
         ) {
-          handleInitiatePayment(null, "VNPAY");
+          handleInitiatePayment(null, m);
         }
       }
     },
@@ -586,7 +652,7 @@ export function usePayment() {
 
   const handleCheckPaymentStatus = async () => {
     if (!paymentSession?.id || countdown === 0) {
-      await handleInitiatePayment(null, "VNPAY");
+      await handleInitiatePayment(null, selectedMethod);
       return;
     }
 

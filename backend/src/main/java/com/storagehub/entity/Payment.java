@@ -40,7 +40,8 @@ public class Payment {
     public enum Method {
         CARD,
         MOMO,
-        VNPAY
+        VNPAY,
+        PAYOS
     }
 
     public enum Status {

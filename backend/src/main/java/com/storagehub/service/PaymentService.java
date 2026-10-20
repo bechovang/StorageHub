@@ -32,4 +32,7 @@ public interface PaymentService {
             Long paymentId,
             ConfirmPaymentRequest request
     );
+
+    /** POST /payments/webhooks/payos — verify ở gateway, state machine ở đây. */
+    void handlePayOsWebhook(String rawPayload);
 }

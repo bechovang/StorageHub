@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * US-8 (FR-8/9) — 4 endpoint khớp contracts/openapi.yaml (operationId
  * createPayment/listPayments/getPayment/confirmPayment). Identity lấy từ JWT
@@ -27,6 +29,18 @@ public class PaymentController {
 
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
+    }
+
+    /**
+     * Public (AD-9): PayOS gọi server-to-server, xác thực bằng HMAC-SHA256
+     * trong payload — không JWT. Raw body giữ nguyên để SDK verify chữ ký.
+     */
+    @PostMapping({"/webhooks/payos", "/webhook"})
+    public ResponseEntity<Map<String, String>> payOsWebhook(
+            @RequestBody String rawPayload
+    ) {
+        paymentService.handlePayOsWebhook(rawPayload);
+        return ResponseEntity.ok(Map.of("code", "00", "desc", "success"));
     }
 
     @PostMapping
