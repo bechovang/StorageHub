@@ -217,13 +217,31 @@ export default function BookingReview({
               </p>
             </div>
 
-            {/* Nút Thanh toán cọc / Mở Modal */}
+            {/* Nút Thanh toán cọc / Mở Modal & Điều hướng kế tiếp */}
             <div className="financial-card__actions">
               {isAlreadyPaid ? (
-                <div className="paid-status-box">
-                  <CheckCircle size={20} weight="fill" />
-                  <span>Đơn đặt chỗ đã thanh toán cọc thành công</span>
-                </div>
+                <>
+                  <div className="paid-status-box">
+                    <CheckCircle size={20} weight="fill" />
+                    <span>Đơn đặt chỗ đã thanh toán cọc thành công</span>
+                  </div>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "12px", width: "100%" }}>
+                    <Link
+                      to={`/checkin/${reservation?.id || 1}`}
+                      className="btn btn--primary"
+                      style={{ flex: 1, textAlign: "center", textDecoration: "none" }}
+                    >
+                      Mở Check-in Pass nhận kho
+                    </Link>
+                    <Link
+                      to="/rentals"
+                      className="btn btn--outline"
+                      style={{ flex: 1, textAlign: "center", textDecoration: "none" }}
+                    >
+                      Kho của tôi
+                    </Link>
+                  </div>
+                </>
               ) : (
                 <Button variant="primary" fullWidth size="large" onClick={onOpenModal}>
                   <Lock size={18} weight="bold" />
@@ -231,16 +249,18 @@ export default function BookingReview({
                 </Button>
               )}
 
-              {/* Nút tạo đơn mẫu để test thuận tiện */}
-              <button
-                type="button"
-                className="btn-create-test"
-                onClick={onCreateTestReservation}
-                disabled={loadingReservation}
-              >
-                <PlusCircle size={15} />
-                <span>Tạo đơn đặt chỗ thử nghiệm (Demo)</span>
-              </button>
+              {/* Nút tạo đơn mẫu để test thuận tiện (chỉ hiển thị ở môi trường DEV) */}
+              {import.meta.env.DEV && (
+                <button
+                  type="button"
+                  className="btn-create-test"
+                  onClick={onCreateTestReservation}
+                  disabled={loadingReservation}
+                >
+                  <PlusCircle size={15} />
+                  <span>Tạo đơn đặt chỗ thử nghiệm (Demo)</span>
+                </button>
+              )}
             </div>
           </article>
 

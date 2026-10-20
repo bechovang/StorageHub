@@ -3,19 +3,14 @@ import {
   Users,
   UserPlus,
   MagnifyingGlass,
-  Funnel,
   ShieldCheck,
-  LockKey,
   Key,
-  ArrowsClockwise,
   UserSwitch,
   Lock,
   LockOpen,
   Copy,
   Check,
-  Shield,
   Table,
-  CaretDown,
   DotsThreeVertical,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
@@ -31,7 +26,6 @@ import {
   USER_STATUSES,
   ROLE_DEFINITIONS,
   PERMISSION_GROUPS,
-  PERMISSION_MATRIX,
 } from "../../services/userService.js";
 import "./UserManagementPage.css";
 
@@ -74,10 +68,18 @@ export default function UserManagementPage() {
 
   // Filtered users list
   const filteredUsers = useMemo(() => {
-    return getUsers({
-      role: selectedRole,
-      status: selectedStatus,
-      searchTerm,
+    return users.filter((u) => {
+      if (selectedRole !== "ALL" && u.role !== selectedRole) return false;
+      if (selectedStatus !== "ALL" && u.status !== Number(selectedStatus)) return false;
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        return (
+          u.fullName.toLowerCase().includes(term) ||
+          u.email.toLowerCase().includes(term) ||
+          (u.phone && u.phone.includes(term))
+        );
+      }
+      return true;
     });
   }, [selectedRole, selectedStatus, searchTerm, users]);
 
@@ -96,6 +98,7 @@ export default function UserManagementPage() {
   const [targetRole, setTargetRole] = useState("CUSTOMER");
   const [roleReason, setRoleReason] = useState("");
   const [roleError, setRoleError] = useState("");
+  const [isSubmittingRole, setIsSubmittingRole] = useState(false);
 
   // 3. Đổi trạng thái (Khóa / Mở khóa)
   const [statusModalUser, setStatusModalUser] = useState(null);
@@ -142,22 +145,30 @@ export default function UserManagementPage() {
     }
   };
 
-  // Submit đổi vai trò
-  const handleRoleSubmit = (e) => {
+  // Submit đổi vai trò (US-28 / FR-37) - Đấu nối Backend API
+  const handleRoleSubmit = async (e) => {
     e.preventDefault();
     setRoleError("");
+    setIsSubmittingRole(true);
     try {
-      updateUserRole({
-        userId: roleModalUser.userId,
+      const targetId = roleModalUser?.id || roleModalUser?.userId;
+      await updateUserRole({
+        userId: targetId,
         newRole: targetRole,
         reason: roleReason,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
+      // 3. Sau khi gọi API thành công, reset filter về "ALL" và fetch lại danh sách
+      // để Admin thấy ngay người dùng với badge vai trò mới (chống bị ẩn do filter cũ)
+      setSelectedRole("ALL");
       setUsers(getUsers());
+      const updatedUserName = roleModalUser.fullName;
       setRoleModalUser(null);
-      showToast(`Đã chuyển vai trò của ${roleModalUser.fullName} sang ${targetRole}.`);
+      showToast(`Đã chuyển vai trò của ${updatedUserName} sang ${USER_ROLES[targetRole]?.label || targetRole}.`);
     } catch (err) {
-      setRoleError(err.message);
+      setRoleError(err.message || "Không thể cập nhật vai trò người dùng");
+    } finally {
+      setIsSubmittingRole(false);
     }
   };
 
@@ -166,10 +177,12 @@ export default function UserManagementPage() {
     e.preventDefault();
     setStatusError("");
     try {
+      const targetId = statusModalUser?.id || statusModalUser?.userId;
+      const currentActorId = currentSessionUser?.id || currentSessionUser?.userId;
       updateUserStatus({
-        userId: statusModalUser.userId,
+        userId: targetId,
         newStatus: targetStatus,
-        currentUserId: currentSessionUser?.id,
+        currentUserId: currentActorId,
         reason: statusReason,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
@@ -184,15 +197,16 @@ export default function UserManagementPage() {
   // Submit Reset Mật khẩu
   const handleConfirmReset = () => {
     try {
+      const targetId = resetModalUser?.id || resetModalUser?.userId;
       const res = resetUserPassword({
-        userId: resetModalUser.userId,
+        userId: targetId,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
       setResetSuccessPass(res.tempPassword);
       setUsers(getUsers());
       showToast(`Đã cấp mật khẩu tạm mới cho ${resetModalUser.fullName}.`);
     } catch (err) {
-      alert(err.message);
+      showToast(err.message || "Lỗi khi cấp lại mật khẩu", "error");
     }
   };
 
@@ -209,7 +223,7 @@ export default function UserManagementPage() {
             <span>Cơ sở: Toàn hệ thống</span>
           </div>
           <div className="mgmt-telemetry__right">
-            <span>SYS_ADMIN_WORKSPACE</span>
+            <span>KHÔNG GIAN QUẢN TRỊ TOÀN QUYỀN</span>
           </div>
         </div>
 
@@ -354,53 +368,67 @@ export default function UserManagementPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map((u, index) => {
-                      const roleConfig = USER_ROLES[u.role] || { label: u.role, badgeClass: "" };
-                      const statusConfig = Object.values(USER_STATUSES).find((s) => s.key === u.status) || USER_STATUSES.ACTIVE;
-                      const isSelf = currentSessionUser?.id === u.userId;
-                      const isMenuOpen = openMenuId === u.userId;
-                      const isNearBottom = index >= filteredUsers.length - 2 && filteredUsers.length > 3;
-
-                      return (
-                        <tr key={u.userId}>
-                          <td className="user-name-cell">
-                            <div className="user-name-wrapper">
-                              <span className="user-avatar-tag">{getUserInitials(u.fullName)}</span>
-                              <span className="user-name-text">{u.fullName}</span>
-                              {isSelf && <span className="user-self-tag">(Bạn)</span>}
+                    {filteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={7}>
+                          <div className="empty-state">
+                            <Users size={32} className="empty-state__icon" />
+                            <div className="empty-state__title">Không tìm thấy tài khoản người dùng</div>
+                            <div className="empty-state__desc">
+                              Không có tài khoản nào khớp với vai trò, trạng thái hoặc từ khóa tìm kiếm hiện tại.
                             </div>
-                          </td>
-                          <td className="user-email-cell">{u.email}</td>
-                          <td>{u.phone || "—"}</td>
-                          <td>
-                            <span className={`role-chip ${roleConfig.badgeClass}`}>
-                              {u.role}
-                            </span>
-                          </td>
-                          <td style={{ color: "var(--color-secondary)", fontSize: "0.78rem" }}>
-                            {u.facilityName || "Toàn hệ thống"}
-                          </td>
-                          <td>
-                            <span className={`status-badge ${statusConfig.class}`}>
-                              <span className="status-dot" />
-                              {statusConfig.label}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: "center" }}>
-                            <div
-                              className="action-dropdown-wrapper"
-                              ref={isMenuOpen ? dropdownRef : null}
-                            >
-                              <button
-                                type="button"
-                                className={`btn-action-trigger ${isMenuOpen ? "btn-action-trigger--active" : ""}`}
-                                title="Tùy chọn thao tác"
-                                aria-label="Tùy chọn thao tác"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenMenuId(isMenuOpen ? null : u.userId);
-                                }}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredUsers.map((u, index) => {
+                        const targetId = u.id || u.userId;
+                        const roleConfig = USER_ROLES[u.role] || { label: u.role, badgeClass: "" };
+                        const statusConfig = Object.values(USER_STATUSES).find((s) => s.key === u.status) || USER_STATUSES.ACTIVE;
+                        const isSelf = (currentSessionUser?.id || currentSessionUser?.userId) === targetId;
+                        const isMenuOpen = openMenuId === targetId;
+                        const isNearBottom = index >= filteredUsers.length - 2 && filteredUsers.length > 3;
+
+                        return (
+                          <tr key={targetId}>
+                            <td className="user-name-cell">
+                              <div className="user-name-wrapper">
+                                <span className="user-avatar-tag">{getUserInitials(u.fullName)}</span>
+                                <span className="user-name-text">{u.fullName}</span>
+                                {isSelf && <span className="user-self-tag">(Bạn)</span>}
+                              </div>
+                            </td>
+                            <td className="user-email-cell">{u.email}</td>
+                            <td>{u.phone || "—"}</td>
+                            <td>
+                              <span className={`role-chip ${roleConfig.badgeClass}`}>
+                                {u.role}
+                              </span>
+                            </td>
+                            <td style={{ color: "var(--color-secondary)", fontSize: "0.78rem" }}>
+                              {u.facilityName || "Toàn hệ thống"}
+                            </td>
+                            <td>
+                              <span className={`status-badge ${statusConfig.class}`}>
+                                <span className="status-dot" />
+                                {statusConfig.label}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <div
+                                className="action-dropdown-wrapper"
+                                ref={isMenuOpen ? dropdownRef : null}
                               >
+                                <button
+                                  type="button"
+                                  className={`btn-action-trigger ${isMenuOpen ? "btn-action-trigger--active" : ""}`}
+                                  title="Tùy chọn thao tác"
+                                  aria-label="Tùy chọn thao tác"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(isMenuOpen ? null : targetId);
+                                  }}
+                                >
                                 <DotsThreeVertical size={16} weight="bold" />
                               </button>
 
@@ -476,7 +504,7 @@ export default function UserManagementPage() {
                           </td>
                         </tr>
                       );
-                    })}
+                    }))}
                   </tbody>
                 </table>
               </div>
@@ -799,11 +827,11 @@ export default function UserManagementPage() {
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px" }}>
-                <button type="button" className="btn btn--outline" onClick={() => setRoleModalUser(null)}>
+                <button type="button" className="btn btn--outline" onClick={() => setRoleModalUser(null)} disabled={isSubmittingRole}>
                   Hủy
                 </button>
-                <button type="submit" className="btn btn--primary">
-                  Lưu & Ghi nhận kiểm toán
+                <button type="submit" className="btn btn--primary" disabled={isSubmittingRole}>
+                  {isSubmittingRole ? "Đang cập nhật..." : "Lưu & Ghi nhận kiểm toán"}
                 </button>
               </div>
             </form>
@@ -909,6 +937,14 @@ export default function UserManagementPage() {
               </div>
             )}
           </Modal>
+        )}
+
+        {/* ── Toast notification nổi ── */}
+        {toastMessage && (
+          <div className="toast-banner toast-banner--success" role="status">
+            <Check size={18} weight="bold" />
+            <span>{toastMessage}</span>
+          </div>
         )}
       </div>
     </AppShell>

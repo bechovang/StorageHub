@@ -355,7 +355,7 @@ export default function RentalDetailPage() {
         reason: checkoutData.reason,
       });
     } catch (err) {
-      console.warn("Backend checkout request failed or mock mode:", err);
+      console.warn("Checkout request failed:", err);
     }
 
     setReservation((prev) => ({
@@ -379,7 +379,7 @@ export default function RentalDetailPage() {
     try {
       await cancelCheckoutRequest(reservationId);
     } catch (err) {
-      console.warn("Backend cancel checkout request failed or mock mode:", err);
+      console.warn("Cancel checkout request failed:", err);
     }
 
     setReservation((prev) => ({

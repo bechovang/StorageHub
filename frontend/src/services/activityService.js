@@ -325,7 +325,7 @@ export function getActivityLogs({ entityType = "ALL", searchTerm = "" } = {}) {
       }
     }
   } catch (err) {
-    console.error("Lỗi khi đọc Activity Logs từ LocalStorage:", err);
+    console.error("Failed to read activity logs:", err);
   }
 
   // Lọc theo thực thể
@@ -391,7 +391,7 @@ export function appendActivityLog({
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (err) {
-    console.error("Lỗi khi ghi thêm Activity Log:", err);
+    console.error("Failed to append activity log:", err);
   }
 
   return newLog;
