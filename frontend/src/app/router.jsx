@@ -18,6 +18,10 @@ import FacilityOverviewPage from "../pages/FacilityOverviewPage/FacilityOverview
 import BusinessOverviewPage from "../pages/BusinessOverviewPage/BusinessOverviewPage.jsx";
 import ReportsPage from "../pages/ReportsPage/ReportsPage.jsx";
 import UnitManagementPage from "../pages/UnitManagementPage/UnitManagementPage.jsx";
+import ActivityLogPage from "../pages/ActivityLogPage/ActivityLogPage.jsx";
+import UserManagementPage from "../pages/UserManagementPage/UserManagementPage.jsx";
+import SupportPage from "../pages/SupportPage/SupportPage.jsx";
+import PolicyManagementPage from "../pages/PolicyManagementPage/PolicyManagementPage.jsx";
 
 const ROLE_LANDINGS = {
   CUSTOMER: "/browse",
@@ -85,7 +89,11 @@ export default function AppRouter() {
       />
       <Route
         path="/support"
-        element={<RoleLandingPlaceholder path="/support" />}
+        element={
+          <ProtectedRoute allowedRoles={["CUSTOMER", "STAFF", "FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
+            <SupportPage />
+          </ProtectedRoute>
+        }
       />
 
       {/* ── 3. Payment Flow Routes (US-8) ── */}
@@ -151,6 +159,14 @@ export default function AppRouter() {
         }
       />
       <Route
+        path="/facility/activity"
+        element={
+          <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
+            <ActivityLogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/facility/*"
         element={
           <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
@@ -172,7 +188,7 @@ export default function AppRouter() {
         path="/policy"
         element={
           <ProtectedRoute allowedRoles={["BUSINESS_OPS", "SYSTEM_ADMIN"]}>
-            <BusinessOverviewPage />
+            <PolicyManagementPage />
           </ProtectedRoute>
         }
       />
@@ -190,7 +206,7 @@ export default function AppRouter() {
         path="/users"
         element={
           <ProtectedRoute allowedRoles={["SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/users" />
+            <UserManagementPage />
           </ProtectedRoute>
         }
       />
@@ -198,7 +214,7 @@ export default function AppRouter() {
         path="/login-history"
         element={
           <ProtectedRoute allowedRoles={["SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/users" />
+            <ActivityLogPage />
           </ProtectedRoute>
         }
       />

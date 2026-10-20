@@ -61,6 +61,8 @@ const ROLE_CONFIGS = {
     links: [
       { label: "Quản lý Users", href: "/users" },
       { label: "Lịch sử đăng nhập", href: "/login-history" },
+      { label: "Nhật ký hệ thống", href: "/facility/activity" },
+      { label: "Chính sách & Giá", href: "/policy" },
     ],
   },
 };
@@ -363,14 +365,6 @@ export default function Header({
                         <span className="header-user-info__role">{currentRole}</span>
                       </div>
                       <div className="header-dropdown__divider" />
-                      <Link
-                        to={roleConfig.landing}
-                        className="header-dropdown__item"
-                        onClick={() => setShowAvatarMenu(false)}
-                      >
-                        <UserIcon size={16} />
-                        <span>Trang chủ vai trò</span>
-                      </Link>
                       <button
                         type="button"
                         className="header-dropdown__item header-dropdown__item--danger"
