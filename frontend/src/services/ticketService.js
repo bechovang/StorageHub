@@ -124,7 +124,7 @@ export function getTickets({ status = "ALL", unitCode = "ALL", customerId = null
       if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
     }
   } catch (err) {
-    console.error("Lỗi khi đọc danh sách tickets:", err);
+    console.error("Failed to read tickets:", err);
   }
 
   if (customerId) {
@@ -146,7 +146,7 @@ function saveTickets(tickets) {
   try {
     localStorage.setItem(TICKETS_STORAGE_KEY, JSON.stringify(tickets));
   } catch (err) {
-    console.error("Lỗi khi lưu tickets:", err);
+    console.error("Failed to save tickets:", err);
   }
 }
 

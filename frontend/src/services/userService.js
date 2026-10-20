@@ -34,7 +34,6 @@ export const USER_STATUSES = {
  */
 export const INITIAL_USERS = [
   {
-    id: 1,
     userId: 1,
     fullName: "Nguyễn Thị Lan",
     email: "lan@demo.storagehub.vn",
@@ -47,7 +46,6 @@ export const INITIAL_USERS = [
     createdAt: "2026-04-18T08:00:00Z",
   },
   {
-    id: 2,
     userId: 2,
     fullName: "Trần Minh",
     email: "minh@demo.storagehub.vn",
@@ -60,7 +58,6 @@ export const INITIAL_USERS = [
     createdAt: "2026-01-05T08:00:00Z",
   },
   {
-    id: 3,
     userId: 3,
     fullName: "Lê Thị Hằng",
     email: "hang@demo.storagehub.vn",
@@ -73,7 +70,6 @@ export const INITIAL_USERS = [
     createdAt: "2026-01-05T08:00:00Z",
   },
   {
-    id: 4,
     userId: 4,
     fullName: "Phạm Tuấn",
     email: "tuan@demo.storagehub.vn",
@@ -86,7 +82,6 @@ export const INITIAL_USERS = [
     createdAt: "2026-01-05T08:00:00Z",
   },
   {
-    id: 5,
     userId: 5,
     fullName: "Hoàng Nam",
     email: "nam@demo.storagehub.vn",
@@ -99,7 +94,6 @@ export const INITIAL_USERS = [
     createdAt: "2026-01-05T08:00:00Z",
   },
   {
-    id: 6,
     userId: 6,
     fullName: "Phạm Thị Trang",
     email: "trang@demo.storagehub.vn",
@@ -112,7 +106,6 @@ export const INITIAL_USERS = [
     createdAt: "2026-07-15T08:00:00Z",
   },
   {
-    id: 7,
     userId: 7,
     fullName: "Vũ Văn Vũ",
     email: "vu@demo.storagehub.vn",
@@ -140,15 +133,14 @@ export function getUsers({ role = "ALL", status = "ALL", searchTerm = "" } = {})
       }
     }
   } catch (err) {
-    console.error("Lỗi khi đọc danh sách users từ localStorage:", err);
+    console.error("Failed to read users:", err);
   }
 
-  // Chuẩn hóa định danh: Backend trả về id, mock cũ có userId -> đồng bộ cả hai
-  list = list.map((u) => ({
-    ...u,
-    id: u.id || u.userId,
-    userId: u.id || u.userId,
-  }));
+  // Chuẩn hóa id & userId đồng nhất theo chuẩn REST
+  list = list.map((u) => {
+    const targetId = u.id || u.userId;
+    return { ...u, id: targetId, userId: targetId };
+  });
 
   // Lọc theo Role
   if (role && role !== "ALL") {
@@ -182,7 +174,7 @@ function saveUsers(users) {
   try {
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
   } catch (err) {
-    console.error("Lỗi khi lưu danh sách users:", err);
+    console.error("Failed to save users:", err);
   }
 }
 
@@ -201,10 +193,8 @@ export function createUser({ fullName, email, phone, role, facilityId = 1, facil
   // Tạo mật khẩu tạm ngẫu nhiên 8 ký tự
   const tempPassword = "SH@" + Math.random().toString(36).substring(2, 7).toUpperCase();
 
-  const newId = Date.now();
   const newUser = {
-    id: newId,
-    userId: newId,
+    userId: Date.now(),
     fullName: fullName.trim(),
     email: cleanEmail,
     phone: phone.trim(),
@@ -225,7 +215,7 @@ export function createUser({ fullName, email, phone, role, facilityId = 1, facil
     actor: currentActor,
     actorRole: "SYSTEM_ADMIN",
     entityType: "USER",
-    entityId: newUser.id || newUser.userId,
+    entityId: newUser.userId,
     entityName: newUser.fullName,
     action: "CREATED",
     fromValue: null,
@@ -237,10 +227,10 @@ export function createUser({ fullName, email, phone, role, facilityId = 1, facil
 }
 
 /**
- * Cập nhật vai trò người dùng (FR-37 / US-28)
- * Đấu nối PATCH /api/v1/users/{userId}/role
- * Headers: Authorization: Bearer <token> (apiClient tự động đính kèm)
- * Body: { role: "STAFF" | "CUSTOMER" | "FACILITY_MANAGER" | "BUSINESS_OPS" | "SYSTEM_ADMIN" }
+ * Cập nhật vai trò người dùng (US-28 / FR-37)
+ * Đấu nối API Backend: PATCH /api/v1/users/{userId}/role
+ * Headers: Authorization: Bearer <token> (apiClient tự động thêm)
+ * Body: { "role": "STAFF" | "CUSTOMER" | "FACILITY_MANAGER" | "BUSINESS_OPS" | "SYSTEM_ADMIN" }
  */
 export async function updateUserRole({ userId, newRole, reason, currentActor = "Hoàng Nam (System Admin)" }) {
   if (!reason || !reason.trim()) {
@@ -248,57 +238,54 @@ export async function updateUserRole({ userId, newRole, reason, currentActor = "
   }
 
   const targetId = userId;
-  const users = getUsers({ role: "ALL", status: "ALL" });
-  const index = users.findIndex((u) => (u.id || u.userId) === Number(targetId));
-  if (index === -1) {
-    throw new Error("Không tìm thấy người dùng này trong hệ thống.");
+  if (!targetId) {
+    throw new Error("Không xác định được ID người dùng cần đổi vai trò.");
   }
 
-  const user = users[index];
-  const oldRole = user.role;
-  if (oldRole === newRole) return user;
-
-  // 1. Đấu nối API Backend (PATCH /api/v1/users/{userId}/role)
-  try {
-    const res = await apiClient(`/api/v1/users/${targetId}/role`, {
-      method: "PATCH",
-      body: JSON.stringify({ role: newRole }),
-    });
-
-    if (!res.ok) {
-      const errData = await safeParseJson(res);
-      if (errData?.message) {
-        throw new Error(errData.message);
-      }
-      throw new Error(`Cập nhật vai trò thất bại (Mã lỗi HTTP: ${res.status})`);
-    }
-  } catch (apiErr) {
-    console.warn("Backend API /api/v1/users/:userId/role:", apiErr);
-    // Nếu là lỗi nghiệp vụ từ server (400, 403, 404, 409) thì ném lỗi
-    if (apiErr.status && apiErr.status >= 400 && apiErr.status < 500) {
-      throw apiErr;
-    }
-  }
-
-  // 2. Cập nhật dữ liệu localStorage
-  user.role = newRole;
-  users[index] = user;
-  saveUsers(users);
-
-  // 3. Ghi Activity Log
-  appendActivityLog({
-    actor: currentActor,
-    actorRole: "SYSTEM_ADMIN",
-    entityType: "USER",
-    entityId: user.id || user.userId,
-    entityName: user.fullName,
-    action: "STATUS_CHANGE",
-    fromValue: `ROLE_${oldRole}`,
-    toValue: `ROLE_${newRole}`,
-    reason: reason.trim(),
+  // 1. Gọi API Backend (PATCH /api/v1/users/{userId}/role)
+  const res = await apiClient(`/api/v1/users/${targetId}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role: newRole }),
   });
 
-  return user;
+  const backendData = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(backendData.message || `Cập nhật vai trò thất bại (Mã lỗi: ${res.status})`);
+  }
+
+  // 2. Cập nhật đồng bộ vào cache localStorage
+  const users = getUsers({ role: "ALL", status: "ALL" });
+  const index = users.findIndex((u) => (u.id || u.userId) === Number(targetId));
+  let updatedUser;
+
+  if (index !== -1) {
+    const user = users[index];
+    const oldRole = user.role;
+    user.role = newRole;
+    if (backendData && typeof backendData === "object" && backendData.role) {
+      Object.assign(user, backendData);
+    }
+    users[index] = user;
+    saveUsers(users);
+    updatedUser = user;
+
+    // 3. Ghi Activity Log
+    appendActivityLog({
+      actor: currentActor,
+      actorRole: "SYSTEM_ADMIN",
+      entityType: "USER",
+      entityId: targetId,
+      entityName: user.fullName,
+      action: "STATUS_CHANGE",
+      fromValue: `ROLE_${oldRole}`,
+      toValue: `ROLE_${newRole}`,
+      reason: reason.trim(),
+    });
+  } else {
+    updatedUser = backendData || { id: targetId, userId: targetId, role: newRole };
+  }
+
+  return updatedUser;
 }
 
 /**
@@ -332,7 +319,7 @@ export function updateUserStatus({ userId, newStatus, currentUserId, reason, cur
     actor: currentActor,
     actorRole: "SYSTEM_ADMIN",
     entityType: "USER",
-    entityId: user.id || user.userId,
+    entityId: targetId,
     entityName: user.fullName,
     action: "STATUS_CHANGE",
     fromValue: statusLabelMap[oldStatus] || String(oldStatus),
@@ -364,7 +351,7 @@ export function resetUserPassword({ userId, currentActor = "Hoàng Nam (System A
     actor: currentActor,
     actorRole: "SYSTEM_ADMIN",
     entityType: "USER",
-    entityId: user.id || user.userId,
+    entityId: targetId,
     entityName: user.fullName,
     action: "STATUS_CHANGE",
     fromValue: null,

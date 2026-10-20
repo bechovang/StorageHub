@@ -123,7 +123,7 @@ export default function ExtensionModal({
             });
             onClose();
         } catch (err) {
-            console.error("Lỗi gia hạn:", err);
+            console.error("Failed to extend rental:", err);
         } finally {
             setSubmitting(false);
         }

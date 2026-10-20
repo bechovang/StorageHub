@@ -109,7 +109,7 @@ export default function CheckInPassPage() {
                 if (active) setQrDataUrl(url);
             })
             .catch((err) => {
-                console.error("Lỗi sinh QR Check-in:", err);
+                console.error("Failed to generate check-in QR code:", err);
             });
         return () => {
             active = false;

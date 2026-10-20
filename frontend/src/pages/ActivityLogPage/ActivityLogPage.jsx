@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLocation } from "react-router";
 import {
   MagnifyingGlass,
   Funnel,
@@ -35,7 +36,9 @@ function formatLogTimestamp(isoString) {
 }
 
 export default function ActivityLogPage() {
-  const [selectedEntity, setSelectedEntity] = useState("ALL");
+  const location = useLocation();
+  const isLoginHistory = location.pathname.includes("login-history");
+  const [selectedEntity, setSelectedEntity] = useState(() => (isLoginHistory ? "USER" : "ALL"));
   const [searchTerm, setSearchTerm] = useState("");
 
   // Lấy dữ liệu logs theo bộ lọc
@@ -78,10 +81,20 @@ export default function ActivityLogPage() {
         <div className="activity-container">
           {/* Header section */}
           <header className="activity-header">
-            <span className="activity-header__super">QUẢN TRỊ CƠ SỞ · BẢO MẬT & KIỂM TOÁN</span>
-            <h1 className="activity-header__title">NHẬT KÝ HOẠT ĐỘNG HỆ THỐNG</h1>
+            <span className="activity-header__super">
+              {isLoginHistory
+                ? "QUẢN TRỊ HỆ THỐNG · LỊCH SỬ ĐĂNG NHẬP & BẢO MẬT"
+                : "QUẢN TRỊ CƠ SỞ · BẢO MẬT & KIỂM TOÁN"}
+            </span>
+            <h1 className="activity-header__title">
+              {isLoginHistory
+                ? "LỊCH SỬ ĐĂNG NHẬP & BẢO MẬT TÀI KHOẢN"
+                : "NHẬT KÝ HOẠT ĐỘNG HỆ THỐNG"}
+            </h1>
             <p className="activity-header__desc">
-              Ghi nhận toàn bộ biến động trạng thái kho, hợp đồng thuê, đặt chỗ và các sự kiện bảo mật tại cơ sở.
+              {isLoginHistory
+                ? "Ghi nhận toàn bộ biến động tài khoản người dùng, các lượt đăng nhập và sự kiện xác thực bảo mật."
+                : "Ghi nhận toàn bộ biến động trạng thái kho, hợp đồng thuê, đặt chỗ và các sự kiện bảo mật tại cơ sở."}
             </p>
           </header>
 
