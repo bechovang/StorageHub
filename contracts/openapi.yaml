@@ -1189,6 +1189,138 @@ paths:
         "404": { $ref: "#/components/responses/UserNotFound" }
 
 # ---------------------------------------------------------------------------
+  /reports/financial-summary:
+    get:
+      tags: [Reports]
+      summary: Báo cáo tổng hợp tài chính và 4 chỉ số KPI cốt lõi (FR-31)
+      description: |
+        Chỉ dành cho BUSINESS_OPS và SYSTEM_ADMIN.
+        Cung cấp 4 chỉ số: Doanh thu thực nhận, Tiền cọc an ninh trong Escrow (KHÔNG tính vào doanh thu),
+        Tổng phụ thu phát sinh, Tỷ lệ lấp đầy cơ sở (Occupancy Rate).
+        Hỗ trợ lọc theo kỳ mặc định (THIS_MONTH, LAST_MONTH, THIS_QUARTER, YTD) hoặc khoảng ngày tự chọn (CUSTOM).
+      operationId: getFinancialSummary
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [THIS_MONTH, LAST_MONTH, THIS_QUARTER, YTD, CUSTOM]
+            default: THIS_QUARTER
+          description: Kỳ báo cáo
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Ngày bắt đầu (khi period = CUSTOM)
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Ngày kết thúc (khi period = CUSTOM)
+      responses:
+        "200":
+          description: Báo cáo tổng hợp tài chính theo kỳ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialSummary"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /reports/monthly-revenue:
+    get:
+      tags: [Reports]
+      summary: Dữ liệu chuỗi thời gian doanh thu hàng tháng (FR-31)
+      description: |
+        Chỉ dành cho BUSINESS_OPS và SYSTEM_ADMIN.
+        Phục vụ biểu đồ doanh thu theo tháng (tiền thuê, phụ thu, tiền cọc phong tỏa).
+      operationId: getMonthlyRevenueChart
+      parameters:
+        - name: months
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 6
+            minimum: 1
+            maximum: 24
+          description: Số tháng thống kê gần nhất
+      responses:
+        "200":
+          description: Danh sách dữ liệu doanh thu từng tháng
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyRevenueItem"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /reports/drilldown:
+    get:
+      tags: [Reports]
+      summary: Tra cứu chi tiết chứng từ theo từng KPI (KPI Drill-down) (FR-31)
+      description: |
+        Chỉ dành cho BUSINESS_OPS và SYSTEM_ADMIN.
+        Bấm vào bất kỳ KPI nào (REVENUE, DEPOSIT, SURCHARGE, OCCUPANCY) để xem toàn bộ danh sách chứng từ cấu thành.
+      operationId: getReportDrilldown
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [REVENUE, DEPOSIT, SURCHARGE, OCCUPANCY]
+          description: Loại chỉ số KPI cần drill-down
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Tìm kiếm tự do trong bảng chi tiết
+      responses:
+        "200":
+          description: Danh sách dữ liệu drill-down kèm cấu hình cột
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DrilldownResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /reports/export:
+    get:
+      tags: [Reports]
+      summary: Xuất báo cáo tài chính kiểm toán ra file CSV (FR-31)
+      description: |
+        Chỉ dành cho BUSINESS_OPS và SYSTEM_ADMIN.
+        Xuất file CSV chuẩn kiểm toán (UTF-8 BOM), phân cách bằng dấu phẩy.
+      operationId: exportReportCSV
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [THIS_MONTH, LAST_MONTH, THIS_QUARTER, YTD, CUSTOM]
+            default: THIS_QUARTER
+      responses:
+        "200":
+          description: File CSV báo cáo kiểm toán
+          content:
+            text/csv:
+              schema:
+                type: string
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
 components:
 
   securitySchemes:
@@ -1866,3 +1998,56 @@ components:
         priority: { type: string, nullable: true }
         alertNote: { type: string, nullable: true }
         issueDescription: { type: string, nullable: true }
+
+    # ------------------------------- Reports (FR-31) ----------------------
+
+    FinancialSummary:
+      type: object
+      required: [periodLabel, grossRevenue, grossRevenueGrowth, netRevenue, escrowDeposit, escrowDepositNote, surchargeRevenue, surchargeNote, occupancyRate, occupancyBreakdown, occupancyGrowth]
+      properties:
+        periodLabel: { type: string, example: "Quý này (Q3 2026)" }
+        grossRevenue: { type: integer, format: int64, example: 37450000, description: "Tổng doanh thu kinh doanh = netRevenue + surchargeRevenue" }
+        grossRevenueGrowth: { type: string, example: "+12.4% so với kỳ trước" }
+        netRevenue: { type: integer, format: int64, example: 36210000, description: "Doanh thu thuần từ tiền thuê kho" }
+        escrowDeposit: { type: integer, format: int64, example: 4890000, description: "Tiền cọc an ninh ký quỹ — tuyệt đối KHÔNG tính vào doanh thu" }
+        escrowDepositNote: { type: string, example: "Tài khoản giữ hộ cọc tại Vietcombank — Tách biệt 100% khỏi doanh thu kinh doanh" }
+        surchargeRevenue: { type: integer, format: int64, example: 1240000, description: "Tổng phụ thu phát sinh" }
+        surchargeNote: { type: string, example: "Bao gồm phí quá giờ, điện lạnh và xử lý rác" }
+        occupancyRate: { type: number, format: double, example: 88.1, description: "Tỷ lệ lấp đầy cơ sở (%)" }
+        occupancyBreakdown: { type: string, example: "37 / 42 kho đang cho thuê" }
+        occupancyGrowth: { type: string, example: "+3.2% so với tháng trước" }
+
+    MonthlyRevenueItem:
+      type: object
+      required: [month, rentRevenue, surcharge, escrowHold, totalRevenue]
+      properties:
+        month: { type: string, example: "10/2026" }
+        rentRevenue: { type: integer, format: int64, example: 36210000 }
+        surcharge: { type: integer, format: int64, example: 1240000 }
+        escrowHold: { type: integer, format: int64, example: 4890000 }
+        totalRevenue: { type: integer, format: int64, example: 37450000 }
+
+    DrilldownColumn:
+      type: object
+      required: [key, label]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        isMoney: { type: boolean, default: false }
+
+    DrilldownResponse:
+      type: object
+      required: [key, title, columns, rows]
+      properties:
+        key: { type: string, example: "REVENUE" }
+        title: { type: string, example: "Chi tiết chứng từ Doanh thu kinh doanh" }
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/DrilldownColumn"
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
