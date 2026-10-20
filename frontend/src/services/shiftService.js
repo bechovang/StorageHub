@@ -133,7 +133,7 @@ export function getLocalShifts() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (err) {
-    console.error("Lỗi đọc shifts từ localStorage:", err);
+    console.error("Failed to read shifts:", err);
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SHIFTS));
   return INITIAL_SHIFTS;
@@ -143,7 +143,7 @@ export function saveLocalShifts(shifts) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(shifts));
   } catch (err) {
-    console.error("Lỗi lưu shifts vào localStorage:", err);
+    console.error("Failed to save shifts:", err);
   }
 }
 

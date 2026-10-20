@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router";
 import {
   Bell,
   SignOut,
-  User as UserIcon,
   CaretDown,
   CheckCircle,
   WarningCircle,
@@ -23,16 +22,17 @@ const ROLE_CONFIGS = {
     label: "CUSTOMER",
     landing: "/browse",
     links: [
-      { label: "Browse Units", href: "/browse" },
-      { label: "My Rentals", href: "/rentals" },
+      { label: "Tìm thuê kho", href: "/browse" },
+      { label: "Kho của tôi", href: "/rentals" },
       { label: "Thanh toán", href: "/payment" },
+      { label: "Hỗ trợ", href: "/support" },
     ],
   },
   STAFF: {
     label: "STAFF",
     landing: "/tasks",
     links: [
-      { label: "Task Board", href: "/tasks" },
+      { label: "Bảng công việc", href: "/tasks" },
       { label: "Hỗ trợ sự cố", href: "/support" },
     ],
   },
@@ -41,7 +41,7 @@ const ROLE_CONFIGS = {
     landing: "/facility",
     links: [
       { label: "Tổng quan", href: "/facility" },
-      { label: "Quản lý Unit", href: "/facility/units" },
+      { label: "Quản lý kho", href: "/facility/units" },
       { label: "Ca trực", href: "/facility/shifts" },
       { label: "Nhật ký", href: "/facility/activity" },
     ],
@@ -59,8 +59,10 @@ const ROLE_CONFIGS = {
     label: "SYSTEM ADMIN",
     landing: "/users",
     links: [
-      { label: "Quản lý Users", href: "/users" },
+      { label: "Quản lý người dùng", href: "/users" },
       { label: "Lịch sử đăng nhập", href: "/login-history" },
+      { label: "Nhật ký hệ thống", href: "/facility/activity" },
+      { label: "Chính sách & Giá", href: "/policy" },
     ],
   },
 };
@@ -363,14 +365,6 @@ export default function Header({
                         <span className="header-user-info__role">{currentRole}</span>
                       </div>
                       <div className="header-dropdown__divider" />
-                      <Link
-                        to={roleConfig.landing}
-                        className="header-dropdown__item"
-                        onClick={() => setShowAvatarMenu(false)}
-                      >
-                        <UserIcon size={16} />
-                        <span>Trang chủ vai trò</span>
-                      </Link>
                       <button
                         type="button"
                         className="header-dropdown__item header-dropdown__item--danger"

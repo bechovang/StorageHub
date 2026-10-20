@@ -1,240 +1,45 @@
-import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   ArrowLeft,
-  Clock,
-  ShieldCheck,
-  Lock,
   ShareNetwork,
   Check,
-  CalendarCheck,
-  Key,
-  Truck,
-  Sparkle,
-  Thermometer,
-  CaretLeft,
-  CaretRight,
 } from "@phosphor-icons/react";
-
 import { Header, Footer, Badge, Button } from "../../components";
 import { useAuth } from "../../context/AuthContext";
-import { getUnitDetail, getUnitQuote } from "../../services/unitService";
 import {
-  formatVND as formatVnd,
-  formatDate,
-  getTomorrowDate,
-  PLACEHOLDER_UNIT_IMAGE,
-} from "../../utils/formatters.js";
+  useUnitDetailView,
+  UnitImageSlider,
+  UnitPricingCalculator,
+  UnitFacilityStandards,
+} from "../../features/catalog/index.js";
 import "./UnitDetailPage.css";
 
-/**
- * ── Image Slider Trình chiếu ảnh kho (Hỗ trợ ảnh thật & fallback về 1 ảnh placeholder) ──
- */
-function UnitImageSlider({ photos = [], typeName = "Tiêu chuẩn", sizeM2 = 5 }) {
-  const rawPhotos = Array.isArray(photos) ? photos.filter(Boolean) : [];
-  const [prevPhotos, setPrevPhotos] = useState(photos);
-  const [failedUrls, setFailedUrls] = useState(new Set());
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  // Reset failedUrls khi prop photos đổi theo idiomatic React
-  if (prevPhotos !== photos) {
-    setPrevPhotos(photos);
-    setFailedUrls(new Set());
-    setCurrentSlide(0);
-  }
-
-  // Lọc bỏ những URL ảnh thật đã bị lỗi tải
-  const validRealPhotos = rawPhotos.filter((url) => !failedUrls.has(url));
-
-  // Nếu còn ảnh thật tải được thì dùng danh sách đó, ngược lại hiển thị ĐÚNG 1 TẤM ẢNH PLACEHOLDER duy nhất
-  const displayPhotos =
-    validRealPhotos.length > 0 ? validRealPhotos : [PLACEHOLDER_UNIT_IMAGE];
-  const totalSlides = displayPhotos.length;
-
-  const nextSlide = useCallback(() => {
-    if (totalSlides <= 1) return;
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
-  }, [totalSlides]);
-
-  const prevSlide = useCallback(() => {
-    if (totalSlides <= 1) return;
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-  }, [totalSlides]);
-
-  const handleKeyDown = (e) => {
-    if (totalSlides <= 1) return;
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      prevSlide();
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      nextSlide();
-    }
-  };
-
-  const handleImageError = (url) => {
-    setFailedUrls((prev) => {
-      const next = new Set(prev);
-      next.add(url);
-      return next;
-    });
-  };
-
-  return (
-    <div
-      className="unit-slider"
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      role="region"
-      aria-label="Hình ảnh không gian kho"
-    >
-      <div className="unit-slider__viewport">
-        <div
-          className="unit-slider__track"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-        >
-          {displayPhotos.map((src, idx) => (
-            <div key={`${src}-${idx}`} className="unit-slider__slide">
-              <img
-                src={src}
-                alt={`Kho ${typeName} ${sizeM2} m² - Hình ảnh ${idx + 1}`}
-                className="unit-slider__img"
-                onError={() => handleImageError(src)}
-                loading={idx === 0 ? "eager" : "lazy"}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Nút điều hướng Trước / Kế tiếp (Chỉ hiển thị khi có từ 2 ảnh thật trở lên) */}
-        {totalSlides > 1 && (
-          <>
-            <button
-              type="button"
-              className="unit-slider__nav-btn unit-slider__nav-btn--prev"
-              onClick={prevSlide}
-              aria-label="Ảnh trước"
-            >
-              <CaretLeft size={20} weight="bold" />
-            </button>
-
-            <button
-              type="button"
-              className="unit-slider__nav-btn unit-slider__nav-btn--next"
-              onClick={nextSlide}
-              aria-label="Ảnh kế tiếp"
-            >
-              <CaretRight size={20} weight="bold" />
-            </button>
-          </>
-        )}
-
-        {/* Thanh chỉ báo số ảnh và bước chuyển chuẩn Swiss Grid (Chỉ hiển thị khi có từ 2 ảnh thật trở lên) */}
-        {totalSlides > 1 && (
-          <div className="unit-slider__indicator" role="tablist" aria-label="Chỉ số ảnh kho">
-            <span className="unit-slider__counter">
-              0{currentSlide + 1} / 0{totalSlides}
-            </span>
-            <div className="unit-slider__steps">
-              {displayPhotos.map((_, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={`unit-slider__step ${idx === currentSlide ? "is-active" : ""}`}
-                  onClick={() => setCurrentSlide(idx)}
-                  aria-label={`Xem ảnh ${idx + 1}`}
-                  role="tab"
-                  aria-selected={idx === currentSlide}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function UnitDetailPage() {
-  const { unitId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  const [unit, setUnit] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [copiedLink, setCopiedLink] = useState(false);
-
-  // Bộ chọn thời gian thuê
-  const [durationMonths, setDurationMonths] = useState(3);
-  const [startDate, setStartDate] = useState(getTomorrowDate());
-
-  // Bảng giá minh bạch tính từ PricingEngine theo Rental Policy v3
-  const [quote, setQuote] = useState(null);
-  const [quoteLoading, setQuoteLoading] = useState(false);
-
-  // 1. Tải thông tin chi tiết của kho
-  useEffect(() => {
-    let isMounted = true;
-
-    getUnitDetail(unitId)
-      .then((data) => {
-        if (isMounted) {
-          setUnit(data);
-          if (data.availability?.availableFromDate) {
-            setStartDate(data.availability.availableFromDate);
-          }
-        }
-      })
-      .catch((err) => {
-        console.error("Lỗi khi tải chi tiết kho:", err);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [unitId]);
-
-  // 2. Tính toán bảng giá minh bạch khi thay đổi ngày hoặc thời hạn thuê
-  useEffect(() => {
-    if (!unit?.id) return;
-    let active = true;
-    getUnitQuote(unit.id, {
-      startDate,
-      durationMonths,
-    })
-      .then((q) => {
-        if (active) setQuote(q);
-      })
-      .catch((err) => {
-        console.error("Lỗi khi tính toán bảng giá:", err);
-      })
-      .finally(() => {
-        if (active) setQuoteLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [unit?.id, startDate, durationMonths]);
-
-  // Xử lý sao chép liên kết chia sẻ
-  const handleCopyLink = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
-  // Điều hướng sang trang thanh toán / đặt kho
-  const handleBookNow = () => {
-    const params = new URLSearchParams({
-      startDate,
-      durationMonths: String(durationMonths),
-    });
-    navigate(`/units/${unitId}/book?${params.toString()}`);
-  };
+  const {
+    unit,
+    loading,
+    copiedLink,
+    durationMonths,
+    setDurationMonths,
+    startDate,
+    setStartDate,
+    quoteLoading,
+    handleCopyLink,
+    handleBookNow,
+    isSoon,
+    availableDate,
+    typeLabel,
+    facilityLabel,
+    monthlyRent,
+    volumeM3,
+    totalRent,
+    depositAmount,
+    dueNow,
+    endDate,
+    policyVersion,
+  } = useUnitDetailView();
 
   if (loading) {
     return (
@@ -246,7 +51,7 @@ export default function UnitDetailPage() {
           navLinks={[
             { label: "Tìm thuê kho", href: "/browse" },
             { label: "Kho của tôi", href: "/rentals" },
-            { label: "Hỗ trợ", href: "#support" },
+            { label: "Hỗ trợ", href: "/support" },
           ]}
         />
         <main
@@ -294,33 +99,6 @@ export default function UnitDetailPage() {
     );
   }
 
-  const rawStatus =
-    typeof unit.availability === "object"
-      ? unit.availability?.status
-      : unit.availability;
-  const isSoon =
-    rawStatus === "AVAILABLE_SOON" ||
-    rawStatus === "soon" ||
-    rawStatus === "PREPARING";
-  const availableDate =
-    typeof unit.availability === "object"
-      ? unit.availability?.availableFromDate
-      : unit.availableFrom;
-
-  const typeLabel = unit.typeName || unit.type || "Tiêu chuẩn";
-  const facilityLabel = unit.facilityName || "Cơ sở Tân Bình (VN-SGN-01)";
-  const monthlyRent = unit.baseMonthlyRent || unit.monthlyPrice || 345000;
-  const volumeM3 = (unit.sizeM2 * 2.8).toFixed(1);
-
-  // Dữ liệu bảng giá minh bạch
-  const totalRent = quote ? quote.totalRent : monthlyRent * durationMonths;
-  const depositAmount = quote
-    ? quote.depositAmount
-    : Math.round((totalRent * 10) / 100);
-  const dueNow = quote ? quote.dueNow : depositAmount;
-  const endDate = quote ? quote.endDate : "";
-  const policyVersion = quote?.policyVersion || "v3";
-
   return (
     <div className="unit-detail-page">
       {/* ── 1. Top Navigation Header ── */}
@@ -332,9 +110,9 @@ export default function UnitDetailPage() {
           user?.fullName ? user.fullName.trim().charAt(0).toUpperCase() : "KH"
         }
         navLinks={[
-          { label: "Tìm thuê kho", href: "/browse", active: true },
+          { label: "Tìm thuê kho", href: "/browse" },
           { label: "Kho của tôi", href: "/rentals" },
-          { label: "Hỗ trợ", href: "#support" },
+          { label: "Hỗ trợ", href: "/support" },
         ]}
       />
 
@@ -395,7 +173,7 @@ export default function UnitDetailPage() {
         <div className="unit-detail-layout">
           {/* ═══════════ CỘT TRÁI: HÌNH ẢNH & THÔNG SỐ CƠ SỞ (7 COLS) ═══════════ */}
           <div className="unit-detail-left-col">
-            {/* Slider hình ảnh kho - thuần ảnh, không mô tả */}
+            {/* Slider hình ảnh kho */}
             <article className="unit-detail-card unit-detail-slider-card">
               <UnitImageSlider
                 photos={unit.photoUrls?.length ? unit.photoUrls : unit.photoUrl ? [unit.photoUrl] : []}
@@ -447,308 +225,35 @@ export default function UnitDetailPage() {
                   <div className="spec-row">
                     <dt>Vị trí trong kho</dt>
                     <dd>
-                      Tòa nhà B · Tầng {unit.floor || 1} · Khu{" "}
-                      {unit.zoneCode || "A"}
+                      Tòa nhà B · Tầng {unit.floor || 1} · Khu {unit.zoneCode || "A"}
                     </dd>
                   </div>
                 </dl>
               </div>
             </article>
 
-            {/* Tiêu chuẩn vận hành cơ sở (Facility Operational Standards) */}
-            <article className="unit-detail-card">
-              <div className="unit-detail-card__header">
-                <h2 className="unit-detail-card__title">
-                  TIÊU CHUẨN KHO & TIỆN ÍCH CƠ SỞ
-                </h2>
-                <span className="unit-detail-badge-mono">
-                  AN TÂM LƯU TRỮ
-                </span>
-              </div>
-              <div className="unit-detail-card__body">
-                <div className="facility-standards-grid">
-                  <div className="standard-item">
-                    <div className="standard-item__icon">
-                      <Thermometer size={20} weight="bold" />
-                    </div>
-                    <div>
-                      <strong>Kiểm soát nhiệt ẩm 24/7</strong>
-                      <p>
-                        Duy trì 22°C - 24°C, độ ẩm &lt; 55% bảo vệ hàng điện tử,
-                        hồ sơ, đồ gỗ.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="standard-item">
-                    <div className="standard-item__icon">
-                      <Key size={20} weight="bold" />
-                    </div>
-                    <div>
-                      <strong>Ra vào bằng mã PIN riêng</strong>
-                      <p>
-                        Chủ động vào kho 24/7 bằng mã PIN riêng, kích hoạt ngay
-                        sau khi đặt cọc.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="standard-item">
-                    <div className="standard-item__icon">
-                      <Truck size={20} weight="bold" />
-                    </div>
-                    <div>
-                      <strong>Khu bốc dỡ & Thang nâng 3 tấn</strong>
-                      <p>
-                        Sân đỗ xe tải trực tiếp, thang nâng hàng chuyên dụng
-                        cách cửa kho 15m.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="standard-item">
-                    <div className="standard-item__icon">
-                      <Sparkle size={20} weight="bold" />
-                    </div>
-                    <div>
-                      <strong>Khử khuẩn & Vệ sinh sạch sẽ</strong>
-                      <p>
-                        Kho luôn được quét dọn, khử khuẩn sạch sẽ trước khi bàn
-                        giao cho bạn.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </article>
+            {/* Tiêu chuẩn vận hành cơ sở */}
+            <UnitFacilityStandards />
           </div>
 
           {/* ═══════════ CỘT PHẢI: BẢNG GIÁ MINH BẠCH & DỰ TOÁN THUÊ (5 COLS) ═══════════ */}
           <aside className="unit-detail-right-col">
-            <div className="unit-detail-pricing-panel">
-              {/* Header bảng giá */}
-              <div className="pricing-panel-header">
-                <div>
-                  <h2 className="pricing-panel-title">DỰ TOÁN CHI PHÍ THUÊ</h2>
-                  <p className="pricing-panel-sub">
-                    Giá thuê rõ ràng, không phụ phí ẩn
-                  </p>
-                </div>
-              </div>
-
-              {/* Bộ chọn thời gian thuê (Lease Duration Selector) */}
-              <div className="pricing-selector-group">
-                <label
-                  htmlFor="duration-select"
-                  className="pricing-selector-label"
-                >
-                  THỜI HẠN THUÊ CAM KẾT
-                </label>
-                <div className="pricing-duration-buttons">
-                  {[
-                    { months: 1, label: "1 tháng", hint: "Linh hoạt" },
-                    { months: 3, label: "3 tháng", hint: "Phổ biến" },
-                    { months: 6, label: "6 tháng", hint: "Tiết kiệm 5%" },
-                    { months: 12, label: "12 tháng", hint: "Ưu đãi 10%" },
-                  ].map((item) => (
-                    <button
-                      key={item.months}
-                      type="button"
-                      className={`pricing-duration-btn ${durationMonths === item.months ? "is-selected" : ""}`}
-                      onClick={() => setDurationMonths(item.months)}
-                    >
-                      <span className="pricing-duration-btn__months">
-                        {item.label}
-                      </span>
-                      <span className="pricing-duration-btn__hint">
-                        {item.hint}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bộ chọn ngày nhận kho (Start Date) */}
-              <div className="pricing-selector-group">
-                <label
-                  htmlFor="start-date-input"
-                  className="pricing-selector-label"
-                >
-                  NGÀY BẮT ĐẦU THUÊ DỰ KIẾN
-                </label>
-                <input
-                  id="start-date-input"
-                  type="date"
-                  className="pricing-date-input"
-                  value={startDate}
-                  min={
-                    isSoon && availableDate ? availableDate : getTomorrowDate()
-                  }
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-                {endDate && (
-                  <p className="pricing-cycle-hint">
-                    <CalendarCheck size={14} weight="bold" />
-                    <span>
-                      Chu kỳ thuê: <strong>{formatDate(startDate)}</strong> →{" "}
-                      <strong>{formatDate(endDate)}</strong> ({durationMonths}{" "}
-                      tháng)
-                    </span>
-                  </p>
-                )}
-              </div>
-
-              <div className="pricing-divider" />
-
-              {/* ── TỪNG DÒNG CHI PHÍ THEO RENTAL POLICY ĐANG HIỆU LỰC ── */}
-              <div className="pricing-breakdown-list">
-                <span className="pricing-breakdown-heading">
-                  CHI TIẾT CHI PHÍ
-                </span>
-
-                {/* 1. Dòng tiền thuê cơ bản: Rent × Duration */}
-                <div className="pricing-breakdown-row">
-                  <div className="pricing-row-left">
-                    <span className="pricing-row-label">Tiền thuê kho</span>
-                    <span className="pricing-row-sub">
-                      {formatVnd(monthlyRent)}/tháng × {durationMonths} tháng
-                    </span>
-                  </div>
-                  <strong className="pricing-row-amount">
-                    {formatVnd(totalRent)}
-                  </strong>
-                </div>
-
-                {/* 2. Dòng phụ thu: Phí quản lý cơ sở & bảo trì */}
-                <div className="pricing-breakdown-row">
-                  <div className="pricing-row-left">
-                    <span className="pricing-row-label">
-                      Phí dịch vụ & giám sát an ninh 24/7
-                    </span>
-                    <span className="pricing-row-sub">
-                      Rental Policy {policyVersion}
-                    </span>
-                  </div>
-                  <span className="pricing-row-status is-included">
-                    Bao gồm (0 ₫)
-                  </span>
-                </div>
-
-                {/* 3. Dòng phụ thu: Bảo hiểm tài sản lưu trữ */}
-                <div className="pricing-breakdown-row">
-                  <div className="pricing-row-left">
-                    <span className="pricing-row-label">
-                      Bảo hiểm tài sản tiêu chuẩn
-                    </span>
-                    <span className="pricing-row-sub">
-                      Gói bảo vệ hàng hóa cơ bản
-                    </span>
-                  </div>
-                  <span className="pricing-row-status is-included">
-                    Bao gồm (0 ₫)
-                  </span>
-                </div>
-
-                {/* 4. Dòng phụ thu: Cấp mã số PIN khoá điện tử */}
-                <div className="pricing-breakdown-row">
-                  <div className="pricing-row-left">
-                    <span className="pricing-row-label">
-                      Khởi tạo mã PIN vào kho
-                    </span>
-                    <span className="pricing-row-sub">
-                      Cấp mã PIN miễn phí
-                    </span>
-                  </div>
-                  <div className="pricing-row-waived">
-                    <del>50.000 ₫</del>
-                    <span className="pricing-row-status is-included">
-                      Miễn phí (0 ₫)
-                    </span>
-                  </div>
-                </div>
-
-                {/* 5. Tổng giá trị hợp đồng thuê */}
-                <div className="pricing-total-contract-row">
-                  <span>Tổng giá trị tiền thuê ({durationMonths} tháng):</span>
-                  <strong>{formatVnd(totalRent)}</strong>
-                </div>
-              </div>
-
-              {/* ── HỘP TẬP TRUNG TIỀN CỌC KÈM NHÃN REFUNDABLE (HOÀN LẠI) ── */}
-              <div className="pricing-deposit-box">
-                <div className="deposit-box-header">
-                  <div className="deposit-box-title-wrap">
-                    <ShieldCheck size={20} color="#16a34a" weight="bold" />
-                    <div>
-                      <span className="deposit-box-title">
-                        Tiền đặt cọc giữ kho (10%)
-                      </span>
-                      <span className="deposit-box-badge-refundable">
-                        HOÀN TRẢ KHI TRẢ KHO
-                      </span>
-                    </div>
-                  </div>
-                  <strong className="deposit-box-amount">
-                    {formatVnd(depositAmount)}
-                  </strong>
-                </div>
-
-                <p className="deposit-box-explanation">
-                  ✓ Tiền cọc giúp giữ chỗ kho cho bạn và được{" "}
-                  <strong>hoàn trả 100%</strong> vào tài khoản của bạn ngay khi
-                  kết thúc hợp đồng.
-                </p>
-              </div>
-
-              {/* ── SỐ TIỀN PHẢI THANH TOÁN NGAY HÔM NAY (DUE NOW) ── */}
-              <div className="pricing-due-now-box">
-                <div className="due-now-row">
-                  <div>
-                    <span className="due-now-label">
-                      THANH TOÁN HÔM NAY:
-                    </span>
-                    <span className="due-now-sub">
-                      Tiền cọc giữ chỗ kho
-                    </span>
-                  </div>
-                  <strong className="due-now-amount">
-                    {formatVnd(dueNow)}
-                  </strong>
-                </div>
-                <p className="due-now-subnote">
-                  (Tiền thuê còn lại {formatVnd(totalRent)} sẽ thanh toán vào
-                  ngày nhận kho)
-                </p>
-              </div>
-
-              {/* ── NÚT HÀNH ĐỘNG ĐẶT KHO ── */}
-              <button
-                type="button"
-                className="pricing-submit-btn"
-                onClick={handleBookNow}
-                disabled={quoteLoading}
-              >
-                <span>Đặt kho & Thanh toán cọc</span>
-                <span className="pricing-submit-btn__arrow">→</span>
-              </button>
-
-              {/* Cam kết bảo mật & Hủy miễn phí */}
-              <div className="pricing-guarantees">
-                <div className="guarantee-item">
-                  <Lock size={15} weight="bold" />
-                  <span>
-                    Cổng thanh toán mã hóa an toàn · Hỗ trợ Thẻ / MoMo / VNPay
-                  </span>
-                </div>
-                <div className="guarantee-item">
-                  <Clock size={15} weight="bold" />
-                  <span>
-                    Hủy miễn phí trong vòng 24 giờ trước ngày nhận kho, hoàn
-                    100% cọc
-                  </span>
-                </div>
-              </div>
-            </div>
+            <UnitPricingCalculator
+              durationMonths={durationMonths}
+              setDurationMonths={setDurationMonths}
+              startDate={startDate}
+              setStartDate={setStartDate}
+              endDate={endDate}
+              monthlyRent={monthlyRent}
+              totalRent={totalRent}
+              depositAmount={depositAmount}
+              dueNow={dueNow}
+              policyVersion={policyVersion}
+              quoteLoading={quoteLoading}
+              isSoon={isSoon}
+              availableDate={availableDate}
+              onBookNow={handleBookNow}
+            />
           </aside>
         </div>
       </main>
