@@ -51,6 +51,7 @@ tags:
   - name: Contracts
   - name: Tasks
   - name: Notifications
+  - name: ActivityLogs
 
 # ---------------------------------------------------------------------------
 paths:
@@ -1076,6 +1077,31 @@ paths:
         "409": { $ref: "#/components/responses/TaskSnapBack" }
 
 # --------------------- USERS / SYS-01 (US-28, FR-37) --------------------
+
+  /activity-logs:
+    get:
+      tags: [ActivityLogs]
+      summary: Xem nhật ký hoạt động hệ thống (FR-28 / NFR-6)
+      description: |
+        Audit trail append-only: timestamp, actor, entity, action, from → to, reason.
+        Hỗ trợ lọc theo entityType, query text, date range, phân trang (mặc định 25 rows).
+        Dành cho Facility Manager và System Administrator. Read-only hoàn toàn (cấm sửa/xóa).
+      operationId: getActivityLogs
+      parameters:
+        - { name: query, in: query, schema: { type: string }, description: "Tìm kiếm theo tên actor, action, reason" }
+        - { name: entityType, in: query, schema: { type: string }, description: "Lọc theo entity type (UNIT, RESERVATION, CONTRACT, STAFF_ASSIGNMENT, USER, TICKET, PAYMENT...)" }
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: "Từ ngày (YYYY-MM-DD)" }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: "Đến ngày (YYYY-MM-DD)" }
+        - { name: page, in: query, schema: { type: integer, default: 1, minimum: 1 }, description: "Trang (1-based)" }
+        - { name: pageSize, in: query, schema: { type: integer, default: 25, minimum: 1, maximum: 100 }, description: "Số bản ghi mỗi trang (mặc định 25)" }
+      responses:
+        "200":
+          description: Danh sách nhật ký hoạt động phân trang
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActivityLogPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /users:
     get:
@@ -2112,3 +2138,33 @@ components:
             type: object
             additionalProperties: true
 
+    # --------------------------- Activity Log (FR-28) ---------------------
+
+    ActivityLogItem:
+      type: object
+      required: [logId, entityType, action, createdAt]
+      properties:
+        logId: { type: integer, format: int64, example: 1 }
+        actorId: { type: integer, format: int64, nullable: true, example: 4 }
+        actorName: { type: string, nullable: true, example: "Phạm Tuấn" }
+        actorEmail: { type: string, nullable: true, example: "tuan@demo.storagehub.vn" }
+        actorRole: { type: string, nullable: true, example: "FACILITY_MANAGER" }
+        entityType: { type: string, example: "UNIT" }
+        entityId: { type: integer, format: int64, nullable: true, example: 3 }
+        action: { type: string, example: "STATUS_CHANGE" }
+        fromValue: { type: string, nullable: true, example: "RENTED" }
+        toValue: { type: string, nullable: true, example: "PREPARING" }
+        reason: { type: string, nullable: true, example: "Sửa trạng thái thực tế kho không dùng" }
+        createdAt: { type: string, format: date-time, example: "2026-10-01T14:22:00Z" }
+
+    ActivityLogPage:
+      type: object
+      required: [items, page, pageSize, total, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ActivityLogItem" }
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 25 }
+        total: { type: integer, format: int64, example: 48 }
+        totalPages: { type: integer, example: 2 }

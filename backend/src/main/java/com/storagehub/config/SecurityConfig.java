@@ -74,6 +74,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/v1/users/**").hasRole("SYSTEM_ADMIN")
                         .requestMatchers("/api/v1/reports/**").hasAnyRole("BUSINESS_OPS", "SYSTEM_ADMIN")
+                        .requestMatchers("/api/v1/activity-logs/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
