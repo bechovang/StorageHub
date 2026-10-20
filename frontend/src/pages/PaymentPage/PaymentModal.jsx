@@ -270,8 +270,8 @@ export default function PaymentModal({
               </div>
 
               <div className="decline-code-box">
-                <span className="decline-code-box__label">Mã phản hồi từ cổng:</span>
-                <code className="decline-code-box__code">DECLINE_CODE_51</code>
+                <span className="decline-code-box__label">Chi tiết phản hồi:</span>
+                <code className="decline-code-box__code">Thẻ bị từ chối hoặc không đủ hạn mức (Mã 51)</code>
               </div>
 
               <div className="modal-actions-grid">
@@ -360,24 +360,26 @@ export default function PaymentModal({
                 )}
               </div>
 
-              {/* Quick Mock OTP Presets */}
-              <div className="mock-presets-row">
-                <span className="mock-presets-label">Kiểm thử:</span>
-                <button
-                  type="button"
-                  className="preset-chip preset-chip--success"
-                  onClick={() => onOtpChange("123456")}
-                >
-                  OTP hợp lệ (123456)
-                </button>
-                <button
-                  type="button"
-                  className="preset-chip preset-chip--danger"
-                  onClick={() => onOtpChange("999999")}
-                >
-                  OTP sai (999999)
-                </button>
-              </div>
+              {/* Quick Mock OTP Presets (chỉ hiển thị ở môi trường DEV) */}
+              {import.meta.env.DEV && (
+                <div className="mock-presets-row">
+                  <span className="mock-presets-label">Kiểm thử:</span>
+                  <button
+                    type="button"
+                    className="preset-chip preset-chip--success"
+                    onClick={() => onOtpChange("123456")}
+                  >
+                    OTP hợp lệ (123456)
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-chip preset-chip--danger"
+                    onClick={() => onOtpChange("999999")}
+                  >
+                    OTP sai (999999)
+                  </button>
+                </div>
+              )}
 
               <div className="modal-actions-grid">
                 <Button
@@ -529,24 +531,26 @@ export default function PaymentModal({
                     />
                   </div>
 
-                  {/* Mock Gateway Test Chips */}
-                  <div className="mock-presets-row">
-                    <span className="mock-presets-label">Thẻ thử nghiệm:</span>
-                    <button
-                      type="button"
-                      className="preset-chip preset-chip--success"
-                      onClick={() => onApplyCardPreset("success")}
-                    >
-                      Thẻ hợp lệ (4242 4242...)
-                    </button>
-                    <button
-                      type="button"
-                      className="preset-chip preset-chip--danger"
-                      onClick={() => onApplyCardPreset("fail")}
-                    >
-                      Thẻ từ chối (5555 5555...)
-                    </button>
-                  </div>
+                  {/* Mock Gateway Test Chips (chỉ hiển thị ở môi trường DEV) */}
+                  {import.meta.env.DEV && (
+                    <div className="mock-presets-row">
+                      <span className="mock-presets-label">Thẻ thử nghiệm:</span>
+                      <button
+                        type="button"
+                        className="preset-chip preset-chip--success"
+                        onClick={() => onApplyCardPreset("success")}
+                      >
+                        Thẻ hợp lệ (4242 4242...)
+                      </button>
+                      <button
+                        type="button"
+                        className="preset-chip preset-chip--danger"
+                        onClick={() => onApplyCardPreset("fail")}
+                      >
+                        Thẻ từ chối (5555 5555...)
+                      </button>
+                    </div>
+                  )}
 
                   {/* Hóa đơn xác nhận trước khi thanh toán */}
                   <PaymentInvoiceSummary
@@ -665,17 +669,19 @@ export default function PaymentModal({
                     <strong>{formatVND(paymentSession?.amount || reservation?.depositAmount)}</strong>.
                   </p>
 
-                  {/* Mock Presets */}
-                  <div className="mock-presets-row">
-                    <span className="mock-presets-label">Kiểm thử Mock Gateway:</span>
-                    <button
-                      type="button"
-                      className="preset-chip preset-chip--success"
-                      onClick={onSimulateVNPaySuccess}
-                    >
-                      Giả lập quét thành công
-                    </button>
-                  </div>
+                  {/* Mock Presets (chỉ hiển thị ở môi trường DEV) */}
+                  {import.meta.env.DEV && (
+                    <div className="mock-presets-row">
+                      <span className="mock-presets-label">Kiểm thử Mock Gateway:</span>
+                      <button
+                        type="button"
+                        className="preset-chip preset-chip--success"
+                        onClick={onSimulateVNPaySuccess}
+                      >
+                        Giả lập quét thành công
+                      </button>
+                    </div>
+                  )}
 
                   <div className="polling-status-hint">
                     <CircleNotch size={14} className="spinner-rotate" />

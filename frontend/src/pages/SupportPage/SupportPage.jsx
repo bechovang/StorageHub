@@ -1,14 +1,8 @@
 import { useState, useMemo } from "react";
 import {
-  Lifebuoy,
   PlusCircle,
-  Clock,
   CheckCircle,
-  WarningOctagon,
-  ArrowRight,
   ShieldWarning,
-  PaperPlaneTilt,
-  ChatText,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import Modal from "../../components/Modal/Modal.jsx";
@@ -59,12 +53,12 @@ export default function SupportPage() {
   };
 
   const filteredTickets = useMemo(() => {
-    let list = getTickets(isCustomer ? { customerId: user?.id } : {});
+    let list = tickets;
     if (statusFilter !== "ALL") {
       list = list.filter((t) => t.status === statusFilter);
     }
     return list;
-  }, [statusFilter, tickets, isCustomer, user]);
+  }, [statusFilter, tickets]);
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
@@ -297,7 +291,7 @@ export default function SupportPage() {
                             }}
                           >
                             <CheckCircle size={15} weight="bold" />
-                            <span>Xử lý xong (Resolve)</span>
+                            <span>Đã xử lý xong</span>
                           </button>
                           {t.status !== "ESCALATED" && (
                             <button
@@ -310,7 +304,7 @@ export default function SupportPage() {
                               }}
                             >
                               <ShieldWarning size={15} weight="bold" />
-                              <span>Chuyển Quản lý (Escalate)</span>
+                              <span>Chuyển cấp Quản lý</span>
                             </button>
                           )}
                         </div>
@@ -471,6 +465,14 @@ export default function SupportPage() {
               </div>
             </form>
           </Modal>
+        )}
+
+        {/* ── Toast notification nổi ── */}
+        {toastMessage && (
+          <div className="toast-banner toast-banner--success" role="status">
+            <CheckCircle size={18} weight="bold" />
+            <span>{toastMessage}</span>
+          </div>
         )}
       </div>
     </AppShell>
