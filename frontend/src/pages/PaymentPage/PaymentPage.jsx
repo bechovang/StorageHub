@@ -48,6 +48,7 @@ export default function PaymentPage() {
     handleCreateTestReservation,
     handleSelectReservation,
     handleCopyReceipt,
+    unitDetailUrl,
   } = usePayment();
 
   return (
@@ -70,6 +71,7 @@ export default function PaymentPage() {
               paymentHistory={paymentHistory}
               showHistory={showHistory}
               setShowHistory={setShowHistory}
+              unitDetailUrl={unitDetailUrl}
             />
           </div>
         </div>

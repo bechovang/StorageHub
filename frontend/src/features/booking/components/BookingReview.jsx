@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   CaretRight,
   ShieldCheck,
   CheckCircle,
@@ -28,8 +29,17 @@ export default function BookingReview({
   paymentHistory = [],
   showHistory,
   setShowHistory,
+  unitDetailUrl: passedUnitDetailUrl,
 }) {
   const unit = reservation?.unit || {};
+  const targetUnitId = unit.id || reservation?.unitId;
+  const backParams = new URLSearchParams();
+  if (reservation?.startDate) backParams.set("startDate", reservation.startDate);
+  if (reservation?.durationMonths) backParams.set("durationMonths", reservation.durationMonths);
+  const backQueryStr = backParams.toString() ? `?${backParams.toString()}` : "";
+  const unitDetailUrl =
+    passedUnitDetailUrl || (targetUnitId ? `/units/${targetUnitId}${backQueryStr}` : "/browse");
+
   const totalRent = (unit.monthlyPrice || 345000) * (reservation?.durationMonths || 3);
   const initials = user?.fullName
     ? user.fullName
@@ -44,15 +54,22 @@ export default function BookingReview({
     <div className="booking-review-layout">
       {/* ── BREADCRUMB & WORKFLOW STEP ── */}
       <div className="booking-subbar">
-        <nav className="booking-breadcrumb" aria-label="Breadcrumb">
-          <Link to="/browse">Danh sách kho</Link>
-          <CaretRight size={13} weight="bold" />
-          <span>{unit.depot || "Cơ sở Tân Bình"}</span>
-          <CaretRight size={13} weight="bold" />
-          <span className="booking-breadcrumb__current">
-            {unit.code ? `Kho ${unit.code}` : "Kho"} · Đặt chỗ
-          </span>
-        </nav>
+        <div className="booking-subbar__nav">
+          <Link to={unitDetailUrl} className="booking-back-btn" title="Quay lại chi tiết kho">
+            <ArrowLeft size={15} weight="bold" />
+            <span>Quay lại chi tiết kho</span>
+          </Link>
+          <span className="booking-subbar__divider" aria-hidden="true">|</span>
+          <nav className="booking-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/browse">Danh sách kho</Link>
+            <CaretRight size={13} weight="bold" />
+            <Link to={unitDetailUrl} className="booking-breadcrumb__unit-link">
+              {unit.code ? `Kho ${unit.code}` : "Chi tiết kho"}
+            </Link>
+            <CaretRight size={13} weight="bold" />
+            <span className="booking-breadcrumb__current">Đặt cọc &amp; Thanh toán</span>
+          </nav>
+        </div>
 
         <Badge tone={isAlreadyPaid ? "success" : "default"} className="step-badge">
           <ShieldCheck size={14} weight="bold" />
@@ -241,12 +258,22 @@ export default function BookingReview({
                       Kho của tôi
                     </Link>
                   </div>
+                  <Link to={unitDetailUrl} className="btn-back-change-terms">
+                    <ArrowLeft size={14} weight="bold" />
+                    <span>Xem lại thông tin chi tiết kho</span>
+                  </Link>
                 </>
               ) : (
-                <Button variant="primary" fullWidth size="large" onClick={onOpenModal}>
-                  <Lock size={18} weight="bold" />
-                  <span>Tiến hành thanh toán cọc</span>
-                </Button>
+                <>
+                  <Button variant="primary" fullWidth size="large" onClick={onOpenModal}>
+                    <Lock size={18} weight="bold" />
+                    <span>Tiến hành thanh toán cọc</span>
+                  </Button>
+                  <Link to={unitDetailUrl} className="btn-back-change-terms">
+                    <ArrowLeft size={14} weight="bold" />
+                    <span>Đổi thời hạn thuê hoặc ngày nhận kho</span>
+                  </Link>
+                </>
               )}
 
               {/* Nút tạo đơn mẫu để test thuận tiện (chỉ hiển thị ở môi trường DEV) */}

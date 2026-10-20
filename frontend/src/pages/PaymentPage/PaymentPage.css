@@ -41,6 +41,51 @@
   margin-bottom: var(--space-6);
 }
 
+.booking-subbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.booking-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 12px;
+  background-color: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-sm, 2px);
+  color: var(--color-ink);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 600;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: all 0.15s ease;
+}
+
+.booking-back-btn:hover {
+  background-color: var(--color-ink);
+  color: var(--color-surface);
+  border-color: var(--color-ink);
+}
+
+.booking-back-btn svg {
+  transition: transform 0.15s ease;
+}
+
+.booking-back-btn:hover svg {
+  transform: translateX(-3px);
+}
+
+.booking-subbar__divider {
+  color: var(--color-border);
+  font-size: 14px;
+  user-select: none;
+}
+
 .booking-breadcrumb {
   display: flex;
   align-items: center;
@@ -57,6 +102,12 @@
 
 .booking-breadcrumb a:hover {
   color: var(--color-ink);
+}
+
+.booking-breadcrumb__unit-link {
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .booking-breadcrumb__current {
@@ -455,6 +506,37 @@
   color: var(--color-status-success);
   font-weight: 700;
   font-size: var(--font-size-sm);
+}
+
+.btn-back-change-terms {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 8px 12px;
+  color: var(--color-secondary);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  border-radius: var(--radius-sm, 2px);
+  transition: all 0.15s ease;
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.btn-back-change-terms:hover {
+  color: var(--color-ink);
+  background-color: var(--color-neutral);
+  border-color: var(--color-line);
+}
+
+.btn-back-change-terms svg {
+  transition: transform 0.15s ease;
+}
+
+.btn-back-change-terms:hover svg {
+  transform: translateX(-3px);
 }
 
 .btn-create-test {

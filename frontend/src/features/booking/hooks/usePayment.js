@@ -16,6 +16,7 @@ const DEFAULT_DEMO_RESERVATION = {
   startDate: "2026-10-03",
   endDate: "2027-01-03",
   unit: {
+    id: 1,
     code: "S-3",
     sizeM2: 5,
     typeName: "Indoor Climate-Controlled Storage",
@@ -182,6 +183,7 @@ export function usePayment() {
                 startDate: start,
                 endDate: eDate.toISOString().split("T")[0],
                 unit: {
+                  id: u.id,
                   code: u.code || `UNIT-${u.id}`,
                   sizeM2: u.sizeM2 || 5,
                   typeName: u.typeName || "Kho tiêu chuẩn",
@@ -227,6 +229,7 @@ export function usePayment() {
                 startDate: detail.startDate || "2026-10-03",
                 endDate: detail.endDate || "2027-01-03",
                 unit: {
+                  id: detail.unit?.id || detail.unitId,
                   code: detail.unit?.code || "S-3",
                   sizeM2: detail.unit?.sizeM2 || 5,
                   typeName: detail.unit?.typeName || "Indoor Climate-Controlled Storage",
@@ -695,6 +698,7 @@ export function usePayment() {
         startDate: created.startDate || today,
         endDate: created.endDate,
         unit: {
+          id: created.unit?.id || created.unitId,
           code: created.unit?.code || "S-4",
           sizeM2: created.unit?.sizeM2 || 5,
           typeName: created.unit?.typeName || "Standard Storage",
@@ -744,6 +748,7 @@ export function usePayment() {
           startDate: detail.startDate || "2026-10-03",
           endDate: detail.endDate || "2027-01-03",
           unit: {
+            id: detail.unit?.id || detail.unitId,
             code: detail.unit?.code || "S-3",
             sizeM2: detail.unit?.sizeM2 || 5,
             typeName: detail.unit?.typeName || "Indoor Climate-Controlled Storage",
@@ -780,10 +785,19 @@ export function usePayment() {
     reservation?.status === "RESERVED" ||
     paymentSession?.status === "SUCCEEDED";
 
+  const targetUnitId = reservation?.unit?.id || reservation?.unitId || paramUnitId;
+  const backParams = new URLSearchParams();
+  if (reservation?.startDate) backParams.set("startDate", reservation.startDate);
+  if (reservation?.durationMonths) backParams.set("durationMonths", reservation.durationMonths);
+  const backQueryStr = backParams.toString() ? `?${backParams.toString()}` : "";
+  const unitDetailUrl = targetUnitId ? `/units/${targetUnitId}${backQueryStr}` : "/browse";
+
   return {
     user,
     navigate,
     reservation,
+    targetUnitId,
+    unitDetailUrl,
     loadingReservation,
     myReservations,
     isModalOpen,
