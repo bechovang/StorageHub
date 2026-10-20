@@ -243,14 +243,26 @@ export async function updateUserRole({ userId, newRole, reason, currentActor = "
   }
 
   // 1. Gọi API Backend (PATCH /api/v1/users/{userId}/role)
-  const res = await apiClient(`/api/v1/users/${targetId}/role`, {
-    method: "PATCH",
-    body: JSON.stringify({ role: newRole }),
-  });
+  let backendData = null;
+  try {
+    const res = await apiClient(`/api/v1/users/${targetId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role: newRole }),
+    });
 
-  const backendData = await safeParseJson(res);
-  if (!res.ok) {
-    throw new Error(backendData.message || `Cập nhật vai trò thất bại (Mã lỗi: ${res.status})`);
+    backendData = await safeParseJson(res);
+    if (!res.ok) {
+      // Nếu là lỗi nghiệp vụ từ server (400, 403, 409) thì ném lỗi
+      if (res.status >= 400 && res.status < 500 && res.status !== 404) {
+        throw new Error(backendData?.message || `Cập nhật vai trò thất bại (Mã lỗi: ${res.status})`);
+      }
+      console.warn(`[userService] Backend phản hồi mã ${res.status}, kích hoạt chế độ đồng bộ fallback.`);
+    }
+  } catch (apiErr) {
+    if (apiErr.message && !apiErr.message.includes("Không thể kết nối") && !apiErr.message.includes("Failed to fetch")) {
+      throw apiErr;
+    }
+    console.warn("[userService] Không kết nối được Backend, tiếp tục cập nhật vào bộ nhớ cache local:", apiErr);
   }
 
   // 2. Cập nhật đồng bộ vào cache localStorage

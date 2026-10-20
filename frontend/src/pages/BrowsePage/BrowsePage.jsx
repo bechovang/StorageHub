@@ -1,4 +1,4 @@
-import { SignOut, X, Funnel } from "@phosphor-icons/react";
+import { X, Funnel } from "@phosphor-icons/react";
 import { Header, Footer, UnitCard } from "../../components";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -9,7 +9,7 @@ import {
 import "./BrowsePage.css";
 
 export default function BrowsePage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const {
     filterOptions,
     selectedType,
