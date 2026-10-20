@@ -13,8 +13,8 @@
 # - AD-8: Mọi lỗi theo envelope Error (machine code + message + fieldErrors).
 #   Danh sách theo envelope page {items, page, pageSize, total}, page 1-based,
 #   mặc định 25. Enum UPPER_SNAKE; JSON field camelCase; query param kebab-case.
-# - AD-9: Kết quả thanh toán do MockPaymentGateway quyết định theo cấu hình
-#   server-side (profile dev) — KHÔNG BAO GIỜ là field trong request.
+# - AD-9: CARD/MOMO/VNPAY = mock demo; PAYOS = cổng thật; outcome không bao
+#   giờ là field trong request.
 # - AD-11: Mọi con số tiền sinh từ PricingEngine; quote snapshot vào
 #   reservation tại Booking Summary; contract dùng lại snapshot.
 # - 401/403 từ tầng security vẫn trả envelope Error (AuthenticationEntryPoint /
@@ -661,18 +661,14 @@ paths:
       description: |
         Nhận purpose DEPOSIT (booking) và RENT (check-in tại quầy — US-15:
         chỉ mở khi reservation đã RESERVED và chưa quá hạn nhận kho).
-        EXTENSION_FEE / EXTRA_FEE / DAMAGE_FEE thuộc sprint sau.
-        Kết quả thanh toán (thành công/thất bại) do MockPaymentGateway quyết
-        định theo cấu hình server-side — KHÔNG có field outcome trong request.
-        Flows: CARD → trả PROCESSING, FE poll GET; MOMO → trả PENDING +
-        otpRequired, FE nhập OTP rồi POST /payments/{id}/confirm; VNPAY →
-        trả PENDING + QR payload + expiresAt (~5 phút), FE poll GET (mock
-        auto-complete sau ~2s), hết hạn → EXPIRED, FE quay về chọn phương thức
-        rồi tạo payment mới.
-        Giá trị test mock (config `payment.mock.*` backend): CARD
-        4242424242424242 → SUCCEEDED, thẻ khác → FAILED; MoMo OTP 123456 →
-        SUCCEEDED, OTP khác → FAILED; QR/OTP hết hạn ~5 phút theo
-        qrExpiresAt/otpExpiresAt server trả.
+        Kết quả thanh toán do gateway phía server quyết định — KHÔNG có field
+        outcome trong request.
+        CARD / MOMO / VNPAY = DEMO: trả PROCESSING, FE poll GET ~1s sau đó
+        SUCCEEDED; không cần thẻ/OTP/QR hợp lệ (demo bỏ bước OTP).
+        PAYOS = THẬT (backend bật PAYOS_ENABLED=true + 3 key): trả PENDING +
+        `checkoutUrl` + `qrCode` (VietQR động) + `qrExpiresAt`; khách quét
+        VietQR hoặc mở cổng PayOS, FE poll GET cho tới khi webhook xác nhận.
+        Chưa cấu hình PayOS → 400 VALIDATION_FAILED với hướng dẫn bật.
       operationId: createPayment
       requestBody:
         required: true
@@ -796,6 +792,42 @@ paths:
                   value: { code: PAYMENT_EXPIRED, message: "Phiên thanh toán đã hết hạn (QR/OTP). Chọn lại phương thức để tiếp tục.", fieldErrors: [] }
                 invalidState:
                   value: { code: PAYMENT_INVALID_STATE, message: "Giao dịch này đã kết thúc.", fieldErrors: [] }
+
+  /payments/webhooks/payos:
+    post:
+      tags: [Payments]
+      summary: Webhook PayOS — public, xác thực HMAC-SHA256
+      description: |
+        PayOS gọi endpoint này sau khi khách chuyển khoản. Không dùng JWT;
+        chữ ký HMAC-SHA256 trong `signature` được verify bằng
+        PAYOS_CHECKSUM_KEY (SDK PayOS). Gateway chỉ verify + trả event đã
+        chuẩn hóa; `PaymentService` là single writer (AD-4/AD-9) — chuyển
+        payment PENDING/PROCESSING → SUCCEEDED (kích hoạt handler theo purpose
+        DEPOSIT/RENT/EXTENSION_FEE) hoặc FAILED. Idempotent theo orderCode:
+        payment đã terminal thì trả 200 và không chạy lại handler.
+      operationId: payOsWebhook
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PayOsWebhook" }
+      responses:
+        "200":
+          description: Webhook đã xử lý (hoặc đã xử lý trước đó — idempotent)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code: { type: string, example: "00" }
+                  desc: { type: string, example: "success" }
+        "400":
+          description: JSON hỏng, thiếu chữ ký hoặc chữ ký không hợp lệ
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: PAYMENT_WEBHOOK_INVALID, message: "Chữ ký webhook PayOS không hợp lệ.", fieldErrors: [] }
 
   # ------------------- CONTRACTS (US-11/13, FR-10/13) ---------------------
 
@@ -1733,7 +1765,8 @@ components:
 
     PaymentMethod:
       type: string
-      enum: [CARD, MOMO, VNPAY]
+      enum: [CARD, MOMO, VNPAY, PAYOS]
+      description: "PAYOS là cổng thật khi backend bật PAYOS_ENABLED=true + key; CARD/MOMO/VNPAY là mock demo auto-success."
 
     PaymentStatus:
       type: string
@@ -1751,7 +1784,9 @@ components:
         status: { $ref: "#/components/schemas/PaymentStatus" }
         otpRequired: { type: boolean, description: "true khi MOMO chờ OTP" }
         otpExpiresAt: { type: string, format: date-time, nullable: true, description: "Hạn nhập OTP (MOMO) — quá hạn → EXPIRED, PAYMENT_EXPIRED" }
-        qrPayload: { type: string, nullable: true, description: "Nội dung QR khi VNPAY — FE render QR" }
+        qrPayload: { type: string, nullable: true, description: "Nội dung QR (VNPAY mock hoặc VietQR PayOS) — FE render QR" }
+        qrCode: { type: string, nullable: true, description: "Chuỗi VietQR động PayOS trả về khi method=PAYOS; demo = null" }
+        checkoutUrl: { type: string, nullable: true, description: "Trang thanh toán PayOS (chỉ method=PAYOS) — FE mở tab mới" }
         qrExpiresAt: { type: string, format: date-time, nullable: true, description: "~5 phút (server quyết)" }
         receiptCode: { type: string, nullable: true, description: "Sinh khi SUCCEEDED" }
         paidAt: { type: string, format: date-time, nullable: true }
@@ -1817,7 +1852,33 @@ components:
             - $ref: "#/components/schemas/NotificationEvent"
             - type: object
               nullable: true
+
           description: "Chỉ có khi thanh toán THÀNH CÔNG — thất bại không sinh notification (FAIL tile: No money was taken)"
+
+    PayOsWebhook:
+      type: object
+      description: "Payload PayOS POST về webhook — verify bằng SDK trước khi đọc data."
+      required: [code, data, signature]
+      properties:
+        code: { type: string, example: "00" }
+        desc: { type: string, example: "success" }
+        success: { type: boolean }
+        signature: { type: string, description: "HMAC-SHA256 của data bằng PAYOS_CHECKSUM_KEY" }
+        data:
+          type: object
+          properties:
+            orderCode: { type: integer, format: int64, description: "Base + paymentId do backend sinh" }
+            amount: { type: integer, format: int64 }
+            description: { type: string }
+            accountNumber: { type: string }
+            reference: { type: string }
+            transactionDateTime: { type: string }
+            currency: { type: string, example: VND }
+            paymentLinkId: { type: string }
+            code: { type: string, example: "00" }
+            desc: { type: string }
+          additionalProperties: true
+      additionalProperties: true
 
     # ------------------------------ Contracts -----------------------------
 

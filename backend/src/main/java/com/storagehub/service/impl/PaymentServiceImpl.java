@@ -16,6 +16,7 @@ import com.storagehub.exception.PaymentDuplicateException;
 import com.storagehub.exception.PaymentExpiredException;
 import com.storagehub.exception.PaymentInvalidStateException;
 import com.storagehub.exception.PaymentNotFoundException;
+import com.storagehub.exception.PaymentWebhookException;
 import com.storagehub.gateway.PaymentGateway;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.ReservationRepository;
@@ -23,6 +24,8 @@ import com.storagehub.repository.UserRepository;
 import com.storagehub.service.ExtensionService;
 import com.storagehub.service.PaymentService;
 import com.storagehub.service.handler.PaymentSuccessHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,6 +50,9 @@ import java.util.Set;
  */
 @Service
 public class PaymentServiceImpl implements PaymentService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(PaymentServiceImpl.class);
 
     /** Payment còn "sống" hoặc đã xong → chặn tạo payment trùng (409 DUPLICATE). */
     private static final Set<Payment.Status> BLOCKS_DUPLICATE = Set.of(
@@ -270,7 +276,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (!TERMINAL.contains(payment.getStatus())) {
             // Mock resolve terminal ngay lúc poll (CARD/VNPAY auto-complete,
             // MOMO/VNPAY quá hạn) — transaction + FOR UPDATE bên trong.
-            gateway.poll(paymentId).ifPresent(decision ->
+            gateway.poll(paymentId, payment.getMethod()).ifPresent(decision ->
                     transactionTemplate.executeWithoutResult(
                             tx -> resolve(paymentId, decision)));
 
@@ -331,6 +337,44 @@ public class PaymentServiceImpl implements PaymentService {
                 buildResultAfterResolve(paymentId, decision));
     }
 
+    /**
+     * Webhook PayOS (AD-9): gateway đã verify chữ ký và trả event; service là
+     * single writer — đổi state machine + chạy handler đúng một lần trong
+     * transaction có FOR UPDATE. Payment đã terminal (webhook retry) → no-op.
+     */
+    @Override
+    public void handlePayOsWebhook(String rawPayload) {
+        PaymentGateway.WebhookEvent event = gateway.verifyWebhook(rawPayload)
+                .orElseThrow(() -> new PaymentWebhookException(
+                        "Cổng PayOS chưa được bật trên backend này."));
+
+        transactionTemplate.executeWithoutResult(tx -> {
+            Payment payment = paymentRepository
+                    .findByIdForUpdate(event.paymentId())
+                    .orElse(null);
+
+            if (payment == null) {
+                // orderCode lạ: trả 200 để PayOS không retry vô hạn.
+                log.warn("PayOS webhook for unknown paymentId {}", event.paymentId());
+                return;
+            }
+            if (payment.getMethod() != Payment.Method.PAYOS) {
+                throw new PaymentWebhookException(
+                        "Payment " + event.paymentId() + " không phải PayOS.");
+            }
+            if (event.success()
+                    && payment.getAmount().longValueExact() != event.amount()) {
+                throw new PaymentWebhookException(
+                        "Số tiền webhook không khớp payment " + event.paymentId()
+                                + " (webhook " + event.amount()
+                                + ", expected " + payment.getAmount() + ").");
+            }
+
+            resolve(event.paymentId(), event.success()
+                    ? Payment.Status.SUCCEEDED
+                    : Payment.Status.FAILED);
+        });
+    }
     // ------------------------------------------------------------------
     // Resolve terminal — luôn chạy trong transaction
     // ------------------------------------------------------------------
@@ -417,7 +461,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private PaymentSessionResponse toSession(Payment payment, Long reservationId) {
         PaymentGateway.SessionView view = gateway
-                .describe(payment.getPaymentId())
+                .describe(payment.getPaymentId(), payment.getMethod())
                 .orElse(null);
 
         return PaymentSessionResponse.from(
@@ -427,7 +471,8 @@ public class PaymentServiceImpl implements PaymentService {
                         view.otpRequired(),
                         view.otpExpiresAt(),
                         view.qrPayload(),
-                        view.qrExpiresAt()
+                        view.qrExpiresAt(),
+                        view.checkoutUrl()
                 )
         );
     }

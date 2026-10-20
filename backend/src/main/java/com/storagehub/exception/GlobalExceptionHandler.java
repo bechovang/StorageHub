@@ -274,6 +274,32 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    /** Webhook PayOS sai chữ ký / sai shape / lệch tiền → 400 cho PayOS retry. */
+    @ExceptionHandler(PaymentWebhookException.class)
+    public ResponseEntity<ApiError> handlePaymentWebhook(
+            PaymentWebhookException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiError.of(
+                        "PAYMENT_WEBHOOK_INVALID",
+                        exception.getMessage()
+                ));
+    }
+
+    /** Cổng ngoài (PayOS) lỗi mạng/HTTP → 502, không phải lỗi nghiệp vụ. */
+    @ExceptionHandler(PaymentGatewayException.class)
+    public ResponseEntity<ApiError> handlePaymentGateway(
+            PaymentGatewayException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body(ApiError.of(
+                        "PAYMENT_GATEWAY_ERROR",
+                        "Cổng thanh toán tạm thời không phản hồi. Vui lòng thử lại."
+                ));
+    }
+
     // ------------------------------------------------------------------
     // Cross-cutting
     // ------------------------------------------------------------------

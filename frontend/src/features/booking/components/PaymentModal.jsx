@@ -1,4 +1,5 @@
 import {
+  Bank,
   CreditCard,
   Wallet,
   QrCode as QrCodeIcon,
@@ -75,7 +76,6 @@ export default function PaymentModal({
   countdown,
   formatCountdown,
   submitting,
-  polling,
   checkingStatus,
   onCheckPaymentStatus,
   onSimulateVNPaySuccess,
@@ -102,7 +102,8 @@ export default function PaymentModal({
   const isTerminalSuccess = currentStatus === "SUCCEEDED";
   const isTerminalFailed = currentStatus === "FAILED";
   const isTerminalExpired = currentStatus === "EXPIRED";
-  const isProcessing = currentStatus === "PROCESSING" || polling;
+  // Polling không che QR: VNPAY/PAYOS vẫn PENDING trong lúc chờ webhook.
+  const isProcessing = currentStatus === "PROCESSING";
   const isMoMoOtpStage =
     selectedMethod === "MOMO" && paymentSession?.otpRequired && currentStatus === "PENDING";
 
@@ -441,6 +442,17 @@ export default function PaymentModal({
                   <QrCodeIcon size={18} weight={selectedMethod === "VNPAY" ? "bold" : "regular"} />
                   <span>VNPay QR</span>
                 </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedMethod === "PAYOS"}
+                  className={`segmented-tab ${selectedMethod === "PAYOS" ? "is-active" : ""}`}
+                  onClick={() => onSelectMethod("PAYOS")}
+                >
+                  <Bank size={18} weight={selectedMethod === "PAYOS" ? "bold" : "regular"} />
+                  <span>PayOS QR</span>
+                </button>
               </div>
 
               {/* CARD FORM */}
@@ -641,11 +653,12 @@ export default function PaymentModal({
               )}
 
               {/* VNPAY QR VIEW (Auto-generated on tab select) */}
-              {selectedMethod === "VNPAY" && (
+              {(selectedMethod === "VNPAY" || selectedMethod === "PAYOS") &&
+                paymentSession?.method === selectedMethod && (
                 <div className="vnpay-qr-view">
                   <div className="qr-wrapper">
                     {qrDataUrl ? (
-                      <img src={qrDataUrl} alt="VNPay QR Code" className="qr-image" />
+                      <img src={qrDataUrl} alt={selectedMethod === "PAYOS" ? "PayOS VietQR" : "VNPay QR Code"} className="qr-image" />
                     ) : (
                       <div className="qr-placeholder">
                         <CircleNotch size={32} className="spinner-rotate" />
@@ -653,7 +666,7 @@ export default function PaymentModal({
                     )}
                     <div className="qr-badge">
                       <QrCodeIcon size={14} weight="bold" />
-                      <span>VNPAY-QR</span>
+                      <span>{selectedMethod === "PAYOS" ? "PAYOS · VietQR" : "VNPAY-QR"}</span>
                     </div>
                   </div>
 
@@ -665,12 +678,14 @@ export default function PaymentModal({
                   )}
 
                   <p className="vnpay-instruction">
-                    Mở ứng dụng ngân hàng hoặc ví VNPAY, chọn Quét QR để thanh toán{" "}
+                    {selectedMethod === "PAYOS"
+                      ? "Mở ứng dụng ngân hàng bất kỳ, chọn Quét VietQR (Napas 247) để chuyển "
+                      : "Mở ứng dụng ngân hàng hoặc ví VNPAY, chọn Quét QR để thanh toán "}
                     <strong>{formatVND(paymentSession?.amount || reservation?.depositAmount)}</strong>.
                   </p>
 
                   {/* Mock Presets (chỉ hiển thị ở môi trường DEV) */}
-                  {import.meta.env.DEV && (
+                  {import.meta.env.DEV && selectedMethod === "VNPAY" && (
                     <div className="mock-presets-row">
                       <span className="mock-presets-label">Kiểm thử Mock Gateway:</span>
                       <button
@@ -687,6 +702,20 @@ export default function PaymentModal({
                     <CircleNotch size={14} className="spinner-rotate" />
                     <span>Hệ thống tự động xác nhận sau khi quét mã...</span>
                   </div>
+
+                  {selectedMethod === "PAYOS" && paymentSession?.checkoutUrl && (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      fullWidth
+                      onClick={() =>
+                        window.open(paymentSession.checkoutUrl, "_blank", "noopener,noreferrer")
+                      }
+                    >
+                      <Bank size={16} weight="bold" />
+                      <span>Mở cổng PayOS</span>
+                    </Button>
+                  )}
 
                   <div className="modal-actions-grid">
                     <Button
