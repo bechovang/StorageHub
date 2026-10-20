@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   Users,
   UserPlus,
@@ -23,6 +23,7 @@ import Modal from "../../components/Modal/Modal.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import {
   getUsers,
+  getLocalUsers,
   createUser,
   updateUserRole,
   updateUserStatus,
@@ -69,16 +70,48 @@ export default function UserManagementPage() {
     };
   }, [openMenuId]);
 
-  // Dữ liệu users
-  const [users, setUsers] = useState(() => getUsers());
+  // Dữ liệu users: load ngay từ cache local để UI phản hồi tức thì, sau đó đồng bộ API
+  const [users, setUsers] = useState(() => getLocalUsers());
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Filtered users list
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getUsers();
+      if (Array.isArray(data) && data.length > 0) {
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải danh sách users từ API:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // Filtered users list (in-memory filtering trên tập users đã fetch để phản hồi mượt mà)
   const filteredUsers = useMemo(() => {
-    return getUsers({
-      role: selectedRole,
-      status: selectedStatus,
-      searchTerm,
-    });
+    let list = Array.isArray(users) ? users : [];
+    if (selectedRole && selectedRole !== "ALL") {
+      list = list.filter((u) => u.role === selectedRole);
+    }
+    if (selectedStatus !== "ALL" && selectedStatus !== undefined && selectedStatus !== "") {
+      const statusNum = Number(selectedStatus);
+      list = list.filter((u) => Number(u.status) === statusNum);
+    }
+    if (searchTerm && searchTerm.trim()) {
+      const q = searchTerm.trim().toLowerCase();
+      list = list.filter(
+        (u) =>
+          (u.fullName && u.fullName.toLowerCase().includes(q)) ||
+          (u.email && u.email.toLowerCase().includes(q)) ||
+          (u.phone && u.phone.toLowerCase().includes(q))
+      );
+    }
+    return list;
   }, [selectedRole, selectedStatus, searchTerm, users]);
 
   // Modals state
@@ -107,6 +140,12 @@ export default function UserManagementPage() {
   const [resetModalUser, setResetModalUser] = useState(null);
   const [resetSuccessPass, setResetSuccessPass] = useState(null);
 
+  // Trạng thái loading cho các actions
+  const [isSubmittingCreate, setIsSubmittingCreate] = useState(false);
+  const [isSubmittingRole, setIsSubmittingRole] = useState(false);
+  const [isSubmittingStatus, setIsSubmittingStatus] = useState(false);
+  const [isSubmittingReset, setIsSubmittingReset] = useState(false);
+
   // Toast feedback
   const [toastMessage, setToastMessage] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -122,77 +161,104 @@ export default function UserManagementPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Submit tạo tài khoản
-  const handleCreateSubmit = (e) => {
+  // Submit tạo tài khoản (FR-37 / US-28)
+  const handleCreateSubmit = async (e) => {
     e.preventDefault();
     setCreateError("");
+    setIsSubmittingCreate(true);
     try {
-      const res = createUser({
+      const res = await createUser({
         fullName: createName,
         email: createEmail,
         phone: createPhone,
         role: createRole,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
-      setUsers(getUsers());
+      setSelectedRole("ALL");
+      setSelectedStatus("ALL");
+      await fetchUsers();
       setCreatedSuccessData(res);
       showToast(`Đã cấp tài khoản cho ${res.user.fullName} thành công.`);
     } catch (err) {
-      setCreateError(err.message);
+      setCreateError(err.message || "Không thể cấp tài khoản mới.");
+    } finally {
+      setIsSubmittingCreate(false);
     }
   };
 
-  // Submit đổi vai trò
-  const handleRoleSubmit = (e) => {
+  // Submit đổi vai trò (FR-37 / US-28)
+  const handleRoleSubmit = async (e) => {
     e.preventDefault();
+    if (!roleModalUser) return;
     setRoleError("");
+    setIsSubmittingRole(true);
+    const targetUserId = roleModalUser.id || roleModalUser.userId;
     try {
-      updateUserRole({
-        userId: roleModalUser.userId,
+      await updateUserRole({
+        userId: targetUserId,
         newRole: targetRole,
         reason: roleReason,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
-      setUsers(getUsers());
+
+      // Tự động chuyển tab filter về ALL nếu role cũ đang lọc khác với role mới, giúp admin thấy ngay user
+      if (selectedRole !== "ALL" && selectedRole !== targetRole) {
+        setSelectedRole("ALL");
+      }
+
+      await fetchUsers();
       setRoleModalUser(null);
       showToast(`Đã chuyển vai trò của ${roleModalUser.fullName} sang ${targetRole}.`);
     } catch (err) {
-      setRoleError(err.message);
+      setRoleError(err.message || "Không thể cập nhật vai trò người dùng.");
+    } finally {
+      setIsSubmittingRole(false);
     }
   };
 
-  // Submit đổi trạng thái
-  const handleStatusSubmit = (e) => {
+  // Submit đổi trạng thái (FR-37 / US-28)
+  const handleStatusSubmit = async (e) => {
     e.preventDefault();
+    if (!statusModalUser) return;
     setStatusError("");
+    setIsSubmittingStatus(true);
+    const targetUserId = statusModalUser.id || statusModalUser.userId;
+    const currentUserId = currentSessionUser?.id || currentSessionUser?.userId;
     try {
-      updateUserStatus({
-        userId: statusModalUser.userId,
+      await updateUserStatus({
+        userId: targetUserId,
         newStatus: targetStatus,
-        currentUserId: currentSessionUser?.id,
+        currentUserId: currentUserId,
         reason: statusReason,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
-      setUsers(getUsers());
+      await fetchUsers();
       setStatusModalUser(null);
       showToast(`Đã cập nhật trạng thái của ${statusModalUser.fullName}.`);
     } catch (err) {
-      setStatusError(err.message);
+      setStatusError(err.message || "Không thể cập nhật trạng thái người dùng.");
+    } finally {
+      setIsSubmittingStatus(false);
     }
   };
 
-  // Submit Reset Mật khẩu
-  const handleConfirmReset = () => {
+  // Submit Reset Mật khẩu (FR-37 / US-28)
+  const handleConfirmReset = async () => {
+    if (!resetModalUser) return;
+    setIsSubmittingReset(true);
+    const targetUserId = resetModalUser.id || resetModalUser.userId;
     try {
-      const res = resetUserPassword({
-        userId: resetModalUser.userId,
+      const res = await resetUserPassword({
+        userId: targetUserId,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
       setResetSuccessPass(res.tempPassword);
-      setUsers(getUsers());
+      await fetchUsers();
       showToast(`Đã cấp mật khẩu tạm mới cho ${resetModalUser.fullName}.`);
     } catch (err) {
-      alert(err.message);
+      alert(err.message || "Không thể cấp lại mật khẩu tạm.");
+    } finally {
+      setIsSubmittingReset(false);
     }
   };
 
@@ -355,14 +421,16 @@ export default function UserManagementPage() {
                   </thead>
                   <tbody>
                     {filteredUsers.map((u, index) => {
+                      const uid = u.id || u.userId;
                       const roleConfig = USER_ROLES[u.role] || { label: u.role, badgeClass: "" };
                       const statusConfig = Object.values(USER_STATUSES).find((s) => s.key === u.status) || USER_STATUSES.ACTIVE;
-                      const isSelf = currentSessionUser?.id === u.userId;
-                      const isMenuOpen = openMenuId === u.userId;
+                      const currentUserId = currentSessionUser?.id || currentSessionUser?.userId;
+                      const isSelf = Number(currentUserId) === Number(uid);
+                      const isMenuOpen = openMenuId === uid;
                       const isNearBottom = index >= filteredUsers.length - 2 && filteredUsers.length > 3;
 
                       return (
-                        <tr key={u.userId}>
+                        <tr key={uid}>
                           <td className="user-name-cell">
                             <div className="user-name-wrapper">
                               <span className="user-avatar-tag">{getUserInitials(u.fullName)}</span>
@@ -398,7 +466,7 @@ export default function UserManagementPage() {
                                 aria-label="Tùy chọn thao tác"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setOpenMenuId(isMenuOpen ? null : u.userId);
+                                  setOpenMenuId(isMenuOpen ? null : uid);
                                 }}
                               >
                                 <DotsThreeVertical size={16} weight="bold" />
@@ -745,8 +813,8 @@ export default function UserManagementPage() {
                   <button type="button" className="btn btn--outline" onClick={() => setShowCreateModal(false)}>
                     Hủy bỏ
                   </button>
-                  <button type="submit" className="btn btn--primary">
-                    Tạo tài khoản & Cấp pass tạm
+                  <button type="submit" className="btn btn--primary" disabled={isSubmittingCreate}>
+                    {isSubmittingCreate ? "Đang xử lý..." : "Tạo tài khoản & Cấp pass tạm"}
                   </button>
                 </div>
               </form>
@@ -802,8 +870,8 @@ export default function UserManagementPage() {
                 <button type="button" className="btn btn--outline" onClick={() => setRoleModalUser(null)}>
                   Hủy
                 </button>
-                <button type="submit" className="btn btn--primary">
-                  Lưu & Ghi nhận kiểm toán
+                <button type="submit" className="btn btn--primary" disabled={isSubmittingRole}>
+                  {isSubmittingRole ? "Đang lưu..." : "Lưu & Ghi nhận kiểm toán"}
                 </button>
               </div>
             </form>
@@ -849,7 +917,7 @@ export default function UserManagementPage() {
                   type="submit"
                   className={targetStatus === 2 ? "btn btn--danger" : "btn btn--primary"}
                 >
-                  {targetStatus === 2 ? "Xác nhận khóa" : "Xác nhận mở khóa"}
+                  {isSubmittingStatus ? "Đang xử lý..." : (targetStatus === 2 ? "Xác nhận khóa" : "Xác nhận mở khóa")}
                 </button>
               </div>
             </form>
@@ -902,7 +970,7 @@ export default function UserManagementPage() {
                   <button type="button" className="btn btn--outline" onClick={() => setResetModalUser(null)}>
                     Hủy
                   </button>
-                  <button type="button" className="btn btn--primary" onClick={handleConfirmReset}>
+                  <button type="button" className="btn btn--primary" onClick={handleConfirmReset} disabled={isSubmittingReset}>
                     Cấp mật khẩu tạm mới
                   </button>
                 </div>
