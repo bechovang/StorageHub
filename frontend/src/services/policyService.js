@@ -103,7 +103,7 @@ export function getCurrentPolicy() {
     }
     return JSON.parse(raw);
   } catch (err) {
-    console.error("Lỗi đọc Rental Policy từ localStorage:", err);
+    console.error("Failed to read rental policy:", err);
     return { ...DEFAULT_POLICY };
   }
 }
@@ -224,7 +224,7 @@ export function savePolicy(policyDraft, actorName = "Lê Thị Hằng (Business 
       reason: `Ban hành điều chỉnh bảng giá và tham số quy chế thuê kho (${nextVer}, hiệu lực từ ${effectiveDate}).`,
     });
   } catch (e) {
-    console.warn("Không thể ghi Activity Log cho Policy:", e);
+    console.warn("Failed to log policy activity:", e);
   }
 
   return updatedPolicy;
