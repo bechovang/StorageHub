@@ -287,17 +287,6 @@ export default function BrowsePage() {
           { label: "Kho của tôi", href: "/rentals" },
           { label: "Hỗ trợ", href: "#support" },
         ]}
-        rightContent={
-          <button
-            type="button"
-            onClick={logout}
-            className="browse-logout-btn"
-            title="Đăng xuất"
-            aria-label="Đăng xuất"
-          >
-            <SignOut size={16} weight="bold" />
-          </button>
-        }
       />
 
       <main className="browse-container">

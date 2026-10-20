@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <!-- Central Hallway Perspective -->
+  <polygon points="0,0 800,0 800,600 0,600" fill="#f8fafc"/>
+  
+  <!-- Ceiling Lights -->
+  <polygon points="250,0 550,0 440,240 360,240" fill="#e2e8f0"/>
+  <line x1="400" y1="0" x2="400" y2="240" stroke="#facc15" stroke-width="4"/>
+
+  <!-- Left Wall Doors (Orange/Red) -->
+  <polygon points="0,0 360,240 360,420 0,600" fill="#dc2626"/>
+  <line x1="90" y1="60" x2="90" y2="550" stroke="#991b1b" stroke-width="3"/>
+  <line x1="180" y1="120" x2="180" y2="510" stroke="#991b1b" stroke-width="3"/>
+  <line x1="270" y1="180" x2="270" y2="460" stroke="#991b1b" stroke-width="3"/>
+
+  <!-- Right Wall Doors (Slate Navy) -->
+  <polygon points="800,0 440,240 440,420 800,600" fill="#1e293b"/>
+  <line x1="710" y1="60" x2="710" y2="550" stroke="#0f172a" stroke-width="3"/>
+  <line x1="620" y1="120" x2="620" y2="510" stroke="#0f172a" stroke-width="3"/>
+  <line x1="530" y1="180" x2="530" y2="460" stroke="#0f172a" stroke-width="3"/>
+
+  <!-- Floor Path -->
+  <polygon points="360,420 440,420 800,600 0,600" fill="#cbd5e1"/>
+  <line x1="400" y1="420" x2="400" y2="600" stroke="#eab308" stroke-width="6" stroke-dasharray="25 15"/>
+
+  <!-- End of Hallway Sign -->
+  <rect x="360" y="240" width="80" height="180" fill="#0f172a"/>
+  <rect x="375" y="280" width="50" height="20" fill="#22c55e"/>
+  <text x="400" y="294" font-family="'Inter', sans-serif" font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle">EXIT</text>
+  
+  <rect x="50" y="520" width="700" height="50" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <text x="75" y="552" font-family="'Inter', sans-serif" font-size="16" font-weight="800" fill="#000000">HÀNH LANG TÂN BÌNH DEPOT · ZONE A &amp; B</text>
+  <text x="725" y="552" font-family="'SFMono-Regular', monospace" font-size="13" font-weight="700" fill="#16a34a" text-anchor="end">CCTV 24/7 · CLIMATE CONTROLLED</text>
+</svg>

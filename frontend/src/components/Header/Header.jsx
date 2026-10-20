@@ -20,11 +20,11 @@ import "./Header.css";
 
 const ROLE_CONFIGS = {
   CUSTOMER: {
-    label: "CUSTOMER",
+    label: "KHÁCH HÀNG",
     landing: "/browse",
     links: [
-      { label: "Browse Units", href: "/browse" },
-      { label: "My Rentals", href: "/rentals" },
+      { label: "Tìm thuê kho", href: "/browse" },
+      { label: "Kho của tôi", href: "/rentals" },
       { label: "Thanh toán", href: "/payment" },
     ],
   },
