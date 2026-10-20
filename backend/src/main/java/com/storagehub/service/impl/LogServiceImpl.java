@@ -5,6 +5,8 @@ import com.storagehub.entity.User;
 import com.storagehub.repository.ActivityLogRepository;
 import com.storagehub.service.LogService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /** TỐI THIỂU cho US-8 — US sau bổ sung registry action + reason bắt buộc theo loại. */
 @Service
@@ -17,6 +19,7 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(
             User actor,
             String entityType,
@@ -33,7 +36,7 @@ public class LogServiceImpl implements LogService {
         entry.setAction(action);
         entry.setFromValue(fromValue);
         entry.setToValue(toValue);
-        entry.setReason(reason);
+        entry.setReason(reason != null ? reason : "N/A");
 
         activityLogRepository.save(entry);
     }
