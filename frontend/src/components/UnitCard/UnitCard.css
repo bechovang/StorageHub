@@ -183,7 +183,8 @@
 
 .unit-card__actions .button {
   min-height: 38px;
-  padding: 8px 12px;
+  padding: 8px 14px;
+  white-space: nowrap;
 }
 
 .unit-card__actions .button--primary {

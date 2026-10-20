@@ -31,7 +31,6 @@ export default function BrowsePage() {
     handleRemoveFilter,
     handleOpenDrawer,
     handleViewDetails,
-    handleBook,
     activeTypeName,
     activeFacilityName,
   } = useBrowseUnits();
@@ -183,7 +182,6 @@ export default function BrowsePage() {
                 unit={unit}
                 onOpenDrawer={handleOpenDrawer}
                 onViewDetails={handleViewDetails}
-                onBook={handleBook}
               />
             ))}
           </div>
@@ -195,7 +193,6 @@ export default function BrowsePage() {
         selectedUnit={selectedUnitForDrawer}
         onClose={() => setSelectedUnitForDrawer(null)}
         onViewDetails={handleViewDetails}
-        onBook={handleBook}
       />
 
       {/* ── Footer ── */}

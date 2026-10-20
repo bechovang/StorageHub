@@ -43,7 +43,6 @@ export default function BrowseUnitDrawer({
   selectedUnit,
   onClose,
   onViewDetails,
-  onBook,
 }) {
   if (!selectedUnit) return null;
 
@@ -83,22 +82,13 @@ export default function BrowseUnitDrawer({
           </div>
           <div className="browse-drawer-footer__actions">
             <Button
-              variant="secondary"
+              variant="primary"
               onClick={() => {
                 onClose();
                 onViewDetails(selectedUnit);
               }}
             >
-              Chi tiết
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => {
-                onClose();
-                onBook(selectedUnit);
-              }}
-            >
-              Đặt kho ngay
+              Xem chi tiết & Đặt kho
             </Button>
           </div>
         </div>

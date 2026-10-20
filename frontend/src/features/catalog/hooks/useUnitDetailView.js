@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useSearchParams } from "react-router";
 import { getUnitDetail, getUnitQuote } from "../../../services/unitService.js";
 import { getTomorrowDate } from "../../../utils/formatters.js";
 
 export function useUnitDetailView() {
   const { unitId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const queryStartDate = searchParams.get("startDate");
 
   const [unit, setUnit] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +16,7 @@ export function useUnitDetailView() {
 
   // Bộ chọn thời gian thuê
   const [durationMonths, setDurationMonths] = useState(3);
-  const [startDate, setStartDate] = useState(getTomorrowDate());
+  const [startDate, setStartDate] = useState(() => queryStartDate || getTomorrowDate());
 
   // Bảng giá minh bạch tính từ PricingEngine theo Rental Policy v3
   const [quote, setQuote] = useState(null);

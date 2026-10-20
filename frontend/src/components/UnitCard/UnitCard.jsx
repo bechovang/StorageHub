@@ -7,7 +7,6 @@ export default function UnitCard({
   unit,
   onOpenDrawer,
   onViewDetails,
-  onBook,
   className = "",
 }) {
   if (!unit) return null;
@@ -128,24 +127,14 @@ export default function UnitCard({
 
           <div className="unit-card__actions" onClick={(e) => e.stopPropagation()}>
             <Button
-              variant="secondary"
+              variant="primary"
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
                 onViewDetails?.(unit);
               }}
             >
-              Chi tiết
-            </Button>
-            <Button
-              variant="primary"
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onBook?.(unit);
-              }}
-            >
-              Đặt kho
+              Xem chi tiết & Đặt kho
             </Button>
           </div>
         </div>

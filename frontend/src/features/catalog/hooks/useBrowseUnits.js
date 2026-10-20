@@ -147,13 +147,13 @@ export function useBrowseUnits() {
 
   // Điều hướng đến trang chi tiết kho (Unit Detail)
   const handleViewDetails = (unit) => {
-    navigate(`/units/${unit.id}`);
+    const params = new URLSearchParams();
+    if (startDate) params.set("startDate", startDate);
+    const queryString = params.toString() ? `?${params.toString()}` : "";
+    navigate(`/units/${unit.id}${queryString}`);
   };
 
-  const handleBook = (unit) => {
-    navigate(`/units/${unit.id}/book`);
-  };
-
+  
   // Lấy tên loại kho đang được lọc để hiển thị trên chip
   const activeTypeName = filterOptions.types.find(
     (t) => String(t.id) === String(activeFilters.typeId),
@@ -186,7 +186,6 @@ export function useBrowseUnits() {
     handleRemoveFilter,
     handleOpenDrawer,
     handleViewDetails,
-    handleBook,
     activeTypeName,
     activeFacilityName,
   };
