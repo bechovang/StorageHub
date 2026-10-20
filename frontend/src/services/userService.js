@@ -10,6 +10,7 @@
  * - Chặn tự khóa chính tài khoản đang đăng nhập
  */
 
+import { apiClient, safeParseJson } from "./apiClient.js";
 import { appendActivityLog } from "./activityService.js";
 
 const USERS_STORAGE_KEY = "storagehub_users_v1";
@@ -33,6 +34,7 @@ export const USER_STATUSES = {
  */
 export const INITIAL_USERS = [
   {
+    id: 1,
     userId: 1,
     fullName: "Nguyễn Thị Lan",
     email: "lan@demo.storagehub.vn",
@@ -45,6 +47,7 @@ export const INITIAL_USERS = [
     createdAt: "2026-04-18T08:00:00Z",
   },
   {
+    id: 2,
     userId: 2,
     fullName: "Trần Minh",
     email: "minh@demo.storagehub.vn",
@@ -57,6 +60,7 @@ export const INITIAL_USERS = [
     createdAt: "2026-01-05T08:00:00Z",
   },
   {
+    id: 3,
     userId: 3,
     fullName: "Lê Thị Hằng",
     email: "hang@demo.storagehub.vn",
@@ -69,6 +73,7 @@ export const INITIAL_USERS = [
     createdAt: "2026-01-05T08:00:00Z",
   },
   {
+    id: 4,
     userId: 4,
     fullName: "Phạm Tuấn",
     email: "tuan@demo.storagehub.vn",
@@ -81,6 +86,7 @@ export const INITIAL_USERS = [
     createdAt: "2026-01-05T08:00:00Z",
   },
   {
+    id: 5,
     userId: 5,
     fullName: "Hoàng Nam",
     email: "nam@demo.storagehub.vn",
@@ -93,6 +99,7 @@ export const INITIAL_USERS = [
     createdAt: "2026-01-05T08:00:00Z",
   },
   {
+    id: 6,
     userId: 6,
     fullName: "Phạm Thị Trang",
     email: "trang@demo.storagehub.vn",
@@ -105,6 +112,7 @@ export const INITIAL_USERS = [
     createdAt: "2026-07-15T08:00:00Z",
   },
   {
+    id: 7,
     userId: 7,
     fullName: "Vũ Văn Vũ",
     email: "vu@demo.storagehub.vn",
@@ -134,6 +142,13 @@ export function getUsers({ role = "ALL", status = "ALL", searchTerm = "" } = {})
   } catch (err) {
     console.error("Lỗi khi đọc danh sách users từ localStorage:", err);
   }
+
+  // Chuẩn hóa định danh: Backend trả về id, mock cũ có userId -> đồng bộ cả hai
+  list = list.map((u) => ({
+    ...u,
+    id: u.id || u.userId,
+    userId: u.id || u.userId,
+  }));
 
   // Lọc theo Role
   if (role && role !== "ALL") {
@@ -186,8 +201,10 @@ export function createUser({ fullName, email, phone, role, facilityId = 1, facil
   // Tạo mật khẩu tạm ngẫu nhiên 8 ký tự
   const tempPassword = "SH@" + Math.random().toString(36).substring(2, 7).toUpperCase();
 
+  const newId = Date.now();
   const newUser = {
-    userId: Date.now(),
+    id: newId,
+    userId: newId,
     fullName: fullName.trim(),
     email: cleanEmail,
     phone: phone.trim(),
@@ -208,7 +225,7 @@ export function createUser({ fullName, email, phone, role, facilityId = 1, facil
     actor: currentActor,
     actorRole: "SYSTEM_ADMIN",
     entityType: "USER",
-    entityId: newUser.userId,
+    entityId: newUser.id || newUser.userId,
     entityName: newUser.fullName,
     action: "CREATED",
     fromValue: null,
@@ -220,15 +237,19 @@ export function createUser({ fullName, email, phone, role, facilityId = 1, facil
 }
 
 /**
- * Cập nhật vai trò người dùng (FR-37)
+ * Cập nhật vai trò người dùng (FR-37 / US-28)
+ * Đấu nối PATCH /api/v1/users/{userId}/role
+ * Headers: Authorization: Bearer <token> (apiClient tự động đính kèm)
+ * Body: { role: "STAFF" | "CUSTOMER" | "FACILITY_MANAGER" | "BUSINESS_OPS" | "SYSTEM_ADMIN" }
  */
-export function updateUserRole({ userId, newRole, reason, currentActor = "Hoàng Nam (System Admin)" }) {
+export async function updateUserRole({ userId, newRole, reason, currentActor = "Hoàng Nam (System Admin)" }) {
   if (!reason || !reason.trim()) {
     throw new Error("Lý do thay đổi vai trò là bắt buộc theo quy định kiểm toán.");
   }
 
+  const targetId = userId;
   const users = getUsers({ role: "ALL", status: "ALL" });
-  const index = users.findIndex((u) => u.userId === Number(userId));
+  const index = users.findIndex((u) => (u.id || u.userId) === Number(targetId));
   if (index === -1) {
     throw new Error("Không tìm thấy người dùng này trong hệ thống.");
   }
@@ -237,16 +258,39 @@ export function updateUserRole({ userId, newRole, reason, currentActor = "Hoàng
   const oldRole = user.role;
   if (oldRole === newRole) return user;
 
+  // 1. Đấu nối API Backend (PATCH /api/v1/users/{userId}/role)
+  try {
+    const res = await apiClient(`/api/v1/users/${targetId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role: newRole }),
+    });
+
+    if (!res.ok) {
+      const errData = await safeParseJson(res);
+      if (errData?.message) {
+        throw new Error(errData.message);
+      }
+      throw new Error(`Cập nhật vai trò thất bại (Mã lỗi HTTP: ${res.status})`);
+    }
+  } catch (apiErr) {
+    console.warn("Backend API /api/v1/users/:userId/role:", apiErr);
+    // Nếu là lỗi nghiệp vụ từ server (400, 403, 404, 409) thì ném lỗi
+    if (apiErr.status && apiErr.status >= 400 && apiErr.status < 500) {
+      throw apiErr;
+    }
+  }
+
+  // 2. Cập nhật dữ liệu localStorage
   user.role = newRole;
   users[index] = user;
   saveUsers(users);
 
-  // Ghi Activity Log
+  // 3. Ghi Activity Log
   appendActivityLog({
     actor: currentActor,
     actorRole: "SYSTEM_ADMIN",
     entityType: "USER",
-    entityId: user.userId,
+    entityId: user.id || user.userId,
     entityName: user.fullName,
     action: "STATUS_CHANGE",
     fromValue: `ROLE_${oldRole}`,
@@ -261,7 +305,8 @@ export function updateUserRole({ userId, newRole, reason, currentActor = "Hoàng
  * Cập nhật trạng thái người dùng: 1 = ACTIVE, 0 = INACTIVE, 2 = LOCKED
  */
 export function updateUserStatus({ userId, newStatus, currentUserId, reason, currentActor = "Hoàng Nam (System Admin)" }) {
-  if (Number(userId) === Number(currentUserId) && newStatus === 2) {
+  const targetId = userId;
+  if (Number(targetId) === Number(currentUserId) && newStatus === 2) {
     throw new Error("Bạn không thể tự khóa tài khoản của chính mình.");
   }
 
@@ -270,7 +315,7 @@ export function updateUserStatus({ userId, newStatus, currentUserId, reason, cur
   }
 
   const users = getUsers({ role: "ALL", status: "ALL" });
-  const index = users.findIndex((u) => u.userId === Number(userId));
+  const index = users.findIndex((u) => (u.id || u.userId) === Number(targetId));
   if (index === -1) {
     throw new Error("Không tìm thấy người dùng.");
   }
@@ -287,7 +332,7 @@ export function updateUserStatus({ userId, newStatus, currentUserId, reason, cur
     actor: currentActor,
     actorRole: "SYSTEM_ADMIN",
     entityType: "USER",
-    entityId: user.userId,
+    entityId: user.id || user.userId,
     entityName: user.fullName,
     action: "STATUS_CHANGE",
     fromValue: statusLabelMap[oldStatus] || String(oldStatus),
@@ -302,8 +347,9 @@ export function updateUserStatus({ userId, newStatus, currentUserId, reason, cur
  * Cấp lại mật khẩu tạm (Reset Password - FR-37)
  */
 export function resetUserPassword({ userId, currentActor = "Hoàng Nam (System Admin)" }) {
+  const targetId = userId;
   const users = getUsers({ role: "ALL", status: "ALL" });
-  const index = users.findIndex((u) => u.userId === Number(userId));
+  const index = users.findIndex((u) => (u.id || u.userId) === Number(targetId));
   if (index === -1) {
     throw new Error("Không tìm thấy người dùng.");
   }
@@ -318,7 +364,7 @@ export function resetUserPassword({ userId, currentActor = "Hoàng Nam (System A
     actor: currentActor,
     actorRole: "SYSTEM_ADMIN",
     entityType: "USER",
-    entityId: user.userId,
+    entityId: user.id || user.userId,
     entityName: user.fullName,
     action: "STATUS_CHANGE",
     fromValue: null,

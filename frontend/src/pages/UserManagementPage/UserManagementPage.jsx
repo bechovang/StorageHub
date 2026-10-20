@@ -142,22 +142,25 @@ export default function UserManagementPage() {
     }
   };
 
-  // Submit đổi vai trò
-  const handleRoleSubmit = (e) => {
+  // Submit đổi vai trò (US-28 / FR-37)
+  const handleRoleSubmit = async (e) => {
     e.preventDefault();
     setRoleError("");
+    const targetId = roleModalUser?.id || roleModalUser?.userId;
     try {
-      updateUserRole({
-        userId: roleModalUser.userId,
+      await updateUserRole({
+        userId: targetId,
         newRole: targetRole,
         reason: roleReason,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
+      // Set filter về "ALL" (Tất cả vai trò) để Admin thấy ngay người dùng với badge vai trò mới
+      setSelectedRole("ALL");
       setUsers(getUsers());
       setRoleModalUser(null);
       showToast(`Đã chuyển vai trò của ${roleModalUser.fullName} sang ${targetRole}.`);
     } catch (err) {
-      setRoleError(err.message);
+      setRoleError(err.message || "Không thể cập nhật vai trò người dùng");
     }
   };
 
@@ -165,9 +168,10 @@ export default function UserManagementPage() {
   const handleStatusSubmit = (e) => {
     e.preventDefault();
     setStatusError("");
+    const targetId = statusModalUser?.id || statusModalUser?.userId;
     try {
       updateUserStatus({
-        userId: statusModalUser.userId,
+        userId: targetId,
         newStatus: targetStatus,
         currentUserId: currentSessionUser?.id,
         reason: statusReason,
@@ -183,9 +187,10 @@ export default function UserManagementPage() {
 
   // Submit Reset Mật khẩu
   const handleConfirmReset = () => {
+    const targetId = resetModalUser?.id || resetModalUser?.userId;
     try {
       const res = resetUserPassword({
-        userId: resetModalUser.userId,
+        userId: targetId,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
       setResetSuccessPass(res.tempPassword);
@@ -357,12 +362,13 @@ export default function UserManagementPage() {
                     {filteredUsers.map((u, index) => {
                       const roleConfig = USER_ROLES[u.role] || { label: u.role, badgeClass: "" };
                       const statusConfig = Object.values(USER_STATUSES).find((s) => s.key === u.status) || USER_STATUSES.ACTIVE;
-                      const isSelf = currentSessionUser?.id === u.userId;
-                      const isMenuOpen = openMenuId === u.userId;
+                      const targetId = u.id || u.userId;
+                      const isSelf = currentSessionUser && (currentSessionUser.id === targetId || currentSessionUser.email === u.email);
+                      const isMenuOpen = openMenuId === targetId;
                       const isNearBottom = index >= filteredUsers.length - 2 && filteredUsers.length > 3;
 
                       return (
-                        <tr key={u.userId}>
+                        <tr key={targetId}>
                           <td className="user-name-cell">
                             <div className="user-name-wrapper">
                               <span className="user-avatar-tag">{getUserInitials(u.fullName)}</span>
@@ -398,7 +404,7 @@ export default function UserManagementPage() {
                                 aria-label="Tùy chọn thao tác"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setOpenMenuId(isMenuOpen ? null : u.userId);
+                                  setOpenMenuId(isMenuOpen ? null : targetId);
                                 }}
                               >
                                 <DotsThreeVertical size={16} weight="bold" />
