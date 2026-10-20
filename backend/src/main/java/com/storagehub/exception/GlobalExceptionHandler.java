@@ -78,6 +78,30 @@ public class GlobalExceptionHandler {
     // Unit / Reservation / Contract (US-7, US-9, US-11 — Phúc)
     // ------------------------------------------------------------------
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiError> handleUserNotFound(
+            UserNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "USER_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Không tìm thấy người dùng này."
+                ));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(
+            IllegalArgumentException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiError.of(
+                        "VALIDATION_FAILED",
+                        exception.getMessage()
+                ));
+    }
+
     @ExceptionHandler(UnitNotFoundException.class)
     public ResponseEntity<ApiError> handleUnitNotFound(
             UnitNotFoundException exception
