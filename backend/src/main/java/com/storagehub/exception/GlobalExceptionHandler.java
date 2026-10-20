@@ -78,6 +78,30 @@ public class GlobalExceptionHandler {
     // Unit / Reservation / Contract (US-7, US-9, US-11 — Phúc)
     // ------------------------------------------------------------------
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiError> handleUserNotFound(
+            UserNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "USER_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Không tìm thấy người dùng này."
+                ));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(
+            IllegalArgumentException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiError.of(
+                        "VALIDATION_FAILED",
+                        exception.getMessage()
+                ));
+    }
+
     @ExceptionHandler(UnitNotFoundException.class)
     public ResponseEntity<ApiError> handleUnitNotFound(
             UnitNotFoundException exception
@@ -247,6 +271,32 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(
                         "VALIDATION_FAILED",
                         exception.getMessage()
+                ));
+    }
+
+    /** Webhook PayOS sai chữ ký / sai shape / lệch tiền → 400 cho PayOS retry. */
+    @ExceptionHandler(PaymentWebhookException.class)
+    public ResponseEntity<ApiError> handlePaymentWebhook(
+            PaymentWebhookException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(ApiError.of(
+                        "PAYMENT_WEBHOOK_INVALID",
+                        exception.getMessage()
+                ));
+    }
+
+    /** Cổng ngoài (PayOS) lỗi mạng/HTTP → 502, không phải lỗi nghiệp vụ. */
+    @ExceptionHandler(PaymentGatewayException.class)
+    public ResponseEntity<ApiError> handlePaymentGateway(
+            PaymentGatewayException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body(ApiError.of(
+                        "PAYMENT_GATEWAY_ERROR",
+                        "Cổng thanh toán tạm thời không phản hồi. Vui lòng thử lại."
                 ));
     }
 

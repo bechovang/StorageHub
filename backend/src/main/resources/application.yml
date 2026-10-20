@@ -6,6 +6,9 @@
 # ============================================================================
 
 spring:
+  config:
+    # Tự đọc backend/.env (KEY=VALUE) khi dev — env var của OS vẫn ưu tiên.
+    import: optional:file:./.env[.properties]
   application:
     name: storagehub
   datasource:
@@ -39,17 +42,29 @@ security:
     ttl: PT24H
 
 # ----------------------------------------------------------------------------
-# Payment mock gateway (AD-9 / US-8) — outcome do server quyết; test values
-# đã ghi trong contracts/openapi.yaml. Đổi giá trị test phải sửa contract trước.
+# CARD/MOMO/VNPAY = demo: tạo payment → PROCESSING → poll tự SUCCEEDED
+# (auto-complete-delay 0s). PAYOS = thật, bật bằng PAYOS_ENABLED + 3 key.
+# Test values cũ trong contract chỉ còn giá trị lịch sử.
 # ----------------------------------------------------------------------------
 payment:
   mock:
-    success-card: "4242424242424242"
-    otp: "123456"
-    otp-ttl: PT5M
-    qr-ttl: PT5M
-    auto-complete-delay: PT2S
+    auto-complete-delay: PT0S
 
+  # PayOS thật (AD-9/Task 33):
+  #   PAYOS_ENABLED=true
+  #   PAYOS_CLIENT_ID / PAYOS_API_KEY / PAYOS_CHECKSUM_KEY
+  # Webhook URL trên dashboard PayOS:
+  #   https://<tunnel>/api/v1/payments/webhooks/payos
+  payos:
+    enabled: ${PAYOS_ENABLED:false}
+    return-url: ${PAYOS_RETURN_URL:http://localhost:5173/payment}
+    cancel-url: ${PAYOS_CANCEL_URL:http://localhost:5173/payment}
+    client-id: ${PAYOS_CLIENT_ID:}
+    api-key: ${PAYOS_API_KEY:}
+    checksum-key: ${PAYOS_CHECKSUM_KEY:}
+    # orderCode = base + paymentId (hàm thuần, webhook suy ngược được).
+    order-code-base: 100000
+    qr-ttl: PT5M
 # springdoc render docs từ code — chỉ để tham khảo; contract thật =
 # contracts/openapi.yaml (AD-2)
 

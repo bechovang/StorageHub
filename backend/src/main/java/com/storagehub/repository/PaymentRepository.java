@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -61,4 +62,18 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     String findMaxReceiptCodeByPrefix(@Param("prefix") String prefix);
 
     List<Payment> findByReservation_ReservationIdOrderByCreatedAtAsc(Long reservationId);
+
+    List<Payment> findByStatus(Payment.Status status);
+
+    List<Payment> findByStatusAndCreatedAtBetween(Payment.Status status, LocalDateTime start, LocalDateTime end);
+
+    @Query("""
+            SELECT p FROM Payment p
+            LEFT JOIN FETCH p.payer
+            LEFT JOIN FETCH p.reservation r
+            LEFT JOIN FETCH r.unit u
+            WHERE p.status = :status
+            ORDER BY p.createdAt DESC
+            """)
+    List<Payment> findByStatusWithAssociations(@Param("status") Payment.Status status);
 }

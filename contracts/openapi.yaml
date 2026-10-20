@@ -13,8 +13,8 @@
 # - AD-8: Mọi lỗi theo envelope Error (machine code + message + fieldErrors).
 #   Danh sách theo envelope page {items, page, pageSize, total}, page 1-based,
 #   mặc định 25. Enum UPPER_SNAKE; JSON field camelCase; query param kebab-case.
-# - AD-9: Kết quả thanh toán do MockPaymentGateway quyết định theo cấu hình
-#   server-side (profile dev) — KHÔNG BAO GIỜ là field trong request.
+# - AD-9: CARD/MOMO/VNPAY = mock demo; PAYOS = cổng thật; outcome không bao
+#   giờ là field trong request.
 # - AD-11: Mọi con số tiền sinh từ PricingEngine; quote snapshot vào
 #   reservation tại Booking Summary; contract dùng lại snapshot.
 # - 401/403 từ tầng security vẫn trả envelope Error (AuthenticationEntryPoint /
@@ -661,18 +661,14 @@ paths:
       description: |
         Nhận purpose DEPOSIT (booking) và RENT (check-in tại quầy — US-15:
         chỉ mở khi reservation đã RESERVED và chưa quá hạn nhận kho).
-        EXTENSION_FEE / EXTRA_FEE / DAMAGE_FEE thuộc sprint sau.
-        Kết quả thanh toán (thành công/thất bại) do MockPaymentGateway quyết
-        định theo cấu hình server-side — KHÔNG có field outcome trong request.
-        Flows: CARD → trả PROCESSING, FE poll GET; MOMO → trả PENDING +
-        otpRequired, FE nhập OTP rồi POST /payments/{id}/confirm; VNPAY →
-        trả PENDING + QR payload + expiresAt (~5 phút), FE poll GET (mock
-        auto-complete sau ~2s), hết hạn → EXPIRED, FE quay về chọn phương thức
-        rồi tạo payment mới.
-        Giá trị test mock (config `payment.mock.*` backend): CARD
-        4242424242424242 → SUCCEEDED, thẻ khác → FAILED; MoMo OTP 123456 →
-        SUCCEEDED, OTP khác → FAILED; QR/OTP hết hạn ~5 phút theo
-        qrExpiresAt/otpExpiresAt server trả.
+        Kết quả thanh toán do gateway phía server quyết định — KHÔNG có field
+        outcome trong request.
+        CARD / MOMO / VNPAY = DEMO: trả PROCESSING, FE poll GET ~1s sau đó
+        SUCCEEDED; không cần thẻ/OTP/QR hợp lệ (demo bỏ bước OTP).
+        PAYOS = THẬT (backend bật PAYOS_ENABLED=true + 3 key): trả PENDING +
+        `checkoutUrl` + `qrCode` (VietQR động) + `qrExpiresAt`; khách quét
+        VietQR hoặc mở cổng PayOS, FE poll GET cho tới khi webhook xác nhận.
+        Chưa cấu hình PayOS → 400 VALIDATION_FAILED với hướng dẫn bật.
       operationId: createPayment
       requestBody:
         required: true
@@ -796,6 +792,42 @@ paths:
                   value: { code: PAYMENT_EXPIRED, message: "Phiên thanh toán đã hết hạn (QR/OTP). Chọn lại phương thức để tiếp tục.", fieldErrors: [] }
                 invalidState:
                   value: { code: PAYMENT_INVALID_STATE, message: "Giao dịch này đã kết thúc.", fieldErrors: [] }
+
+  /payments/webhooks/payos:
+    post:
+      tags: [Payments]
+      summary: Webhook PayOS — public, xác thực HMAC-SHA256
+      description: |
+        PayOS gọi endpoint này sau khi khách chuyển khoản. Không dùng JWT;
+        chữ ký HMAC-SHA256 trong `signature` được verify bằng
+        PAYOS_CHECKSUM_KEY (SDK PayOS). Gateway chỉ verify + trả event đã
+        chuẩn hóa; `PaymentService` là single writer (AD-4/AD-9) — chuyển
+        payment PENDING/PROCESSING → SUCCEEDED (kích hoạt handler theo purpose
+        DEPOSIT/RENT/EXTENSION_FEE) hoặc FAILED. Idempotent theo orderCode:
+        payment đã terminal thì trả 200 và không chạy lại handler.
+      operationId: payOsWebhook
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PayOsWebhook" }
+      responses:
+        "200":
+          description: Webhook đã xử lý (hoặc đã xử lý trước đó — idempotent)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code: { type: string, example: "00" }
+                  desc: { type: string, example: "success" }
+        "400":
+          description: JSON hỏng, thiếu chữ ký hoặc chữ ký không hợp lệ
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { code: PAYMENT_WEBHOOK_INVALID, message: "Chữ ký webhook PayOS không hợp lệ.", fieldErrors: [] }
 
   # ------------------- CONTRACTS (US-11/13, FR-10/13) ---------------------
 
@@ -1043,7 +1075,284 @@ paths:
         "404": { $ref: "#/components/responses/TaskNotFound" }
         "409": { $ref: "#/components/responses/TaskSnapBack" }
 
+# --------------------- USERS / SYS-01 (US-28, FR-37) --------------------
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Danh sách người dùng — SYS-01 (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Tìm kiếm theo tên, email, phone; lọc theo role và status (0=DEACTIVATED, 1=ACTIVE, 2=LOCKED); phân trang.
+      operationId: listUsers
+      parameters:
+        - { name: query, in: query, schema: { type: string }, description: "Tìm kiếm tự do theo họ tên, email hoặc số điện thoại" }
+        - { name: role, in: query, schema: { $ref: "#/components/schemas/RoleName" }, description: "Lọc theo vai trò" }
+        - { name: status, in: query, schema: { type: integer, enum: [0, 1, 2] }, description: "0: DEACTIVATED, 1: ACTIVE, 2: LOCKED" }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page-size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200":
+          description: Trang danh sách người dùng
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+    post:
+      tags: [Users]
+      summary: Tạo tài khoản người dùng mới kèm mật khẩu tạm (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Tạo tài khoản cho mọi Role. Mật khẩu tạm được sinh ngẫu nhiên và trả về trong response để Admin bàn giao.
+        Email trùng trả về 409 Conflict (AUTH_EMAIL_EXISTS).
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateUserRequest" }
+      responses:
+        "201":
+          description: Tạo tài khoản thành công kèm mật khẩu tạm
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateUserResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Email đã tồn tại trong hệ thống
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Chi tiết người dùng theo ID (FR-37)
+      operationId: getUserDetail
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chi tiết người dùng
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/UserNotFound" }
+
+  /users/{userId}/status:
+    patch:
+      tags: [Users]
+      summary: Cập nhật trạng thái người dùng (Activate / Deactivate / Lock) (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Anti-lockout: Admin không được tự deactivate hoặc lock tài khoản của chính mình.
+        Ghi nhận sự thay đổi vào ActivityLog (EntityType USER).
+      operationId: updateUserStatus
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateUserStatusRequest" }
+      responses:
+        "200":
+          description: Cập nhật trạng thái thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/UserNotFound" }
+
+  /users/{userId}/role:
+    patch:
+      tags: [Users]
+      summary: Đổi vai trò người dùng (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Anti-lockout: Admin không được tự hạ vai trò của chính mình.
+        Ghi nhận sự kiện ROLE_CHANGED vào ActivityLog.
+      operationId: updateUserRole
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateUserRoleRequest" }
+      responses:
+        "200":
+          description: Đổi vai trò thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/UserNotFound" }
+
+  /users/{userId}/reset-password:
+    post:
+      tags: [Users]
+      summary: Cấp lại mật khẩu tạm mới (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Sinh mật khẩu tạm mới ngẫu nhiên, lưu hash BCrypt và trả về plain text một lần duy nhất cho Admin.
+        Ghi nhận PASSWORD_RESET vào ActivityLog.
+      operationId: resetUserPassword
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Đã cấp lại mật khẩu tạm thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResetPasswordResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/UserNotFound" }
+
 # ---------------------------------------------------------------------------
+  /reports/financial-summary:
+    get:
+      tags: [Reports]
+      summary: Báo cáo tổng hợp tài chính và 4 chỉ số KPI cốt lõi (FR-31)
+      description: |
+        Chỉ dành cho BUSINESS_OPS và SYSTEM_ADMIN.
+        Cung cấp 4 chỉ số: Doanh thu thực nhận, Tiền cọc an ninh trong Escrow (KHÔNG tính vào doanh thu),
+        Tổng phụ thu phát sinh, Tỷ lệ lấp đầy cơ sở (Occupancy Rate).
+        Hỗ trợ lọc theo kỳ mặc định (THIS_MONTH, LAST_MONTH, THIS_QUARTER, YTD) hoặc khoảng ngày tự chọn (CUSTOM).
+      operationId: getFinancialSummary
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [THIS_MONTH, LAST_MONTH, THIS_QUARTER, YTD, CUSTOM]
+            default: THIS_QUARTER
+          description: Kỳ báo cáo
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Ngày bắt đầu (khi period = CUSTOM)
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Ngày kết thúc (khi period = CUSTOM)
+      responses:
+        "200":
+          description: Báo cáo tổng hợp tài chính theo kỳ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialSummary"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /reports/monthly-revenue:
+    get:
+      tags: [Reports]
+      summary: Dữ liệu chuỗi thời gian doanh thu hàng tháng (FR-31)
+      description: |
+        Chỉ dành cho BUSINESS_OPS và SYSTEM_ADMIN.
+        Phục vụ biểu đồ doanh thu theo tháng (tiền thuê, phụ thu, tiền cọc phong tỏa).
+      operationId: getMonthlyRevenueChart
+      parameters:
+        - name: months
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 6
+            minimum: 1
+            maximum: 24
+          description: Số tháng thống kê gần nhất
+      responses:
+        "200":
+          description: Danh sách dữ liệu doanh thu từng tháng
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyRevenueItem"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /reports/drilldown:
+    get:
+      tags: [Reports]
+      summary: Tra cứu chi tiết chứng từ theo từng KPI (KPI Drill-down) (FR-31)
+      description: |
+        Chỉ dành cho BUSINESS_OPS và SYSTEM_ADMIN.
+        Bấm vào bất kỳ KPI nào (REVENUE, DEPOSIT, SURCHARGE, OCCUPANCY) để xem toàn bộ danh sách chứng từ cấu thành.
+      operationId: getReportDrilldown
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [REVENUE, DEPOSIT, SURCHARGE, OCCUPANCY]
+          description: Loại chỉ số KPI cần drill-down
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Tìm kiếm tự do trong bảng chi tiết
+      responses:
+        "200":
+          description: Danh sách dữ liệu drill-down kèm cấu hình cột
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DrilldownResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /reports/export:
+    get:
+      tags: [Reports]
+      summary: Xuất báo cáo tài chính kiểm toán ra file CSV (FR-31)
+      description: |
+        Chỉ dành cho BUSINESS_OPS và SYSTEM_ADMIN.
+        Xuất file CSV chuẩn kiểm toán (UTF-8 BOM), phân cách bằng dấu phẩy.
+      operationId: exportReportCSV
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [THIS_MONTH, LAST_MONTH, THIS_QUARTER, YTD, CUSTOM]
+            default: THIS_QUARTER
+      responses:
+        "200":
+          description: File CSV báo cáo kiểm toán
+          content:
+            text/csv:
+              schema:
+                type: string
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
 components:
 
   securitySchemes:
@@ -1095,6 +1404,13 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
           example: { code: TASK_SNAP_BACK, message: "Chặn Done ảo: Đơn chưa xác nhận thanh toán tiền cọc!", fieldErrors: [] }
+    UserNotFound:
+      description: Người dùng không tồn tại
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: USER_NOT_FOUND, message: "Không tìm thấy người dùng này.", fieldErrors: [] }
+
 
   schemas:
 
@@ -1107,7 +1423,7 @@ components:
         code:
           type: string
           description: Machine code UPPER_SNAKE
-          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, INTERNAL_ERROR]
+          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, USER_NOT_FOUND, INTERNAL_ERROR]
         message: { type: string, description: "Message human-readable theo khuôn NFR-7 (chuyện gì + hệ quả + 1 bước kế)" }
         fieldErrors:
           type: array
@@ -1146,6 +1462,69 @@ components:
           description: Route FE đổ vào theo role (khớp contracts/routes.yaml)
           enum: [/browse, /tasks, /facility, /overview, /users]
           example: /browse
+
+    UserDetail:
+      type: object
+      required: [id, fullName, email, role, status, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        fullName: { type: string, example: "Nguyễn Văn Admin" }
+        email: { type: string, example: "admin@storagehub.vn" }
+        phone: { type: string, nullable: true, example: "0901234567" }
+        role: { $ref: "#/components/schemas/RoleName" }
+        facilityId: { type: integer, format: int64, nullable: true }
+        status: { type: integer, enum: [0, 1, 2], description: "0: DEACTIVATED, 1: ACTIVE, 2: LOCKED" }
+        createdAt: { type: string, format: date-time }
+
+    UserPage:
+      type: object
+      required: [items, page, pageSize, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/UserDetail" }
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 20 }
+        totalItems: { type: integer, example: 45 }
+        totalPages: { type: integer, example: 3 }
+
+    CreateUserRequest:
+      type: object
+      required: [fullName, email, role]
+      properties:
+        fullName: { type: string, example: "Trần Văn Staff" }
+        email: { type: string, format: email, example: "staff2@demo.storagehub.vn" }
+        phone: { type: string, nullable: true, example: "0912345678" }
+        role: { $ref: "#/components/schemas/RoleName" }
+        facilityId: { type: integer, format: int64, nullable: true }
+
+    CreateUserResponse:
+      type: object
+      required: [user, temporaryPassword]
+      properties:
+        user: { $ref: "#/components/schemas/UserDetail" }
+        temporaryPassword: { type: string, example: "Tmp#9aK2$x" }
+
+    UpdateUserStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { type: integer, enum: [0, 1, 2], description: "0: DEACTIVATED, 1: ACTIVE, 2: LOCKED" }
+        reason: { type: string, nullable: true, example: "Nghỉ việc chuyển công tác" }
+
+    UpdateUserRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role: { $ref: "#/components/schemas/RoleName" }
+
+    ResetPasswordResponse:
+      type: object
+      required: [userId, email, temporaryPassword]
+      properties:
+        userId: { type: integer, format: int64 }
+        email: { type: string }
+        temporaryPassword: { type: string, example: "Rst#4mP9!z" }
 
     # ------------------------------ Units ---------------------------------
 
@@ -1386,7 +1765,8 @@ components:
 
     PaymentMethod:
       type: string
-      enum: [CARD, MOMO, VNPAY]
+      enum: [CARD, MOMO, VNPAY, PAYOS]
+      description: "PAYOS là cổng thật khi backend bật PAYOS_ENABLED=true + key; CARD/MOMO/VNPAY là mock demo auto-success."
 
     PaymentStatus:
       type: string
@@ -1404,7 +1784,9 @@ components:
         status: { $ref: "#/components/schemas/PaymentStatus" }
         otpRequired: { type: boolean, description: "true khi MOMO chờ OTP" }
         otpExpiresAt: { type: string, format: date-time, nullable: true, description: "Hạn nhập OTP (MOMO) — quá hạn → EXPIRED, PAYMENT_EXPIRED" }
-        qrPayload: { type: string, nullable: true, description: "Nội dung QR khi VNPAY — FE render QR" }
+        qrPayload: { type: string, nullable: true, description: "Nội dung QR (VNPAY mock hoặc VietQR PayOS) — FE render QR" }
+        qrCode: { type: string, nullable: true, description: "Chuỗi VietQR động PayOS trả về khi method=PAYOS; demo = null" }
+        checkoutUrl: { type: string, nullable: true, description: "Trang thanh toán PayOS (chỉ method=PAYOS) — FE mở tab mới" }
         qrExpiresAt: { type: string, format: date-time, nullable: true, description: "~5 phút (server quyết)" }
         receiptCode: { type: string, nullable: true, description: "Sinh khi SUCCEEDED" }
         paidAt: { type: string, format: date-time, nullable: true }
@@ -1470,7 +1852,33 @@ components:
             - $ref: "#/components/schemas/NotificationEvent"
             - type: object
               nullable: true
+
           description: "Chỉ có khi thanh toán THÀNH CÔNG — thất bại không sinh notification (FAIL tile: No money was taken)"
+
+    PayOsWebhook:
+      type: object
+      description: "Payload PayOS POST về webhook — verify bằng SDK trước khi đọc data."
+      required: [code, data, signature]
+      properties:
+        code: { type: string, example: "00" }
+        desc: { type: string, example: "success" }
+        success: { type: boolean }
+        signature: { type: string, description: "HMAC-SHA256 của data bằng PAYOS_CHECKSUM_KEY" }
+        data:
+          type: object
+          properties:
+            orderCode: { type: integer, format: int64, description: "Base + paymentId do backend sinh" }
+            amount: { type: integer, format: int64 }
+            description: { type: string }
+            accountNumber: { type: string }
+            reference: { type: string }
+            transactionDateTime: { type: string }
+            currency: { type: string, example: VND }
+            paymentLinkId: { type: string }
+            code: { type: string, example: "00" }
+            desc: { type: string }
+          additionalProperties: true
+      additionalProperties: true
 
     # ------------------------------ Contracts -----------------------------
 
@@ -1651,3 +2059,56 @@ components:
         priority: { type: string, nullable: true }
         alertNote: { type: string, nullable: true }
         issueDescription: { type: string, nullable: true }
+
+    # ------------------------------- Reports (FR-31) ----------------------
+
+    FinancialSummary:
+      type: object
+      required: [periodLabel, grossRevenue, grossRevenueGrowth, netRevenue, escrowDeposit, escrowDepositNote, surchargeRevenue, surchargeNote, occupancyRate, occupancyBreakdown, occupancyGrowth]
+      properties:
+        periodLabel: { type: string, example: "Quý này (Q3 2026)" }
+        grossRevenue: { type: integer, format: int64, example: 37450000, description: "Tổng doanh thu kinh doanh = netRevenue + surchargeRevenue" }
+        grossRevenueGrowth: { type: string, example: "+12.4% so với kỳ trước" }
+        netRevenue: { type: integer, format: int64, example: 36210000, description: "Doanh thu thuần từ tiền thuê kho" }
+        escrowDeposit: { type: integer, format: int64, example: 4890000, description: "Tiền cọc an ninh ký quỹ — tuyệt đối KHÔNG tính vào doanh thu" }
+        escrowDepositNote: { type: string, example: "Tài khoản giữ hộ cọc tại Vietcombank — Tách biệt 100% khỏi doanh thu kinh doanh" }
+        surchargeRevenue: { type: integer, format: int64, example: 1240000, description: "Tổng phụ thu phát sinh" }
+        surchargeNote: { type: string, example: "Bao gồm phí quá giờ, điện lạnh và xử lý rác" }
+        occupancyRate: { type: number, format: double, example: 88.1, description: "Tỷ lệ lấp đầy cơ sở (%)" }
+        occupancyBreakdown: { type: string, example: "37 / 42 kho đang cho thuê" }
+        occupancyGrowth: { type: string, example: "+3.2% so với tháng trước" }
+
+    MonthlyRevenueItem:
+      type: object
+      required: [month, rentRevenue, surcharge, escrowHold, totalRevenue]
+      properties:
+        month: { type: string, example: "10/2026" }
+        rentRevenue: { type: integer, format: int64, example: 36210000 }
+        surcharge: { type: integer, format: int64, example: 1240000 }
+        escrowHold: { type: integer, format: int64, example: 4890000 }
+        totalRevenue: { type: integer, format: int64, example: 37450000 }
+
+    DrilldownColumn:
+      type: object
+      required: [key, label]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        isMoney: { type: boolean, default: false }
+
+    DrilldownResponse:
+      type: object
+      required: [key, title, columns, rows]
+      properties:
+        key: { type: string, example: "REVENUE" }
+        title: { type: string, example: "Chi tiết chứng từ Doanh thu kinh doanh" }
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/DrilldownColumn"
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+

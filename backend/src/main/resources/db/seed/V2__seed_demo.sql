@@ -129,10 +129,10 @@ INSERT INTO users (user_id, full_name, email, phone, password_hash, role_id, fac
 INSERT INTO units (unit_id, code, type_id, zone_id, size_m2, floor, access_type, status) VALUES
     (1,  'S-1',    2, 1, 5.00,    1, 'QR',         'AVAILABLE'),
     (2,  'S-2',    2, 1, 5.00,    1, 'PIN',        'AVAILABLE'), -- beat Retire (UJ-4)
-    (3,  'S-3',    2, 1, 5.00,    1, 'PIN',        'RENTED'),    -- Trang BK-1044
+    (3,  'S-3',    2, 1, 5.00,    1, 'PIN',        'AVAILABLE'), -- Lan đã checkout 10-18, đệm hoàn tất, sẵn sàng cho thuê
     (4,  'S-4',    2, 1, 5.00,    1, 'QR',         'AVAILABLE'),
     (5,  'M-1',    3, 1, 8.00,    1, 'QR',         'AVAILABLE'),
-    (6,  'M-2',    3, 1, 8.00,    1, 'PIN',        'RENTED'),    -- stuck — beat fix status (UJ-4)
+    (6,  'M-2',    3, 1, 8.00,    1, 'PIN',        'AVAILABLE'), -- Đã hoàn tất dọn dẹp, sẵn sàng cho thuê
     (7,  'M-3',    3, 2, 8.00,    2, 'QR',         'AVAILABLE'),
     (8,  'M-4',    3, 2, 8.00,    2, 'smart lock', 'PREPARING'), -- cleaning task hôm nay
     (9,  'M-5',    3, 2, 8.00,    2, 'smart lock', 'AVAILABLE'), -- đích relocation (UJ-5)
@@ -160,9 +160,7 @@ INSERT INTO staff_assignments (staff_id, zone_id, shift, work_date) VALUES
 -- deposit_amount = cọc đang giữ cuối cùng (BK-1042: 172.500 sau top-up).
 
 INSERT INTO reservations (reservation_id, code, customer_id, unit_id, start_date, end_date, deposit_amount, access_code, status, created_at) VALUES
-    (1, 'BK-1042', 1, 3,  '2026-05-18', '2026-10-18', 172500, '482913', 'CLOSED',            '2026-04-20 09:12:00.000000'),
-    (2, 'BK-1043', 6, 6,  '2026-08-01', '2026-11-01', 114000, '731905', 'CHECKED_IN',        '2026-07-28 10:30:00.000000'), -- M-2: khách rời 10-01, desk chưa xử lý
-    (3, 'BK-1044', 6, 3,  '2026-10-19', '2026-12-19',  69000, '159034', 'CHECKED_IN',        '2026-07-20 14:05:00.000000');
+    (1, 'BK-1042', 1, 3,  '2026-05-18', '2026-10-18', 172500, '482913', 'CLOSED',            '2026-04-20 09:12:00.000000');
 
 INSERT INTO extensions (reservation_id, old_end_date, new_end_date, extension_fee, status, created_at) VALUES
     (1, '2026-08-18', '2026-10-18', 690000, 'APPLIED', '2026-08-05 11:20:00.000000');
@@ -175,13 +173,7 @@ INSERT INTO checkout_requests (reservation_id, requested_date, status, created_a
 INSERT INTO contracts (contract_id, code, reservation_id, policy_id, content_snapshot, signed_photo_url, status, supersedes_contract_id, is_latest, created_at) VALUES
     (1, 'CT-1042', 1, 2,
      '{"unit":"S-3","term":"2026-05-18/2026-10-18 (sau gia hạn)","rent":1725000,"deposit":172500,"policy":"v3","late_fee":"35000/day","surcharge":"5% cap 10%"}',
-     '/storage/contracts/CT-1042-signed.jpg', 'CLOSED', NULL, 1, '2026-04-20 09:13:00.000000'),
-    (2, 'CT-1043', 2, 2,
-     '{"unit":"M-2","term":"2026-08-01/2026-11-01","rent":1140000,"deposit":114000,"policy":"v3"}',
-     '/storage/contracts/CT-1043-signed.jpg', 'ACTIVE', NULL, 1, '2026-07-28 10:31:00.000000'),
-    (3, 'CT-1044', 3, 2,
-     '{"unit":"S-3","term":"2026-10-19/2026-12-19","rent":690000,"deposit":69000,"policy":"v3"}',
-     '/storage/contracts/CT-1044-signed.jpg', 'ACTIVE', NULL, 1, '2026-07-20 14:06:00.000000');
+     '/storage/contracts/CT-1042-signed.jpg', 'CLOSED', NULL, 1, '2026-04-20 09:13:00.000000');
 
 INSERT INTO contract_addendums (contract_id, extension_id, code, content_snapshot, signed_photo_url, signature_due_date, status, created_at) VALUES
     (1, 1, 'CT-1042-A1',
@@ -208,31 +200,22 @@ INSERT INTO payments (payment_id, receipt_code, payer_id, reservation_id, extens
     (2, 'RT-0871', 1, 1, NULL, NULL, 'DEPOSIT',       'MOMO',  103500,  'SUCCEEDED', '2026-04-20 09:12:00.000000'),
     (3, 'RT-0872', 1, 1, NULL, NULL, 'RENT',          'CARD',  1035000, 'SUCCEEDED', '2026-05-18 08:45:00.000000'),
     (4, 'RT-0873', 1, NULL, 1, NULL, 'EXTENSION_FEE', 'MOMO',  690000,  'SUCCEEDED', '2026-08-05 11:20:00.000000'),
-    (5, 'RT-0874', 1, 1, NULL, NULL, 'DEPOSIT',       'MOMO',  69000,   'SUCCEEDED', '2026-08-05 11:22:00.000000'), -- top-up cọc
-    (6, 'RT-0875', 6, 3, NULL, NULL, 'DEPOSIT',       'VNPAY', 69000,   'SUCCEEDED', '2026-07-20 14:05:00.000000'),
-    (7, 'RT-0876', 6, 3, NULL, NULL, 'RENT',          'CARD',  690000,  'SUCCEEDED', '2026-10-19 09:05:00.000000'),
-    (8, 'RT-0877', 6, 2, NULL, NULL, 'DEPOSIT',       'MOMO',  114000,  'SUCCEEDED', '2026-07-28 10:30:00.000000'),
-    (9, 'RT-0878', 6, 2, NULL, NULL, 'RENT',          'CARD',  1140000, 'SUCCEEDED', '2026-08-01 08:40:00.000000');
+    (5, 'RT-0874', 1, 1, NULL, NULL, 'DEPOSIT',       'MOMO',  69000,   'SUCCEEDED', '2026-08-05 11:22:00.000000'); -- top-up cọc
 
 -- ------------------------------------------------------------ TICKETS ----
 
 INSERT INTO support_tickets (ticket_id, code, customer_id, unit_id, reservation_id, incident_type, status, assigned_staff_id, created_at) VALUES
-    (1, 'SR-0032', 1, 3, 1, 'DEVICE_ISSUE', 'RESOLVED',   2, '2026-06-30 10:15:00.000000'), -- cửa kẹt — Minh xử lý xong
-    (2, 'SR-0033', 6, 3, 3, 'LOST_ACCESS',  'OPEN',       2, '2026-10-20 08:05:00.000000'); -- quên PIN — card hỗ trợ hôm nay
+    (1, 'SR-0032', 1, 3, 1, 'DEVICE_ISSUE', 'RESOLVED',   2, '2026-06-30 10:15:00.000000'); -- cửa kẹt — Minh xử lý xong
 
 -- ------------------------------------------------------------- TASKS ----
 -- Kanban hôm 2026-10-20: SUPPORT (TODO) + CLEANING (TODO); còn lại là history.
 
 INSERT INTO tasks (task_id, type, ref_code, assigned_staff_id, work_date, status, created_at) VALUES
-    (1, 'CHECK_IN',  'BK-1043', 2, '2026-08-01',  'DONE',        '2026-08-01 07:00:00.000000'),
-    (2, 'CHECK_IN',  'BK-1044', 2, '2026-10-19',  'DONE',        '2026-10-19 07:00:00.000000'),
     (3, 'CHECKOUT',  'BK-1042', 2, '2026-10-18',  'DONE',        '2026-10-18 07:00:00.000000'),
     (4, 'CLEANING',  NULL,      2, '2026-10-20',  'TODO',        '2026-10-19 18:00:00.000000'), -- M-4 sau maintenance
-    (5, 'SUPPORT',   'SR-0033', 2, '2026-10-20',  'TODO',        '2026-10-20 08:05:00.000000'),
     (6, 'CHECK_IN',  'BK-1042', 2, '2026-10-13',  'TODO',        '2026-10-13 07:15:00.000000'),
     (7, 'CLEANING',  'S-1',     2, '2026-10-13',  'TODO',        '2026-10-13 07:30:00.000000'),
     (8, 'SUPPORT',   'SR-0032', 2, '2026-10-13',  'TODO',        '2026-10-13 08:00:00.000000'),
-    (9, 'CHECKOUT',  'BK-1043', 2, '2026-10-13',  'IN_PROGRESS', '2026-10-13 08:30:00.000000'),
     (10, 'CONTRACT', 'CT-1042', 2, '2026-10-13',  'DONE',        '2026-10-13 09:00:00.000000');
 
 -- ------------------------------------------------------ NOTIFICATIONS ----
@@ -243,10 +226,7 @@ INSERT INTO notifications (user_id, type, title, deep_link, is_read, created_at)
     (1, 'TICKET_RESOLVED',       'SR-0032 resolved — sticky door fixed.',             '/support/1',     1, '2026-07-01 09:00:00.000000'),
     (1, 'EXTENSION_APPLIED',     'New checkout: Oct 18. Receipt 690.000 ₫ + 69.000 ₫ deposit top-up.', '/rentals/1', 1, '2026-08-05 11:22:00.000000'),
     (1, 'ADDENDUM_SIGNED',       'Addendum CT-1042-A1 signed.',                       '/rentals/1',     1, '2026-08-10 10:00:00.000000'),
-    (1, 'SETTLEMENT_COMPLETED',  'Checkout closed. Refund 132.500 ₫ after damage fee 40.000 ₫.',      '/rentals/1',  0, '2026-10-18 16:05:00.000000'),
-    (6, 'BOOKING_CONFIRMED',     'Unit S-3 reserved for Oct 19. Deposit 69.000 ₫ received.', '/rentals/3', 1, '2026-07-20 14:05:00.000000'),
-    (6, 'CHECK_IN_COMPLETED',    'Rental active. Your access code is ready.',         '/rentals/3',     0, '2026-10-19 09:06:00.000000'),
-    (6, 'TICKET_CREATED',        'SR-0033 received — staff will contact you soon.',   '/support/2',     0, '2026-10-20 08:05:00.000000');
+    (1, 'SETTLEMENT_COMPLETED',  'Checkout closed. Refund 132.500 ₫ after damage fee 40.000 ₫.',      '/rentals/1',  0, '2026-10-18 16:05:00.000000');
 
 -- ------------------------------------------------------ ACTIVITY LOGS ----
 -- Append-only: chỉ những write có thật trong timeline; M-2 KHÔNG có dòng
@@ -266,9 +246,7 @@ INSERT INTO activity_logs (actor_id, entity_type, entity_id, action, from_value,
     (1, 'RESERVATION', 1, 'STATUS_CHANGE',   'CHECKED_IN','CHECKOUT_REQUESTED', 'Checkout requested for 2026-10-18',     '2026-10-10 15:40:00.000000'),
     (4, 'UNIT',        8, 'STATUS_CHANGE',   'MAINTENANCE','PREPARING',      'Maintenance done, cleaning buffer',        '2026-10-19 17:55:00.000000'),
     (2, 'RESERVATION', 1, 'STATUS_CHANGE',   'CHECKOUT_REQUESTED', 'CLOSED', 'Settlement TL-0042: refund 132.500',       '2026-10-18 16:05:00.000000'),
-    (2, 'UNIT',        3, 'STATUS_CHANGE',   'RENTED',    'PREPARING',       'Checkout BK-1042, turnover buffer 1 day',  '2026-10-18 16:05:00.000000'),
-    (2, 'RESERVATION', 3, 'STATUS_CHANGE',   'RESERVED',  'CHECKED_IN',      'Check-in BK-1044, rent 690.000 paid',      '2026-10-19 09:05:00.000000'),
-    (2, 'UNIT',        3, 'STATUS_CHANGE',   'PREPARING', 'RENTED',          'Check-in BK-1044',                         '2026-10-19 09:06:00.000000'),
+    (2, 'UNIT',        3, 'STATUS_CHANGE',   'RENTED',    'AVAILABLE',       'Checkout BK-1042 completed, buffer ended',  '2026-10-18 16:05:00.000000'),
     -- UJ-6: chuỗi login fail sáng nay của tài khoản locked
     (7, 'USER', 7, 'LOGIN_FAILED', NULL, NULL, 'Wrong password',        '2026-10-20 07:58:12.000000'),
     (7, 'USER', 7, 'LOGIN_FAILED', NULL, NULL, 'Wrong password',        '2026-10-20 07:58:40.000000'),

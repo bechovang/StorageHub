@@ -67,6 +67,13 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/forgot-password"
                         ).permitAll()
+                        // AD-9: PayOS callback xác thực bằng chữ ký HMAC, không JWT.
+                        .requestMatchers(
+                                "/api/v1/payments/webhooks/payos",
+                                "/api/v1/payments/webhook"
+                        ).permitAll()
+                        .requestMatchers("/api/v1/users/**").hasRole("SYSTEM_ADMIN")
+                        .requestMatchers("/api/v1/reports/**").hasAnyRole("BUSINESS_OPS", "SYSTEM_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
