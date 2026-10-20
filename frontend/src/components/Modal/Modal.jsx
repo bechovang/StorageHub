@@ -4,20 +4,24 @@ import "./Modal.css";
 
 export default function Modal({
   open,
+  isOpen,
   title,
   children,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   onConfirm,
   onClose,
+  showFooter,
 }) {
+  const isVisible = open !== undefined ? Boolean(open) : Boolean(isOpen);
+
   useEffect(() => {
-    if (!open) {
+    if (!isVisible) {
       return undefined;
     }
 
     function handleKeyDown(event) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && onClose) {
         onClose();
       }
     }
@@ -29,11 +33,14 @@ export default function Modal({
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [isVisible, onClose]);
 
-  if (!open) {
+  if (!isVisible) {
     return null;
   }
+
+  // Tự động ẩn footer mặc định nếu component không truyền onConfirm và không yêu cầu showFooter
+  const shouldRenderFooter = showFooter !== undefined ? showFooter : Boolean(onConfirm);
 
   return (
     <div
@@ -63,15 +70,21 @@ export default function Modal({
 
         <div className="modal__body">{children}</div>
 
-        <footer className="modal__footer">
-          <Button variant="secondary" onClick={onClose}>
-            {cancelLabel}
-          </Button>
+        {shouldRenderFooter && (
+          <footer className="modal__footer">
+            {cancelLabel && (
+              <Button variant="secondary" onClick={onClose}>
+                {cancelLabel}
+              </Button>
+            )}
 
-          <Button onClick={onConfirm}>
-            {confirmLabel}
-          </Button>
-        </footer>
+            {onConfirm && (
+              <Button onClick={onConfirm}>
+                {confirmLabel}
+              </Button>
+            )}
+          </footer>
+        )}
       </section>
     </div>
   );
