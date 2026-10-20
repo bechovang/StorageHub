@@ -1043,6 +1043,151 @@ paths:
         "404": { $ref: "#/components/responses/TaskNotFound" }
         "409": { $ref: "#/components/responses/TaskSnapBack" }
 
+# --------------------- USERS / SYS-01 (US-28, FR-37) --------------------
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Danh sách người dùng — SYS-01 (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Tìm kiếm theo tên, email, phone; lọc theo role và status (0=DEACTIVATED, 1=ACTIVE, 2=LOCKED); phân trang.
+      operationId: listUsers
+      parameters:
+        - { name: query, in: query, schema: { type: string }, description: "Tìm kiếm tự do theo họ tên, email hoặc số điện thoại" }
+        - { name: role, in: query, schema: { $ref: "#/components/schemas/RoleName" }, description: "Lọc theo vai trò" }
+        - { name: status, in: query, schema: { type: integer, enum: [0, 1, 2] }, description: "0: DEACTIVATED, 1: ACTIVE, 2: LOCKED" }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page-size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        "200":
+          description: Trang danh sách người dùng
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+    post:
+      tags: [Users]
+      summary: Tạo tài khoản người dùng mới kèm mật khẩu tạm (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Tạo tài khoản cho mọi Role. Mật khẩu tạm được sinh ngẫu nhiên và trả về trong response để Admin bàn giao.
+        Email trùng trả về 409 Conflict (AUTH_EMAIL_EXISTS).
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateUserRequest" }
+      responses:
+        "201":
+          description: Tạo tài khoản thành công kèm mật khẩu tạm
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateUserResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Email đã tồn tại trong hệ thống
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Chi tiết người dùng theo ID (FR-37)
+      operationId: getUserDetail
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Chi tiết người dùng
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/UserNotFound" }
+
+  /users/{userId}/status:
+    patch:
+      tags: [Users]
+      summary: Cập nhật trạng thái người dùng (Activate / Deactivate / Lock) (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Anti-lockout: Admin không được tự deactivate hoặc lock tài khoản của chính mình.
+        Ghi nhận sự thay đổi vào ActivityLog (EntityType USER).
+      operationId: updateUserStatus
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateUserStatusRequest" }
+      responses:
+        "200":
+          description: Cập nhật trạng thái thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/UserNotFound" }
+
+  /users/{userId}/role:
+    patch:
+      tags: [Users]
+      summary: Đổi vai trò người dùng (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Anti-lockout: Admin không được tự hạ vai trò của chính mình.
+        Ghi nhận sự kiện ROLE_CHANGED vào ActivityLog.
+      operationId: updateUserRole
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateUserRoleRequest" }
+      responses:
+        "200":
+          description: Đổi vai trò thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserDetail" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/UserNotFound" }
+
+  /users/{userId}/reset-password:
+    post:
+      tags: [Users]
+      summary: Cấp lại mật khẩu tạm mới (FR-37)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Sinh mật khẩu tạm mới ngẫu nhiên, lưu hash BCrypt và trả về plain text một lần duy nhất cho Admin.
+        Ghi nhận PASSWORD_RESET vào ActivityLog.
+      operationId: resetUserPassword
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Đã cấp lại mật khẩu tạm thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResetPasswordResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/UserNotFound" }
+
 # ---------------------------------------------------------------------------
 components:
 
@@ -1095,6 +1240,13 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
           example: { code: TASK_SNAP_BACK, message: "Chặn Done ảo: Đơn chưa xác nhận thanh toán tiền cọc!", fieldErrors: [] }
+    UserNotFound:
+      description: Người dùng không tồn tại
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: USER_NOT_FOUND, message: "Không tìm thấy người dùng này.", fieldErrors: [] }
+
 
   schemas:
 
@@ -1107,7 +1259,7 @@ components:
         code:
           type: string
           description: Machine code UPPER_SNAKE
-          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, INTERNAL_ERROR]
+          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, USER_NOT_FOUND, INTERNAL_ERROR]
         message: { type: string, description: "Message human-readable theo khuôn NFR-7 (chuyện gì + hệ quả + 1 bước kế)" }
         fieldErrors:
           type: array
@@ -1146,6 +1298,69 @@ components:
           description: Route FE đổ vào theo role (khớp contracts/routes.yaml)
           enum: [/browse, /tasks, /facility, /overview, /users]
           example: /browse
+
+    UserDetail:
+      type: object
+      required: [id, fullName, email, role, status, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        fullName: { type: string, example: "Nguyễn Văn Admin" }
+        email: { type: string, example: "admin@storagehub.vn" }
+        phone: { type: string, nullable: true, example: "0901234567" }
+        role: { $ref: "#/components/schemas/RoleName" }
+        facilityId: { type: integer, format: int64, nullable: true }
+        status: { type: integer, enum: [0, 1, 2], description: "0: DEACTIVATED, 1: ACTIVE, 2: LOCKED" }
+        createdAt: { type: string, format: date-time }
+
+    UserPage:
+      type: object
+      required: [items, page, pageSize, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/UserDetail" }
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 20 }
+        totalItems: { type: integer, example: 45 }
+        totalPages: { type: integer, example: 3 }
+
+    CreateUserRequest:
+      type: object
+      required: [fullName, email, role]
+      properties:
+        fullName: { type: string, example: "Trần Văn Staff" }
+        email: { type: string, format: email, example: "staff2@demo.storagehub.vn" }
+        phone: { type: string, nullable: true, example: "0912345678" }
+        role: { $ref: "#/components/schemas/RoleName" }
+        facilityId: { type: integer, format: int64, nullable: true }
+
+    CreateUserResponse:
+      type: object
+      required: [user, temporaryPassword]
+      properties:
+        user: { $ref: "#/components/schemas/UserDetail" }
+        temporaryPassword: { type: string, example: "Tmp#9aK2$x" }
+
+    UpdateUserStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { type: integer, enum: [0, 1, 2], description: "0: DEACTIVATED, 1: ACTIVE, 2: LOCKED" }
+        reason: { type: string, nullable: true, example: "Nghỉ việc chuyển công tác" }
+
+    UpdateUserRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role: { $ref: "#/components/schemas/RoleName" }
+
+    ResetPasswordResponse:
+      type: object
+      required: [userId, email, temporaryPassword]
+      properties:
+        userId: { type: integer, format: int64 }
+        email: { type: string }
+        temporaryPassword: { type: string, example: "Rst#4mP9!z" }
 
     # ------------------------------ Units ---------------------------------
 
