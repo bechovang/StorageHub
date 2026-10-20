@@ -285,7 +285,7 @@ export default function BrowsePage() {
         navLinks={[
           { label: "Tìm thuê kho", href: "/browse", active: true },
           { label: "Kho của tôi", href: "/rentals" },
-          { label: "Hỗ trợ", href: "#support" },
+          { label: "Hỗ trợ", href: "/support" },
         ]}
         rightContent={
           <button

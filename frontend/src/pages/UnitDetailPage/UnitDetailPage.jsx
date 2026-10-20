@@ -186,7 +186,7 @@ export default function UnitDetailPage() {
         }
       })
       .catch((err) => {
-        console.error("Lỗi khi tải chi tiết kho:", err);
+        console.error("Failed to fetch unit details:", err);
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -209,7 +209,7 @@ export default function UnitDetailPage() {
         if (active) setQuote(q);
       })
       .catch((err) => {
-        console.error("Lỗi khi tính toán bảng giá:", err);
+        console.error("Failed to calculate rental price:", err);
       })
       .finally(() => {
         if (active) setQuoteLoading(false);
@@ -246,7 +246,7 @@ export default function UnitDetailPage() {
           navLinks={[
             { label: "Tìm thuê kho", href: "/browse" },
             { label: "Kho của tôi", href: "/rentals" },
-            { label: "Hỗ trợ", href: "#support" },
+            { label: "Hỗ trợ", href: "/support" },
           ]}
         />
         <main
@@ -332,9 +332,9 @@ export default function UnitDetailPage() {
           user?.fullName ? user.fullName.trim().charAt(0).toUpperCase() : "KH"
         }
         navLinks={[
-          { label: "Tìm thuê kho", href: "/browse", active: true },
+          { label: "Tìm thuê kho", href: "/browse" },
           { label: "Kho của tôi", href: "/rentals" },
-          { label: "Hỗ trợ", href: "#support" },
+          { label: "Hỗ trợ", href: "/support" },
         ]}
       />
 

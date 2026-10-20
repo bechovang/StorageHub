@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Key,
   WarningCircle,
+  CheckCircle,
   FileText,
   CaretRight,
   CaretLeft,
@@ -43,6 +44,13 @@ export default function TaskBoardPage() {
   const [toastData, setToastData] = useState(null); // { message, task }
   const [snappingBackTaskId, setSnappingBackTaskId] = useState(null);
 
+  // General action toast (thay thế window.alert)
+  const [actionToast, setActionToast] = useState(null);
+  const showActionToast = useCallback((message, type = "success") => {
+    setActionToast({ message, type });
+    setTimeout(() => setActionToast(null), 4500);
+  }, []);
+
   // Active ritual drawers
   const [activeCheckinTask, setActiveCheckinTask] = useState(null);
   const [activeCheckoutTask, setActiveCheckoutTask] = useState(null);
@@ -59,7 +67,7 @@ export default function TaskBoardPage() {
       const data = await getStaffTasks();
       setTasks(data);
     } catch (err) {
-      console.error("Lỗi khi tải danh sách công việc:", err);
+      console.error("Failed to fetch staff tasks:", err);
     }
   }, []);
 
@@ -82,7 +90,7 @@ export default function TaskBoardPage() {
         }
       })
       .catch((err) => {
-        console.error("Lỗi khi tải danh sách công việc:", err);
+        console.error("Failed to fetch staff tasks:", err);
         if (!ignore) setLoading(false);
       });
 
@@ -511,11 +519,12 @@ export default function TaskBoardPage() {
         </aside>
       )}
 
-      {/* ── US-15: Check-in Ritual Drawer (F2-02) ── */}
+      {/* ── Check-in Ritual Drawer ── */}
       {activeCheckinTask && (
         <CheckinRitualDrawer
           task={activeCheckinTask}
           onClose={() => setActiveCheckinTask(null)}
+          showToast={showActionToast}
           onSuccess={async () => {
             setActiveCheckinTask(null);
             await reloadTasks();
@@ -523,11 +532,12 @@ export default function TaskBoardPage() {
         />
       )}
 
-      {/* ── US-21: Checkout Ritual Drawer (F3-01) ── */}
+      {/* ── Checkout Ritual Drawer ── */}
       {activeCheckoutTask && (
         <CheckoutRitualDrawer
           task={activeCheckoutTask}
           onClose={() => setActiveCheckoutTask(null)}
+          showToast={showActionToast}
           onSuccess={async () => {
             setActiveCheckoutTask(null);
             await reloadTasks();
@@ -540,6 +550,7 @@ export default function TaskBoardPage() {
         <CleaningRitualDrawer
           task={activeCleaningTask}
           onClose={() => setActiveCleaningTask(null)}
+          showToast={showActionToast}
           onSuccess={async () => {
             setActiveCleaningTask(null);
             await reloadTasks();
@@ -552,6 +563,7 @@ export default function TaskBoardPage() {
         <SupportTicketDrawer
           task={activeSupportTask}
           onClose={() => setActiveSupportTask(null)}
+          showToast={showActionToast}
           onSuccess={async () => {
             setActiveSupportTask(null);
             await reloadTasks();
@@ -559,25 +571,38 @@ export default function TaskBoardPage() {
         />
       )}
 
-      {/* ── US-19: Contract / Addendum Signature Drawer ── */}
+      {/* ── Contract / Addendum Signature Drawer ── */}
       {activeContractTask && (
         <ContractRitualDrawer
           task={activeContractTask}
           onClose={() => setActiveContractTask(null)}
+          showToast={showActionToast}
           onSuccess={async () => {
             setActiveContractTask(null);
             await reloadTasks();
           }}
         />
       )}
+
+      {/* ── General Action Toast ── */}
+      {actionToast && (
+        <div className={`toast-banner toast-banner--${actionToast.type}`} role="status">
+          {actionToast.type === "success" ? (
+            <CheckCircle size={18} weight="bold" />
+          ) : (
+            <WarningCircle size={18} weight="bold" />
+          )}
+          <span>{actionToast.message}</span>
+        </div>
+      )}
     </AppShell>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SUB-COMPONENT: US-15 CHECK-IN RITUAL DRAWER
+// SUB-COMPONENT: CHECK-IN RITUAL DRAWER
 // ─────────────────────────────────────────────────────────────────────────────
-function CheckinRitualDrawer({ task, onClose, onSuccess }) {
+function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [photoUploaded, setPhotoUploaded] = useState(Boolean(task.ritual?.contractPhotoUrl));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -594,9 +619,10 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
         contractPhotoUrl: PLACEHOLDER_UNIT_IMAGE,
         accessPin: task.accessPin || "8842-Active",
       });
+      showToast?.(`Hoàn tất nhận kho ${task.refCode} thành công! Mã PIN đã được kích hoạt.`, "success");
       onSuccess();
     } catch (err) {
-      alert(err.message || "Lỗi khi hoàn tất check-in");
+      showToast?.(err.message || "Lỗi khi hoàn tất check-in", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -754,9 +780,9 @@ function CheckinRitualDrawer({ task, onClose, onSuccess }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SUB-COMPONENT: US-21 CHECKOUT RITUAL DRAWER
+// SUB-COMPONENT: CHECKOUT RITUAL DRAWER
 // ─────────────────────────────────────────────────────────────────────────────
-function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
+function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [checklist, setChecklist] = useState(
     task.ritual?.checklist || {
       accessCard: "OK",
@@ -782,7 +808,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
 
   const handleAddCharge = () => {
     if (!newChargeItem.trim() || !newChargeAmount || Number(newChargeAmount) <= 0 || !newChargeReason.trim()) {
-      alert("Quy định: Phụ phí bồi thường bắt buộc phải có tên hạng mục, số tiền > 0 và lý do hư hại cụ thể!");
+      showToast?.("Quy định: Phụ phí bồi thường bắt buộc phải có tên hạng mục, số tiền > 0 và lý do hư hại cụ thể!", "warning");
       return;
     }
 
@@ -809,7 +835,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
     // Validate lý do phụ phí bắt buộc
     const invalid = charges.some((c) => !c.reason || !c.amount || c.amount <= 0);
     if (invalid) {
-      alert("Không thể đóng rental: Mọi khoản phụ phí hư hại bắt buộc có số tiền và lý do giải trình!");
+      showToast?.("Không thể đóng hợp đồng thuê: Mọi khoản phụ phí hư hại bắt buộc có số tiền và lý do giải trình!", "warning");
       return;
     }
 
@@ -821,12 +847,13 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
         refundAmount,
         extraCharged: extraDue,
       });
-      alert(
-        `Đã hoàn tất tất toán cho đơn ${task.refCode}!\n- Tiền cọc hoàn trả: ${formatVnd(refundAmount)}\n- Hệ thống đã tự động sinh một Thẻ dọn kho (Cleaning Task) cho ${task.unitCode}.`
+      showToast?.(
+        `Đã hoàn tất tất toán cho đơn ${task.refCode}! Hoàn trả cọc: ${formatVnd(refundAmount)}. Đã tự động tạo Thẻ dọn kho cho ${task.unitCode}.`,
+        "success"
       );
       onSuccess();
     } catch (err) {
-      alert(err.message || "Lỗi khi xử lý tất toán");
+      showToast?.(err.message || "Lỗi khi xử lý tất toán", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -1018,7 +1045,7 @@ function CheckoutRitualDrawer({ task, onClose, onSuccess }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SUB-COMPONENT: CLEANING RITUAL DRAWER
 // ─────────────────────────────────────────────────────────────────────────────
-function CleaningRitualDrawer({ task, onClose, onSuccess }) {
+function CleaningRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [checklist, setChecklist] = useState({
     sweptFloor: false,
     dehumidifierChecked: false,
@@ -1030,10 +1057,10 @@ function CleaningRitualDrawer({ task, onClose, onSuccess }) {
   const handleComplete = async () => {
     try {
       await completeCleaningRitual(task.taskId, checklist);
-      alert(`Đã hoàn tất dọn kho ${task.unitCode}! Kho đã sẵn sàng cho khách thuê tiếp theo.`);
+      showToast?.(`Đã hoàn tất dọn kho ${task.unitCode}! Kho đã sẵn sàng bàn giao cho khách thuê tiếp theo.`, "success");
       onSuccess();
     } catch (err) {
-      alert(err.message || "Lỗi khi cập nhật");
+      showToast?.(err.message || "Lỗi khi cập nhật trạng thái dọn dẹp", "error");
     }
   };
 
@@ -1092,7 +1119,7 @@ function CleaningRitualDrawer({ task, onClose, onSuccess }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SUB-COMPONENT: SUPPORT TICKET DRAWER
 // ─────────────────────────────────────────────────────────────────────────────
-function SupportTicketDrawer({ task, onClose, onSuccess }) {
+function SupportTicketDrawer({ task, onClose, onSuccess, showToast }) {
   const [note, setNote] = useState("");
   const [escalate, setEscalate] = useState(false);
   const [escalateReason, setEscalateReason] = useState("");
@@ -1104,10 +1131,10 @@ function SupportTicketDrawer({ task, onClose, onSuccess }) {
         escalate,
         escalateReason,
       });
-      alert(escalate ? "Đã chuyển sự cố lên Quản lý cơ sở!" : "Đã xử lý xong sự cố!");
+      showToast?.(escalate ? "Đã chuyển sự cố lên Quản lý cơ sở tiếp nhận!" : "Đã xử lý xong sự cố cho khách!", "success");
       onSuccess();
     } catch (err) {
-      alert(err.message || "Lỗi khi xử lý ticket");
+      showToast?.(err.message || "Lỗi khi xử lý sự cố", "error");
     }
   };
 
@@ -1180,7 +1207,7 @@ function SupportTicketDrawer({ task, onClose, onSuccess }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SUB-COMPONENT: CONTRACT / ADDENDUM SIGNATURE DRAWER (US-19)
 // ─────────────────────────────────────────────────────────────────────────────
-function ContractRitualDrawer({ task, onClose, onSuccess }) {
+function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [photoUrl, setPhotoUrl] = useState(task.ritual?.contractPhotoUrl || "");
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1198,10 +1225,10 @@ function ContractRitualDrawer({ task, onClose, onSuccess }) {
     setIsSubmitting(true);
     try {
       await completeContractRitual(task.taskId, { contractPhotoUrl: photoUrl });
-      alert(`Đã hoàn tất lưu hồ sơ hợp đồng/phụ lục ${task.refCode}!`);
+      showToast?.(`Đã hoàn tất lưu hồ sơ hợp đồng/phụ lục ${task.refCode}!`, "success");
       onSuccess();
     } catch (err) {
-      alert(err.message || "Lỗi khi lưu chữ ký hợp đồng");
+      showToast?.(err.message || "Lỗi khi lưu chữ ký hợp đồng", "error");
     } finally {
       setIsSubmitting(false);
     }

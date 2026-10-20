@@ -52,9 +52,9 @@ export const TASK_TYPES = {
 };
 
 export const TASK_STATUSES = {
-  TODO: { key: "TODO", label: "To do", countLabel: "Chờ xử lý" },
-  IN_PROGRESS: { key: "IN_PROGRESS", label: "In progress", countLabel: "Đang thực hiện" },
-  DONE: { key: "DONE", label: "Done", countLabel: "Hoàn thành" },
+  TODO: { key: "TODO", label: "Chờ xử lý", countLabel: "Chờ xử lý" },
+  IN_PROGRESS: { key: "IN_PROGRESS", label: "Đang thực hiện", countLabel: "Đang thực hiện" },
+  DONE: { key: "DONE", label: "Đã hoàn thành", countLabel: "Hoàn thành" },
 };
 
 const STORAGE_KEY = "storagehub_tasks_v2";
@@ -222,7 +222,7 @@ export function resetLocalTasks() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_TASKS));
   } catch (err) {
-    console.error("Lỗi khi reset tasks vào localStorage:", err);
+    console.error("Failed to reset tasks:", err);
   }
   return INITIAL_TASKS;
 }
@@ -232,7 +232,7 @@ function loadLocalTasks() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (err) {
-    console.error("Lỗi khi đọc tasks từ localStorage:", err);
+    console.error("Failed to read tasks:", err);
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_TASKS));
   return INITIAL_TASKS;
@@ -242,7 +242,7 @@ function saveLocalTasks(tasks) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   } catch (err) {
-    console.error("Lỗi khi lưu tasks vào localStorage:", err);
+    console.error("Failed to save tasks:", err);
   }
 }
 

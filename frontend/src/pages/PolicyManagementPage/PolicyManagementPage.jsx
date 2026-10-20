@@ -1,18 +1,12 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Link } from "react-router";
 import {
-  ShieldCheck,
   CheckCircle,
   XCircle,
-  Warning,
   ArrowClockwise,
   FloppyDisk,
-  FileText,
   Warehouse,
   Info,
-  Clock,
-  ArrowRight,
-  Check,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -101,7 +95,7 @@ export default function PolicyManagementPage() {
         to: `${draftLateFee}%`,
         isValid: !isBlocked,
         blockReason: isBlocked
-          ? `Bị chặn bởi trần cứng #CAP-04 (Tối đa ${HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}%)`
+          ? `Vượt mức trần tối đa cho phép (Tối đa ${HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}%)`
           : null,
       });
     }
@@ -117,7 +111,7 @@ export default function PolicyManagementPage() {
         to: `${draftDeposit}%`,
         isValid: !isBlocked,
         blockReason: isBlocked
-          ? `Bị chặn bởi sàn tối thiểu #CAP-08 (Tối thiểu ${HARD_CAPS.SECURITY_DEPOSIT_MIN_PERCENT}%)`
+          ? `Thấp hơn mức sàn tối thiểu theo quy định (Tối thiểu ${HARD_CAPS.SECURITY_DEPOSIT_MIN_PERCENT}%)`
           : null,
       });
     }
@@ -136,7 +130,7 @@ export default function PolicyManagementPage() {
         to: `${draftBufferDays} ngày`,
         isValid: !isBlocked,
         blockReason: isBlocked
-          ? `Thời gian đệm phải từ ${HARD_CAPS.TURNOVER_BUFFER_MIN_DAYS} đến ${HARD_CAPS.TURNOVER_BUFFER_MAX_DAYS} ngày (#OPS-012)`
+          ? `Thời gian đệm xoay vòng kho phải từ ${HARD_CAPS.TURNOVER_BUFFER_MIN_DAYS} đến ${HARD_CAPS.TURNOVER_BUFFER_MAX_DAYS} ngày`
           : null,
       });
     }
@@ -364,7 +358,7 @@ export default function PolicyManagementPage() {
                   capRulesRef.current?.scrollIntoView({ behavior: "smooth" });
                 }}
               >
-                Xem quy định trần cứng (#CAP-04) →
+                Xem quy định hạn mức an toàn →
               </a>
             </div>
           )}
@@ -380,15 +374,15 @@ export default function PolicyManagementPage() {
                 {/* Card Header */}
                 <div className="policy-card__header">
                   <div>
-                    <h2 className="policy-card__title">Rental Governance & Pricing Matrix</h2>
+                    <h2 className="policy-card__title">Chính sách vận hành & Bảng giá thuê</h2>
                     <p className="policy-card__subtitle">
                       Thiết lập đơn giá cơ sở theo từng phân loại ô kho, tỷ lệ phụ thu trả trễ và tham số vận hành vệ sinh kho.
                     </p>
                   </div>
                   <div className="policy-card__tags">
-                    <span className="policy-tag policy-tag--facility">Scope: VN-SGN-01</span>
+                    <span className="policy-tag policy-tag--facility">Phạm vi: Tân Bình Gateway</span>
                     <span className="policy-tag policy-tag--status">
-                      {hasChanges ? "Draft Rev 4" : "Enforced Active"}
+                      {hasChanges ? "Bản thảo chưa lưu" : "Đang áp dụng"}
                     </span>
                   </div>
                 </div>
@@ -398,8 +392,8 @@ export default function PolicyManagementPage() {
                   <div className="policy-section">
                     <div className="policy-section__header">
                       <div className="policy-section__title-wrap">
-                        <span className="policy-section__title">Đơn giá thuê cơ bản theo tháng</span>
-                        <span className="policy-section__sub">(Base Rent per Month)</span>
+                        <span className="policy-section__title">Đơn giá thuê cơ sở theo tháng</span>
+                        <span className="policy-section__sub">(Đơn giá cơ bản)</span>
                       </div>
                       <span className="policy-section__currency">Đơn vị: Đồng Việt Nam (VND)</span>
                     </div>
@@ -481,7 +475,7 @@ export default function PolicyManagementPage() {
                     <div className="policy-section__header">
                       <div className="policy-section__title-wrap">
                         <span className="policy-section__title">Phụ thu & Tham số vận hành</span>
-                        <span className="policy-section__sub">(Surcharges & Constraints)</span>
+                        <span className="policy-section__sub">(Phụ phí & Quy định ràng buộc)</span>
                       </div>
                       <span className="policy-section__currency text-error font-medium">
                         Tuân thủ trần quy chế nghiêm ngặt
@@ -495,7 +489,7 @@ export default function PolicyManagementPage() {
                             <th>Hạng mục quy chế</th>
                             <th>Hình thức</th>
                             <th className="w-48">Giá trị thiết lập</th>
-                            <th>Trần quy định (#CAP)</th>
+                            <th>Hạn mức trần an toàn</th>
                             <th className="text-right w-32">Thi hành</th>
                           </tr>
                         </thead>
