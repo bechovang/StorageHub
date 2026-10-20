@@ -70,4 +70,9 @@ public interface TaskService {
      * US-20: Hủy task CHECKOUT khi khách hủy yêu cầu trả kho.
      */
     void cancelCheckoutTask(User actor, String reservationCode);
+
+    /**
+     * US-21: Xác nhận tất toán và hoàn tất Checkout ritual trên Drawer của Task Board.
+     */
+    TaskResponse completeCheckoutRitual(String currentUserEmail, Long taskId, Long refundAmount, Long damageFee);
 }

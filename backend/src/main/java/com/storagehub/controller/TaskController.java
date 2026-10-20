@@ -78,6 +78,22 @@ public class TaskController {
     }
 
     /**
+     * US-21: Xác nhận tất toán và hoàn tất thủ tục trả kho trên Drawer Task Board.
+     */
+    @PostMapping("/{taskId}/complete-checkout")
+    public ResponseEntity<TaskResponse> completeCheckout(
+            @PathVariable("taskId") Long taskId,
+            @RequestBody(required = false) com.storagehub.dto.task.CompleteCheckoutRequest request,
+            Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        Long refund = request != null ? request.refundAmount() : null;
+        Long damage = request != null ? request.damageFee() : null;
+        TaskResponse response = taskService.completeCheckoutRitual(email, taskId, refund, damage);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Hệ thống tự động phân sinh task cho staff trực ca và phụ trách Zone chứa Unit (FR-21).
      * Không hỗ trợ giao task thủ công.
      */

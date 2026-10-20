@@ -249,7 +249,45 @@ function saveLocalTasks(tasks) {
 /**
  * Lấy danh sách nhiệm vụ của ca trực
  */
-export async function getStaffTasks() {
+export async function getStaffTasks(params = {}) {
+  try {
+    const query = new URLSearchParams();
+    if (params.workDate) query.set("workDate", params.workDate);
+    if (params.shift) query.set("shift", params.shift);
+    if (params.type) query.set("type", params.type);
+    if (params.status) query.set("status", params.status);
+    const queryString = query.toString() ? `?${query.toString()}` : "";
+
+    const res = await apiClient(`/api/v1/tasks${queryString}`);
+    if (res.ok) {
+      const serverTasks = await safeParseJson(res);
+      if (Array.isArray(serverTasks)) {
+        const localTasks = loadLocalTasks();
+        const mergedMap = new Map();
+
+        // Ưu tiên đưa local tasks vào để không mất dữ liệu demo
+        localTasks.forEach((t) => mergedMap.set(t.taskId, t));
+
+        // Hợp nhất dữ liệu thật từ Backend (bao gồm các task Checkout mới từ Database)
+        serverTasks.forEach((st) => {
+          const local = mergedMap.get(st.taskId);
+          mergedMap.set(st.taskId, {
+            ...st,
+            ritual: {
+              ...(st.ritual || {}),
+              ...(local?.ritual || {}),
+            },
+          });
+        });
+
+        const merged = Array.from(mergedMap.values());
+        saveLocalTasks(merged);
+        return merged;
+      }
+    }
+  } catch (err) {
+    console.warn("Backend getStaffTasks failed, using local storage:", err);
+  }
   return loadLocalTasks();
 }
 
@@ -432,6 +470,23 @@ export async function completeCheckinRitual(taskId, { paymentMethod, contractPho
  * Thực hiện nghiệp vụ Checkout Ritual (US-21)
  */
 export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged }) {
+  // Cố gắng gọi API backend nếu online
+  try {
+    const res = await apiClient(`/api/v1/tasks/${taskId}/complete-checkout`, {
+      method: "POST",
+      body: JSON.stringify({
+        refundAmount: refundAmount || 0,
+        damageFee: extraCharged || 0,
+      }),
+    });
+    if (res.ok) {
+      const data = await safeParseJson(res);
+      console.log("Backend checkout completed successfully:", data);
+    }
+  } catch (err) {
+    console.warn("Backend complete checkout ritual failed, continuing locally:", err);
+  }
+
   const tasks = loadLocalTasks();
   const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
   if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ Checkout");

@@ -309,6 +309,41 @@ public class NotificationServiceImpl implements NotificationService {
                 });
     }
 
+    @Override
+    @Transactional
+    public NotificationEventResponse notifySettlementCompleted(
+            Reservation reservation,
+            long refundAmount,
+            long damageFee
+    ) {
+        String title = "Tất toán hoàn tất — Đơn " + reservation.getCode() + " đã trả kho";
+        String body = "Thủ tục trả kho " + reservation.getUnit().getCode() + " đã hoàn tất thành công. "
+                + "Tiền cọc hoàn trả: " + vnd(refundAmount)
+                + (damageFee > 0 ? " (sau khi khấu trừ phụ phí hư hại " + vnd(damageFee) + ")" : "")
+                + ". Cảm ơn quý khách đã tin chọn StorageHub!";
+        String deepLink = "/rentals/" + reservation.getReservationId();
+
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType("SETTLEMENT_COMPLETED");
+        row.setTitle(title);
+        row.setDeepLink(deepLink);
+        row.setIsRead(false);
+        notificationRepository.save(row);
+
+        return new NotificationEventResponse(
+                "SETTLEMENT_COMPLETED",
+                title,
+                body,
+                deepLink
+        );
+    }
+
+    /** VND theo AD-7/FR-6: "103.500 ₫" — nhóm 3 bằng dấu chấm. */
+    private static String vnd(long amount) {
+        return vnd(java.math.BigDecimal.valueOf(amount));
+    }
+
     /** VND theo AD-7/FR-6: "103.500 ₫" — nhóm 3 bằng dấu chấm. */
     private static String vnd(java.math.BigDecimal amount) {
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.US);

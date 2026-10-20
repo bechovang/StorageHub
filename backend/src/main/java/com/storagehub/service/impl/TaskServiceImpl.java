@@ -9,6 +9,7 @@ import com.storagehub.exception.TaskNotFoundException;
 import com.storagehub.exception.TaskSnapBackException;
 import com.storagehub.repository.*;
 import com.storagehub.service.LogService;
+import com.storagehub.service.NotificationService;
 import com.storagehub.service.TaskService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ public class TaskServiceImpl implements TaskService {
     private final ContractRepository contractRepository;
     private final SupportTicketRepository supportTicketRepository;
     private final PaymentRepository paymentRepository;
+    private final NotificationService notificationService;
     private final LogService logService;
     private final Clock clock;
 
@@ -48,6 +50,7 @@ public class TaskServiceImpl implements TaskService {
             ContractRepository contractRepository,
             SupportTicketRepository supportTicketRepository,
             PaymentRepository paymentRepository,
+            NotificationService notificationService,
             LogService logService,
             Clock clock
     ) {
@@ -59,6 +62,7 @@ public class TaskServiceImpl implements TaskService {
         this.contractRepository = contractRepository;
         this.supportTicketRepository = supportTicketRepository;
         this.paymentRepository = paymentRepository;
+        this.notificationService = notificationService;
         this.logService = logService;
         this.clock = clock;
     }
@@ -635,5 +639,51 @@ public class TaskServiceImpl implements TaskService {
                     "DELETED", fromStatus, null,
                     "Hủy checkout task cho " + reservationCode);
         }
+    }
+
+    @Override
+    @Transactional
+    public TaskResponse completeCheckoutRitual(
+            String currentUserEmail,
+            Long taskId,
+            Long refundAmount,
+            Long damageFee
+    ) {
+        User currentUser = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new AccessDeniedException("Người dùng không tồn tại"));
+
+        Task task = taskRepository.findWithStaffById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        String ref = task.getRefCode();
+        if (ref != null && ref.startsWith("BK-")) {
+            Reservation res = reservationRepository.findByCode(ref).orElse(null);
+            if (res != null) {
+                res.setStatus(Reservation.Status.CLOSED);
+                if (res.getUnit() != null) {
+                    res.getUnit().setStatus(Unit.Status.PREPARING);
+                }
+                reservationRepository.save(res);
+
+                long refund = refundAmount != null ? refundAmount : (res.getDepositAmount() != null ? res.getDepositAmount().longValue() : 360000L);
+                long fee = damageFee != null ? damageFee : 0L;
+                notificationService.notifySettlementCompleted(res, refund, fee);
+            }
+        }
+
+        task.setStatus(Task.Status.DONE);
+        Task saved = taskRepository.save(task);
+
+        logService.log(
+                currentUser,
+                "TASK",
+                task.getTaskId(),
+                "CHECKOUT_COMPLETED",
+                "IN_PROGRESS",
+                "DONE",
+                "Tất toán hợp đồng và hoàn tất trả kho"
+        );
+
+        return toTaskResponse(saved, getCurrentShift(), null, null, null, null);
     }
 }

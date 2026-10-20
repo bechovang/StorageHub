@@ -55,6 +55,9 @@ class TaskServiceTest {
     private PaymentRepository paymentRepository;
 
     @Mock
+    private com.storagehub.service.NotificationService notificationService;
+
+    @Mock
     private LogService logService;
 
     @Mock

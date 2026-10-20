@@ -47,4 +47,7 @@ public interface NotificationService {
 
     /** US-18 (FR-12): addendum chờ ký tại quầy — bell cho staff. */
     void notifyAddendumAwaitingSignature(Reservation reservation, com.storagehub.entity.ContractAddendum addendum);
+
+    /** US-21 (FR-17): Tất toán và thanh lý hợp đồng trả kho thành công → thông báo khách hàng. */
+    NotificationEventResponse notifySettlementCompleted(Reservation reservation, long refundAmount, long damageFee);
 }

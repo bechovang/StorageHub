@@ -70,6 +70,50 @@ export async function createCheckoutRequest(reservationId, { requestedDate, time
     });
     const data = await safeParseJson(res);
     if (!res.ok) throw { status: res.status, ...data };
+
+    // Đồng bộ tức thời thẻ Checkout Task vào localStorage cho màn hình Staff Task Board
+    try {
+        const STORAGE_KEY = "storagehub_tasks_v2";
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const tasks = raw ? JSON.parse(raw) : [];
+        const taskId = data.taskId || Number(reservationId) + 2000;
+        const existingIdx = tasks.findIndex(
+            (t) => t.type === "CHECKOUT" && (t.refCode === `BK-${reservationId}` || t.taskId === taskId)
+        );
+        const checkoutTask = {
+            taskId,
+            type: "CHECKOUT",
+            refCode: `BK-${reservationId}`,
+            unitCode: data.unitCode || "Unit",
+            customerName: data.customerName || "Khách hàng",
+            customerPhone: data.customerPhone || "0901 234 567",
+            dueTime: timeSlot === "MORNING" ? "09:00" : timeSlot === "AFTERNOON" ? "14:00" : "18:00",
+            status: "TODO",
+            workDate: requestedDate,
+            depositPaid: data.depositAmount || 360000,
+            rentAmount: 0,
+            ritual: {
+                checklist: {
+                    accessCard: "OK",
+                    padlock: "OK",
+                    cleanliness: "OK",
+                    structure: "OK",
+                },
+                damageCharges: [],
+                settlementConfirmed: false,
+                receiptPrinted: false,
+            },
+        };
+        if (existingIdx !== -1) {
+            tasks[existingIdx] = { ...tasks[existingIdx], ...checkoutTask };
+        } else {
+            tasks.unshift(checkoutTask);
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    } catch {
+        // bỏ qua lỗi đồng bộ local
+    }
+
     return data;
 }
 
