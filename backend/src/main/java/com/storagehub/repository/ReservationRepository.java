@@ -121,6 +121,16 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     boolean existsByCode(String code);
 
+    @Query("""
+        SELECT r FROM Reservation r
+        JOIN FETCH r.customer c
+        JOIN FETCH r.unit u
+        WHERE r.status IN (com.storagehub.entity.Reservation.Status.CHECKED_IN,
+                           com.storagehub.entity.Reservation.Status.CHECKOUT_REQUESTED,
+                           com.storagehub.entity.Reservation.Status.RESERVED)
+    """)
+    List<Reservation> findCurrentActiveReservations();
+
     @Query("SELECT r FROM Reservation r JOIN FETCH r.unit u JOIN FETCH u.zone z JOIN FETCH z.facility f JOIN FETCH r.customer c WHERE r.code = :code")
     Optional<Reservation> findByCode(@Param("code") String code);
 

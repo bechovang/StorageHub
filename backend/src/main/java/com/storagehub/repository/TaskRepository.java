@@ -27,6 +27,12 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT t FROM Task t JOIN FETCH t.assignedStaff s WHERE t.taskId = :taskId")
     Optional<Task> findWithStaffById(@Param("taskId") Long taskId);
 
+    @Query("SELECT t FROM Task t JOIN FETCH t.assignedStaff s WHERE t.workDate = :workDate ORDER BY t.createdAt ASC")
+    List<Task> findByWorkDateWithStaff(@Param("workDate") LocalDate workDate);
+
+    @Query("SELECT t FROM Task t JOIN FETCH t.assignedStaff s WHERE t.type IN :types AND t.status <> com.storagehub.entity.Task.Status.DONE ORDER BY t.workDate ASC, t.createdAt ASC")
+    List<Task> findActiveTasksByTypesWithStaff(@Param("types") java.util.Collection<Task.Type> types);
+
     @Query("""
         SELECT t FROM Task t
         JOIN FETCH t.assignedStaff s

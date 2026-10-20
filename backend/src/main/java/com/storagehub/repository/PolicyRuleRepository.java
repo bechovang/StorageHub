@@ -28,4 +28,12 @@ public interface PolicyRuleRepository extends JpaRepository<PolicyRule, Long> {
      * Lấy toàn bộ rule thuộc một chính sách giá.
      */
     List<PolicyRule> findByPolicy_PolicyId(Integer policyId);
+
+    @Query("""
+        SELECT pr FROM PolicyRule pr
+        JOIN FETCH pr.type
+        WHERE pr.policy.status = 1
+          AND pr.ruleType = :ruleType
+    """)
+    List<PolicyRule> findActiveRulesByType(@Param("ruleType") PolicyRule.RuleType ruleType);
 }

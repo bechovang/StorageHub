@@ -13,4 +13,7 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
 
     @Query("SELECT st FROM SupportTicket st JOIN FETCH st.unit JOIN FETCH st.customer WHERE st.code = :code")
     Optional<SupportTicket> findByCode(@Param("code") String code);
+
+    @Query("SELECT st FROM SupportTicket st LEFT JOIN FETCH st.unit u LEFT JOIN FETCH st.customer c WHERE st.status IN :statuses ORDER BY st.createdAt DESC")
+    java.util.List<SupportTicket> findByStatusInWithDetails(@Param("statuses") java.util.Collection<SupportTicket.Status> statuses);
 }
