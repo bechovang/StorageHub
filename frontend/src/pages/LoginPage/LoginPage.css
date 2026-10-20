@@ -172,6 +172,37 @@
   border-bottom: var(--border-strong);
 }
 
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  text-decoration: none;
+  margin-bottom: var(--space-3);
+  padding: 4px 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm, 2px);
+  transition: all 0.15s ease;
+}
+
+.auth-back-link:hover {
+  background: var(--color-ink);
+  color: var(--color-surface);
+  border-color: var(--color-ink);
+}
+
+.auth-back-link svg {
+  transition: transform 0.15s ease;
+}
+
+.auth-back-link:hover svg {
+  transform: translateX(-3px);
+}
+
 .login-card__eyebrow {
   margin: 0 0 var(--space-2) 0;
   font-size: 0.7rem;

@@ -4,7 +4,9 @@ import {
   MagnifyingGlass,
   Check,
   Table,
+  ArrowLeft,
 } from "@phosphor-icons/react";
+import { Link } from "react-router";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { USER_ROLES } from "../../services/userService.js";
 import {
@@ -96,6 +98,16 @@ export default function UserManagementPage() {
         </div>
 
         <div className="user-mgmt-container">
+          {/* Subbar navigation */}
+          <div className="mgmt-subbar">
+            <Link to="/overview" className="mgmt-back-link">
+              <ArrowLeft size={14} weight="bold" />
+              <span>Tổng quan hệ thống</span>
+            </Link>
+            <span className="mgmt-subbar__sep">/</span>
+            <span className="mgmt-subbar__current">Quản lý người dùng</span>
+          </div>
+
           {/* Header */}
           <header className="user-mgmt-header">
             <div className="user-mgmt-header__titles">

@@ -7,6 +7,7 @@ import {
   DownloadSimple,
   Calendar,
   Warehouse,
+  ArrowLeft,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
@@ -88,7 +89,10 @@ export default function ReportsPage() {
           <section className="reports-header">
             <div>
               <div className="reports-breadcrumb">
-                <span>StorageHub VN</span>
+                <Link to="/overview" className="mgmt-back-link">
+                  <ArrowLeft size={14} weight="bold" />
+                  <span>Tổng quan</span>
+                </Link>
                 <span>/</span>
                 <span>Quản lý kinh doanh</span>
                 <span>/</span>

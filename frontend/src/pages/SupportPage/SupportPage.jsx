@@ -1,4 +1,5 @@
-import { PlusCircle, CheckCircle } from "@phosphor-icons/react";
+import { PlusCircle, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
+import { Link } from "react-router";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { TICKET_STATUSES } from "../../services/ticketService.js";
 import {
@@ -63,6 +64,16 @@ export default function SupportPage() {
         </div>
 
         <div className="support-container">
+          {/* Subbar Navigation */}
+          <div className="support-subbar">
+            <Link to={isCustomer ? "/rentals" : "/tasks"} className="support-back-btn">
+              <ArrowLeft size={14} weight="bold" />
+              <span>{isCustomer ? "Quay lại đơn thuê của tôi" : "Quay lại danh sách nhiệm vụ"}</span>
+            </Link>
+            <span className="support-subbar__sep">/</span>
+            <span className="support-subbar__current">Trung tâm hỗ trợ</span>
+          </div>
+
           {/* Header */}
           <header className="support-header">
             <div>

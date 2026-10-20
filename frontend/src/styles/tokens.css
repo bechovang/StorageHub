@@ -120,3 +120,52 @@
   --z-modal: 50;
   --z-toast: 100;
 }
+
+/* ── Universal Management Subbar & Back Navigation Link ── */
+.mgmt-subbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-family: var(--font-mono);
+  color: var(--color-secondary);
+  margin-bottom: var(--space-4, 16px);
+  flex-wrap: wrap;
+}
+
+.mgmt-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-ink);
+  font-weight: 600;
+  text-decoration: none;
+  padding: 4px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm, 2px);
+  transition: all 0.15s ease;
+}
+
+.mgmt-back-link:hover {
+  background: var(--color-ink);
+  color: var(--color-surface);
+  border-color: var(--color-ink);
+}
+
+.mgmt-back-link svg {
+  transition: transform 0.15s ease;
+}
+
+.mgmt-back-link:hover svg {
+  transform: translateX(-3px);
+}
+
+.mgmt-subbar__sep {
+  color: var(--color-line);
+}
+
+.mgmt-subbar__current {
+  font-weight: 700;
+  color: var(--color-ink);
+}

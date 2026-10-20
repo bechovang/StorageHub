@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Check, Square } from "@phosphor-icons/react";
+import { Check, Square, ArrowLeft } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
 import LoginPanel from "../../components/LoginPanel/LoginPanel";
@@ -101,6 +101,10 @@ export default function RegisterPage() {
                 <div className="login-form-col">
                     <div className="login-card">
                         <div className="login-card__header">
+                            <Link to="/browse" className="auth-back-link">
+                                <ArrowLeft size={14} weight="bold" />
+                                <span>Khám phá kho</span>
+                            </Link>
                             <p className="login-card__eyebrow">StorageHub</p>
                             <h2 className="login-card__title">Đăng ký</h2>
                         </div>

@@ -4,7 +4,9 @@ import {
   CheckCircle,
   ArrowsClockwise,
   X,
+  ArrowLeft,
 } from "@phosphor-icons/react";
+import { Link } from "react-router";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   DAYS_OF_WEEK,
@@ -92,7 +94,10 @@ export default function StaffShiftsPage() {
           <header className="shifts-header">
             <div>
               <div className="shifts-breadcrumb">
-                <span>Vận hành cơ sở</span>
+                <Link to="/facility" className="mgmt-back-link">
+                  <ArrowLeft size={14} weight="bold" />
+                  <span>Tổng quan cơ sở</span>
+                </Link>
                 <span className="shifts-breadcrumb__sep">/</span>
                 <span className="shifts-breadcrumb__curr">Lịch trực nhân viên</span>
               </div>

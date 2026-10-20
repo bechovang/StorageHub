@@ -4,6 +4,7 @@ import {
   ArrowClockwise,
   WarningCircle,
   Plus,
+  ArrowLeft,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { listMyReservations } from "../../services/rentalService.js";
@@ -122,6 +123,11 @@ export default function MyRentalsPage() {
       <div className="my-rentals-page">
         {/* Breadcrumb Navigation */}
         <nav className="my-rentals-page__breadcrumb" aria-label="Breadcrumb">
+          <Link to="/browse" className="my-rentals-back-link">
+            <ArrowLeft size={14} weight="bold" />
+            <span>Khám phá kho</span>
+          </Link>
+          <span className="my-rentals-page__breadcrumb-sep">/</span>
           <span>StorageHub VN</span>
           <span className="my-rentals-page__breadcrumb-sep">/</span>
           <span>Depot SGN-01 (Tân Bình)</span>

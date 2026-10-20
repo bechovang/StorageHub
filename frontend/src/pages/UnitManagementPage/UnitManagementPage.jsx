@@ -5,7 +5,9 @@ import {
   ArrowsClockwise,
   CheckCircle,
   X,
+  ArrowLeft,
 } from "@phosphor-icons/react";
+import { Link } from "react-router";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   useUnitManagement,
@@ -117,6 +119,15 @@ export default function UnitManagementPage() {
 
         {/* ── 2. Header & Breadcrumbs ── */}
         <header className="mgmt-header">
+          <div className="mgmt-subbar">
+            <Link to="/facility" className="mgmt-back-link">
+              <ArrowLeft size={14} weight="bold" />
+              <span>Tổng quan cơ sở</span>
+            </Link>
+            <span className="mgmt-subbar__sep">/</span>
+            <span className="mgmt-subbar__current">Quản lý danh mục kho</span>
+          </div>
+
           <div className="mgmt-header__titles">
             <span className="mgmt-header__eyebrow">TRUNG TÂM ĐIỀU HÀNH KHO CƠ SỞ</span>
             <h1 className="mgmt-header__title">QUẢN LÝ DANH MỤC KHO & TRẠNG THÁI</h1>

@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
-import { useLocation } from "react-router";
+import { useLocation, Link } from "react-router";
 import {
   MagnifyingGlass,
   Funnel,
   ArrowRight,
   Database,
+  ArrowLeft,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
@@ -79,6 +80,18 @@ export default function ActivityLogPage() {
         </div>
 
         <div className="activity-container">
+          {/* Subbar navigation */}
+          <div className="mgmt-subbar">
+            <Link to={isLoginHistory ? "/users" : "/facility"} className="mgmt-back-link">
+              <ArrowLeft size={14} weight="bold" />
+              <span>{isLoginHistory ? "Quản lý người dùng" : "Tổng quan cơ sở"}</span>
+            </Link>
+            <span className="mgmt-subbar__sep">/</span>
+            <span className="mgmt-subbar__current">
+              {isLoginHistory ? "Lịch sử đăng nhập" : "Nhật ký kiểm toán"}
+            </span>
+          </div>
+
           {/* Header section */}
           <header className="activity-header">
             <span className="activity-header__super">
