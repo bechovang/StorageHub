@@ -51,6 +51,7 @@ tags:
   - name: Contracts
   - name: Tasks
   - name: Notifications
+  - name: Shifts
 
 # ---------------------------------------------------------------------------
 paths:
@@ -1075,6 +1076,91 @@ paths:
         "404": { $ref: "#/components/responses/TaskNotFound" }
         "409": { $ref: "#/components/responses/TaskSnapBack" }
 
+# --------------------- SHIFTS & STAFFING (FR-27) -----------------------
+
+  /shifts:
+    get:
+      tags: [Shifts]
+      summary: Lấy danh sách phân ca trực theo khoảng ngày (FR-27)
+      description: |
+        Hỗ trợ lọc theo startDate, endDate, staffId, zoneId.
+        Phục vụ hiển thị lưới lịch tuần (Schedule · this week) của Facility Manager.
+      operationId: getShifts
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: "Ngày bắt đầu (mặc định đầu tuần hiện tại ICT)" }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: "Ngày kết thúc (mặc định cuối tuần hiện tại ICT)" }
+        - { name: staffId, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo nhân viên" }
+        - { name: zoneId, in: query, schema: { type: integer }, description: "Lọc theo khu vực (Zone)" }
+      responses:
+        "200":
+          description: Danh sách phân công ca trực
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ShiftAssignmentResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+    post:
+      tags: [Shifts]
+      summary: Phân công ca trực mới kèm phát hiện xung đột (FR-27)
+      description: |
+        Facility Manager phân công staff × Zone × ca × ngày.
+        Hệ thống kiểm tra xung đột trước khi lưu (Pre-save validation & rejection).
+        Nếu trùng người - ca - ngày, từ chối với 409 Conflict và thông báo cụ thể.
+      operationId: createShiftAssignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateShiftAssignmentRequest" }
+      responses:
+        "201":
+          description: Phân công ca trực thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShiftAssignmentResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/ShiftConflict" }
+
+  /shifts/{assignmentId}:
+    delete:
+      tags: [Shifts]
+      summary: Hủy phân công ca trực (FR-27)
+      description: Gỡ bỏ ca trực và ghi nhận Activity Log.
+      operationId: deleteShiftAssignment
+      parameters:
+        - { name: assignmentId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "204":
+          description: Đã hủy phân công ca trực
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ShiftNotFound" }
+
+  /shifts/roster:
+    get:
+      tags: [Shifts]
+      summary: Lấy danh sách nhân sự trực ca kèm thống kê tuần (FR-27 / F5-03)
+      description: Danh sách nhân viên (Staff Roster) kèm số lượng ca đã gán và trạng thái xung đột.
+      operationId: getStaffRoster
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: "Ngày bắt đầu tuần" }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: "Ngày kết thúc tuần" }
+      responses:
+        "200":
+          description: Danh sách nhân sự và số ca trực
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StaffRosterMember" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
 # --------------------- USERS / SYS-01 (US-28, FR-37) --------------------
 
   /users:
@@ -1410,6 +1496,18 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
           example: { code: USER_NOT_FOUND, message: "Không tìm thấy người dùng này.", fieldErrors: [] }
+    ShiftConflict:
+      description: Xung đột phân công ca trực (FR-27 — người-ca-ngày đã tồn tại)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: SHIFT_ASSIGNMENT_CONFLICT, message: "Minh is already assigned Morning shift, Zone B on Oct 12. Choose another staff member or another shift.", fieldErrors: [{ field: "shift", code: "CONFLICT", message: "Trùng ca trực" }] }
+    ShiftNotFound:
+      description: Không tìm thấy phân công ca trực
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: SHIFT_NOT_FOUND, message: "Không tìm thấy phân công ca trực này.", fieldErrors: [] }
 
 
   schemas:
@@ -1423,7 +1521,7 @@ components:
         code:
           type: string
           description: Machine code UPPER_SNAKE
-          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, USER_NOT_FOUND, INTERNAL_ERROR]
+          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, USER_NOT_FOUND, SHIFT_ASSIGNMENT_CONFLICT, SHIFT_NOT_FOUND, INTERNAL_ERROR]
         message: { type: string, description: "Message human-readable theo khuôn NFR-7 (chuyện gì + hệ quả + 1 bước kế)" }
         fieldErrors:
           type: array
@@ -2112,3 +2210,42 @@ components:
             type: object
             additionalProperties: true
 
+
+    # ------------------------------- Shifts (FR-27) -----------------------
+
+    ShiftAssignmentResponse:
+      type: object
+      required: [assignmentId, staffId, staffName, zoneId, zoneCode, shift, workDate]
+      properties:
+        assignmentId: { type: integer, format: int64, example: 101 }
+        staffId: { type: integer, format: int64, example: 2 }
+        staffName: { type: string, example: "Minh Nguyễn" }
+        staffCode: { type: string, example: "KC-8842" }
+        zoneId: { type: integer, example: 2 }
+        zoneCode: { type: string, example: "B" }
+        zoneName: { type: string, example: "Zone B (Ground Floor Units)" }
+        shift: { type: string, enum: [MORNING, AFTERNOON, EVENING], example: "MORNING" }
+        workDate: { type: string, format: date, example: "2026-10-12" }
+        createdAt: { type: string, format: date-time }
+
+    CreateShiftAssignmentRequest:
+      type: object
+      required: [staffId, zoneId, shift, workDate]
+      properties:
+        staffId: { type: integer, format: int64, example: 2 }
+        zoneId: { type: integer, example: 2 }
+        shift: { type: string, enum: [MORNING, AFTERNOON, EVENING], example: "MORNING" }
+        workDate: { type: string, format: date, example: "2026-10-12" }
+
+    StaffRosterMember:
+      type: object
+      required: [staffId, fullName, email]
+      properties:
+        staffId: { type: integer, format: int64, example: 2 }
+        fullName: { type: string, example: "Minh Nguyễn" }
+        email: { type: string, format: email, example: "minh@demo.storagehub.vn" }
+        code: { type: string, example: "KC-8842" }
+        roleLabel: { type: string, example: "Staff · Zones A, B (Ground Floor Warden)" }
+        status: { type: string, example: "ON_DUTY" }
+        shiftCount: { type: integer, example: 5 }
+        conflictCount: { type: integer, example: 0 }
