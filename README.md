@@ -44,3 +44,16 @@ StorageHub/
 - Backend: Java 21 + Spring Boot (contract-first OpenAPI) — chi tiết: `docs/architecture/ARCHITECTURE-SPINE.md`
 - Frontend: React + Vite
 - Database: MySQL 8.4
+
+## Chạy app
+
+Hướng dẫn đầy đủ BE + FE + MySQL + PayOS + ngrok webhook:
+**[docs/RUNBOOK.md](docs/RUNBOOK.md)**.
+
+```bash
+# Backend (profile dev, đọc backend/.env)
+cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Frontend
+cd frontend && npm install && npm run dev
+```
