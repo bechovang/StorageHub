@@ -304,7 +304,7 @@ export default function UnitManagementPage() {
               <div className="telemetry-item">
                 <ShieldCheck size={16} className="text-success" />
                 <span>Quy chuẩn vận hành:</span>
-                <span className="font-mono font-semibold">FR-26 / UJ-4 Guard Enforced</span>
+                <span className="font-mono font-semibold">Chế độ bảo vệ: Đang bật</span>
               </div>
             </div>
 
@@ -342,10 +342,10 @@ export default function UnitManagementPage() {
         {/* ── 2. Header & Breadcrumbs ── */}
         <header className="mgmt-header">
           <div className="mgmt-header__titles">
-            <span className="mgmt-header__eyebrow">FACILITY CONTROL ROOM · US-25 · FR-26</span>
+            <span className="mgmt-header__eyebrow">TRUNG TÂM ĐIỀU HÀNH KHO CƠ SỞ</span>
             <h1 className="mgmt-header__title">QUẢN LÝ DANH MỤC KHO & TRẠNG THÁI</h1>
             <p className="mgmt-header__desc">
-              Kiểm soát trạng thái vật lý, điều chỉnh thông số, đưa vào bảo trì hoặc cho nghỉ kho. Mọi thay đổi trạng thái đều được giám sát qua Guard và lưu nhật ký kiểm toán Activity Log.
+              Kiểm soát trạng thái vật lý, điều chỉnh thông số, đưa vào bảo trì hoặc cho nghỉ kho. Mọi thay đổi trạng thái đều được giám sát và lưu nhật ký kiểm toán.
             </p>
           </div>
         </header>
@@ -623,7 +623,7 @@ export default function UnitManagementPage() {
                     <div className="drawer-kv-item">
                       <span className="drawer-kv-label">Trạng thái bảo vệ:</span>
                       <span className="drawer-kv-value text-success font-semibold">
-                        Guard Active (FR-26)
+                        Đang bảo vệ (Tự động khóa)
                       </span>
                     </div>
                   </div>
@@ -722,7 +722,7 @@ export default function UnitManagementPage() {
               ) : (
                 <div className="drawer-logs-tab">
                   <div className="logs-header-note">
-                    Nhật ký kiểm toán ghi nhận mọi thao tác điều chỉnh trạng thái, thông số của kho {selectedUnit.code} theo quy định FR-26.
+                    Nhật ký kiểm toán ghi nhận mọi thao tác điều chỉnh trạng thái, thông số của kho {selectedUnit.code} vào hệ thống giám sát.
                   </div>
                   {unitLogs.length === 0 ? (
                     <div className="logs-empty">Chưa có bản ghi nhật ký nào cho kho này.</div>
@@ -912,7 +912,7 @@ export default function UnitManagementPage() {
 
               <div className="form-group mt-3">
                 <label htmlFor="fix-status-reason" className="form-label font-semibold">
-                  Lý do điều chỉnh (Bắt buộc kiểm toán FR-26):
+                  Lý do điều chỉnh (Bắt buộc lưu nhật ký):
                 </label>
                 <textarea
                   id="fix-status-reason"

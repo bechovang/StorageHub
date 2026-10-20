@@ -436,7 +436,7 @@ export function getFacilityUnits() {
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch (err) {
-    console.error("Lỗi khi đọc facility units:", err);
+    console.error("Failed to read facility units:", err);
   }
   return [...INITIAL_FACILITY_UNITS];
 }
@@ -448,7 +448,7 @@ export function saveFacilityUnits(units) {
   try {
     localStorage.setItem(FACILITY_UNITS_STORAGE_KEY, JSON.stringify(units));
   } catch (err) {
-    console.error("Lỗi khi lưu facility units:", err);
+    console.error("Failed to save facility units:", err);
   }
 }
 
@@ -459,7 +459,7 @@ export function resetFacilityUnits() {
   try {
     localStorage.removeItem(FACILITY_UNITS_STORAGE_KEY);
   } catch (err) {
-    console.error("Lỗi khi reset facility units:", err);
+    console.error("Failed to reset facility units:", err);
   }
   return [...INITIAL_FACILITY_UNITS];
 }
@@ -478,7 +478,7 @@ export function getUnitActivityLogs(unitCode = null) {
       }
     }
   } catch (err) {
-    console.error("Lỗi khi đọc activity logs:", err);
+    console.error("Failed to read activity logs:", err);
   }
 
   if (unitCode) {
@@ -506,7 +506,7 @@ export function addActivityLog({ actor = "Tuấn (Facility Manager)", unitCode, 
   try {
     localStorage.setItem(ACTIVITY_LOGS_STORAGE_KEY, JSON.stringify(updatedLogs));
   } catch (err) {
-    console.error("Lỗi khi ghi activity log:", err);
+    console.error("Failed to write activity log:", err);
   }
   return newEntry;
 }
