@@ -88,7 +88,6 @@ export default function PaymentModal({
   onNavigateRentals,
   onNavigateRentalDetail,
   formatVND,
-  payOsUnavailable = false,
 }) {
   if (!open) return null;
 
@@ -440,7 +439,6 @@ export default function PaymentModal({
                 >
                   <QrCodeIcon size={18} weight={selectedMethod === "PAYOS" ? "bold" : "regular"} />
                   <span>Thanh toán QR</span>
-                  {payOsUnavailable && <span className="tab-pill-badge">Bảo trì</span>}
                 </button>
               </div>
 
@@ -729,10 +727,7 @@ export default function PaymentModal({
                           <QrCodeIcon size={24} weight="bold" />
                         </div>
                         <div className="gateway-maintenance-meta">
-                          <div className="gateway-maintenance-title-row">
-                            <h4 className="gateway-maintenance-title">Kênh thanh toán QR đang tạm bảo trì</h4>
-                            <Badge tone="warning">Tạm bảo trì</Badge>
-                          </div>
+                          <h4 className="gateway-maintenance-title">Kênh thanh toán QR đang tạm bảo trì</h4>
                           <p className="gateway-maintenance-desc">
                             Kênh thanh toán qua mã QR đang được nâng cấp hệ thống định kỳ. Quý khách vui lòng chọn phương thức thanh toán bên dưới để hoàn tất đặt cọc nhé:
                           </p>
