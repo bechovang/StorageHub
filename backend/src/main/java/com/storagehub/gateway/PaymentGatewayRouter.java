@@ -2,6 +2,8 @@ package com.storagehub.gateway;
 
 import com.storagehub.entity.Payment;
 import com.storagehub.exception.PaymentBadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,8 @@ import java.util.Optional;
 @Primary
 @Component
 public class PaymentGatewayRouter implements PaymentGateway {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentGatewayRouter.class);
 
     private final MockPaymentGateway mock;
     private final ObjectProvider<PayOsPaymentGateway> payOsProvider;
@@ -66,9 +70,9 @@ public class PaymentGatewayRouter implements PaymentGateway {
     private PayOsPaymentGateway payOs() {
         PayOsPaymentGateway payOs = payOsProvider.getIfAvailable();
         if (payOs == null) {
+            log.warn("PayOS gateway được yêu cầu nhưng chưa cấu hình (PAYOS_ENABLED=false hoặc thiếu keys trong .env).");
             throw new PaymentBadRequestException(
-                    "PayOS chưa được cấu hình. Đặt PAYOS_ENABLED=true và "
-                            + "PAYOS_CLIENT_ID / PAYOS_API_KEY / PAYOS_CHECKSUM_KEY rồi khởi động lại backend.");
+                    "Cổng thanh toán QR hiện đang tạm bảo trì kết nối. Quý khách vui lòng chọn phương thức thanh toán cọc khác");
         }
         return payOs;
     }

@@ -35,6 +35,7 @@ export default function PaymentPage() {
     setShowHistory,
     copiedCode,
     isAlreadyPaid,
+    payOsUnavailable,
     handleCardNumberChange,
     handleExpiryChange,
     handleCardFormChange,
@@ -117,6 +118,7 @@ export default function PaymentPage() {
           onNavigateRentals={() => navigate("/rentals")}
           onNavigateRentalDetail={() => navigate(`/rentals/${reservation.id}`)}
           formatVND={formatVND}
+          payOsUnavailable={payOsUnavailable}
         />
       </div>
     </AppShell>

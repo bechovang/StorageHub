@@ -90,6 +90,7 @@ export default function PaymentModal({
   onNavigateRentals,
   onNavigateRentalDetail,
   formatVND,
+  payOsUnavailable = false,
 }) {
   if (!open) return null;
 
@@ -179,7 +180,7 @@ export default function PaymentModal({
         {/* Modal Body */}
         <div className="payment-modal__body">
           {/* Thông báo lỗi từ API */}
-          {apiError && (
+          {apiError && !apiError.includes("PAYOS_") && !apiError.includes("PayOS chưa được cấu hình") && (
             <div className="status-alert status-alert--danger">
               <WarningCircle size={18} weight="bold" />
               <span>{apiError}</span>
@@ -452,6 +453,7 @@ export default function PaymentModal({
                 >
                   <Bank size={18} weight={selectedMethod === "PAYOS" ? "bold" : "regular"} />
                   <span>PayOS QR</span>
+                  {payOsUnavailable && <span className="tab-pill-badge">Bảo trì</span>}
                 </button>
               </div>
 
@@ -652,13 +654,12 @@ export default function PaymentModal({
                 </form>
               )}
 
-              {/* VNPAY QR VIEW (Auto-generated on tab select) */}
-              {(selectedMethod === "VNPAY" || selectedMethod === "PAYOS") &&
-                paymentSession?.method === selectedMethod && (
+              {/* ── VNPAY QR VIEW ── */}
+              {selectedMethod === "VNPAY" && paymentSession?.method === "VNPAY" && (
                 <div className="vnpay-qr-view">
                   <div className="qr-wrapper">
                     {qrDataUrl ? (
-                      <img src={qrDataUrl} alt={selectedMethod === "PAYOS" ? "PayOS VietQR" : "VNPay QR Code"} className="qr-image" />
+                      <img src={qrDataUrl} alt="VNPay QR Code" className="qr-image" />
                     ) : (
                       <div className="qr-placeholder">
                         <CircleNotch size={32} className="spinner-rotate" />
@@ -666,7 +667,7 @@ export default function PaymentModal({
                     )}
                     <div className="qr-badge">
                       <QrCodeIcon size={14} weight="bold" />
-                      <span>{selectedMethod === "PAYOS" ? "PAYOS · VietQR" : "VNPAY-QR"}</span>
+                      <span>VNPAY-QR</span>
                     </div>
                   </div>
 
@@ -678,14 +679,12 @@ export default function PaymentModal({
                   )}
 
                   <p className="vnpay-instruction">
-                    {selectedMethod === "PAYOS"
-                      ? "Mở ứng dụng ngân hàng bất kỳ, chọn Quét VietQR (Napas 247) để chuyển "
-                      : "Mở ứng dụng ngân hàng hoặc ví VNPAY, chọn Quét QR để thanh toán "}
+                    Mở ứng dụng ngân hàng hoặc ví VNPAY, chọn Quét QR để thanh toán{" "}
                     <strong>{formatVND(paymentSession?.amount || reservation?.depositAmount)}</strong>.
                   </p>
 
                   {/* Mock Presets (chỉ hiển thị ở môi trường DEV) */}
-                  {import.meta.env.DEV && selectedMethod === "VNPAY" && (
+                  {import.meta.env.DEV && (
                     <div className="mock-presets-row">
                       <span className="mock-presets-label">Kiểm thử Mock Gateway:</span>
                       <button
@@ -702,20 +701,6 @@ export default function PaymentModal({
                     <CircleNotch size={14} className="spinner-rotate" />
                     <span>Hệ thống tự động xác nhận sau khi quét mã...</span>
                   </div>
-
-                  {selectedMethod === "PAYOS" && paymentSession?.checkoutUrl && (
-                    <Button
-                      type="button"
-                      variant="primary"
-                      fullWidth
-                      onClick={() =>
-                        window.open(paymentSession.checkoutUrl, "_blank", "noopener,noreferrer")
-                      }
-                    >
-                      <Bank size={16} weight="bold" />
-                      <span>Mở cổng PayOS</span>
-                    </Button>
-                  )}
 
                   <div className="modal-actions-grid">
                     <Button
@@ -742,6 +727,162 @@ export default function PaymentModal({
                     </Button>
                   </div>
                 </div>
+              )}
+
+              {/* ── PAYOS FLOW (KẾT NỐI HOẶC BẢO TRÌ THÂN THIỆN) ── */}
+              {selectedMethod === "PAYOS" && (
+                <>
+                  {submitting && !paymentSession ? (
+                    <div className="gateway-loading-view">
+                      <CircleNotch size={36} className="spinner-rotate" />
+                      <p className="gateway-loading-text">Đang kết nối cổng thanh toán PayOS VietQR...</p>
+                    </div>
+                  ) : paymentSession?.method === "PAYOS" && paymentSession?.status === "PENDING" ? (
+                    <div className="vnpay-qr-view">
+                      <div className="qr-wrapper">
+                        {qrDataUrl ? (
+                          <img src={qrDataUrl} alt="PayOS VietQR" className="qr-image" />
+                        ) : (
+                          <div className="qr-placeholder">
+                            <CircleNotch size={32} className="spinner-rotate" />
+                          </div>
+                        )}
+                        <div className="qr-badge">
+                          <QrCodeIcon size={14} weight="bold" />
+                          <span>PAYOS · VietQR</span>
+                        </div>
+                      </div>
+
+                      {countdown !== null && (
+                        <div className="countdown-pill">
+                          <Clock size={13} weight="bold" />
+                          <span>Mã QR hết hạn sau: {formatCountdown(countdown)}</span>
+                        </div>
+                      )}
+
+                      <p className="vnpay-instruction">
+                        Mở ứng dụng ngân hàng bất kỳ, chọn Quét VietQR (Napas 247) để chuyển{" "}
+                        <strong>{formatVND(paymentSession?.amount || reservation?.depositAmount)}</strong>.
+                      </p>
+
+                      <div className="polling-status-hint">
+                        <CircleNotch size={14} className="spinner-rotate" />
+                        <span>Hệ thống tự động xác nhận sau khi quét mã...</span>
+                      </div>
+
+                      {paymentSession?.checkoutUrl && (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          fullWidth
+                          onClick={() =>
+                            window.open(paymentSession.checkoutUrl, "_blank", "noopener,noreferrer")
+                          }
+                        >
+                          <Bank size={16} weight="bold" />
+                          <span>Mở trang thanh toán PayOS</span>
+                        </Button>
+                      )}
+
+                      <div className="modal-actions-grid">
+                        <Button
+                          type="button"
+                          variant="primary"
+                          onClick={onCheckPaymentStatus}
+                          disabled={checkingStatus || submitting}
+                          title="Kiểm tra xem đã thanh toán chưa"
+                        >
+                          {checkingStatus ? (
+                            <>
+                              <CircleNotch size={16} className="spinner-rotate" />
+                              <span>Đang kiểm tra...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ArrowCounterClockwise size={16} weight="bold" />
+                              <span>Làm mới</span>
+                            </>
+                          )}
+                        </Button>
+                        <Button type="button" variant="secondary" onClick={onClose}>
+                          Hủy
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Trạng thái bảo trì kết nối chuẩn hoá, thân thiện với người dùng */
+                    <div className="gateway-maintenance-card">
+                      <div className="gateway-maintenance-header">
+                        <div className="gateway-maintenance-icon">
+                          <Bank size={24} weight="duotone" />
+                        </div>
+                        <div className="gateway-maintenance-meta">
+                          <div className="gateway-maintenance-title-row">
+                            <h4 className="gateway-maintenance-title">Kênh VietQR (PayOS) đang tạm bảo trì</h4>
+                            <Badge tone="warning">Bảo trì kết nối</Badge>
+                          </div>
+                          <p className="gateway-maintenance-desc">
+                            Cổng kết nối VietQR đang được nâng cấp định kỳ để đảm bảo giao dịch thông suốt. Quý khách vui lòng chọn phương thức thanh toán thay thế bên dưới để hoàn tất giữ chỗ ngay nhé:
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="gateway-alt-options">
+                        <button
+                          type="button"
+                          className="gateway-alt-btn gateway-alt-btn--primary"
+                          onClick={() => onSelectMethod("CARD")}
+                        >
+                          <div className="gateway-alt-btn__icon">
+                            <CreditCard size={20} weight="bold" />
+                          </div>
+                          <div className="gateway-alt-btn__content">
+                            <span className="gateway-alt-btn__label">Thanh toán bằng Thẻ (Visa / Mastercard)</span>
+                            <span className="gateway-alt-btn__sub">Xử lý ngay tức thì · Khuyên dùng</span>
+                          </div>
+                          <span className="gateway-alt-btn__action">Chọn thẻ →</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="gateway-alt-btn"
+                          onClick={() => onSelectMethod("VNPAY")}
+                        >
+                          <div className="gateway-alt-btn__icon">
+                            <QrCodeIcon size={20} weight="bold" />
+                          </div>
+                          <div className="gateway-alt-btn__content">
+                            <span className="gateway-alt-btn__label">Quét mã VNPay QR</span>
+                            <span className="gateway-alt-btn__sub">Hỗ trợ tất cả ứng dụng Mobile Banking</span>
+                          </div>
+                          <span className="gateway-alt-btn__action">Quét QR →</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="gateway-alt-btn"
+                          onClick={() => onSelectMethod("MOMO")}
+                        >
+                          <div className="gateway-alt-btn__icon">
+                            <Wallet size={20} weight="bold" />
+                          </div>
+                          <div className="gateway-alt-btn__content">
+                            <span className="gateway-alt-btn__label">Ví điện tử MoMo</span>
+                            <span className="gateway-alt-btn__sub">Xác thực mã OTP gửi về số điện thoại</span>
+                          </div>
+                          <span className="gateway-alt-btn__action">Ví MoMo →</span>
+                        </button>
+                      </div>
+
+                      <div className="gateway-maintenance-footer">
+                        <Lock size={14} weight="bold" />
+                        <span>
+                          Kho <strong>{unit.code || "S-3"}</strong> và đơn đặt chỗ <strong>{reservation?.code || "RSV-2026-S3"}</strong> vẫn được giữ an toàn trong lúc bạn thanh toán.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
