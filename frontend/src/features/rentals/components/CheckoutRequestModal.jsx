@@ -6,7 +6,7 @@ import {
     WarningCircle,
     ArrowRight,
 } from "@phosphor-icons/react";
-import { formatDate as fmtDate, formatVND as fmtMoney } from "../../utils/formatters.js";
+import { formatDate as fmtDate, formatVND as fmtMoney } from "../../../utils/formatters.js";
 
 /**
  * CheckoutRequestModal — US-20 (FR-17)

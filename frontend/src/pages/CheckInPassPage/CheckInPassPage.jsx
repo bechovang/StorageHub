@@ -1,6 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { Link, useParams, useNavigate } from "react-router";
-import QRCode from "qrcode";
+import { Link, useParams } from "react-router";
 import {
     ArrowLeft,
     QrCode as QrCodeIcon,
@@ -14,10 +12,9 @@ import {
     Printer,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
-import { getCheckInPass } from "../../services/rentalService.js";
+import { useCheckInPass } from "../../features/rentals/index.js";
+import { formatDateLong as fmtDate } from "../../utils/formatters.js";
 import "./CheckInPassPage.css";
-
-import { formatDateLong as fmtDate, daysUntil } from "../../utils/formatters.js";
 
 const INSTRUCTION_TRANSLATIONS = {
     "Show this code at the Tân Bình depot desk upon arrival.":
@@ -35,90 +32,17 @@ function formatInstruction(text) {
 
 export default function CheckInPassPage() {
     const { reservationId } = useParams();
-    const navigate = useNavigate();
-
-    const [pass, setPass] = useState(null);
-    const [qrDataUrl, setQrDataUrl] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [errorCode, setErrorCode] = useState(null);
-
-    const load = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        setErrorCode(null);
-        try {
-            const data = await getCheckInPass(reservationId);
-            setPass(data);
-        } catch (err) {
-            setErrorCode(err?.code || null);
-            if (err?.status === 409) {
-                setError("Check-in Pass chỉ khả dụng khi đặt chỗ đã xác nhận (đã thanh toán cọc).");
-            } else if (err?.status === 403) {
-                navigate("/403", { replace: true });
-            } else if (err?.status === 404) {
-                setError("Không tìm thấy đơn thuê này.");
-            } else {
-                setError(err?.message || "Không thể tải Check-in Pass.");
-            }
-        } finally {
-            setLoading(false);
-        }
-    }, [reservationId, navigate]);
-
-    useEffect(() => {
-        let isMounted = true;
-        async function fetchPass() {
-            try {
-                const data = await getCheckInPass(reservationId);
-                if (isMounted) setPass(data);
-            } catch (err) {
-                if (!isMounted) return;
-                setErrorCode(err?.code || null);
-                if (err?.status === 409) {
-                    setError("Check-in Pass chỉ khả dụng khi đặt chỗ đã xác nhận (đã thanh toán cọc).");
-                } else if (err?.status === 403) {
-                    navigate("/403", { replace: true });
-                } else if (err?.status === 404) {
-                    setError("Không tìm thấy đơn thuê này.");
-                } else {
-                    setError(err?.message || "Không thể tải Check-in Pass.");
-                }
-            } finally {
-                if (isMounted) setLoading(false);
-            }
-        }
-        fetchPass();
-        return () => {
-            isMounted = false;
-        };
-    }, [reservationId, navigate]);
-
-    useEffect(() => {
-        if (!pass?.code) return;
-        let active = true;
-        QRCode.toDataURL(pass.code, {
-            width: 180,
-            margin: 2,
-            color: {
-                dark: "#000000",
-                light: "#FFFFFF",
-            },
-        })
-            .then((url) => {
-                if (active) setQrDataUrl(url);
-            })
-            .catch((err) => {
-                console.error("Failed to generate check-in QR code:", err);
-            });
-        return () => {
-            active = false;
-        };
-    }, [pass?.code]);
-
-    const days = pass ? daysUntil(pass.checkInDeadline) : null;
-    const isUrgent = days !== null && days >= 0 && days <= 3;
-    const isOverdue = days !== null && days < 0;
+    const {
+        pass,
+        qrDataUrl,
+        loading,
+        error,
+        errorCode,
+        reload,
+        days,
+        isUrgent,
+        isOverdue,
+    } = useCheckInPass(reservationId);
 
     return (
         <AppShell>
@@ -164,7 +88,7 @@ export default function CheckInPassPage() {
                                 </p>
                             )}
                         </div>
-                        <button onClick={load} className="cip__retry">
+                        <button onClick={reload} className="cip__retry">
                             <ArrowClockwise size={14} /> Thử lại
                         </button>
                     </div>

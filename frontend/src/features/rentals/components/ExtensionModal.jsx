@@ -8,7 +8,7 @@ import {
     Info,
     ArrowRight,
 } from "@phosphor-icons/react";
-import { fmtDate, fmtMoney } from "../../utils/formatters";
+import { fmtDate, fmtMoney } from "../../../utils/formatters.js";
 
 /**
  * ExtensionModal — US-18 & US-19 (FR-16 / FR-12)

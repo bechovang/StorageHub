@@ -15,7 +15,7 @@ import {
   DEPOSIT_STATUS_LABEL,
   fmtDate,
   fmtMoney,
-} from "./rentalConstants";
+} from "../../../utils/rentalConstants.js";
 
 export default function RentalCard({ item }) {
   const statusColor = STATUS_COLOR[item.status] || "neutral";
