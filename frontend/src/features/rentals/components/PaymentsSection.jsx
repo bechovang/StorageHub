@@ -3,7 +3,7 @@ import {
   fmtDateTime,
   fmtMoney,
   PAYMENT_STATUS_LABEL,
-} from "../../../pages/MyRentalsPage/rentalConstants.js";
+} from "../../../utils/rentalConstants.js";
 
 export function PaymentsSection({ payments = [] }) {
   if (payments.length === 0) {

@@ -1,4 +1,4 @@
-import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { MagnifyingGlass } from "@phosphor-icons/react";
 
 const TABS = [
   { key: "ALL", label: "Tất cả", countKey: "all" },
@@ -50,16 +50,6 @@ export default function RentalFilters({
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Tìm kiếm đơn thuê"
         />
-        {searchQuery && (
-          <button
-            type="button"
-            className="rental-filters__search-clear"
-            onClick={() => onSearchChange("")}
-            title="Xóa tìm kiếm"
-          >
-            <X size={14} weight="bold" />
-          </button>
-        )}
       </div>
     </div>
   );

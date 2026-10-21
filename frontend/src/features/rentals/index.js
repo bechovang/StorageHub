@@ -1,12 +1,15 @@
 export { useRentalDetail } from "./hooks/useRentalDetail.js";
+export { useMyRentals } from "./hooks/useMyRentals.js";
+export { useCheckInPass } from "./hooks/useCheckInPass.js";
+
 export { PaymentsSection } from "./components/PaymentsSection.jsx";
 export { ContractsSection } from "./components/ContractsSection.jsx";
 export { RentalHeroBanner } from "./components/RentalHeroBanner.jsx";
 export { RentalDepositCard } from "./components/RentalDepositCard.jsx";
 export { RentalSpecsCard } from "./components/RentalSpecsCard.jsx";
-export { default as ExtensionModal } from "../../pages/RentalDetailPage/ExtensionModal.jsx";
-export { default as CheckoutRequestModal } from "../../pages/RentalDetailPage/CheckoutRequestModal.jsx";
-export { default as RentalCard } from "../../pages/MyRentalsPage/RentalCard.jsx";
-export { default as RentalEmptyState } from "../../pages/MyRentalsPage/RentalEmptyState.jsx";
-export { default as RentalFilters } from "../../pages/MyRentalsPage/RentalFilters.jsx";
-export { default as RentalTelemetry } from "../../pages/MyRentalsPage/RentalTelemetry.jsx";
+export { default as ExtensionModal } from "./components/ExtensionModal.jsx";
+export { default as CheckoutRequestModal } from "./components/CheckoutRequestModal.jsx";
+export { default as RentalCard } from "./components/RentalCard.jsx";
+export { default as RentalEmptyState } from "./components/RentalEmptyState.jsx";
+export { default as RentalFilters } from "./components/RentalFilters.jsx";
+export { default as RentalTelemetry } from "./components/RentalTelemetry.jsx";

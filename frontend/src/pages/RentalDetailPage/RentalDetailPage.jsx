@@ -20,7 +20,7 @@ import {
   ExtensionModal,
   CheckoutRequestModal,
 } from "../../features/rentals/index.js";
-import { fmtDate } from "../MyRentalsPage/rentalConstants.js";
+import { fmtDate } from "../../utils/rentalConstants.js";
 import "./RentalDetailPage.css";
 
 export default function RentalDetailPage() {

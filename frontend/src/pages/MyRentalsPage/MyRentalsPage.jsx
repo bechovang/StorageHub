@@ -1,121 +1,28 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router";
-import {
-  ArrowClockwise,
-  WarningCircle,
-  Plus,
-} from "@phosphor-icons/react";
+import { Plus, ArrowClockwise, WarningCircle } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
-import { listMyReservations } from "../../services/rentalService.js";
-import RentalTelemetry from "./RentalTelemetry.jsx";
-import RentalFilters from "./RentalFilters.jsx";
-import RentalCard from "./RentalCard.jsx";
-import RentalEmptyState from "./RentalEmptyState.jsx";
+import {
+  useMyRentals,
+  RentalCard,
+  RentalEmptyState,
+  RentalFilters,
+  RentalTelemetry,
+} from "../../features/rentals/index.js";
 import "./MyRentalsPage.css";
 
 export default function MyRentalsPage() {
-  const [activeItems, setActiveItems] = useState([]);
-  const [historyItems, setHistoryItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [activeTab, setActiveTab] = useState("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const loadRentals = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [activePage, historyPage] = await Promise.all([
-        listMyReservations({ group: "active" }),
-        listMyReservations({ group: "history" }),
-      ]);
-      setActiveItems(activePage?.items || []);
-      setHistoryItems(historyPage?.items || []);
-    } catch (err) {
-      setError(err?.message || "Không thể tải danh sách đơn thuê.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let ignore = false;
-    async function fetchInitial() {
-      try {
-        const [activePage, historyPage] = await Promise.all([
-          listMyReservations({ group: "active" }),
-          listMyReservations({ group: "history" }),
-        ]);
-        if (!ignore) {
-          setActiveItems(activePage?.items || []);
-          setHistoryItems(historyPage?.items || []);
-        }
-      } catch (err) {
-        if (!ignore) {
-          setError(err?.message || "Không thể tải danh sách đơn thuê.");
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-
-    fetchInitial();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  // Nhóm và tính toán số lượng cho từng tab
-  const counts = useMemo(() => {
-    const all = activeItems.length + historyItems.length;
-    const active = activeItems.filter((i) =>
-      ["CHECKED_IN", "CHECKOUT_REQUESTED"].includes(i.status)
-    ).length;
-    const reserved = activeItems.filter((i) => i.status === "RESERVED").length;
-    const pending = activeItems.filter(
-      (i) => i.status === "PENDING_PAYMENT"
-    ).length;
-    const history = historyItems.length;
-
-    return { all, active, reserved, pending, history };
-  }, [activeItems, historyItems]);
-
-  // Lọc theo Tab đã chọn
-  const tabFilteredItems = useMemo(() => {
-    switch (activeTab) {
-      case "ACTIVE":
-        return activeItems.filter((i) =>
-          ["CHECKED_IN", "CHECKOUT_REQUESTED"].includes(i.status)
-        );
-      case "RESERVED":
-        return activeItems.filter((i) => i.status === "RESERVED");
-      case "PENDING":
-        return activeItems.filter((i) => i.status === "PENDING_PAYMENT");
-      case "HISTORY":
-        return historyItems;
-      case "ALL":
-      default:
-        return [...activeItems, ...historyItems];
-    }
-  }, [activeTab, activeItems, historyItems]);
-
-  // Lọc tiếp theo từ khóa tìm kiếm (mã đơn hoặc mã kho)
-  const displayItems = useMemo(() => {
-    if (!searchQuery.trim()) return tabFilteredItems;
-    const q = searchQuery.trim().toLowerCase();
-    return tabFilteredItems.filter((item) => {
-      const codeMatch = item.code?.toLowerCase().includes(q);
-      const unitMatch = item.unit?.code?.toLowerCase().includes(q);
-      const typeMatch = item.unit?.typeName?.toLowerCase().includes(q);
-      return codeMatch || unitMatch || typeMatch;
-    });
-  }, [tabFilteredItems, searchQuery]);
-
-  const hasAnyRentals = activeItems.length > 0 || historyItems.length > 0;
+  const {
+    loading,
+    error,
+    activeTab,
+    setActiveTab,
+    searchQuery,
+    setSearchQuery,
+    loadRentals,
+    counts,
+    displayItems,
+    hasAnyRentals,
+  } = useMyRentals();
 
   return (
     <AppShell>
