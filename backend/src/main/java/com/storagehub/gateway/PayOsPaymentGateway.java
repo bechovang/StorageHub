@@ -170,14 +170,15 @@ public class PayOsPaymentGateway implements PaymentGateway {
         try {
             WebhookData data = payOS.webhooks().verify(rawPayload);
             if (data == null || data.getOrderCode() == null) {
-                throw new PaymentWebhookException(
-                        "Webhook PayOS thiếu orderCode.");
+                log.warn("PayOS webhook without orderCode — ignored");
+                return Optional.empty();
             }
 
             long paymentId = data.getOrderCode() - orderCodeBase;
             if (paymentId <= 0) {
-                throw new PaymentWebhookException(
-                        "orderCode không thuộc StorageHub: " + data.getOrderCode());
+                // PayOS gửi payload mẫu (orderCode 123) khi xác thực webhook URL.
+                log.info("PayOS probe/foreign orderCode {} — ignored", data.getOrderCode());
+                return Optional.empty();
             }
 
             boolean success = "00".equals(data.getCode());
