@@ -45,7 +45,6 @@ export default function PaymentPage() {
     handleResetOrSwitch,
     handleSelectMethod,
     handleCheckPaymentStatus,
-    handleSimulateVNPaySuccess,
     handleCreateTestReservation,
     handleSelectReservation,
     handleCopyReceipt,
@@ -106,7 +105,6 @@ export default function PaymentPage() {
           polling={polling}
           checkingStatus={checkingStatus}
           onCheckPaymentStatus={handleCheckPaymentStatus}
-          onSimulateVNPaySuccess={handleSimulateVNPaySuccess}
           formErrors={formErrors}
           apiError={apiError}
           notificationToast={notificationToast}

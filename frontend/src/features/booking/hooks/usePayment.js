@@ -355,7 +355,7 @@ export function usePayment() {
           if (
             session.status === "PROCESSING" ||
             (session.status === "PENDING" &&
-              (session.method === "VNPAY" || session.method === "PAYOS"))
+              (session.method === "PAYOS"))
           ) {
             startPolling(
               session.id,
@@ -565,27 +565,6 @@ export function usePayment() {
           }
           setApiError("Khoản cọc này đã được thanh toán hoặc đang trong phiên xử lý.");
         } else {
-          if (
-            methodToUse === "VNPAY" &&
-            (err.code === "BACKEND_UNAVAILABLE" ||
-              !err.status ||
-              err.message?.includes("Backend") ||
-              err.message?.includes("fetch"))
-          ) {
-            const mockSession = {
-              id: `vnpay-mock-${Date.now()}`,
-              reservationId: reservation.id,
-              purpose: "DEPOSIT",
-              method: "VNPAY",
-              status: "PENDING",
-              amount: reservation.depositAmount || 103500,
-              qrPayload: `00020101021238540010A000000727012400069704220110${Date.now()}5303704540${reservation.depositAmount || 103500}5802VN6304MOCK`,
-              qrExpiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-              createdAt: new Date().toISOString(),
-            };
-            setPaymentSession(mockSession);
-            return;
-          }
           if (methodToUse === "PAYOS") {
             setPayOsUnavailable(true);
             setApiError("");
@@ -653,7 +632,7 @@ export function usePayment() {
     setPayOsUnavailable(false);
     if (newMethod) {
       setSelectedMethod(newMethod);
-      if (newMethod === "VNPAY" || newMethod === "PAYOS") {
+      if (newMethod === "PAYOS") {
         handleInitiatePayment(null, newMethod);
       }
     }
@@ -664,7 +643,7 @@ export function usePayment() {
       setSelectedMethod(m);
       setFormErrors({});
       setApiError("");
-      if (m === "VNPAY" || m === "PAYOS") {
+      if (m === "PAYOS") {
         if (
           !paymentSession ||
           paymentSession.method !== m ||

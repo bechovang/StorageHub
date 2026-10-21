@@ -11,9 +11,10 @@ export function PaymentsSection({ payments = [] }) {
   }
 
   const methodLabel = {
-    CARD: "Thẻ quốc tế",
+    CARD: "Thẻ ngân hàng",
     MOMO: "Ví MoMo",
-    VNPAY: "VNPay QR",
+    VNPAY: "Thanh toán QR",
+    PAYOS: "Thanh toán QR",
   };
 
   const purposeLabel = {

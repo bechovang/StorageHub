@@ -72,7 +72,7 @@ public class PaymentGatewayRouter implements PaymentGateway {
         if (payOs == null) {
             log.warn("PayOS gateway được yêu cầu nhưng chưa cấu hình (PAYOS_ENABLED=false hoặc thiếu keys trong .env).");
             throw new PaymentBadRequestException(
-                    "Cổng thanh toán QR hiện đang tạm bảo trì kết nối. Quý khách vui lòng chọn phương thức thanh toán cọc khác");
+                    "Kênh thanh toán QR hiện đang tạm bảo trì kết nối. Quý khách vui lòng chọn phương thức Thẻ hoặc Ví MoMo để hoàn tất thanh toán cọc.");
         }
         return payOs;
     }

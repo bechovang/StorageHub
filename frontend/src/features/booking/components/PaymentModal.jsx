@@ -1,5 +1,4 @@
 import {
-  Bank,
   CreditCard,
   Wallet,
   QrCode as QrCodeIcon,
@@ -78,7 +77,6 @@ export default function PaymentModal({
   submitting,
   checkingStatus,
   onCheckPaymentStatus,
-  onSimulateVNPaySuccess,
   formErrors,
   apiError,
   notificationToast,
@@ -436,23 +434,12 @@ export default function PaymentModal({
                 <button
                   type="button"
                   role="tab"
-                  aria-selected={selectedMethod === "VNPAY"}
-                  className={`segmented-tab ${selectedMethod === "VNPAY" ? "is-active" : ""}`}
-                  onClick={() => onSelectMethod("VNPAY")}
-                >
-                  <QrCodeIcon size={18} weight={selectedMethod === "VNPAY" ? "bold" : "regular"} />
-                  <span>VNPay QR</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="tab"
                   aria-selected={selectedMethod === "PAYOS"}
                   className={`segmented-tab ${selectedMethod === "PAYOS" ? "is-active" : ""}`}
                   onClick={() => onSelectMethod("PAYOS")}
                 >
-                  <Bank size={18} weight={selectedMethod === "PAYOS" ? "bold" : "regular"} />
-                  <span>PayOS QR</span>
+                  <QrCodeIcon size={18} weight={selectedMethod === "PAYOS" ? "bold" : "regular"} />
+                  <span>Thanh toán QR</span>
                   {payOsUnavailable && <span className="tab-pill-badge">Bảo trì</span>}
                 </button>
               </div>
@@ -654,94 +641,19 @@ export default function PaymentModal({
                 </form>
               )}
 
-              {/* ── VNPAY QR VIEW ── */}
-              {selectedMethod === "VNPAY" && paymentSession?.method === "VNPAY" && (
-                <div className="vnpay-qr-view">
-                  <div className="qr-wrapper">
-                    {qrDataUrl ? (
-                      <img src={qrDataUrl} alt="VNPay QR Code" className="qr-image" />
-                    ) : (
-                      <div className="qr-placeholder">
-                        <CircleNotch size={32} className="spinner-rotate" />
-                      </div>
-                    )}
-                    <div className="qr-badge">
-                      <QrCodeIcon size={14} weight="bold" />
-                      <span>VNPAY-QR</span>
-                    </div>
-                  </div>
-
-                  {countdown !== null && (
-                    <div className="countdown-pill">
-                      <Clock size={13} weight="bold" />
-                      <span>Mã QR hết hạn sau: {formatCountdown(countdown)}</span>
-                    </div>
-                  )}
-
-                  <p className="vnpay-instruction">
-                    Mở ứng dụng ngân hàng hoặc ví VNPAY, chọn Quét QR để thanh toán{" "}
-                    <strong>{formatVND(paymentSession?.amount || reservation?.depositAmount)}</strong>.
-                  </p>
-
-                  {/* Mock Presets (chỉ hiển thị ở môi trường DEV) */}
-                  {import.meta.env.DEV && (
-                    <div className="mock-presets-row">
-                      <span className="mock-presets-label">Kiểm thử Mock Gateway:</span>
-                      <button
-                        type="button"
-                        className="preset-chip preset-chip--success"
-                        onClick={onSimulateVNPaySuccess}
-                      >
-                        Giả lập quét thành công
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="polling-status-hint">
-                    <CircleNotch size={14} className="spinner-rotate" />
-                    <span>Hệ thống tự động xác nhận sau khi quét mã...</span>
-                  </div>
-
-                  <div className="modal-actions-grid">
-                    <Button
-                      type="button"
-                      variant="primary"
-                      onClick={onCheckPaymentStatus}
-                      disabled={checkingStatus || submitting}
-                      title="Kiểm tra xem đã thanh toán chưa"
-                    >
-                      {checkingStatus ? (
-                        <>
-                          <CircleNotch size={16} className="spinner-rotate" />
-                          <span>Đang kiểm tra...</span>
-                        </>
-                      ) : (
-                        <>
-                          <ArrowCounterClockwise size={16} weight="bold" />
-                          <span>Làm mới</span>
-                        </>
-                      )}
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={onClose}>
-                      Hủy
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* ── PAYOS FLOW (KẾT NỐI HOẶC BẢO TRÌ THÂN THIỆN) ── */}
+              {/* ── THANH TOÁN QR (QR PAY) ── */}
               {selectedMethod === "PAYOS" && (
                 <>
                   {submitting && !paymentSession ? (
                     <div className="gateway-loading-view">
                       <CircleNotch size={36} className="spinner-rotate" />
-                      <p className="gateway-loading-text">Đang kết nối cổng thanh toán PayOS VietQR...</p>
+                      <p className="gateway-loading-text">Đang tạo mã thanh toán QR...</p>
                     </div>
                   ) : paymentSession?.method === "PAYOS" && paymentSession?.status === "PENDING" ? (
                     <div className="vnpay-qr-view">
                       <div className="qr-wrapper">
                         {qrDataUrl ? (
-                          <img src={qrDataUrl} alt="PayOS VietQR" className="qr-image" />
+                          <img src={qrDataUrl} alt="Mã thanh toán QR" className="qr-image" />
                         ) : (
                           <div className="qr-placeholder">
                             <CircleNotch size={32} className="spinner-rotate" />
@@ -749,7 +661,7 @@ export default function PaymentModal({
                         )}
                         <div className="qr-badge">
                           <QrCodeIcon size={14} weight="bold" />
-                          <span>PAYOS · VietQR</span>
+                          <span>QR Pay · VietQR</span>
                         </div>
                       </div>
 
@@ -761,7 +673,7 @@ export default function PaymentModal({
                       )}
 
                       <p className="vnpay-instruction">
-                        Mở ứng dụng ngân hàng bất kỳ, chọn Quét VietQR (Napas 247) để chuyển{" "}
+                        Mở ứng dụng ngân hàng bất kỳ, chọn Quét QR để chuyển khoản{" "}
                         <strong>{formatVND(paymentSession?.amount || reservation?.depositAmount)}</strong>.
                       </p>
 
@@ -779,8 +691,8 @@ export default function PaymentModal({
                             window.open(paymentSession.checkoutUrl, "_blank", "noopener,noreferrer")
                           }
                         >
-                          <Bank size={16} weight="bold" />
-                          <span>Mở trang thanh toán PayOS</span>
+                          <QrCodeIcon size={16} weight="bold" />
+                          <span>Mở trang thanh toán QR</span>
                         </Button>
                       )}
 
@@ -814,15 +726,15 @@ export default function PaymentModal({
                     <div className="gateway-maintenance-card">
                       <div className="gateway-maintenance-header">
                         <div className="gateway-maintenance-icon">
-                          <Bank size={24} weight="duotone" />
+                          <QrCodeIcon size={24} weight="bold" />
                         </div>
                         <div className="gateway-maintenance-meta">
                           <div className="gateway-maintenance-title-row">
-                            <h4 className="gateway-maintenance-title">Kênh VietQR (PayOS) đang tạm bảo trì</h4>
-                            <Badge tone="warning">Bảo trì kết nối</Badge>
+                            <h4 className="gateway-maintenance-title">Kênh thanh toán QR đang tạm bảo trì</h4>
+                            <Badge tone="warning">Tạm bảo trì</Badge>
                           </div>
                           <p className="gateway-maintenance-desc">
-                            Cổng kết nối VietQR đang được nâng cấp định kỳ để đảm bảo giao dịch thông suốt. Quý khách vui lòng chọn phương thức thanh toán thay thế bên dưới để hoàn tất giữ chỗ ngay nhé:
+                            Kênh thanh toán qua mã QR đang được nâng cấp hệ thống định kỳ. Quý khách vui lòng chọn phương thức thanh toán bên dưới để hoàn tất đặt cọc nhé:
                           </p>
                         </div>
                       </div>
@@ -837,25 +749,9 @@ export default function PaymentModal({
                             <CreditCard size={20} weight="bold" />
                           </div>
                           <div className="gateway-alt-btn__content">
-                            <span className="gateway-alt-btn__label">Thanh toán bằng Thẻ (Visa / Mastercard)</span>
-                            <span className="gateway-alt-btn__sub">Xử lý ngay tức thì · Khuyên dùng</span>
+                            <span className="gateway-alt-btn__label">Thanh toán bằng Thẻ</span>
                           </div>
                           <span className="gateway-alt-btn__action">Chọn thẻ →</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="gateway-alt-btn"
-                          onClick={() => onSelectMethod("VNPAY")}
-                        >
-                          <div className="gateway-alt-btn__icon">
-                            <QrCodeIcon size={20} weight="bold" />
-                          </div>
-                          <div className="gateway-alt-btn__content">
-                            <span className="gateway-alt-btn__label">Quét mã VNPay QR</span>
-                            <span className="gateway-alt-btn__sub">Hỗ trợ tất cả ứng dụng Mobile Banking</span>
-                          </div>
-                          <span className="gateway-alt-btn__action">Quét QR →</span>
                         </button>
 
                         <button
@@ -868,17 +764,9 @@ export default function PaymentModal({
                           </div>
                           <div className="gateway-alt-btn__content">
                             <span className="gateway-alt-btn__label">Ví điện tử MoMo</span>
-                            <span className="gateway-alt-btn__sub">Xác thực mã OTP gửi về số điện thoại</span>
                           </div>
                           <span className="gateway-alt-btn__action">Ví MoMo →</span>
                         </button>
-                      </div>
-
-                      <div className="gateway-maintenance-footer">
-                        <Lock size={14} weight="bold" />
-                        <span>
-                          Kho <strong>{unit.code || "S-3"}</strong> và đơn đặt chỗ <strong>{reservation?.code || "RSV-2026-S3"}</strong> vẫn được giữ an toàn trong lúc bạn thanh toán.
-                        </span>
                       </div>
                     </div>
                   )}
