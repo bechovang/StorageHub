@@ -86,7 +86,7 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-      - name: Trigger Dokploy compose deploy
+      - name: Pin image tags and deploy
         env:
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
@@ -94,7 +94,21 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$DOKPLOY_URL" && test -n "$DOKPLOY_API_KEY" && test -n "$DOKPLOY_COMPOSE_ID"
-          curl -fsS --max-time 120 -X POST "$DOKPLOY_URL/api/compose.deploy" \
-            -H "x-api-key: $DOKPLOY_API_KEY" \
-            -H "content-type: application/json" \
-            -d "{\"composeId\":\"$DOKPLOY_COMPOSE_ID\"}"
+
+          base="$DOKPLOY_URL/api"
+          auth=(-H "x-api-key: $DOKPLOY_API_KEY")
+
+          one=$(curl -fsS "${auth[@]}" "$base/compose.one?composeId=$DOKPLOY_COMPOSE_ID")
+          compose=$(printf '%s' "$one" | jq -r '.composeFile')
+          envfile=$(printf '%s' "$one" | jq -r '.env // ""')
+
+          # Compose phải trỏ tag bất biến, nếu không `up -d` với :latest sẽ không recreate container.
+          pinned=$(printf '%s' "$compose" | sed -E "s#(storagehub/(backend|frontend)):[^[:space:]]+#\1:sha-${GITHUB_SHA}#g")
+          printf '%s' "$pinned" | grep -q "sha-${GITHUB_SHA}" || { echo "pin tag failed"; exit 1; }
+
+          payload=$(jq -n --arg id "$DOKPLOY_COMPOSE_ID" --arg cf "$pinned" --arg env "$envfile" \
+            '{composeId: $id, composeFile: $cf, env: $env, sourceType: "raw", composeType: "docker-compose"}')
+          curl -fsS -X POST "${auth[@]}" -H "content-type: application/json" -d "$payload" "$base/compose.update" >/dev/null
+
+          curl -fsS --max-time 120 -X POST "${auth[@]}" -H "content-type: application/json" \
+            -d "{\"composeId\":\"$DOKPLOY_COMPOSE_ID\"}" "$base/compose.deploy"
