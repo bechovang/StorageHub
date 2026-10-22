@@ -112,3 +112,36 @@ jobs:
 
           curl -fsS --max-time 120 -X POST "${auth[@]}" -H "content-type: application/json" \
             -d "{\"composeId\":\"$DOKPLOY_COMPOSE_ID\"}" "$base/compose.deploy"
+
+  notify:
+    needs: [backend-test, frontend-build, build, deploy]
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack notify
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
+            echo "SLACK_WEBHOOK_URL not set, skipping"
+            exit 0
+          fi
+
+          summary=$(printf '%s' "$RESULTS" | jq -r 'to_entries | map("\(.key)=\(.value.result // "unknown")") | join("  ")')
+          failed=$(printf '%s' "$RESULTS" | jq -r '[.[] | select(.result == "failure" or .result == "cancelled")] | length')
+          if [ "$failed" -gt 0 ]; then
+            icon=":x:"
+            state="FAILED"
+          else
+            icon=":white_check_mark:"
+            state="OK"
+          fi
+
+          text=$(printf '%s CI/CD %s — %s@%s (%s) by %s\n%s\n%s/%s/actions/runs/%s' \
+            "$icon" "$state" "$GITHUB_REPOSITORY" "${GITHUB_SHA:0:7}" "$GITHUB_REF_NAME" "$GITHUB_ACTOR" \
+            "$summary" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
+          payload=$(jq -n --arg t "$text" '{text: $t}')
+          curl -fsS -X POST -H 'content-type: application/json' -d "$payload" "$SLACK_WEBHOOK_URL" >/dev/null
+          echo "slack notified"
