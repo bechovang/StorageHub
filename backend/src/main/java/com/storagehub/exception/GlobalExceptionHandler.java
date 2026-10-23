@@ -358,4 +358,29 @@ public class GlobalExceptionHandler {
                         fieldErrors
                 ));
     }
+
+    @ExceptionHandler(ShiftConflictException.class)
+    public ResponseEntity<ApiError> handleShiftConflict(
+            ShiftConflictException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ApiError(
+                        "SHIFT_ASSIGNMENT_CONFLICT",
+                        exception.getMessage(),
+                        List.of(new FieldErrorDetail("shift", "CONFLICT", "Trùng ca trực"))
+                ));
+    }
+
+    @ExceptionHandler(ShiftNotFoundException.class)
+    public ResponseEntity<ApiError> handleShiftNotFound(
+            ShiftNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(
+                        "SHIFT_NOT_FOUND",
+                        exception.getMessage() != null ? exception.getMessage() : "Không tìm thấy phân công ca trực này."
+                ));
+    }
 }

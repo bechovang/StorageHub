@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import {
   getUsers,
@@ -36,8 +36,31 @@ export function useUserManagement() {
     };
   }, [openMenuId]);
 
-  // Dữ liệu users
-  const [users, setUsers] = useState(() => getUsers());
+  // Dữ liệu users từ Backend API
+  const [users, setUsers] = useState([]);
+
+  const reloadUsers = useCallback(async () => {
+    try {
+      const data = await getUsers();
+      setUsers(data);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    getUsers()
+      .then((data) => {
+        if (!ignore) setUsers(data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch users:", err);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Filtered users list
   const filteredUsers = useMemo(() => {
@@ -47,8 +70,8 @@ export function useUserManagement() {
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
         return (
-          u.fullName.toLowerCase().includes(term) ||
-          u.email.toLowerCase().includes(term) ||
+          (u.fullName && u.fullName.toLowerCase().includes(term)) ||
+          (u.email && u.email.toLowerCase().includes(term)) ||
           (u.phone && u.phone.includes(term))
         );
       }
@@ -131,18 +154,18 @@ export function useUserManagement() {
   };
 
   // Submit tạo tài khoản
-  const handleCreateSubmit = (e) => {
+  const handleCreateSubmit = async (e) => {
     e.preventDefault();
     setCreateError("");
     try {
-      const res = createUser({
+      const res = await createUser({
         fullName: createName,
         email: createEmail,
         phone: createPhone,
         role: createRole,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
-      setUsers(getUsers());
+      await reloadUsers();
       setCreatedSuccessData(res);
       showToast(`Đã cấp tài khoản cho ${res.user.fullName} thành công.`);
     } catch (err) {
@@ -163,10 +186,8 @@ export function useUserManagement() {
         reason: roleReason,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
-      // Sau khi gọi API thành công, reset filter về "ALL" và fetch lại danh sách
-      // để Admin thấy ngay người dùng với badge vai trò mới (chống bị ẩn do filter cũ)
       setSelectedRole("ALL");
-      setUsers(getUsers());
+      await reloadUsers();
       const updatedUserName = roleModalUser.fullName;
       setRoleModalUser(null);
       showToast(`Đã chuyển vai trò của ${updatedUserName} sang ${USER_ROLES[targetRole]?.label || targetRole}.`);
@@ -178,40 +199,41 @@ export function useUserManagement() {
   };
 
   // Submit đổi trạng thái
-  const handleStatusSubmit = (e) => {
+  const handleStatusSubmit = async (e) => {
     e.preventDefault();
     setStatusError("");
     try {
       const targetId = statusModalUser?.id || statusModalUser?.userId;
       const currentActorId = currentSessionUser?.id || currentSessionUser?.userId;
-      updateUserStatus({
+      await updateUserStatus({
         userId: targetId,
         newStatus: targetStatus,
         currentUserId: currentActorId,
         reason: statusReason,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
-      setUsers(getUsers());
+      await reloadUsers();
+      const updatedUserName = statusModalUser.fullName;
       setStatusModalUser(null);
-      showToast(`Đã cập nhật trạng thái của ${statusModalUser.fullName}.`);
+      showToast(`Đã cập nhật trạng thái của ${updatedUserName}.`);
     } catch (err) {
       setStatusError(err.message);
     }
   };
 
   // Submit Reset Mật khẩu
-  const handleConfirmReset = () => {
+  const handleConfirmReset = async () => {
     try {
       const targetId = resetModalUser?.id || resetModalUser?.userId;
-      const res = resetUserPassword({
+      const res = await resetUserPassword({
         userId: targetId,
         currentActor: currentSessionUser?.fullName || "System Admin",
       });
       setResetSuccessPass(res.tempPassword);
-      setUsers(getUsers());
+      await reloadUsers();
       showToast(`Đã cấp mật khẩu tạm mới cho ${resetModalUser.fullName}.`);
     } catch (err) {
-      showToast(err.message || "Lỗi khi cấp lại mật khẩu", "error");
+      showToast(err.message || "Lỗi khi cấp lại mật khẩu");
     }
   };
 

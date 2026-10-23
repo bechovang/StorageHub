@@ -6,6 +6,26 @@ import { paymentService } from "../../../services/paymentService.js";
 import { getUnitDetail } from "../../../services/unitService.js";
 import { PaymentValidator } from "../../../validation/index.js";
 
+
+/**
+ * Chuẩn hoá thông điệp lỗi: bảo vệ người dùng khỏi các lỗi nội bộ, config keys, hoặc stack traces
+ */
+function sanitizeErrorMessage(msg) {
+  if (!msg || typeof msg !== 'string') {
+    return 'Giao dịch chưa thành công. Quý khách vui lòng thử lại hoặc chọn phương thức khác.';
+  }
+  if (msg.includes('PAYOS_') || msg.toLowerCase().includes('payos chưa được cấu hình')) {
+    return 'Cổng thanh toán QR hiện đang tạm bảo trì kết nối. Quý khách vui lòng chọn phương thức thanh toán cọc khác.';
+  }
+  if (msg.includes('Backend') || msg.includes('fetch') || msg.includes('8080') || msg.includes('NetworkError') || msg.includes('Failed to fetch')) {
+    return 'Không thể kết nối đến máy chủ thanh toán. Quý khách vui lòng kiểm tra kết nối mạng và thử lại.';
+  }
+  if (msg.includes('Exception') || msg.includes('SQL') || msg.includes('NullPointer') || msg.includes('Internal Server')) {
+    return 'Hệ thống đang bận xử lý. Quý khách vui lòng thử lại sau ít phút.';
+  }
+  return msg;
+}
+
 const DEFAULT_DEMO_RESERVATION = {
   id: 1,
   code: "RSV-2026-S3",
@@ -77,6 +97,7 @@ export function usePayment() {
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [apiError, setApiError] = useState("");
+  const [payOsUnavailable, setPayOsUnavailable] = useState(false);
   const [notificationToast, setNotificationToast] = useState(null);
 
   // Lịch sử thanh toán & Copy
@@ -129,7 +150,7 @@ export function usePayment() {
               setNotificationToast({
                 type: "PAYMENT_CONFIRMED",
                 title: "Thanh toán cọc thành công",
-                body: `Biên lai ${updated.receiptCode || "RT-2026-..."} đã được cấp. Đơn đặt chỗ đã chuyển sang trạng thái RESERVED.`,
+                body: `Biên lai ${updated.receiptCode || "RT-2026-..."} đã được cấp.`,
               });
               if (reservationRef.current?.id) {
                 loadPaymentHistory(reservationRef.current.id);
@@ -334,7 +355,7 @@ export function usePayment() {
           if (
             session.status === "PROCESSING" ||
             (session.status === "PENDING" &&
-              (session.method === "VNPAY" || session.method === "PAYOS"))
+              (session.method === "PAYOS"))
           ) {
             startPolling(
               session.id,
@@ -544,28 +565,12 @@ export function usePayment() {
           }
           setApiError("Khoản cọc này đã được thanh toán hoặc đang trong phiên xử lý.");
         } else {
-          if (
-            methodToUse === "VNPAY" &&
-            (err.code === "BACKEND_UNAVAILABLE" ||
-              !err.status ||
-              err.message?.includes("Backend") ||
-              err.message?.includes("fetch"))
-          ) {
-            const mockSession = {
-              id: `vnpay-mock-${Date.now()}`,
-              reservationId: reservation.id,
-              purpose: "DEPOSIT",
-              method: "VNPAY",
-              status: "PENDING",
-              amount: reservation.depositAmount || 103500,
-              qrPayload: `00020101021238540010A000000727012400069704220110${Date.now()}5303704540${reservation.depositAmount || 103500}5802VN6304MOCK`,
-              qrExpiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-              createdAt: new Date().toISOString(),
-            };
-            setPaymentSession(mockSession);
-            return;
+          if (methodToUse === "PAYOS") {
+            setPayOsUnavailable(true);
+            setApiError("");
+          } else {
+            setApiError(sanitizeErrorMessage(err.message));
           }
-          setApiError(err.message || "Giao dịch không thành công. Vui lòng thử lại.");
         }
       } finally {
         setSubmitting(false);
@@ -624,9 +629,10 @@ export function usePayment() {
     setOtp("");
     setApiError("");
     setFormErrors({});
+    setPayOsUnavailable(false);
     if (newMethod) {
       setSelectedMethod(newMethod);
-      if (newMethod === "VNPAY" || newMethod === "PAYOS") {
+      if (newMethod === "PAYOS") {
         handleInitiatePayment(null, newMethod);
       }
     }
@@ -637,7 +643,7 @@ export function usePayment() {
       setSelectedMethod(m);
       setFormErrors({});
       setApiError("");
-      if (m === "VNPAY" || m === "PAYOS") {
+      if (m === "PAYOS") {
         if (
           !paymentSession ||
           paymentSession.method !== m ||
@@ -877,6 +883,7 @@ export function usePayment() {
     setShowHistory,
     copiedCode,
     isAlreadyPaid,
+    payOsUnavailable,
     handleCardNumberChange,
     handleExpiryChange,
     handleCardFormChange,

@@ -48,4 +48,27 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
             @Param("workDate") LocalDate workDate,
             @Param("shift") StaffAssignment.Shift shift
     );
+
+    @Query("""
+        SELECT sa FROM StaffAssignment sa
+        JOIN FETCH sa.staff s
+        JOIN FETCH sa.zone z
+        WHERE (:startDate IS NULL OR sa.workDate >= :startDate)
+          AND (:endDate IS NULL OR sa.workDate <= :endDate)
+          AND (:staffId IS NULL OR s.userId = :staffId)
+          AND (:zoneId IS NULL OR z.zoneId = :zoneId)
+        ORDER BY sa.workDate ASC, sa.shift ASC
+    """)
+    List<StaffAssignment> findFiltered(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("staffId") Long staffId,
+            @Param("zoneId") Integer zoneId
+    );
+
+    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.staff s JOIN FETCH sa.zone z WHERE sa.workDate BETWEEN :startDate AND :endDate ORDER BY sa.workDate ASC, sa.shift ASC")
+    List<StaffAssignment> findByWorkDateBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

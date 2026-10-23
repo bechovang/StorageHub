@@ -2,7 +2,7 @@ import { Seal, Eye } from "@phosphor-icons/react";
 import {
   fmtDate,
   CONTRACT_STATUS_LABEL,
-} from "../../../pages/MyRentalsPage/rentalConstants.js";
+} from "../../../utils/rentalConstants.js";
 
 export function ContractsSection({ contracts = [] }) {
   if (contracts.length === 0) {

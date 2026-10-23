@@ -1,5 +1,5 @@
 import { ClockCountdown, Key } from "@phosphor-icons/react";
-import { fmtDate } from "../../../pages/MyRentalsPage/rentalConstants.js";
+import { fmtDate } from "../../../utils/rentalConstants.js";
 
 export function RentalSpecsCard({ reservation }) {
   return (

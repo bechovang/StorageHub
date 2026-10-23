@@ -3,7 +3,7 @@ import {
   fmtDateTime,
   fmtMoney,
   PAYMENT_STATUS_LABEL,
-} from "../../../pages/MyRentalsPage/rentalConstants.js";
+} from "../../../utils/rentalConstants.js";
 
 export function PaymentsSection({ payments = [] }) {
   if (payments.length === 0) {
@@ -11,9 +11,10 @@ export function PaymentsSection({ payments = [] }) {
   }
 
   const methodLabel = {
-    CARD: "Thẻ quốc tế",
+    CARD: "Thẻ ngân hàng",
     MOMO: "Ví MoMo",
-    VNPAY: "VNPay QR",
+    VNPAY: "Thanh toán QR",
+    PAYOS: "Thanh toán QR",
   };
 
   const purposeLabel = {
