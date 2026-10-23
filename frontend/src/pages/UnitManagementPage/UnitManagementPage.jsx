@@ -2,7 +2,6 @@ import {
   Warehouse,
   MagnifyingGlass,
   ShieldCheck,
-  ArrowsClockwise,
   CheckCircle,
   X,
 } from "@phosphor-icons/react";
@@ -66,7 +65,6 @@ export default function UnitManagementPage() {
     handleFinishMaintenance,
     handleInitiateFixStatus,
     handleConfirmFixStatus,
-    handleResetDemo,
     handleClearFilters,
   } = useUnitManagement();
 
@@ -102,15 +100,6 @@ export default function UnitManagementPage() {
                   Trống: <strong>{statusCounts.AVAILABLE}</strong>
                 </span>
               </div>
-              <button
-                type="button"
-                className="btn btn--outline btn--sm"
-                onClick={handleResetDemo}
-                title="Khôi phục dữ liệu ban đầu"
-              >
-                <ArrowsClockwise size={14} />
-                <span>Reset demo</span>
-              </button>
             </div>
           </div>
         </section>

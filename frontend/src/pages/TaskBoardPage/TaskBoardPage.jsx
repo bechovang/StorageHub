@@ -48,7 +48,6 @@ export default function TaskBoardPage() {
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    handleResetDemo,
     getColTasks,
     taskTypeCounts,
   } = useTaskBoard();
@@ -75,14 +74,6 @@ export default function TaskBoardPage() {
           </div>
 
           <div className="taskboard-context-right">
-            <button
-              type="button"
-              className="btn-reset-demo"
-              title="Khôi phục danh sách nhiệm vụ mẫu ban đầu"
-              onClick={handleResetDemo}
-            >
-              ↺ Đặt lại nhiệm vụ mẫu
-            </button>
             <Clock size={15} weight="bold" />
             <span>Thời gian trực ca: <strong>08:42 ICT (UTC+7)</strong></span>
           </div>

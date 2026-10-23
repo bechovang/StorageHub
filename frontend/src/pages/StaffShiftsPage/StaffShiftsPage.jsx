@@ -2,7 +2,6 @@ import {
   Clock,
   WarningCircle,
   CheckCircle,
-  ArrowsClockwise,
   X,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
@@ -40,7 +39,6 @@ export default function StaffShiftsPage() {
     filteredRoster,
     handleSaveAssignment,
     handleRemoveShift,
-    handleReset,
   } = useStaffShifts();
 
   return (
@@ -100,17 +98,6 @@ export default function StaffShiftsPage() {
               <p className="shifts-subtitle">
                 Phân công ca trực theo khu vực và tự động phát hiện lịch trực bị trùng.
               </p>
-            </div>
-            <div className="shifts-header__actions">
-              <button
-                type="button"
-                className="btn btn--secondary"
-                onClick={handleReset}
-                title="Khôi phục trạng thái mẫu ban đầu để test lại"
-              >
-                <ArrowsClockwise size={16} weight="bold" />
-                <span>Đặt lại dữ liệu mẫu</span>
-              </button>
             </div>
           </header>
 

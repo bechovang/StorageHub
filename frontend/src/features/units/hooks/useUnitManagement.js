@@ -10,7 +10,6 @@ import {
   finishUnitMaintenance,
   fixUnitStatus,
   getUnitActivityLogs,
-  resetFacilityUnits,
 } from "../../../services/unitService.js";
 
 export function useUnitManagement() {
@@ -239,14 +238,6 @@ export function useUnitManagement() {
     }
   };
 
-  const handleResetDemo = () => {
-    if (confirm("Khôi phục danh sách kho về dữ liệu mẫu ban đầu?")) {
-      resetFacilityUnits();
-      setUnits(getFacilityUnits());
-      showToast("Đã khôi phục dữ liệu danh mục kho về ban đầu.");
-    }
-  };
-
   const handleClearFilters = () => {
     setSelectedZone("ALL");
     setSearchTerm("");
@@ -307,7 +298,6 @@ export function useUnitManagement() {
     handleFinishMaintenance,
     handleInitiateFixStatus,
     handleConfirmFixStatus,
-    handleResetDemo,
     handleClearFilters,
   };
 }
