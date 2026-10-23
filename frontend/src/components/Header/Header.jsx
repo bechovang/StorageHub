@@ -115,7 +115,6 @@ export default function Header({
       ? roleConfig.links
       : [
           { label: "Khám phá kho", href: "/browse" },
-          { label: "Bảng giá & Demo", href: "/demo" },
         ]);
 
   const [unreadCount, setUnreadCount] = useState(0);

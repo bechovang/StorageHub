@@ -10,7 +10,7 @@ import {
   STATUS_LABEL,
   STATUS_COLOR,
   DEPOSIT_STATUS_LABEL,
-} from "../../../pages/MyRentalsPage/rentalConstants.js";
+} from "../../../utils/rentalConstants.js";
 
 export function useRentalDetail() {
   const { reservationId } = useParams();

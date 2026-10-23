@@ -72,6 +72,28 @@ export function formatDateTime(dateStr) {
 export const fmtDateTime = formatDateTime;
 
 /**
+ * Định dạng thời gian kiểm toán dạng mono: YYYY-MM-DD HH:mm:ss
+ * @param {string|Date|null|undefined} isoString
+ * @returns {string}
+ */
+export function formatAuditTimestamp(isoString) {
+  if (!isoString) return "—";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return String(isoString);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    const ss = String(d.getSeconds()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+  } catch {
+    return String(isoString);
+  }
+}
+
+/**
  * Định dạng ngày đầy đủ có thứ trong tuần (vi-VN)
  * @param {string|Date|null|undefined} dateStr
  * @returns {string}

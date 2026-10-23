@@ -6,7 +6,6 @@ import {
   detectShiftConflict,
   addShiftAssignment,
   removeShiftAssignment,
-  resetLocalShifts,
   getRosterWithShifts,
 } from "../../../services/shiftService.js";
 
@@ -79,17 +78,6 @@ export function useStaffShifts() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Reset về dữ liệu mẫu chuẩn demo
-  const handleReset = () => {
-    resetLocalShifts();
-    setDataVersion((v) => v + 1);
-    setToast({
-      type: "info",
-      message: "Đã khôi phục lịch phân công ca trực mẫu của cơ sở Tân Bình.",
-    });
-    setTimeout(() => setToast(null), 3000);
-  };
-
   // Lọc roster theo tìm kiếm
   const filteredRoster = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -121,6 +109,5 @@ export function useStaffShifts() {
     filteredRoster,
     handleSaveAssignment,
     handleRemoveShift,
-    handleReset,
   };
 }

@@ -10,6 +10,7 @@ import com.storagehub.repository.RoleRepository;
 import com.storagehub.repository.UserRepository;
 import com.storagehub.security.JwtService;
 import com.storagehub.service.AuthService;
+import com.storagehub.service.LogService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final LogService logService;
 
     private final String dummyPasswordHash;
 
@@ -30,12 +32,14 @@ public class AuthServiceImpl implements AuthService {
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService
+            JwtService jwtService,
+            LogService logService
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.logService = logService;
 
         this.dummyPasswordHash = passwordEncoder.encode(
                 "storagehub-dummy-password"
@@ -43,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthSessionResponse login(LoginRequest request) {
         String normalizedEmail =
                 normalizeEmail(request.email());
@@ -67,13 +71,41 @@ public class AuthServiceImpl implements AuthService {
         );
 
         if (!passwordMatches) {
+            logService.log(
+                    user,
+                    "USER",
+                    user.getUserId(),
+                    "LOGIN_FAILED",
+                    null,
+                    "FAILED",
+                    "Wrong password"
+            );
             throw new InvalidCredentialsException();
         }
 
         // Chỉ kiểm tra trạng thái sau khi mật khẩu đúng.
         if (!user.isActive()) {
+            logService.log(
+                    user,
+                    "USER",
+                    user.getUserId(),
+                    "LOGIN_FAILED",
+                    null,
+                    "FAILED",
+                    "Account locked"
+            );
             throw new AccountLockedException();
         }
+
+        logService.log(
+                user,
+                "USER",
+                user.getUserId(),
+                "LOGIN",
+                null,
+                "SUCCESS",
+                "Đăng nhập thành công"
+        );
 
         JwtService.TokenResult tokenResult =
                 jwtService.generateToken(user);

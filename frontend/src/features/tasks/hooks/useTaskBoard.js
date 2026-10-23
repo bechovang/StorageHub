@@ -3,7 +3,6 @@ import {
   getStaffTasks,
   updateTaskStatus,
   checkSnapBackViolation,
-  resetLocalTasks,
 } from "../../../services/taskService.js";
 
 export function useTaskBoard() {
@@ -136,11 +135,6 @@ export function useTaskBoard() {
     setDraggingTaskId(null);
   };
 
-  const handleResetDemo = async () => {
-    resetLocalTasks();
-    await reloadTasks();
-  };
-
   // Lọc thẻ theo tab
   const filteredTasks = tasks.filter((t) => {
     if (activeTab === "ALL") return true;
@@ -191,7 +185,6 @@ export function useTaskBoard() {
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    handleResetDemo,
     filteredTasks,
     getColTasks,
     taskTypeCounts,

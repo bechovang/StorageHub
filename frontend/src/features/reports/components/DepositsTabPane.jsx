@@ -1,9 +1,24 @@
+import { useState, useEffect } from "react";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { formatVND } from "../../../utils/formatters.js";
 import { getDrilldownItems } from "../../../services/reportService.js";
 
 export function DepositsTabPane({ onDrilldown }) {
-  const depositRows = getDrilldownItems("deposits").rows;
+  const [depositRows, setDepositRows] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+    getDrilldownItems("deposits")
+      .then((data) => {
+        if (!ignore) setDepositRows(data?.rows || []);
+      })
+      .catch((err) => {
+        console.error("Failed to load escrow deposit ledger:", err);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return (
     <div className="tab-pane space-y-6">
