@@ -147,8 +147,8 @@ Vite proxy `/api` → `http://localhost:8080` (xem `frontend/vite.config.js`), n
 |---|---|---|
 | Customer | `lan@demo.storagehub.vn` | `password` |
 | Customer | `trang@demo.storagehub.vn` | `password` |
-| Staff | `tuan@demo.storagehub.vn` | `password` |
-| Facility Manager | `minh@demo.storagehub.vn` | `password` |
+| Staff | `minh@demo.storagehub.vn` | `password` |
+| Facility Manager | `tuan@demo.storagehub.vn` | `password` |
 | Business Ops | `hang@demo.storagehub.vn` | `password` |
 | System Admin | `nam@demo.storagehub.vn` | `password` |
 
