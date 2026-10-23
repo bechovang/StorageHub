@@ -1240,6 +1240,49 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  /users/login-history:
+    get:
+      tags: [Users]
+      summary: Lịch sử đăng nhập hệ thống — SYS-02 (FR-38)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Xem lịch sử đăng nhập (thành công/thất bại) kèm actor, thời điểm, kết quả và lý do.
+        Hỗ trợ lọc theo userId, trạng thái (ALL, SUCCESS, FAILED), từ khóa query, khoảng ngày và phân trang.
+      operationId: getLoginHistory
+      parameters:
+        - { name: userId, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo ID người dùng cụ thể" }
+        - { name: status, in: query, schema: { type: string, enum: [ALL, SUCCESS, FAILED] }, description: "Lọc theo kết quả đăng nhập" }
+        - { name: query, in: query, schema: { type: string }, description: "Tìm kiếm theo họ tên, email hoặc lý do" }
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: "Từ ngày (YYYY-MM-DD)" }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: "Đến ngày (YYYY-MM-DD)" }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: Trang danh sách lịch sử đăng nhập
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginHistoryPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /users/permissions:
+    get:
+      tags: [Users]
+      summary: Ma trận phân quyền 5 vai trò cố định — (FR-39)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Xem bảng Role × Permission đúng như server enforce (NFR-4). Read-only hoàn toàn, cố định trong code.
+      operationId: getPermissionMatrix
+      responses:
+        "200":
+          description: Bảng ma trận phân quyền hệ thống
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PermissionMatrixResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /users/{userId}:
     get:
       tags: [Users]
@@ -2236,6 +2279,67 @@ components:
             type: object
             additionalProperties: true
 
+    # --------------------------- Login History & Permission Matrix (FR-38, FR-39) ---------------------
+
+    LoginHistoryItem:
+      type: object
+      required: [logId, action, status, timestamp]
+      properties:
+        logId: { type: integer, format: int64, example: 10 }
+        userId: { type: integer, format: int64, nullable: true, example: 7 }
+        fullName: { type: string, example: "Vũ Văn Vũ" }
+        email: { type: string, nullable: true, example: "vu@demo.storagehub.vn" }
+        role: { type: string, nullable: true, example: "STAFF" }
+        action: { type: string, example: "LOGIN_FAILED" }
+        status: { type: string, example: "FAILED" }
+        reason: { type: string, nullable: true, example: "Wrong password" }
+        timestamp: { type: string, format: date-time, example: "2026-10-20T07:58:12Z" }
+
+    LoginHistoryPage:
+      type: object
+      required: [items, page, pageSize, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/LoginHistoryItem" }
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 25 }
+        totalItems: { type: integer, format: int64, example: 50 }
+        totalPages: { type: integer, example: 2 }
+
+    PermissionItem:
+      type: object
+      required: [id, name, description, roles]
+      properties:
+        id: { type: string, example: "P-BROWSE" }
+        name: { type: string, example: "Tìm kiếm & Đặt giữ chỗ ô kho" }
+        description: { type: string, example: "Tra cứu danh mục kho trống..." }
+        roles:
+          type: object
+          additionalProperties:
+            type: boolean
+
+    PermissionGroup:
+      type: object
+      required: [category, description, permissions]
+      properties:
+        category: { type: string, example: "1. Phân hệ Khách hàng & Thuê kho" }
+        description: { type: string, example: "Các chức năng phục vụ khách tìm kiếm..." }
+        permissions:
+          type: array
+          items: { $ref: "#/components/schemas/PermissionItem" }
+
+    PermissionMatrixResponse:
+      type: object
+      required: [roles, groups]
+      properties:
+        roles:
+          type: array
+          items: { type: string }
+          example: ["CUSTOMER", "STAFF", "FACILITY_MANAGER", "BUSINESS_OPS", "SYSTEM_ADMIN"]
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/PermissionGroup" }
     # --------------------------- Activity Log (FR-28) ---------------------
 
     ActivityLogItem:
