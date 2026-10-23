@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext.jsx";
-import ForbiddenPage from "../../pages/ForbiddenPage/ForbiddenPage.jsx";
+import ForbiddenPage from "../../pages/auth/ForbiddenPage.jsx";
 
 /**
  * Route Guard chặn người dùng chưa đăng nhập hoặc truy cập chéo vai trò (US-4 / FR-1).

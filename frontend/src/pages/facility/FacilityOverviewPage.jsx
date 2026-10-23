@@ -13,7 +13,7 @@ import {
   FacilityStatusDistribution,
   TurnoverQueueTable,
   FacilityDrilldownDrawer,
-} from "../../features/facility-overview/index.js";
+} from "../../features/facility/index.js";
 import "./FacilityOverviewPage.css";
 
 export default function FacilityOverviewPage() {

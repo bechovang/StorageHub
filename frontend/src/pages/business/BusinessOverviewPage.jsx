@@ -12,7 +12,7 @@ import {
   PolicyVersionsTable,
   BusinessDrilldownDrawer,
   PolicyDiffModal,
-} from "../../features/business-overview/index.js";
+} from "../../features/business/index.js";
 import "./BusinessOverviewPage.css";
 
 export default function BusinessOverviewPage() {
