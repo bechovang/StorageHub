@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
+  EMPTY_FINANCIAL_SUMMARY,
   getFinancialSummary,
   getDrilldownItems,
   exportFinancialAuditCSV,
@@ -21,14 +22,37 @@ export function useReports() {
   const [drilldownSearch, setDrilldownSearch] = useState("");
 
   // Dữ liệu tổng hợp theo kỳ được chọn
-  const summary = useMemo(() => {
-    return getFinancialSummary(selectedPeriod, customRange);
+  const [summary, setSummary] = useState(EMPTY_FINANCIAL_SUMMARY);
+  // Dữ liệu Drill-down
+  const [drilldownData, setDrilldownData] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+    getFinancialSummary(selectedPeriod, customRange)
+      .then((data) => {
+        if (!ignore) setSummary(data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch financial summary:", err);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [selectedPeriod, customRange]);
 
-  // Dữ liệu Drill-down
-  const drilldownData = useMemo(() => {
-    if (!activeDrilldownKey) return null;
-    return getDrilldownItems(activeDrilldownKey);
+  useEffect(() => {
+    if (!activeDrilldownKey) return;
+    let ignore = false;
+    getDrilldownItems(activeDrilldownKey)
+      .then((data) => {
+        if (!ignore) setDrilldownData(data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch report drilldown:", err);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [activeDrilldownKey]);
 
   // Lọc dòng trong drilldown
@@ -43,8 +67,12 @@ export function useReports() {
     );
   }, [drilldownData, drilldownSearch]);
 
-  const handleExportCSV = () => {
-    exportFinancialAuditCSV(summary.periodLabel);
+  const handleExportCSV = async () => {
+    try {
+      await exportFinancialAuditCSV(selectedPeriod);
+    } catch (err) {
+      console.error("Failed to export financial CSV:", err);
+    }
   };
 
   const handleApplyCustomRange = (e) => {
@@ -55,6 +83,7 @@ export function useReports() {
 
   const handleCloseDrilldown = () => {
     setActiveDrilldownKey(null);
+    setDrilldownData(null);
     setDrilldownSearch("");
   };
 

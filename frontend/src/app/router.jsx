@@ -7,7 +7,6 @@ import BrowsePage from "../pages/BrowsePage/BrowsePage.jsx";
 import UnitDetailPage from "../pages/UnitDetailPage/UnitDetailPage.jsx";
 import PaymentPage from "../pages/PaymentPage/PaymentPage.jsx";
 import ForbiddenPage from "../pages/ForbiddenPage/ForbiddenPage.jsx";
-import RoleLandingPlaceholder from "../pages/RoleLandingPlaceholder/RoleLandingPlaceholder.jsx";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
 import MyRentalsPage from "../pages/MyRentalsPage/MyRentalsPage.jsx";
 import RentalDetailPage from "../pages/RentalDetailPage/RentalDetailPage.jsx";
@@ -48,7 +47,7 @@ export default function AppRouter() {
       {/* ── 1. Public & Root Routes ── */}
       <Route path="/" element={<RootRedirect />} />
 
-        <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/403" element={<ForbiddenPage />} />
@@ -166,14 +165,7 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/facility/*"
-        element={
-          <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
-            <RoleLandingPlaceholder path="/facility" />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/facility/*" element={<Navigate to="/facility" replace />} />
 
       {/* ── 6. Business Operations Routes (Chỉ BUSINESS_OPS & SYSTEM_ADMIN) ── */}
       <Route

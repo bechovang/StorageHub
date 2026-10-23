@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
+  EMPTY_FINANCIAL_SUMMARY,
   POLICY_VERSIONS,
   getFinancialSummary,
   getMonthlyRevenueChartData,
@@ -17,19 +18,53 @@ export function useBusinessOverview() {
   const [diffModalVersion, setDiffModalVersion] = useState(null);
 
   // Dữ liệu tài chính theo kỳ
-  const summary = useMemo(() => {
-    return getFinancialSummary(selectedPeriod);
+  const [summary, setSummary] = useState(EMPTY_FINANCIAL_SUMMARY);
+  // Dữ liệu biểu đồ 6 tháng
+  const [monthlyData, setMonthlyData] = useState([]);
+  // Dữ liệu danh sách drill-down khi bấm KPI
+  const [drilldownData, setDrilldownData] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+    getFinancialSummary(selectedPeriod)
+      .then((data) => {
+        if (!ignore) setSummary(data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch business overview summary:", err);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [selectedPeriod]);
 
-  // Dữ liệu biểu đồ 6 tháng
-  const monthlyData = useMemo(() => {
-    return getMonthlyRevenueChartData();
+  useEffect(() => {
+    let ignore = false;
+    getMonthlyRevenueChartData(6)
+      .then((data) => {
+        if (!ignore) setMonthlyData(data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch monthly revenue chart:", err);
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
-  // Dữ liệu danh sách drill-down khi bấm KPI
-  const drilldownData = useMemo(() => {
-    if (!activeDrilldownKey) return null;
-    return getDrilldownItems(activeDrilldownKey);
+  useEffect(() => {
+    if (!activeDrilldownKey) return;
+    let ignore = false;
+    getDrilldownItems(activeDrilldownKey)
+      .then((data) => {
+        if (!ignore) setDrilldownData(data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch drilldown items:", err);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [activeDrilldownKey]);
 
   // Lọc dữ liệu trong drill-down drawer theo ô tìm kiếm
@@ -44,8 +79,12 @@ export function useBusinessOverview() {
     );
   }, [drilldownData, drilldownSearch]);
 
-  const handleExportCSV = () => {
-    exportFinancialAuditCSV(summary.periodLabel);
+  const handleExportCSV = async () => {
+    try {
+      await exportFinancialAuditCSV(selectedPeriod);
+    } catch (err) {
+      console.error("Failed to export financial CSV:", err);
+    }
   };
 
   return {

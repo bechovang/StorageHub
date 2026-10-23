@@ -1,9 +1,24 @@
+import { useState, useEffect } from "react";
 import { DownloadSimple } from "@phosphor-icons/react";
 import { formatVND } from "../../../utils/formatters.js";
 import { getDrilldownItems } from "../../../services/reportService.js";
 
 export function SurchargesTabPane({ onExportCSV }) {
-  const surchargeRows = getDrilldownItems("surcharges").rows;
+  const [surchargeRows, setSurchargeRows] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+    getDrilldownItems("surcharges")
+      .then((data) => {
+        if (!ignore) setSurchargeRows(data?.rows || []);
+      })
+      .catch((err) => {
+        console.error("Failed to load surcharge ledger:", err);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   return (
     <div className="tab-pane space-y-6">
