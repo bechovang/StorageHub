@@ -1,26 +1,40 @@
 import { Routes, Route, Navigate } from "react-router";
 import { useAuth } from "../context/AuthContext.jsx";
-import LoginPage from "../pages/LoginPage/LoginPage.jsx";
-import RegisterPage from "../pages/RegisterPage/RegisterPage.jsx";
-import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgotPasswordPage.jsx";
-import BrowsePage from "../pages/BrowsePage/BrowsePage.jsx";
-import UnitDetailPage from "../pages/UnitDetailPage/UnitDetailPage.jsx";
-import PaymentPage from "../pages/PaymentPage/PaymentPage.jsx";
-import ForbiddenPage from "../pages/ForbiddenPage/ForbiddenPage.jsx";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
-import MyRentalsPage from "../pages/MyRentalsPage/MyRentalsPage.jsx";
-import RentalDetailPage from "../pages/RentalDetailPage/RentalDetailPage.jsx";
-import CheckInPassPage from "../pages/CheckInPassPage/CheckInPassPage.jsx";
-import TaskBoardPage from "../pages/TaskBoardPage/TaskBoardPage.jsx";
-import StaffShiftsPage from "../pages/StaffShiftsPage/StaffShiftsPage.jsx";
-import FacilityOverviewPage from "../pages/FacilityOverviewPage/FacilityOverviewPage.jsx";
-import BusinessOverviewPage from "../pages/BusinessOverviewPage/BusinessOverviewPage.jsx";
-import ReportsPage from "../pages/ReportsPage/ReportsPage.jsx";
-import UnitManagementPage from "../pages/UnitManagementPage/UnitManagementPage.jsx";
-import ActivityLogPage from "../pages/ActivityLogPage/ActivityLogPage.jsx";
-import UserManagementPage from "../pages/UserManagementPage/UserManagementPage.jsx";
-import SupportPage from "../pages/SupportPage/SupportPage.jsx";
-import PolicyManagementPage from "../pages/PolicyManagementPage/PolicyManagementPage.jsx";
+
+// Auth & Public Pages
+import LoginPage from "../pages/auth/LoginPage.jsx";
+import RegisterPage from "../pages/auth/RegisterPage.jsx";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage.jsx";
+import ForbiddenPage from "../pages/auth/ForbiddenPage.jsx";
+
+// Customer Pages
+import BrowsePage from "../pages/customer/BrowsePage.jsx";
+import UnitDetailPage from "../pages/customer/UnitDetailPage.jsx";
+import PaymentPage from "../pages/customer/PaymentPage.jsx";
+import MyRentalsPage from "../pages/customer/MyRentalsPage.jsx";
+import RentalDetailPage from "../pages/customer/RentalDetailPage.jsx";
+import CheckInPassPage from "../pages/customer/CheckInPassPage.jsx";
+
+// Staff Pages
+import TaskBoardPage from "../pages/staff/TaskBoardPage.jsx";
+
+// Facility Manager Pages
+import FacilityOverviewPage from "../pages/facility/FacilityOverviewPage.jsx";
+import UnitManagementPage from "../pages/facility/UnitManagementPage.jsx";
+import StaffShiftsPage from "../pages/facility/StaffShiftsPage.jsx";
+
+// Business Operations Pages
+import BusinessOverviewPage from "../pages/business/BusinessOverviewPage.jsx";
+import PolicyManagementPage from "../pages/business/PolicyManagementPage.jsx";
+import ReportsPage from "../pages/business/ReportsPage.jsx";
+
+// System Administrator Pages
+import UserManagementPage from "../pages/admin/UserManagementPage.jsx";
+
+// Shared / Common Pages
+import ActivityLogPage from "../pages/common/ActivityLogPage.jsx";
+import SupportPage from "../pages/common/SupportPage.jsx";
 
 const ROLE_LANDINGS = {
   CUSTOMER: "/browse",
@@ -51,6 +65,7 @@ export default function AppRouter() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/403" element={<ForbiddenPage />} />
+
       {/* ── 2. Customer Routes (contracts/routes.yaml) ── */}
       <Route path="/browse" element={<BrowsePage />} />
       <Route path="/units/:unitId" element={<UnitDetailPage />} />
