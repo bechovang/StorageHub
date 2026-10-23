@@ -299,13 +299,15 @@ public class PaymentServiceImpl implements PaymentService {
                 Sort.by(Sort.Direction.DESC, "paymentId")
         );
 
-        Page<Payment> result = reservationId == null
-                ? paymentRepository.findByPayer_EmailIgnoreCase(email, pageable)
-                : paymentRepository.findByPayer_EmailIgnoreCaseAndReservation_ReservationId(
-                        email, reservationId, pageable);
-
-        // Trong transaction để lazy load Reservation khi map DTO.
-        return transactionTemplate.execute(tx -> PaymentPageResponse.from(result));
+        // Query + map trong CÙNG transaction: PaymentRecordResponse cần chạm
+        // reservation/extension/settlement (lazy proxy) để lấy reservationId.
+        return transactionTemplate.execute(tx -> {
+            Page<Payment> result = reservationId == null
+                    ? paymentRepository.findByPayer_EmailIgnoreCase(email, pageable)
+                    : paymentRepository.findByPayer_EmailIgnoreCaseAndReservation_ReservationId(
+                            email, reservationId, pageable);
+            return PaymentPageResponse.from(result);
+        });
     }
 
     @Override
