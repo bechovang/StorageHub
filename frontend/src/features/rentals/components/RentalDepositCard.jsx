@@ -1,5 +1,5 @@
 import { Receipt } from "@phosphor-icons/react";
-import { fmtMoney } from "../../../pages/MyRentalsPage/rentalConstants.js";
+import { fmtMoney } from "../../../utils/rentalConstants.js";
 
 export function RentalDepositCard({ reservation, depositText }) {
   return (

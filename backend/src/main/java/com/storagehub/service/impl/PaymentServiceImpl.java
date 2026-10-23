@@ -344,9 +344,11 @@ public class PaymentServiceImpl implements PaymentService {
      */
     @Override
     public void handlePayOsWebhook(String rawPayload) {
-        PaymentGateway.WebhookEvent event = gateway.verifyWebhook(rawPayload)
-                .orElseThrow(() -> new PaymentWebhookException(
-                        "Cổng PayOS chưa được bật trên backend này."));
+        PaymentGateway.WebhookEvent event = gateway.verifyWebhook(rawPayload).orElse(null);
+        if (event == null) {
+            log.info("PayOS webhook ignored (verification probe or gateway disabled)");
+            return;
+        }
 
         transactionTemplate.executeWithoutResult(tx -> {
             Payment payment = paymentRepository

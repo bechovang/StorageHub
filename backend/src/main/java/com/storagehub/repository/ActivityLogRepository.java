@@ -25,6 +25,40 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
         SELECT l FROM ActivityLog l
         JOIN FETCH l.actor a
         JOIN FETCH a.role r
+        WHERE (:query IS NULL OR :query = '' 
+               OR LOWER(a.fullName) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(a.email) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(l.action) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR (l.reason IS NOT NULL AND LOWER(l.reason) LIKE LOWER(CONCAT('%', :query, '%'))))
+          AND (:entityType IS NULL OR :entityType = '' OR UPPER(l.entityType) = UPPER(:entityType))
+          AND (:startDate IS NULL OR l.createdAt >= :startDate)
+          AND (:endDate IS NULL OR l.createdAt <= :endDate)
+        ORDER BY l.createdAt DESC
+    """,
+    countQuery = """
+        SELECT COUNT(l) FROM ActivityLog l
+        JOIN l.actor a
+        WHERE (:query IS NULL OR :query = '' 
+               OR LOWER(a.fullName) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(a.email) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(l.action) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR (l.reason IS NOT NULL AND LOWER(l.reason) LIKE LOWER(CONCAT('%', :query, '%'))))
+          AND (:entityType IS NULL OR :entityType = '' OR UPPER(l.entityType) = UPPER(:entityType))
+          AND (:startDate IS NULL OR l.createdAt >= :startDate)
+          AND (:endDate IS NULL OR l.createdAt <= :endDate)
+    """)
+    Page<ActivityLog> findLogs(
+            @Param("query") String query,
+            @Param("entityType") String entityType,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable
+    );
+
+    @Query(value = """
+        SELECT l FROM ActivityLog l
+        JOIN FETCH l.actor a
+        JOIN FETCH a.role r
         WHERE l.action IN ('LOGIN', 'LOGIN_FAILED')
           AND (:userId IS NULL OR a.userId = :userId)
           AND (:status IS NULL OR :status = '' OR UPPER(l.toValue) = UPPER(:status))
