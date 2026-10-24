@@ -4,35 +4,69 @@ const CustomDonutTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const item = payload[0].payload;
     const total = item.totalUnits || 16;
-    const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+    const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0.0";
+
     return (
       <div
         style={{
-          background: "var(--color-ink, #0f172a)",
-          color: "#ffffff",
-          padding: "8px 12px",
-          fontSize: "0.8rem",
-          border: "1px solid rgba(255,255,255,0.2)",
-          boxShadow: "2px 2px 0px rgba(0,0,0,0.2)",
+          background: "var(--color-ink, #000000)",
+          color: "var(--color-surface, #ffffff)",
+          padding: "10px 14px",
+          border: "1px solid var(--color-ink, #000000)",
+          borderRadius: 0,
+          boxShadow: "3px 3px 0px rgba(0,0,0,0.9)",
+          fontFamily: "var(--font-mono, monospace)",
+          fontSize: "0.76rem",
+          minWidth: 180,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 2,
-              backgroundColor: item.color,
-              display: "inline-block",
-            }}
-          />
-          <span>{item.name}</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid rgba(255,255,255,0.25)",
+            paddingBottom: 5,
+            marginBottom: 6,
+            fontWeight: 800,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+          }}
+        >
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 0,
+                backgroundColor: item.color,
+                display: "inline-block",
+              }}
+            />
+            {item.name}
+          </span>
+          <span style={{ color: "var(--color-muted, #a3a3a3)" }}>[{item.key}]</span>
         </div>
-        <div style={{ marginTop: 4, color: "#94a3b8" }}>
-          Số lượng: <strong style={{ color: "#ffffff" }}>{item.value} kho</strong> ({pct}%)
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+          <span style={{ color: "#a3a3a3" }}>SỐ LƯỢNG:</span>
+          <strong>{item.value} KHO</strong>
         </div>
-        <div style={{ marginTop: 2, fontSize: "0.72rem", color: "#38bdf8" }}>
-          Nhấp để xem danh sách chi tiết →
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+          <span style={{ color: "#a3a3a3" }}>TỶ TRỌNG:</span>
+          <strong style={{ color: "#4ade80" }}>{pct}%</strong>
+        </div>
+        <div
+          style={{
+            borderTop: "1px dashed rgba(255,255,255,0.2)",
+            paddingTop: 5,
+            marginTop: 4,
+            fontSize: "0.68rem",
+            color: "var(--color-accent, #dc2626)",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+          }}
+        >
+          &gt;&gt; NHẤP ĐỂ DRILL-DOWN CHI TIẾT
         </div>
       </div>
     );
@@ -45,6 +79,7 @@ export function FacilityStatusDonutChart({ statusStats, statusConfigs, onOpenDri
   const rented = Number(statusStats?.RENTED) || 0;
   const occupancyPct = total > 0 ? ((rented / total) * 100).toFixed(1) : "0.0";
 
+  // Map to StorageHub canonical status colors (defined in tokens/constants)
   const data = Object.keys(statusConfigs || {})
     .filter((key) => key !== "ALL")
     .map((key) => {
@@ -61,30 +96,46 @@ export function FacilityStatusDonutChart({ statusStats, statusConfigs, onOpenDri
     .filter((item) => item.value > 0);
 
   return (
-    <div className="facility-donut-wrapper" style={{ position: "relative", width: "100%", height: 230 }}>
+    <div
+      className="facility-donut-wrapper"
+      style={{
+        position: "relative",
+        width: "100%",
+        height: 220,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={85}
-            paddingAngle={3}
+            innerRadius={62}
+            outerRadius={86}
+            paddingAngle={1.5}
             dataKey="value"
             cursor="pointer"
             onClick={(entry) => onOpenDrilldown?.(entry.key)}
             isAnimationActive={true}
+            animationDuration={600}
           >
             {data.map((entry) => (
-              <Cell key={`cell-${entry.key}`} fill={entry.color} stroke="none" />
+              <Cell
+                key={`cell-${entry.key}`}
+                fill={entry.color}
+                stroke="var(--color-surface, #ffffff)"
+                strokeWidth={1.5}
+              />
             ))}
           </Pie>
           <Tooltip content={<CustomDonutTooltip />} />
         </PieChart>
       </ResponsiveContainer>
 
-      {/* Center Label (Occupancy Metric) */}
+      {/* Center Telemetry Readout (Swiss Typography) */}
       <div
         style={{
           position: "absolute",
@@ -98,25 +149,38 @@ export function FacilityStatusDonutChart({ statusStats, statusConfigs, onOpenDri
       >
         <div
           style={{
-            fontSize: "1.35rem",
+            fontSize: "1.45rem",
             fontWeight: 800,
             fontFamily: "var(--font-mono, monospace)",
-            color: "var(--color-ink, #0f172a)",
-            lineHeight: 1.1,
+            color: "var(--color-ink, #000000)",
+            lineHeight: 1,
+            letterSpacing: "-0.03em",
           }}
         >
           {occupancyPct}%
         </div>
         <div
           style={{
-            fontSize: "0.72rem",
-            fontWeight: 600,
-            color: "var(--color-secondary, #64748b)",
+            fontSize: "0.68rem",
+            fontWeight: 700,
+            fontFamily: "var(--font-display, sans-serif)",
+            color: "var(--color-secondary, #555555)",
             textTransform: "uppercase",
-            letterSpacing: "0.04em",
+            letterSpacing: "0.08em",
+            marginTop: 3,
           }}
         >
-          Lấp đầy
+          LẤP ĐẦY
+        </div>
+        <div
+          style={{
+            fontSize: "0.64rem",
+            fontFamily: "var(--font-mono, monospace)",
+            color: "var(--color-muted, #767676)",
+            marginTop: 1,
+          }}
+        >
+          {rented}/{total} KHO
         </div>
       </div>
     </div>

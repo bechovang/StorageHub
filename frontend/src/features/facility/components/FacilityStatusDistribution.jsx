@@ -10,6 +10,18 @@ export default function FacilityStatusDistribution({
     <section className="facility-status-panel">
       <div className="facility-status-panel__head">
         <div>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              fontFamily: "var(--font-mono, monospace)",
+              fontWeight: 700,
+              color: "var(--color-accent, #dc2626)",
+              letterSpacing: "0.08em",
+              marginBottom: 3,
+            }}
+          >
+            [ TELEMETRY // REAL-TIME DISPOSITION MATRIX ]
+          </div>
           <h2 className="facility-status-panel__title">Phân bổ trạng thái kho</h2>
           <p className="facility-status-panel__desc">
             Tỷ lệ kho trống, đã cọc và đang thuê tại cơ sở. Bấm vào từng nhóm hoặc lát cắt biểu đồ để xem chi tiết.
@@ -21,7 +33,7 @@ export default function FacilityStatusDistribution({
         </div>
       </div>
 
-      {/* Stacked Proportional Bar */}
+      {/* Stacked Proportional Bar (Swiss Grid Alignment) */}
       <div className="stacked-status-bar" role="meter" aria-label="Tỷ trọng trạng thái kho">
         <div
           className="status-segment status-segment--available"
@@ -62,24 +74,76 @@ export default function FacilityStatusDistribution({
       </div>
 
       {/* Main Visual Section: Donut Chart on Left, Interactive Grid on Right */}
-      <div className="facility-status-main-grid" style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: "24px", marginTop: "18px", alignItems: "center" }}>
-        {/* Interactive Donut Chart */}
-        <div className="facility-status-donut-box" style={{ background: "var(--color-surface-page, #f8fafc)", border: "var(--border)", padding: "12px", textAlign: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "0.78rem", fontWeight: 700, color: "var(--color-ink)", marginBottom: "4px" }}>
-            <ChartPieSlice size={16} className="text-primary" />
-            <span>TỶ LỆ PHÂN BỔ KHO</span>
+      <div
+        className="facility-status-main-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "250px 1fr",
+          gap: "20px",
+          marginTop: "16px",
+          alignItems: "stretch",
+        }}
+      >
+        {/* Interactive Donut Chart Panel (Swiss Box) */}
+        <div
+          className="facility-status-donut-box"
+          style={{
+            background: "var(--color-surface, #ffffff)",
+            border: "var(--border, 1px solid var(--color-line))",
+            borderRadius: 0,
+            padding: "14px 10px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+              padding: "0 6px 8px 6px",
+              borderBottom: "1px solid var(--color-line, #d7d7d7)",
+              fontSize: "0.72rem",
+              fontFamily: "var(--font-mono, monospace)",
+              fontWeight: 700,
+              color: "var(--color-ink, #000000)",
+            }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <ChartPieSlice size={14} style={{ color: "var(--color-accent, #dc2626)" }} />
+              TỶ TRỌNG KHO
+            </span>
+            <span style={{ color: "var(--color-muted, #767676)", fontSize: "0.65rem" }}>[DONUT]</span>
           </div>
+
           <FacilityStatusDonutChart
             statusStats={statusStats}
             statusConfigs={statusConfigs}
             onOpenDrilldown={onOpenDrilldown}
           />
+
+          <div
+            style={{
+              width: "100%",
+              borderTop: "1px dashed var(--color-line, #d7d7d7)",
+              paddingTop: 6,
+              fontSize: "0.68rem",
+              fontFamily: "var(--font-mono, monospace)",
+              color: "var(--color-secondary, #555555)",
+              textAlign: "center",
+            }}
+          >
+            NHẤP VÀO LÁT CẮT ĐỂ XEM CHI TIẾT
+          </div>
         </div>
 
         {/* Status Legend Grid & Telemetry */}
-        <div className="facility-status-right-col">
+        <div className="facility-status-right-col" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           {/* Interactive Status Pills Row */}
-          <div className="status-legend-grid" style={{ marginTop: 0, paddingTop: 0, borderTop: "none" }}>
+          <div className="status-legend-grid" style={{ marginTop: 0, paddingTop: 0, borderTop: "none", gap: "10px" }}>
             {Object.keys(statusConfigs)
               .filter((k) => k !== "ALL")
               .map((key) => {
@@ -107,7 +171,7 @@ export default function FacilityStatusDistribution({
           </div>
 
           {/* Zone Telemetry Sub-strip */}
-          <div className="zone-telemetry-bar">
+          <div className="zone-telemetry-bar" style={{ marginTop: "12px" }}>
             <div className="zone-telemetry-item">
               <Thermometer size={16} className="text-primary" />
               <span className="font-medium text-ink">Khu điều hòa khí (Zone A & B):</span>
