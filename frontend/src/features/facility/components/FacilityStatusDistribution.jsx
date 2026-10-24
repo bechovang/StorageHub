@@ -10,18 +10,6 @@ export default function FacilityStatusDistribution({
     <section className="facility-status-panel">
       <div className="facility-status-panel__head">
         <div>
-          <div
-            style={{
-              fontSize: "0.7rem",
-              fontFamily: "var(--font-mono, monospace)",
-              fontWeight: 700,
-              color: "var(--color-accent, #dc2626)",
-              letterSpacing: "0.08em",
-              marginBottom: 3,
-            }}
-          >
-            [ TELEMETRY // REAL-TIME DISPOSITION MATRIX ]
-          </div>
           <h2 className="facility-status-panel__title">Phân bổ trạng thái kho</h2>
           <p className="facility-status-panel__desc">
             Tỷ lệ kho trống, đã cọc và đang thuê tại cơ sở. Bấm vào từng nhóm hoặc lát cắt biểu đồ để xem chi tiết.
@@ -106,17 +94,15 @@ export default function FacilityStatusDistribution({
               width: "100%",
               padding: "0 6px 8px 6px",
               borderBottom: "1px solid var(--color-line, #d7d7d7)",
-              fontSize: "0.72rem",
-              fontFamily: "var(--font-mono, monospace)",
+              fontSize: "0.75rem",
               fontWeight: 700,
               color: "var(--color-ink, #000000)",
             }}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <ChartPieSlice size={14} style={{ color: "var(--color-accent, #dc2626)" }} />
-              TỶ TRỌNG KHO
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <ChartPieSlice size={15} style={{ color: "var(--color-accent, #dc2626)" }} />
+              Tỷ trọng kho
             </span>
-            <span style={{ color: "var(--color-muted, #767676)", fontSize: "0.65rem" }}>[DONUT]</span>
           </div>
 
           <FacilityStatusDonutChart
@@ -124,20 +110,6 @@ export default function FacilityStatusDistribution({
             statusConfigs={statusConfigs}
             onOpenDrilldown={onOpenDrilldown}
           />
-
-          <div
-            style={{
-              width: "100%",
-              borderTop: "1px dashed var(--color-line, #d7d7d7)",
-              paddingTop: 6,
-              fontSize: "0.68rem",
-              fontFamily: "var(--font-mono, monospace)",
-              color: "var(--color-secondary, #555555)",
-              textAlign: "center",
-            }}
-          >
-            NHẤP VÀO LÁT CẮT ĐỂ XEM CHI TIẾT
-          </div>
         </div>
 
         {/* Status Legend Grid & Telemetry */}

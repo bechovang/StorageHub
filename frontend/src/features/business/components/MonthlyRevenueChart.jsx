@@ -34,17 +34,14 @@ const CustomBarTooltip = ({ active, payload, label }) => {
       >
         <div
           style={{
-            fontWeight: 800,
-            borderBottom: "1px solid rgba(255,255,255,0.25)",
+            fontWeight: 700,
+            borderBottom: "1px solid rgba(255,255,255,0.2)",
             paddingBottom: 5,
             marginBottom: 6,
-            display: "flex",
-            justifyContent: "space-between",
-            letterSpacing: "0.05em",
+            fontSize: "0.8rem",
           }}
         >
-          <span>[ KỲ SỔ CÁI ]</span>
-          <span style={{ color: "var(--color-accent, #dc2626)" }}>{label}</span>
+          <span>{label}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
           <span style={{ color: "#a3a3a3" }}>THUÊ KHO:</span>
@@ -87,18 +84,6 @@ export default function MonthlyRevenueChart({ monthlyData }) {
     <section className="biz-chart-card">
       <div className="biz-chart-header">
         <div>
-          <div
-            style={{
-              fontSize: "0.7rem",
-              fontFamily: "var(--font-mono, monospace)",
-              fontWeight: 700,
-              color: "var(--color-accent, #dc2626)",
-              letterSpacing: "0.08em",
-              marginBottom: 3,
-            }}
-          >
-            [ FINANCIAL AUDIT // REVENUE TRAJECTORY ]
-          </div>
           <h2 className="biz-chart-title">Doanh thu theo tháng</h2>
           <p className="biz-chart-subtitle">
             Số liệu tiền thuê thực thu và phụ thu sổ cái kế toán (6 tháng gần nhất)
@@ -148,11 +133,11 @@ export default function MonthlyRevenueChart({ monthlyData }) {
               strokeDasharray="4 3"
               strokeWidth={1.5}
               label={{
-                value: "[ MỤC TIÊU // 12.0M ₫ ]",
+                value: "Mục tiêu: 12.0M ₫",
                 fill: "#dc2626",
                 fontSize: 10,
                 fontFamily: "var(--font-mono, monospace)",
-                fontWeight: 700,
+                fontWeight: 600,
                 position: "insideTopRight",
               }}
             />
@@ -181,8 +166,8 @@ export default function MonthlyRevenueChart({ monthlyData }) {
           color: "var(--color-muted, #767676)",
         }}
       >
-        <span>* THÁNG 10 THỂ HIỆN SỐ LIỆU HỢP ĐỒNG ĐANG CHẠY &amp; DỰ KIẾN GIA HẠN.</span>
-        <span>ĐƠN VỊ TÍNH: VIỆT NAM ĐỒNG (VND ₫)</span>
+        <span>* Tháng 10 thể hiện số liệu hợp đồng đang chạy và dự kiến gia hạn.</span>
+        <span>Đơn vị tính: VNĐ</span>
       </div>
     </section>
   );

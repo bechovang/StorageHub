@@ -43,17 +43,14 @@ const CustomAreaTooltip = ({ active, payload, label }) => {
       >
         <div
           style={{
-            fontWeight: 800,
-            borderBottom: "1px solid rgba(255,255,255,0.25)",
+            fontWeight: 700,
+            borderBottom: "1px solid rgba(255,255,255,0.2)",
             paddingBottom: 5,
             marginBottom: 6,
-            display: "flex",
-            justifyContent: "space-between",
-            letterSpacing: "0.05em",
+            fontSize: "0.8rem",
           }}
         >
-          <span>[ SỔ CÁI ĐÃ CHỐT ]</span>
-          <span style={{ color: "var(--color-accent, #dc2626)" }}>{label}</span>
+          <span>{label}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
           <span style={{ color: "#a3a3a3" }}>TIỀN THUÊ:</span>
@@ -96,18 +93,6 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
         <div className="bento-chart-card">
           <div className="bento-chart-header">
             <div>
-              <div
-                style={{
-                  fontSize: "0.7rem",
-                  fontFamily: "var(--font-mono, monospace)",
-                  fontWeight: 700,
-                  color: "var(--color-accent, #dc2626)",
-                  letterSpacing: "0.08em",
-                  marginBottom: 3,
-                }}
-              >
-                [ AUDIT MATRIX // REVENUE RECONCILIATION ]
-              </div>
               <div className="bento-title-cluster">
                 <h2 className="bento-title">Biểu đồ đối soát doanh thu</h2>
                 <span className="badge-audited">Đã kiểm toán</span>
@@ -200,8 +185,8 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
             <div className="side-card-body">
               {/* Telemetry Segmented Bar */}
               <div style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.74rem", fontFamily: "var(--font-mono, monospace)", marginBottom: 4 }}>
-                  <span style={{ fontWeight: 700 }}>[ ROUTE: NAPAS / VIETQR ]</span>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", fontFamily: "var(--font-mono, monospace)", marginBottom: 4 }}>
+                  <span style={{ fontWeight: 600 }}>VietQR / NAPAS</span>
                   <span style={{ color: "var(--color-status-success, #16a34a)", fontWeight: 700 }}>92.4% (34.60M ₫)</span>
                 </div>
                 <div
@@ -220,7 +205,7 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
                   <div style={{ width: "7.6%", background: "#0284c7" }} title="Direct Wire 7.6%" />
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", fontFamily: "var(--font-mono, monospace)", marginTop: 6, color: "var(--color-secondary, #555555)" }}>
-                  <span>[ ROUTE: CHUYỂN KHOẢN ]</span>
+                  <span>Chuyển khoản trực tiếp</span>
                   <span>7.6% (2.85M ₫)</span>
                 </div>
               </div>
@@ -264,18 +249,6 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
       <div className="ledger-card">
         <div className="ledger-header">
           <div>
-            <div
-              style={{
-                fontSize: "0.7rem",
-                fontFamily: "var(--font-mono, monospace)",
-                fontWeight: 700,
-                color: "var(--color-accent, #dc2626)",
-                letterSpacing: "0.08em",
-                marginBottom: 3,
-              }}
-            >
-              [ GENERAL LEDGER // AUDITED MONTHLY RECORDS ]
-            </div>
             <h2 className="ledger-title">Sổ cái tổng hợp theo tháng (Monthly Ledger)</h2>
             <p className="ledger-subtitle">
               Đối soát tài chính từng tháng đã được chốt sổ kiểm toán
