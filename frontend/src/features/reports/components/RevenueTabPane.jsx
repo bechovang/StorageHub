@@ -264,6 +264,18 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
       <div className="ledger-card">
         <div className="ledger-header">
           <div>
+            <div
+              style={{
+                fontSize: "0.7rem",
+                fontFamily: "var(--font-mono, monospace)",
+                fontWeight: 700,
+                color: "var(--color-accent, #dc2626)",
+                letterSpacing: "0.08em",
+                marginBottom: 3,
+              }}
+            >
+              [ GENERAL LEDGER // AUDITED MONTHLY RECORDS ]
+            </div>
             <h2 className="ledger-title">Sổ cái tổng hợp theo tháng (Monthly Ledger)</h2>
             <p className="ledger-subtitle">
               Đối soát tài chính từng tháng đã được chốt sổ kiểm toán
