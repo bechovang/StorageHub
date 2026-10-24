@@ -22,6 +22,7 @@ export default function ShiftAssignmentForm({
   liveConflict,
   onSaveAssignment,
   onResetDefaults,
+  staffList = INITIAL_STAFF,
 }) {
   return (
     <section className="shifts-form-panel">
@@ -47,7 +48,7 @@ export default function ShiftAssignmentForm({
             value={selectedStaffId}
             onChange={(e) => setSelectedStaffId(Number(e.target.value))}
           >
-            {INITIAL_STAFF.map((s) => (
+            {staffList.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.fullName} ({s.code})
               </option>
