@@ -53,15 +53,15 @@ const CustomAreaTooltip = ({ active, payload, label }) => {
           <span>{label}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
-          <span style={{ color: "#a3a3a3" }}>TIỀN THUÊ:</span>
+          <span style={{ color: "var(--color-accent, #dc2626)" }}>TIỀN THUÊ:</span>
           <strong>{formatVND(rentVal)}</strong>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
-          <span style={{ color: "#38bdf8" }}>CỌC ESCROW:</span>
+          <span style={{ color: "var(--color-status-info, #38bdf8)" }}>CỌC ESCROW:</span>
           <strong>{formatVND(depositsVal)}</strong>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 5 }}>
-          <span style={{ color: "#fbbf24" }}>PHỤ THU:</span>
+          <span style={{ color: "var(--color-status-warning, #fbbf24)" }}>PHỤ THU:</span>
           <strong>{formatVND(surchargeVal)}</strong>
         </div>
         <div
@@ -103,15 +103,15 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
             </div>
             <div className="bento-legend">
               <div className="legend-item">
-                <span className="legend-indicator legend-indicator--primary" style={{ backgroundColor: "#000000", borderRadius: 0 }} />
+                <span className="legend-indicator legend-indicator--primary" style={{ backgroundColor: "var(--color-accent, #dc2626)", borderRadius: 0 }} />
                 <span>Tiền thuê kho</span>
               </div>
               <div className="legend-item">
-                <span className="legend-indicator legend-indicator--deposit" style={{ backgroundColor: "#0284c7", borderRadius: 0 }} />
+                <span className="legend-indicator legend-indicator--deposit" style={{ backgroundColor: "var(--color-status-info, #2563eb)", borderRadius: 0 }} />
                 <span>Tiền cọc (Ký quỹ)</span>
               </div>
               <div className="legend-item">
-                <span className="legend-indicator legend-indicator--surcharge" style={{ backgroundColor: "#f59e0b", borderRadius: 0 }} />
+                <span className="legend-indicator legend-indicator--surcharge" style={{ backgroundColor: "var(--color-status-warning, #f59e0b)", borderRadius: 0 }} />
                 <span>Phụ thu</span>
               </div>
             </div>
@@ -123,8 +123,8 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
               <AreaChart data={AUDIT_DATA} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="swissRentGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#000000" stopOpacity={0.08} />
-                    <stop offset="95%" stopColor="#000000" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#dc2626" stopOpacity={0.12} />
+                    <stop offset="95%" stopColor="#dc2626" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="var(--color-line, #d7d7d7)" />
@@ -146,7 +146,7 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
                   type="linear"
                   dataKey="rent"
                   name="Tiền thuê kho"
-                  stroke="#000000"
+                  stroke="var(--color-accent, #dc2626)"
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#swissRentGrad)"
@@ -155,7 +155,7 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
                   type="linear"
                   dataKey="deposits"
                   name="Tiền cọc (Ký quỹ)"
-                  stroke="#0284c7"
+                  stroke="var(--color-status-info, #2563eb)"
                   strokeWidth={2}
                   strokeDasharray="4 4"
                   fillOpacity={0}
@@ -164,7 +164,7 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
                   type="linear"
                   dataKey="surcharge"
                   name="Phụ thu"
-                  stroke="#f59e0b"
+                  stroke="var(--color-status-warning, #f59e0b)"
                   strokeWidth={2}
                   fillOpacity={0}
                 />

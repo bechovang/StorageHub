@@ -71,6 +71,15 @@
   --color-status-success-border: #bbf7d0;
   --color-status-warning: #f59e0b;
   --color-status-danger: var(--color-accent);
+  --color-status-info: #2563eb;
+  --color-status-info-tint: #eff6ff;
+  --color-status-info-border: #bfdbfe;
+
+  /* Data Visualization & Chart Tokens */
+  --color-chart-rent: var(--color-accent);
+  --color-chart-deposit: var(--color-status-info);
+  --color-chart-surcharge: var(--color-status-warning);
+  --color-chart-target: var(--color-line-strong);
 
   --font-family-body: var(--font-body);
   --font-family-display: var(--font-display);

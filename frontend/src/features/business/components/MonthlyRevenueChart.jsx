@@ -44,17 +44,17 @@ const CustomBarTooltip = ({ active, payload, label }) => {
           <span>{label}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
-          <span style={{ color: "#a3a3a3" }}>THUÊ KHO:</span>
+          <span style={{ color: "var(--color-accent, #dc2626)" }}>THUÊ KHO:</span>
           <strong>{formatVND(rentVal)}</strong>
         </div>
         {surchargeVal > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
-            <span style={{ color: "#fbbf24" }}>PHỤ THU:</span>
+            <span style={{ color: "var(--color-status-warning, #f59e0b)" }}>PHỤ THU:</span>
             <strong>{formatVND(surchargeVal)}</strong>
           </div>
         )}
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 5 }}>
-          <span style={{ color: "#38bdf8" }}>CỌC ESCROW:</span>
+          <span style={{ color: "var(--color-status-info, #38bdf8)" }}>CỌC ESCROW:</span>
           <strong>{formatVND(depositsVal)}</strong>
         </div>
         <div
@@ -91,20 +91,20 @@ export default function MonthlyRevenueChart({ monthlyData }) {
         </div>
         <div className="biz-chart-legend">
           <div className="legend-item">
-            <span className="legend-color legend-color--primary" style={{ backgroundColor: "#000000", borderRadius: 0 }} />
+            <span className="legend-color legend-color--primary" style={{ backgroundColor: "var(--color-accent, #dc2626)", borderRadius: 0 }} />
             <span className="legend-text">Tiền thuê kho</span>
           </div>
           <div className="legend-item">
-            <span className="legend-color" style={{ width: 12, height: 12, backgroundColor: "#0284c7", borderRadius: 0 }} />
+            <span className="legend-color" style={{ width: 12, height: 12, backgroundColor: "var(--color-status-info, #2563eb)", borderRadius: 0 }} />
             <span className="legend-text">Tiền cọc ký quỹ (Escrow)</span>
           </div>
           <div className="legend-item">
-            <span className="legend-color" style={{ width: 12, height: 12, backgroundColor: "#f59e0b", borderRadius: 0 }} />
+            <span className="legend-color" style={{ width: 12, height: 12, backgroundColor: "var(--color-status-warning, #f59e0b)", borderRadius: 0 }} />
             <span className="legend-text">Phụ thu</span>
           </div>
           <div className="legend-item">
-            <span className="legend-line-dashed" style={{ borderTop: "2px dashed #dc2626" }} />
-            <span className="legend-text" style={{ color: "#dc2626", fontWeight: 700 }}>Mục tiêu: 12.0M ₫</span>
+            <span className="legend-line-dashed" style={{ borderTop: "2px dashed var(--color-ink, #000000)" }} />
+            <span className="legend-text" style={{ color: "var(--color-ink, #000000)", fontWeight: 700 }}>Mục tiêu: 12.0M ₫</span>
           </div>
         </div>
       </div>
@@ -129,22 +129,22 @@ export default function MonthlyRevenueChart({ monthlyData }) {
             <Tooltip content={<CustomBarTooltip />} />
             <ReferenceLine
               y={12000000}
-              stroke="var(--color-accent, #dc2626)"
+              stroke="var(--color-ink, #000000)"
               strokeDasharray="4 3"
               strokeWidth={1.5}
               label={{
                 value: "Mục tiêu: 12.0M ₫",
-                fill: "#dc2626",
+                fill: "#000000",
                 fontSize: 10,
                 fontFamily: "var(--font-mono, monospace)",
-                fontWeight: 600,
+                fontWeight: 700,
                 position: "insideTopRight",
               }}
             />
-            {/* StorageHub Canonical Palette: Pure Black, Industrial Blue, Warning Amber. Radius: 0 */}
-            <Bar dataKey="rent" name="Tiền thuê kho" fill="#000000" radius={[0, 0, 0, 0]} maxBarSize={38} />
-            <Bar dataKey="deposits" name="Tiền cọc giữ (Escrow)" fill="#0284c7" radius={[0, 0, 0, 0]} maxBarSize={38} />
-            <Bar dataKey="surcharge" name="Phụ thu" fill="#f59e0b" radius={[0, 0, 0, 0]} maxBarSize={38} />
+            {/* StorageHub Canonical Palette: Brand Accent Red, Status Info Blue, Warning Amber. Radius: 0 */}
+            <Bar dataKey="rent" name="Tiền thuê kho" fill="var(--color-accent, #dc2626)" radius={[0, 0, 0, 0]} maxBarSize={38} />
+            <Bar dataKey="deposits" name="Tiền cọc giữ (Escrow)" fill="var(--color-status-info, #2563eb)" radius={[0, 0, 0, 0]} maxBarSize={38} />
+            <Bar dataKey="surcharge" name="Phụ thu" fill="var(--color-status-warning, #f59e0b)" radius={[0, 0, 0, 0]} maxBarSize={38} />
             <Legend
               wrapperStyle={{ paddingTop: 10, fontSize: "0.75rem", fontFamily: "var(--font-mono, monospace)" }}
               formatter={(val) => <span style={{ color: "var(--color-ink, #000000)", fontWeight: 700 }}>{val}</span>}
