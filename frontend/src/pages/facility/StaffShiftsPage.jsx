@@ -34,6 +34,7 @@ export default function StaffShiftsPage() {
     toast,
     setToast,
     staffRoster,
+    staffList,
     totalConflicts,
     liveConflict,
     filteredRoster,
@@ -115,6 +116,7 @@ export default function StaffShiftsPage() {
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
             liveConflict={liveConflict}
+            staffList={staffList}
             onSaveAssignment={handleSaveAssignment}
             onResetDefaults={() => {
               setSelectedStaffId(INITIAL_STAFF[0].id);

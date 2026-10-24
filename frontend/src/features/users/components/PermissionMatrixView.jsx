@@ -1,13 +1,28 @@
+import { useState, useEffect } from "react";
 import { Check } from "@phosphor-icons/react";
 import {
   ROLE_DEFINITIONS,
   PERMISSION_GROUPS,
+  getPermissionMatrix,
 } from "../../../services/userService.js";
 
 export function PermissionMatrixView({
   selectedMatrixRole,
   setSelectedMatrixRole,
 }) {
+  const [matrixGroups, setMatrixGroups] = useState(PERMISSION_GROUPS);
+
+  useEffect(() => {
+    let isMounted = true;
+    getPermissionMatrix().then((res) => {
+      if (isMounted && res && res.groups && res.groups.length > 0) {
+        setMatrixGroups(res.groups);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   return (
     <div className="matrix-view-container">
       {/* Header giải thích */}
@@ -66,7 +81,7 @@ export function PermissionMatrixView({
 
       {/* Bảng phân quyền theo 4 nhóm nghiệp vụ */}
       <div className="matrix-groups-wrapper">
-        {PERMISSION_GROUPS.map((group, gIdx) => (
+        {matrixGroups.map((group, gIdx) => (
           <div key={gIdx} className="matrix-group-section">
             <div className="matrix-group-header">
               <h3 className="matrix-group-title">{group.category}</h3>

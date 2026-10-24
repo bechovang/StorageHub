@@ -19,6 +19,7 @@ import "./FacilityOverviewPage.css";
 export default function FacilityOverviewPage() {
   const navigate = useNavigate();
   const {
+    overview,
     drilldownStatus,
     setDrilldownStatus,
     searchUnitTerm,
@@ -120,6 +121,7 @@ export default function FacilityOverviewPage() {
           <FacilityKpiGrid
             occupancyRate={occupancyRate}
             statusStats={statusStats}
+            overview={overview}
             onOpenDrilldown={handleOpenDrilldown}
             onNavigateShifts={() => navigate("/facility/shifts")}
           />

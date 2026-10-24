@@ -400,3 +400,75 @@ export const PERMISSION_GROUPS = [
 export const PERMISSION_MATRIX = PERMISSION_GROUPS.flatMap((g) =>
   g.permissions.map((p) => ({ module: p.name, ...p }))
 );
+
+/**
+ * Lấy ma trận phân quyền 5 vai trò hệ thống từ Backend API (FR-39)
+ * @returns {Promise<{ roles: string[], groups: Array }>}
+ */
+export async function getPermissionMatrix() {
+  try {
+    const response = await apiClient("/api/v1/users/permissions");
+    if (!response.ok) {
+      return { roles: [], groups: PERMISSION_GROUPS };
+    }
+    const data = await safeParseJson(response);
+    if (data && Array.isArray(data.groups) && data.groups.length > 0) {
+      const mappedGroups = data.groups.map((g) => ({
+        category: g.category,
+        description: g.description,
+        permissions: (g.permissions || []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          desc: p.description,
+          ...(p.roles || {}),
+        })),
+      }));
+      return {
+        roles: data.roles || [],
+        groups: mappedGroups,
+      };
+    }
+  } catch (err) {
+    console.warn("Failed to load permission matrix from API, using default matrix:", err);
+  }
+  return { roles: [], groups: PERMISSION_GROUPS };
+}
+
+/**
+ * Lấy lịch sử đăng nhập hệ thống từ Backend API (SYS-02 / FR-38)
+ * @param {Object} params
+ * @param {number} [params.userId]
+ * @param {string} [params.status]
+ * @param {string} [params.query]
+ * @param {string} [params.startDate]
+ * @param {string} [params.endDate]
+ * @param {number} [params.page=1]
+ * @param {number} [params.pageSize=25]
+ * @returns {Promise<Object>} LoginHistoryPageResponse
+ */
+export async function getLoginHistory({
+  userId,
+  status,
+  query,
+  startDate,
+  endDate,
+  page = 1,
+  pageSize = 25,
+  signal,
+} = {}) {
+  const params = new URLSearchParams();
+  if (userId) params.append("userId", String(userId));
+  if (status) params.append("status", status);
+  if (query && query.trim()) params.append("query", query.trim());
+  if (startDate) params.append("startDate", startDate);
+  if (endDate) params.append("endDate", endDate);
+  params.append("page", String(page));
+  params.append("pageSize", String(pageSize));
+
+  const response = await apiClient(`/api/v1/users/login-history?${params.toString()}`, { signal });
+  if (!response.ok) {
+    const errorData = await safeParseJson(response);
+    throw new Error(errorData.message || "Không thể tải lịch sử đăng nhập.");
+  }
+  return await safeParseJson(response);
+}

@@ -7,9 +7,35 @@ import {
 export default function FacilityKpiGrid({
   occupancyRate,
   statusStats,
+  overview,
   onOpenDrilldown,
   onNavigateShifts,
 }) {
+  const trend = overview?.occupancy?.trend || "+1.4%";
+  const unitsInService = overview?.unitsInService;
+  const operationalUnits = unitsInService
+    ? unitsInService.operationalUnits
+    : statusStats.TOTAL - statusStats.RETIRED;
+  const operationalRate = unitsInService
+    ? unitsInService.operationalRate
+    : (statusStats.TOTAL > 0 ? (((statusStats.TOTAL - statusStats.RETIRED) / statusStats.TOTAL) * 100).toFixed(1) : "0");
+  const maintenanceCount = unitsInService
+    ? unitsInService.maintenanceUnits
+    : statusStats.MAINTENANCE;
+
+  const tasksToday = overview?.tasksToday || {
+    totalTasks: 8,
+    completed: 3,
+    inProgress: 2,
+    pending: 3,
+  };
+
+  const escalations = overview?.escalations || {
+    openCount: 1,
+    highPriorityCount: 1,
+    highlight: "Cửa cuốn bị kẹt tại Unit S-4",
+  };
+
   return (
     <section className="facility-kpi-grid">
       {/* KPI 1: Occupancy */}
@@ -23,7 +49,7 @@ export default function FacilityKpiGrid({
         <div className="kpi-card__head">
           <span className="kpi-card__label">TỶ LỆ LẤP ĐẦY KHO</span>
           <span className="badge badge--success">
-            <TrendUp size={12} weight="bold" /> +1.4%
+            <TrendUp size={12} weight="bold" /> {trend}
           </span>
         </div>
         <div className="kpi-card__main-metric">
@@ -57,13 +83,13 @@ export default function FacilityKpiGrid({
         </div>
         <div className="kpi-card__main-metric">
           <span className="kpi-card__val">
-            {statusStats.TOTAL - statusStats.RETIRED} / {statusStats.TOTAL}
+            {operationalUnits} / {statusStats.TOTAL}
           </span>
-          <span className="kpi-card__meta">93.8% sẵn sàng</span>
+          <span className="kpi-card__meta">{operationalRate}% sẵn sàng</span>
         </div>
         <div className="kpi-card__alert-line text-warning">
           <Wrench size={14} weight="bold" />
-          <span>{statusStats.MAINTENANCE} kho đang bảo trì khóa (Unit M-4)</span>
+          <span>{maintenanceCount} kho đang bảo trì khóa / thiết bị</span>
         </div>
         <div className="kpi-card__footer-hint">
           <span>Xem danh mục toàn bộ kho →</span>
@@ -80,16 +106,16 @@ export default function FacilityKpiGrid({
       >
         <div className="kpi-card__head">
           <span className="kpi-card__label">NHIỆM VỤ CA TRỰC HÔM NAY</span>
-          <span className="badge badge--primary">Mục tiêu ca: 8</span>
+          <span className="badge badge--primary">Tổng việc: {tasksToday.totalTasks}</span>
         </div>
         <div className="kpi-card__main-metric">
-          <span className="kpi-card__val">8</span>
-          <span className="kpi-card__meta">ca đang phụ trách</span>
+          <span className="kpi-card__val">{tasksToday.totalTasks}</span>
+          <span className="kpi-card__meta">công việc vận hành</span>
         </div>
         <div className="kpi-card__breakdown">
-          <span className="text-success">3 hoàn thành</span> ·{" "}
-          <span className="text-info">2 đang làm</span> ·{" "}
-          <span className="text-warning">3 chờ nhận</span>
+          <span className="text-success">{tasksToday.completed} hoàn thành</span> ·{" "}
+          <span className="text-info">{tasksToday.inProgress} đang làm</span> ·{" "}
+          <span className="text-warning">{tasksToday.pending} chờ nhận</span>
         </div>
         <div className="kpi-card__footer-hint">
           <span>Điều phối bảng phân ca →</span>
@@ -106,16 +132,17 @@ export default function FacilityKpiGrid({
       >
         <div className="kpi-card__head">
           <span className="kpi-card__label text-error">SỰ CỐ KHẨN CẤP</span>
-          <span className="badge badge--danger">Ưu tiên cao</span>
+          <span className="badge badge--danger">
+            {escalations.highPriorityCount > 0 ? "Ưu tiên cao" : "Bình thường"}
+          </span>
         </div>
         <div className="kpi-card__main-metric">
-          <span className="kpi-card__val text-error">1</span>
+          <span className="kpi-card__val text-error">{escalations.openCount}</span>
           <span className="kpi-card__meta">cần quản lý can thiệp</span>
         </div>
         <div className="kpi-card__alert-line text-error">
           <Warning size={14} weight="fill" />
-          <span className="font-mono font-bold">SR-0032:</span>
-          <span>Cửa cuốn bị kẹt tại Unit S-4</span>
+          <span>{escalations.highlight}</span>
         </div>
         <div className="kpi-card__footer-hint text-error">
           <span>Xem chi tiết kho bị sự cố →</span>
