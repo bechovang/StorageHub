@@ -29,7 +29,17 @@ export default function ShiftRosterList({
       </div>
 
       <div className="roster-list">
-        {filteredRoster.map((staff) => (
+        {filteredRoster.length === 0 ? (
+          <div className="empty-state" style={{ padding: "32px 16px", textAlign: "center" }}>
+            <div className="empty-state__title" style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--color-secondary)" }}>
+              Không tìm thấy nhân sự
+            </div>
+            <div className="empty-state__desc" style={{ fontSize: "0.82rem", color: "var(--color-muted)", marginTop: "4px" }}>
+              Không có nhân sự nào khớp với từ khóa &ldquo;{searchTerm}&rdquo;.
+            </div>
+          </div>
+        ) : (
+          filteredRoster.map((staff) => (
           <article
             key={staff.id}
             className={`staff-card ${
@@ -79,7 +89,7 @@ export default function ShiftRosterList({
               )}
             </div>
           </article>
-        ))}
+        )))}
       </div>
 
       <div className="roster-footer">

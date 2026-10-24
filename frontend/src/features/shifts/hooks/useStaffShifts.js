@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { matchSearch } from "../../../utils/formatters.js";
 import {
   DAYS_OF_WEEK,
   ZONES,
@@ -213,13 +214,14 @@ export function useStaffShifts() {
 
   // Lọc roster theo tìm kiếm
   const filteredRoster = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
+    const q = searchTerm.trim();
     if (!q) return staffRoster;
     return staffRoster.filter(
       (s) =>
-        s.fullName.toLowerCase().includes(q) ||
-        s.code.toLowerCase().includes(q) ||
-        s.roleLabel.toLowerCase().includes(q)
+        matchSearch(s.fullName, q) ||
+        matchSearch(s.code, q) ||
+        matchSearch(s.roleLabel, q) ||
+        matchSearch(s.rfid, q)
     );
   }, [staffRoster, searchTerm]);
 

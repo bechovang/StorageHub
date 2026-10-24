@@ -454,6 +454,7 @@ export async function getLoginHistory({
   endDate,
   page = 1,
   pageSize = 25,
+  signal,
 } = {}) {
   const params = new URLSearchParams();
   if (userId) params.append("userId", String(userId));
@@ -464,7 +465,7 @@ export async function getLoginHistory({
   params.append("page", String(page));
   params.append("pageSize", String(pageSize));
 
-  const response = await apiClient(`/api/v1/users/login-history?${params.toString()}`);
+  const response = await apiClient(`/api/v1/users/login-history?${params.toString()}`, { signal });
   if (!response.ok) {
     const errorData = await safeParseJson(response);
     throw new Error(errorData.message || "Không thể tải lịch sử đăng nhập.");

@@ -91,6 +91,7 @@ export async function fetchActivityLogs({
   endDate,
   page = 1,
   pageSize = 50,
+  signal,
 } = {}) {
   const params = new URLSearchParams();
   if (entityType && entityType !== "ALL") params.append("entityType", entityType);
@@ -100,7 +101,7 @@ export async function fetchActivityLogs({
   params.append("page", String(page));
   params.append("pageSize", String(pageSize));
 
-  const response = await apiClient(`/api/v1/activity-logs?${params.toString()}`);
+  const response = await apiClient(`/api/v1/activity-logs?${params.toString()}`, { signal });
   if (!response.ok) {
     const errorData = await safeParseJson(response);
     throw new Error(errorData.message || "Không thể tải nhật ký hoạt động hệ thống.");

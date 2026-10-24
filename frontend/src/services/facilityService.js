@@ -27,14 +27,14 @@ export async function getFacilityOverview() {
  * @param {number} [params.pageSize=50]
  * @returns {Promise<Object>} FacilityDrilldownResponse
  */
-export async function getFacilityDrilldown({ status = "", query = "", page = 1, pageSize = 50 } = {}) {
+export async function getFacilityDrilldown({ status = "", query = "", page = 1, pageSize = 50, signal } = {}) {
   const params = new URLSearchParams();
   if (status && status !== "ALL") params.append("status", status);
   if (query && query.trim()) params.append("query", query.trim());
   params.append("page", String(page));
   params.append("pageSize", String(pageSize));
 
-  const response = await apiClient(`/api/v1/facility/drilldown?${params.toString()}`);
+  const response = await apiClient(`/api/v1/facility/drilldown?${params.toString()}`, { signal });
   if (!response.ok) {
     const errorData = await safeParseJson(response);
     throw new Error(errorData.message || "Không thể tải danh sách chi tiết kho.");

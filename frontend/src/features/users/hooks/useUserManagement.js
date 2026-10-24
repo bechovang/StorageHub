@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
+import { matchSearch } from "../../../utils/formatters.js";
 import {
   getUsers,
   createUser,
@@ -68,11 +69,10 @@ export function useUserManagement() {
       if (selectedRole !== "ALL" && u.role !== selectedRole) return false;
       if (selectedStatus !== "ALL" && u.status !== Number(selectedStatus)) return false;
       if (searchTerm) {
-        const term = searchTerm.toLowerCase();
         return (
-          (u.fullName && u.fullName.toLowerCase().includes(term)) ||
-          (u.email && u.email.toLowerCase().includes(term)) ||
-          (u.phone && u.phone.includes(term))
+          matchSearch(u.fullName, searchTerm) ||
+          matchSearch(u.email, searchTerm) ||
+          matchSearch(u.phone, searchTerm)
         );
       }
       return true;

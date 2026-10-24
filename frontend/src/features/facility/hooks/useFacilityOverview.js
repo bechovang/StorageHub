@@ -43,12 +43,15 @@ export function useFacilityOverview() {
     }
 
     let isMounted = true;
+    const controller = new AbortController();
+
     const timer = setTimeout(() => {
       setLoadingDrilldown(true);
       getFacilityDrilldown({
         status: drilldownStatus,
         query: searchUnitTerm,
         pageSize: 100,
+        signal: controller.signal,
       })
         .then((data) => {
           if (isMounted && data && Array.isArray(data.items)) {
@@ -72,6 +75,7 @@ export function useFacilityOverview() {
           }
         })
         .catch((err) => {
+          if (err.name === "AbortError") return;
           console.error("Failed to fetch drilldown units:", err);
         })
         .finally(() => {
@@ -82,6 +86,7 @@ export function useFacilityOverview() {
     return () => {
       isMounted = false;
       clearTimeout(timer);
+      controller.abort();
     };
   }, [drilldownStatus, searchUnitTerm]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { fetchActivityLogs } from "../../../services/activityService.js";
 import { getLoginHistory } from "../../../services/userService.js";
 
@@ -15,7 +15,9 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
   const [error, setError] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
 
-  const loadLogs = useCallback(async () => {
+  const abortControllerRef = useRef(null);
+
+  const loadLogs = useCallback(async (signal) => {
     try {
       setLoading(true);
       setError(null);
@@ -24,6 +26,7 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
         const res = await getLoginHistory({
           query: searchTerm,
           pageSize: 100,
+          signal,
         });
         const items = Array.isArray(res.items) ? res.items : [];
         const mapped = items.map((item) => ({
@@ -47,11 +50,13 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
           entityType: selectedEntity,
           searchTerm,
           pageSize: 100,
+          signal,
         });
         setLogs(res.items);
         setTotalCount(res.total);
       }
     } catch (err) {
+      if (err.name === "AbortError") return;
       console.error("Failed to fetch activity logs:", err);
       setError(err.message || "Không thể tải nhật ký hoạt động.");
     } finally {
@@ -60,11 +65,20 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
   }, [isLoginHistory, selectedEntity, searchTerm]);
 
   useEffect(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const timer = setTimeout(() => {
-      loadLogs();
+      loadLogs(controller.signal);
     }, 200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [loadLogs]);
 
   // Aggregate metrics
@@ -92,7 +106,7 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
   return {
     loading,
     error,
-    refreshLogs: loadLogs,
+    refreshLogs: () => loadLogs(),
     selectedEntity,
     setSelectedEntity,
     searchTerm,
