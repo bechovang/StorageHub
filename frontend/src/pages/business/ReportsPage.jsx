@@ -41,6 +41,7 @@ export default function ReportsPage() {
     handleExportCSV,
     handleApplyCustomRange,
     handleCloseDrilldown,
+    monthlyChartData,
   } = useReports();
 
   return (
@@ -215,6 +216,7 @@ export default function ReportsPage() {
           {/* ── 5. Dynamic Tab Content Based on Active Domain Tab ── */}
           {activeTab === "REVENUE" && (
             <RevenueTabPane
+              monthlyData={monthlyChartData}
               onDrilldown={setActiveDrilldownKey}
               onExportCSV={handleExportCSV}
             />

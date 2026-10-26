@@ -51,7 +51,7 @@ const CustomDonutTooltip = ({ active, payload }) => {
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span style={{ color: "#a3a3a3" }}>TỶ TRỌNG:</span>
-          <strong style={{ color: "#4ade80" }}>{pct}%</strong>
+          <strong style={{ color: "#ffffff" }}>{pct}%</strong>
         </div>
       </div>
     );

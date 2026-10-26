@@ -147,13 +147,13 @@ export default function FacilityStatusDistribution({
             <div className="zone-telemetry-item">
               <Thermometer size={16} className="text-primary" />
               <span className="font-medium text-ink">Khu điều hòa khí (Zone A & B):</span>
-              <span className="text-success font-semibold">88% lấp đầy</span>
+              <span className="font-semibold" style={{ color: "var(--color-accent, #dc2626)" }}>88% lấp đầy</span>
               <span className="text-muted">(7/8 kho đã thuê)</span>
             </div>
             <div className="zone-telemetry-item">
               <Car size={16} className="text-primary" />
               <span className="font-medium text-ink">Hành lang Locker (Zone C):</span>
-              <span className="text-rented font-semibold">50% lấp đầy</span>
+              <span className="font-semibold" style={{ color: "var(--color-accent, #dc2626)" }}>50% lấp đầy</span>
               <span className="text-muted">(2/4 locker hoạt động)</span>
             </div>
           </div>

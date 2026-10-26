@@ -75,11 +75,23 @@
   --color-status-info-tint: #eff6ff;
   --color-status-info-border: #bfdbfe;
 
-  /* Data Visualization & Chart Tokens */
-  --color-chart-rent: var(--color-accent);
-  --color-chart-deposit: var(--color-status-info);
-  --color-chart-surcharge: var(--color-status-warning);
-  --color-chart-target: var(--color-line-strong);
+  /* Data Visualization & Chart Tokens (Swiss Monochromatic Red Tonal Scale) */
+  --chart-red-900: #450a0a; /* Level 1: Escrow locked / Deep wine */
+  --chart-red-800: #7f1d1d; /* Level 2: Maintenance alert / Dark maroon */
+  --chart-red-700: #991b1b; /* Level 3: Overdue / Dark brick */
+  --chart-red-600: #dc2626; /* Level 4: CORE ACCENT - Rented units & Base Rent */
+  --chart-red-500: #ef4444; /* Level 5: Reserved pipeline / Vivid rose */
+  --chart-red-400: #f87171; /* Level 6: Surcharges / Preparing / Soft coral */
+  --chart-red-300: #fca5a5; /* Level 7: Secondary gateway / Pale tint */
+  --chart-red-100: #fee2e2; /* Level 8: Light tint */
+
+  /* Semantic Chart Aliases */
+  --color-chart-rent: var(--chart-red-600);
+  --color-chart-deposit: var(--chart-red-900);
+  --color-chart-surcharge: var(--chart-red-400);
+  --color-chart-target: var(--color-ink);
+  --color-chart-available: #171717;
+  --color-chart-retired: #737373;
 
   --font-family-body: var(--font-body);
   --font-family-display: var(--font-display);
