@@ -299,14 +299,6 @@ export default function LandingPage() {
         {/* ── 1. HERO SECTION ── */}
         <section className="landing-hero" aria-label="Giới thiệu StorageHub">
           <div className="landing-hero__inner">
-            {/* Status Badge */}
-            <div className="landing-hero__badge">
-              <span className="status-dot-pulse" aria-hidden="true" />
-              <span className="landing-hero__badge-text">
-                Hệ thống kho tự quản thông minh hàng đầu TP.HCM · 40+ kho sẵn sàng
-              </span>
-            </div>
-
             {/* Main H1 */}
             <h1 className="landing-hero__title">
               Lưu Trữ Thông Minh.
@@ -381,11 +373,8 @@ export default function LandingPage() {
           <div className="landing-container">
             <div className="landing-section-header">
               <h2 id="sizes-heading" className="landing-section-title">
-                Chọn Kích Thước Kho Phù Hợp Nhu Cầu
+                Từ tủ lưu trữ tài liệu nhỏ gọn đến kho chứa hàng hóa doanh nghiệp rộng rãi
               </h2>
-              <p className="landing-section-subtitle">
-                Từ tủ lưu trữ tài liệu nhỏ gọn đến kho chứa hàng hóa doanh nghiệp rộng rãi.
-              </p>
             </div>
 
             {/* Filter Tabs */}

@@ -17,9 +17,11 @@ Mục tiêu chính:
 - **File thành phần**: [`LandingPage.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/LandingPage.jsx)
 - **File stylesheet**: [`LandingPage.css`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/LandingPage.css)
 - **App Shell**: Sử dụng [`AppShell`](file:///D:/Workspace/StorageHub/frontend/src/components/AppShell/AppShell.jsx) với `brandHref="/"` và `showFooter={true}`.
-- **Header & Auth Integration**: Component [`Header`](file:///D:/Workspace/StorageHub/frontend/src/components/Header/Header.jsx) tự động nhận diện trạng thái xác thực:
-  - Nếu chưa đăng nhập: Hiển thị liên kết "Khám phá kho" cùng nút Đăng nhập / Đăng ký.
-  - Nếu đã đăng nhập: Hiển thị avatar người dùng, chuông thông báo và danh mục liên kết theo vai trò.
+- **Header & Auth Integration**: Component [`Header`](file:///D:/Workspace/StorageHub/frontend/src/components/Header/Header.jsx):
+  - Cụm logo & typography (`.brand`) trên Header mặc định luôn điều hướng về trang chủ (`/`) trên toàn hệ thống.
+  - Tự động nhận diện trạng thái xác thực:
+    - Nếu chưa đăng nhập: Hiển thị liên kết "Khám phá kho" cùng nút Đăng nhập / Đăng ký.
+    - Nếu đã đăng nhập: Hiển thị avatar người dùng, chuông thông báo và danh mục liên kết theo vai trò.
 
 ---
 

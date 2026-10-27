@@ -97,7 +97,7 @@ export default function Header({
   const currentRole = user?.role || "CUSTOMER";
   const roleConfig = ROLE_CONFIGS[currentRole] || ROLE_CONFIGS.CUSTOMER;
 
-  const resolvedHome = brandHref || (isAuthenticated ? roleConfig.landing : "/browse");
+  const resolvedHome = brandHref || "/";
   const resolvedRoleLabel =
     roleLabel !== undefined
       ? ROLE_BADGE_UPPER[roleLabel] || roleLabel
