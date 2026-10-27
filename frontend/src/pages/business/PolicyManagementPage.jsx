@@ -18,7 +18,6 @@ import "./PolicyManagementPage.css";
 
 export default function PolicyManagementPage() {
   const {
-    user,
     persistedPolicy,
     draftBaseRates,
     draftLateFee,

@@ -1,7 +1,6 @@
 import { X, Funnel } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { UnitCard } from "../../components";
-import { useAuth } from "../../context/AuthContext";
 import {
   useBrowseUnits,
   BrowseFilterForm,
@@ -10,7 +9,6 @@ import {
 import "./BrowsePage.css";
 
 export default function BrowsePage() {
-  const { user } = useAuth();
   const {
     filterOptions,
     selectedType,

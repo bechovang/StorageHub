@@ -6,7 +6,6 @@ import {
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { Badge, Button } from "../../components";
-import { useAuth } from "../../context/AuthContext";
 import {
   useUnitDetailView,
   UnitImageSlider,
@@ -17,7 +16,6 @@ import "./UnitDetailPage.css";
 
 export default function UnitDetailPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const {
     unit,
     loading,

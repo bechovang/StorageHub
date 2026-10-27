@@ -157,7 +157,7 @@ export async function getStaffTasks(params = {}) {
   if (params.status) query.set("status", params.status);
   const queryString = query.toString() ? `?${query.toString()}` : "";
 
-  let list = [];
+  let list;
   try {
     const res = await apiClient(`/api/v1/tasks${queryString}`);
     const data = await safeParseJson(res);
@@ -165,7 +165,6 @@ export async function getStaffTasks(params = {}) {
     list = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : [];
   } catch (err) {
     list = DEMO_STAFF_TASKS;
-  }
   }
 
   const overrides = loadRitualOverrides();
