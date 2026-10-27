@@ -12,7 +12,7 @@ INSERT INTO rental_policies (policy_id, version, effective_date, status) VALUES
     (3, 'v4', DATE_ADD(CURDATE(), INTERVAL 1 MONTH), 0);
 
 -- 2. Bộ quy tắc giá mới cho phiên bản v4
-INSERT INTO policy_rules (policy_id, type_id, rule_type, surcharge_type, value, cap) VALUES
+INSERT INTO policy_rules (rule_id, policy_id, type_id, rule_type, surcharge_type, value, cap) VALUES
     -- Giá thuê cơ bản (Rent rate / tháng)
     (100, 3, 1, 'RENT_RATE',       NULL,   120000, NULL),   -- Locker: 120.000 ₫
     (101, 3, 2, 'RENT_RATE',       NULL,   360000, NULL),   -- S: 360.000 ₫
