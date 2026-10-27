@@ -81,7 +81,10 @@ function buildPublicFallbackFilterOptions() {
     unitTypes: types,
     sizes: [1.5, 5, 8, 15],
     sizesM2: [1.5, 5, 8, 15],
-    facilities: [{ id: 1, name: "Cơ sở Tân Bình" }],
+    facilities: [
+      { id: 1, name: "Cơ sở Tân Bình (Đang mở)" },
+      { id: 2, name: "Cơ sở Quận 7 (Sắp mở)" },
+    ],
   };
 }
 
@@ -120,7 +123,12 @@ export async function getUnitFilterOptions() {
       unitTypes: data.unitTypes || data.types || buildPublicFallbackFilterOptions().unitTypes,
       sizesM2: data.sizesM2 || data.sizes || buildPublicFallbackFilterOptions().sizesM2,
       sizes: data.sizes || data.sizesM2 || buildPublicFallbackFilterOptions().sizes,
-      facilities: data.facilities || [{ id: 1, name: "Cơ sở Tân Bình" }],
+      facilities: (data.facilities && data.facilities.length > 1)
+        ? data.facilities
+        : [
+            { id: 1, name: "Cơ sở Tân Bình (Đang mở)" },
+            { id: 2, name: "Cơ sở Quận 7 (Sắp mở)" },
+          ],
     };
   } catch {
     return buildPublicFallbackFilterOptions();

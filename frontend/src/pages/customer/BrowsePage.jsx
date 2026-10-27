@@ -35,6 +35,7 @@ export default function BrowsePage() {
     handleSearchSubmit,
     handleSortChange,
     handleRemoveFilter,
+    handleResetFilters,
     handleOpenDrawer,
     handleViewDetails,
     handleBook,
@@ -163,9 +164,17 @@ export default function BrowsePage() {
             <Funnel size={36} color="var(--color-muted)" aria-hidden="true" />
             <h2 className="browse-empty__title">Không tìm thấy kho phù hợp</h2>
             <p className="browse-empty__desc">
-              Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử
-              thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê.
+              {activeFilters.facilityId && Number(activeFilters.facilityId) === 2
+                ? "Cơ sở Quận 7 hiện đang chuẩn bị khai trương nên chưa có kho khả dụng. Vui lòng chọn cơ sở Tân Bình hoặc bấm nút bên dưới để xem tất cả kho."
+                : "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê."}
             </p>
+            <button
+              type="button"
+              className="browse-empty__btn"
+              onClick={handleResetFilters}
+            >
+              Xóa bộ lọc & Xem tất cả kho
+            </button>
           </section>
         ) : (
           <>

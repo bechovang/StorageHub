@@ -152,6 +152,22 @@ export function useBrowseUnits() {
     fetchUnits(activeFilters, newSort, 1);
   };
 
+  // Đặt lại toàn bộ bộ lọc
+  const handleResetFilters = () => {
+    setSelectedType("");
+    setSelectedSize("");
+    setSelectedFacility("");
+    const reset = {
+      typeId: "",
+      sizeM2: "",
+      startDate,
+      facilityId: "",
+    };
+    setActiveFilters(reset);
+    setPage(1);
+    fetchUnits(reset, sortOrder, 1);
+  };
+
   // Xóa từng bộ lọc riêng lẻ từ chip
   const handleRemoveFilter = (filterKey) => {
     const updated = { ...activeFilters };
@@ -221,6 +237,7 @@ export function useBrowseUnits() {
     handleSearchSubmit,
     handleSortChange,
     handleRemoveFilter,
+    handleResetFilters,
     handleOpenDrawer,
     handleViewDetails,
     handleBook,
