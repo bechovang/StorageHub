@@ -63,6 +63,7 @@ export default function ActivityLogPage() {
             onSelectEntity={setSelectedEntity}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            isLoginHistory={isLoginHistory}
           />
         </div>
       </div>

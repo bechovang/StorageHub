@@ -7,6 +7,7 @@ import {
   LockOpen,
 } from "@phosphor-icons/react";
 import { USER_ROLES, USER_STATUSES } from "../../../services/userService.js";
+import { getRoleLabel } from "../../../utils/statusLabels.js";
 import { getUserInitials } from "../utils.js";
 
 export function UserTable({
@@ -68,11 +69,11 @@ export function UserTable({
                   <td>{u.phone || "—"}</td>
                   <td>
                     <span className={`role-chip ${roleConfig.badgeClass}`}>
-                      {u.role}
+                      {getRoleLabel(u.role)}
                     </span>
                   </td>
                   <td style={{ color: "var(--color-secondary)", fontSize: "0.78rem" }}>
-                    {u.facilityName || "Toàn hệ thống"}
+                    {u.facilityName || (u.role === "CUSTOMER" ? "Khách thuê cá nhân" : "Toàn hệ thống")}
                   </td>
                   <td>
                     <span className={`status-badge ${statusConfig.class}`}>

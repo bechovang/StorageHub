@@ -1,5 +1,6 @@
-import { SignOut, X, Funnel } from "@phosphor-icons/react";
-import { Header, Footer, UnitCard } from "../../components";
+import { X, Funnel } from "@phosphor-icons/react";
+import AppShell from "../../components/AppShell/AppShell.jsx";
+import { UnitCard } from "../../components";
 import { useAuth } from "../../context/AuthContext";
 import {
   useBrowseUnits,
@@ -9,7 +10,7 @@ import {
 import "./BrowsePage.css";
 
 export default function BrowsePage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const {
     filterOptions,
     selectedType,
@@ -37,47 +38,22 @@ export default function BrowsePage() {
   } = useBrowseUnits();
 
   return (
-    <div className="browse-page">
-      {/* ── Header điều hướng dùng chung ── */}
-      <Header
-        brandName="STORAGEHUB"
-        brandHref="/browse"
-        roleLabel="KHÁCH HÀNG"
-        avatarText={
-          user?.fullName ? user.fullName.trim().charAt(0).toUpperCase() : "KH"
-        }
-        navLinks={[
-          { label: "Tìm thuê kho", href: "/browse", active: true },
-          { label: "Kho của tôi", href: "/rentals" },
-          { label: "Hỗ trợ", href: "/support" },
-        ]}
-        rightContent={
-          <button
-            type="button"
-            onClick={logout}
-            className="browse-logout-btn"
-            title="Đăng xuất"
-            aria-label="Đăng xuất"
-          >
-            <SignOut size={16} weight="bold" />
-          </button>
-        }
-      />
-
-      <main className="browse-container">
-        {/* ── Banner tiêu đề trang ── */}
-        <section className="browse-banner">
-          <div>
-            <h1 className="browse-banner__headline">
-              Tìm thuê kho
-              <span className="browse-banner__zone-tag">Khu A & B</span>
-            </h1>
-            <p className="browse-banner__desc">
-              Kho tự quản sạch sẽ, an ninh 24/7, ra vào chủ động bằng mã PIN
-              riêng tại cơ sở Tân Bình.
-            </p>
-          </div>
-        </section>
+    <AppShell showFooter={true}>
+      <div className="browse-page-inner">
+        <main className="browse-container">
+          {/* ── Banner tiêu đề trang ── */}
+          <section className="browse-banner">
+            <div>
+              <h1 className="browse-banner__headline">
+                Tìm thuê kho
+                <span className="browse-banner__zone-tag">Khu A & B</span>
+              </h1>
+              <p className="browse-banner__desc">
+                Kho tự quản sạch sẽ, an ninh 24/7, ra vào chủ động bằng mã PIN
+                riêng tại cơ sở Tân Bình.
+              </p>
+            </div>
+          </section>
 
         {/* ── Thẻ bộ lọc (Filter Card) ── */}
         <BrowseFilterForm
@@ -200,6 +176,7 @@ export default function BrowsePage() {
           </div>
         )}
       </main>
+      </div>
 
       {/* ── Drawer xem chi tiết kho ── */}
       <BrowseUnitDrawer
@@ -208,12 +185,6 @@ export default function BrowsePage() {
         onViewDetails={handleViewDetails}
         onBook={handleBook}
       />
-
-      {/* ── Footer ── */}
-      <Footer
-        leftText="STORAGEHUB / CƠ SỞ TÂN BÌNH — HỆ THỐNG KHO TỰ QUẢN"
-        rightText="PHIÊN BẢN 1.0 · 2026"
-      />
-    </div>
+    </AppShell>
   );
 }

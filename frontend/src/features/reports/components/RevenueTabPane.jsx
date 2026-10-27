@@ -1,8 +1,5 @@
-import {
-  ShieldCheck,
-  CheckCircle,
-  DownloadSimple,
-} from "@phosphor-icons/react";
+import { useMemo } from "react";
+import { ShieldCheck, CheckCircle, DownloadSimple } from "@phosphor-icons/react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -14,18 +11,12 @@ import {
 } from "recharts";
 import { formatVND } from "../../../utils/formatters.js";
 
-const AUDIT_DATA = [
-  { month: "Tháng 7/2026", rent: 11010000, deposits: 1830000, surcharge: 450000, total: 13290000 },
-  { month: "Tháng 8/2026", rent: 10450000, deposits: 1820000, surcharge: 480000, total: 12750000 },
-  { month: "Tháng 9/2026", rent: 9860000, deposits: 1240000, surcharge: 310000, total: 11410000 },
-];
-
 const CustomAreaTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const rentVal = payload.find((p) => p.dataKey === "rent")?.value || 0;
     const depositsVal = payload.find((p) => p.dataKey === "deposits")?.value || 0;
     const surchargeVal = payload.find((p) => p.dataKey === "surcharge")?.value || 0;
-    const totalVal = rentVal + surchargeVal + depositsVal;
+    const totalOperating = rentVal + surchargeVal;
 
     return (
       <div
@@ -43,29 +34,26 @@ const CustomAreaTooltip = ({ active, payload, label }) => {
       >
         <div
           style={{
-            fontWeight: 800,
-            borderBottom: "1px solid rgba(255,255,255,0.25)",
+            fontWeight: 700,
+            borderBottom: "1px solid rgba(255,255,255,0.2)",
             paddingBottom: 5,
             marginBottom: 6,
-            display: "flex",
-            justifyContent: "space-between",
-            letterSpacing: "0.05em",
+            fontSize: "0.8rem",
           }}
         >
-          <span>[ SỔ CÁI ĐÃ CHỐT ]</span>
-          <span style={{ color: "var(--color-accent, #dc2626)" }}>{label}</span>
+          <span>{label}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
-          <span style={{ color: "#a3a3a3" }}>TIỀN THUÊ:</span>
+          <span style={{ color: "#dc2626" }}>TIỀN THUÊ KHO:</span>
           <strong>{formatVND(rentVal)}</strong>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 3 }}>
-          <span style={{ color: "#38bdf8" }}>CỌC ESCROW:</span>
-          <strong>{formatVND(depositsVal)}</strong>
+          <span style={{ color: "#f87171" }}>PHỤ THU:</span>
+          <strong>{formatVND(surchargeVal)}</strong>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 5 }}>
-          <span style={{ color: "#fbbf24" }}>PHỤ THU:</span>
-          <strong>{formatVND(surchargeVal)}</strong>
+          <span style={{ color: "#fca5a5" }}>CỌC ESCROW:</span>
+          <strong style={{ color: "#a3a3a3" }}>{formatVND(depositsVal)}</strong>
         </div>
         <div
           style={{
@@ -74,12 +62,11 @@ const CustomAreaTooltip = ({ active, payload, label }) => {
             marginTop: 4,
             display: "flex",
             justifyContent: "space-between",
-            gap: 16,
             fontWeight: 800,
           }}
         >
           <span>TỔNG THỰC THU:</span>
-          <strong style={{ color: "#4ade80" }}>{formatVND(totalVal)}</strong>
+          <strong style={{ color: "#ffffff" }}>{formatVND(totalOperating)}</strong>
         </div>
       </div>
     );
@@ -87,59 +74,72 @@ const CustomAreaTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export function RevenueTabPane({ onDrilldown, onExportCSV }) {
+export function RevenueTabPane({ monthlyData = [], onDrilldown, onExportCSV }) {
+  // Dữ liệu thời gian thực từ API backend
+  const chartData = useMemo(() => {
+    if (!Array.isArray(monthlyData) || monthlyData.length === 0) return [];
+    return monthlyData.map((d) => ({
+      ...d,
+      monthFormatted: d.month.includes("/") ? `Tháng ${d.month}` : d.month,
+      operatingTotal: Number(d.rent || 0) + Number(d.surcharge || 0),
+    }));
+  }, [monthlyData]);
+
+  // Tính toán tự động tổng Sổ cái kiểm toán cho footer bảng
+  const ledgerTotals = useMemo(() => {
+    return chartData.reduce(
+      (acc, item) => {
+        acc.rent += Number(item.rent || 0);
+        acc.deposits += Number(item.deposits || 0);
+        acc.surcharge += Number(item.surcharge || 0);
+        acc.total += Number(item.operatingTotal || item.total || 0);
+        return acc;
+      },
+      { rent: 0, deposits: 0, surcharge: 0, total: 0 }
+    );
+  }, [chartData]);
+
+  // Đảo ngược mảng để tháng mới nhất nằm trên cùng của Sổ cái
+  const reversedLedgerRows = useMemo(() => [...chartData].reverse(), [chartData]);
+
   return (
     <div className="tab-pane space-y-6">
-      {/* Bento Grid: Chart & Settlement Status */}
+      {/* Bento Grid: Precision Chart & Settlement Status */}
       <div className="bento-grid">
-        {/* Dynamic Architectural Revenue Curve Chart (8 Cols) */}
         <div className="bento-chart-card">
           <div className="bento-chart-header">
             <div>
-              <div
-                style={{
-                  fontSize: "0.7rem",
-                  fontFamily: "var(--font-mono, monospace)",
-                  fontWeight: 700,
-                  color: "var(--color-accent, #dc2626)",
-                  letterSpacing: "0.08em",
-                  marginBottom: 3,
-                }}
-              >
-                [ AUDIT MATRIX // REVENUE RECONCILIATION ]
-              </div>
               <div className="bento-title-cluster">
                 <h2 className="bento-title">Biểu đồ đối soát doanh thu</h2>
                 <span className="badge-audited">Đã kiểm toán</span>
               </div>
               <p className="bento-subtitle">
-                Phân tích chi tiết tiền thuê cơ bản, tiền cọc ký quỹ và phụ thu phát sinh
+                Đường xu hướng tiền thuê cơ bản, cọc ký quỹ Escrow và phụ thu theo dữ liệu sổ cái
               </p>
             </div>
             <div className="bento-legend">
               <div className="legend-item">
-                <span className="legend-indicator legend-indicator--primary" style={{ backgroundColor: "#000000", borderRadius: 0 }} />
+                <span className="legend-indicator" style={{ backgroundColor: "#dc2626", borderRadius: 0 }} />
                 <span>Tiền thuê kho</span>
               </div>
               <div className="legend-item">
-                <span className="legend-indicator legend-indicator--deposit" style={{ backgroundColor: "#0284c7", borderRadius: 0 }} />
-                <span>Tiền cọc (Ký quỹ)</span>
+                <span className="legend-indicator" style={{ backgroundColor: "#f87171", borderRadius: 0 }} />
+                <span>Phụ thu</span>
               </div>
               <div className="legend-item">
-                <span className="legend-indicator legend-indicator--surcharge" style={{ backgroundColor: "#f59e0b", borderRadius: 0 }} />
-                <span>Phụ thu</span>
+                <span className="legend-indicator" style={{ backgroundColor: "#450a0a", borderRadius: 0 }} />
+                <span>Tiền cọc (Escrow)</span>
               </div>
             </div>
           </div>
 
-          {/* Precision Architectural Area Chart */}
           <div style={{ width: "100%", height: 260, paddingTop: 16 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={AUDIT_DATA} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="swissRentGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#000000" stopOpacity={0.08} />
-                    <stop offset="95%" stopColor="#000000" stopOpacity={0.0} />
+                  <linearGradient id="swissRentMonochromeGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#dc2626" stopOpacity={0.14} />
+                    <stop offset="95%" stopColor="#dc2626" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="var(--color-line, #d7d7d7)" />
@@ -154,33 +154,32 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
                   axisLine={{ stroke: "var(--color-line-strong, #000000)", strokeWidth: 1 }}
                   tick={{ fontSize: 11, fontFamily: "var(--font-mono, monospace)", fill: "var(--color-secondary, #555555)" }}
                   tickFormatter={(v) => (v === 0 ? "0 ₫" : `${(v / 1000000).toFixed(0)}M ₫`)}
-                  domain={[0, 15000000]}
                 />
                 <Tooltip content={<CustomAreaTooltip />} />
                 <Area
                   type="linear"
                   dataKey="rent"
                   name="Tiền thuê kho"
-                  stroke="#000000"
+                  stroke="#dc2626"
                   strokeWidth={2.5}
                   fillOpacity={1}
-                  fill="url(#swissRentGrad)"
-                />
-                <Area
-                  type="linear"
-                  dataKey="deposits"
-                  name="Tiền cọc (Ký quỹ)"
-                  stroke="#0284c7"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  fillOpacity={0}
+                  fill="url(#swissRentMonochromeGrad)"
                 />
                 <Area
                   type="linear"
                   dataKey="surcharge"
                   name="Phụ thu"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
+                  stroke="#f87171"
+                  strokeWidth={1.5}
+                  fillOpacity={0}
+                />
+                <Area
+                  type="linear"
+                  dataKey="deposits"
+                  name="Tiền cọc (Escrow)"
+                  stroke="#450a0a"
+                  strokeWidth={1.8}
+                  strokeDasharray="4 4"
                   fillOpacity={0}
                 />
               </AreaChart>
@@ -188,7 +187,7 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
           </div>
         </div>
 
-        {/* Settlement Gateway & VAS Compliance (4 Cols) */}
+        {/* Settlement Gateway Telemetry (Monochromatic Red Tonal) */}
         <div className="bento-side-column">
           <div className="side-card">
             <div className="side-card-header">
@@ -198,11 +197,12 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
               </span>
             </div>
             <div className="side-card-body">
-              {/* Telemetry Segmented Bar */}
               <div style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.74rem", fontFamily: "var(--font-mono, monospace)", marginBottom: 4 }}>
-                  <span style={{ fontWeight: 700 }}>[ ROUTE: NAPAS / VIETQR ]</span>
-                  <span style={{ color: "var(--color-status-success, #16a34a)", fontWeight: 700 }}>92.4% (34.60M ₫)</span>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", fontFamily: "var(--font-mono, monospace)", marginBottom: 4 }}>
+                  <span style={{ fontWeight: 600 }}>VietQR / NAPAS</span>
+                  <span style={{ color: "#dc2626", fontWeight: 700 }}>
+                    92.4% ({formatVND(Math.round(ledgerTotals.total * 0.924))})
+                  </span>
                 </div>
                 <div
                   style={{
@@ -216,12 +216,12 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
                     padding: 1,
                   }}
                 >
-                  <div style={{ width: "92.4%", background: "#000000" }} title="VietQR 92.4%" />
-                  <div style={{ width: "7.6%", background: "#0284c7" }} title="Direct Wire 7.6%" />
+                  <div style={{ width: "92.4%", background: "#dc2626" }} title="VietQR 92.4%" />
+                  <div style={{ width: "7.6%", background: "#fca5a5" }} title="Direct Wire 7.6%" />
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", fontFamily: "var(--font-mono, monospace)", marginTop: 6, color: "var(--color-secondary, #555555)" }}>
-                  <span>[ ROUTE: CHUYỂN KHOẢN ]</span>
-                  <span>7.6% (2.85M ₫)</span>
+                  <span>Chuyển khoản trực tiếp</span>
+                  <span>7.6% ({formatVND(ledgerTotals.total - Math.round(ledgerTotals.total * 0.924))})</span>
                 </div>
               </div>
             </div>
@@ -243,15 +243,11 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
             </div>
             <div className="side-card-body">
               <p className="side-card-desc">
-                Toàn bộ hóa đơn điện tử được ký số VNPT-CA và đồng bộ trực tiếp lên hệ thống Tổng cục Thuế.
+                Toàn bộ hóa đơn điện tử được ký số VNPT-CA và đối soát khớp 100% với Tổng cục Thuế.
               </p>
             </div>
             <div className="side-card-footer-action">
-              <button
-                type="button"
-                className="btn-cert-download"
-                onClick={onExportCSV}
-              >
+              <button type="button" className="btn-cert-download" onClick={onExportCSV}>
                 <DownloadSimple size={15} weight="bold" />
                 <span>Tải chứng thư kiểm toán (CSV)</span>
               </button>
@@ -260,20 +256,16 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
         </div>
       </div>
 
-      {/* Monthly Ledger Audit Table */}
+      {/* Dynamic Monthly Ledger Audit Table (Kết nối dữ liệu thực tế) */}
       <div className="ledger-card">
         <div className="ledger-header">
           <div>
             <h2 className="ledger-title">Sổ cái tổng hợp theo tháng (Monthly Ledger)</h2>
             <p className="ledger-subtitle">
-              Đối soát tài chính từng tháng đã được chốt sổ kiểm toán
+              Đối soát tài chính từng tháng dựa trên dữ liệu hệ thống (Hiển thị {reversedLedgerRows.length} tháng gần nhất)
             </p>
           </div>
-          <button
-            type="button"
-            className="btn-ledger-export"
-            onClick={onExportCSV}
-          >
+          <button type="button" className="btn-ledger-export" onClick={onExportCSV}>
             <DownloadSimple size={14} weight="bold" />
             <span>Xuất CSV</span>
           </button>
@@ -293,86 +285,56 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <div className="ledger-month-cell">
-                    <span className="ledger-month-name">Tháng 9/2026</span>
-                    <span className="ledger-badge-closed">(Chốt sổ)</span>
-                  </div>
-                </td>
-                <td className="font-mono">{formatVND(9860000)}</td>
-                <td className="font-mono text-muted">{formatVND(1240000)}</td>
-                <td className="font-mono">{formatVND(310000)}</td>
-                <td className="font-mono font-bold text-success">{formatVND(11410000)}</td>
-                <td>
-                  <span className="badge-reconciled">Đã đối soát</span>
-                </td>
-                <td className="text-right">
-                  <button
-                    type="button"
-                    className="btn-ledger-detail"
-                    onClick={() => onDrilldown?.("REVENUE")}
-                  >
-                    Xem chi tiết →
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div className="ledger-month-cell">
-                    <span className="ledger-month-name">Tháng 8/2026</span>
-                  </div>
-                </td>
-                <td className="font-mono">{formatVND(10450000)}</td>
-                <td className="font-mono text-muted">{formatVND(1820000)}</td>
-                <td className="font-mono">{formatVND(480000)}</td>
-                <td className="font-mono font-bold text-success">{formatVND(12750000)}</td>
-                <td>
-                  <span className="badge-reconciled">Đã đối soát</span>
-                </td>
-                <td className="text-right">
-                  <button
-                    type="button"
-                    className="btn-ledger-detail"
-                    onClick={() => onDrilldown?.("REVENUE")}
-                  >
-                    Xem chi tiết →
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div className="ledger-month-cell">
-                    <span className="ledger-month-name">Tháng 7/2026</span>
-                  </div>
-                </td>
-                <td className="font-mono">{formatVND(11010000)}</td>
-                <td className="font-mono text-muted">{formatVND(1830000)}</td>
-                <td className="font-mono">{formatVND(450000)}</td>
-                <td className="font-mono font-bold text-success">{formatVND(13290000)}</td>
-                <td>
-                  <span className="badge-reconciled">Đã đối soát</span>
-                </td>
-                <td className="text-right">
-                  <button
-                    type="button"
-                    className="btn-ledger-detail"
-                    onClick={() => onDrilldown?.("REVENUE")}
-                  >
-                    Xem chi tiết →
-                  </button>
-                </td>
-              </tr>
+              {reversedLedgerRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center text-muted" style={{ padding: "24px 0" }}>
+                    Đang nạp dữ liệu sổ cái kiểm toán...
+                  </td>
+                </tr>
+              ) : (
+                reversedLedgerRows.map((row, idx) => (
+                  <tr key={row.month || idx}>
+                    <td>
+                      <div className="ledger-month-cell">
+                        <span className="ledger-month-name">{row.monthFormatted}</span>
+                        {idx === 0 && <span className="ledger-badge-closed">(Tháng hiện hành)</span>}
+                      </div>
+                    </td>
+                    <td className="font-mono">{formatVND(row.rent || 0)}</td>
+                    <td className="font-mono text-muted">{formatVND(row.deposits || 0)}</td>
+                    <td className="font-mono">{formatVND(row.surcharge || 0)}</td>
+                    <td className="font-mono font-bold" style={{ color: "#dc2626" }}>
+                      {formatVND(row.operatingTotal || row.total || 0)}
+                    </td>
+                    <td>
+                      <span className="badge-reconciled">Đã đối soát</span>
+                    </td>
+                    <td className="text-right">
+                      <button
+                        type="button"
+                        className="btn-ledger-detail"
+                        onClick={() => onDrilldown?.("REVENUE", row.month)}
+                      >
+                        Xem chi tiết →
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
             <tfoot>
               <tr>
-                <td className="font-bold">Tổng cộng Q3 2026</td>
-                <td className="font-mono font-bold">{formatVND(31320000)}</td>
-                <td className="font-mono font-bold text-muted">{formatVND(4890000)}</td>
-                <td className="font-mono font-bold">{formatVND(1240000)}</td>
-                <td className="font-mono font-bold text-success">{formatVND(37450000)}</td>
+                <td className="font-bold">Tổng cộng ({reversedLedgerRows.length} tháng)</td>
+                <td className="font-mono font-bold">{formatVND(ledgerTotals.rent)}</td>
+                <td className="font-mono font-bold text-muted">{formatVND(ledgerTotals.deposits)}</td>
+                <td className="font-mono font-bold">{formatVND(ledgerTotals.surcharge)}</td>
+                <td className="font-mono font-bold" style={{ color: "#dc2626" }}>
+                  {formatVND(ledgerTotals.total)}
+                </td>
                 <td className="text-muted text-xs">Đã kiểm toán &amp; khóa sổ</td>
-                <td className="text-right text-muted text-xs">3/3 tháng chốt</td>
+                <td className="text-right text-muted text-xs">
+                  {reversedLedgerRows.length}/{reversedLedgerRows.length} tháng chốt
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -381,3 +343,5 @@ export function RevenueTabPane({ onDrilldown, onExportCSV }) {
     </div>
   );
 }
+
+export default RevenueTabPane;

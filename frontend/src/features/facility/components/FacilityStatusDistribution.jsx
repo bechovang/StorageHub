@@ -10,25 +10,13 @@ export default function FacilityStatusDistribution({
     <section className="facility-status-panel">
       <div className="facility-status-panel__head">
         <div>
-          <div
-            style={{
-              fontSize: "0.7rem",
-              fontFamily: "var(--font-mono, monospace)",
-              fontWeight: 700,
-              color: "var(--color-accent, #dc2626)",
-              letterSpacing: "0.08em",
-              marginBottom: 3,
-            }}
-          >
-            [ TELEMETRY // REAL-TIME DISPOSITION MATRIX ]
-          </div>
           <h2 className="facility-status-panel__title">Phân bổ trạng thái kho</h2>
           <p className="facility-status-panel__desc">
             Tỷ lệ kho trống, đã cọc và đang thuê tại cơ sở. Bấm vào từng nhóm hoặc lát cắt biểu đồ để xem chi tiết.
           </p>
         </div>
         <div className="facility-status-panel__total">
-          <span className="text-muted">Tổng quy mô depot:</span>
+          <span className="text-muted">Tổng quy mô cơ sở:</span>
           <strong className="tag-total-units">{statusStats.TOTAL} kho vật lý</strong>
         </div>
       </div>
@@ -106,17 +94,15 @@ export default function FacilityStatusDistribution({
               width: "100%",
               padding: "0 6px 8px 6px",
               borderBottom: "1px solid var(--color-line, #d7d7d7)",
-              fontSize: "0.72rem",
-              fontFamily: "var(--font-mono, monospace)",
+              fontSize: "0.75rem",
               fontWeight: 700,
               color: "var(--color-ink, #000000)",
             }}
           >
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <ChartPieSlice size={14} style={{ color: "var(--color-accent, #dc2626)" }} />
-              TỶ TRỌNG KHO
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <ChartPieSlice size={15} style={{ color: "var(--color-accent, #dc2626)" }} />
+              Tỷ trọng kho
             </span>
-            <span style={{ color: "var(--color-muted, #767676)", fontSize: "0.65rem" }}>[DONUT]</span>
           </div>
 
           <FacilityStatusDonutChart
@@ -124,20 +110,6 @@ export default function FacilityStatusDistribution({
             statusConfigs={statusConfigs}
             onOpenDrilldown={onOpenDrilldown}
           />
-
-          <div
-            style={{
-              width: "100%",
-              borderTop: "1px dashed var(--color-line, #d7d7d7)",
-              paddingTop: 6,
-              fontSize: "0.68rem",
-              fontFamily: "var(--font-mono, monospace)",
-              color: "var(--color-secondary, #555555)",
-              textAlign: "center",
-            }}
-          >
-            NHẤP VÀO LÁT CẮT ĐỂ XEM CHI TIẾT
-          </div>
         </div>
 
         {/* Status Legend Grid & Telemetry */}
@@ -149,7 +121,7 @@ export default function FacilityStatusDistribution({
               .map((key) => {
                 const cfg = statusConfigs[key];
                 const count = statusStats[key] || 0;
-                const pct = ((count / statusStats.TOTAL) * 100).toFixed(1);
+                const pct = statusStats.TOTAL > 0 ? ((count / statusStats.TOTAL) * 100).toFixed(1) : "0.0";
 
                 return (
                   <button
@@ -160,7 +132,7 @@ export default function FacilityStatusDistribution({
                   >
                     <div className="status-pill-btn__dot" style={{ backgroundColor: cfg.color }} />
                     <div className="status-pill-btn__info">
-                      <span className="status-pill-btn__label">{cfg.label.split(" ")[0]}</span>
+                      <span className="status-pill-btn__label">{cfg.label}</span>
                       <span className="status-pill-btn__nums">
                         <strong>{count}</strong> ({pct}%)
                       </span>
@@ -175,13 +147,13 @@ export default function FacilityStatusDistribution({
             <div className="zone-telemetry-item">
               <Thermometer size={16} className="text-primary" />
               <span className="font-medium text-ink">Khu điều hòa khí (Zone A & B):</span>
-              <span className="text-success font-semibold">88% lấp đầy</span>
+              <span className="font-semibold" style={{ color: "var(--color-accent, #dc2626)" }}>88% lấp đầy</span>
               <span className="text-muted">(7/8 kho đã thuê)</span>
             </div>
             <div className="zone-telemetry-item">
               <Car size={16} className="text-primary" />
               <span className="font-medium text-ink">Hành lang Locker (Zone C):</span>
-              <span className="text-rented font-semibold">50% lấp đầy</span>
+              <span className="font-semibold" style={{ color: "var(--color-accent, #dc2626)" }}>50% lấp đầy</span>
               <span className="text-muted">(2/4 locker hoạt động)</span>
             </div>
           </div>

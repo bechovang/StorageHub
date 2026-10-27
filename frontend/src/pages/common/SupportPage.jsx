@@ -53,12 +53,12 @@ export default function SupportPage() {
           <div className="mgmt-telemetry__left">
             <span className="mgmt-telemetry__dot" />
             <span style={{ fontWeight: 600 }}>Bộ phận hỗ trợ kỹ thuật & vận hành:</span>
-            <span>Tân Bình Depot</span>
+            <span>Cơ sở Tân Bình (VN-SGN-01)</span>
             <span>|</span>
             <span>Hotline trực ca: 1900 8888</span>
           </div>
           <div className="mgmt-telemetry__right">
-            <span>RESPONSE_WINDOW_15M</span>
+            <span>PHẢN HỒI TRONG 15 PHÚT</span>
           </div>
         </div>
 

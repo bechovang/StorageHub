@@ -68,7 +68,7 @@ export default function StaffShiftsPage() {
         <section className="shifts-telemetry" aria-label="Thông tin cơ sở & ca trực">
           <div className="shifts-telemetry__left">
             <span className="telemetry-dot" aria-hidden="true" />
-            <span className="telemetry-facility">VN-SGN-01 (Tân Bình Gateway)</span>
+            <span className="telemetry-facility">Cơ sở Tân Bình (VN-SGN-01)</span>
             <span className="telemetry-sep">•</span>
             <span className="telemetry-status">Hệ thống bình thường</span>
             <span className="telemetry-sep">•</span>

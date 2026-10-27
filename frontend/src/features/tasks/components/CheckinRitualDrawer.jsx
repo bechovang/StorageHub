@@ -161,7 +161,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
               <p style={{ margin: 0, fontSize: "0.76rem", color: "#94a3b8" }}>MÃ SỐ BÀN GIAO CHO KHÁCH:</p>
               <div className="access-pin-number">{task.accessPin || "8842-Active"}</div>
               <p style={{ margin: 0, fontSize: "0.72rem", color: "#34d399" }}>
-                ✓ Mã đã được kích hoạt trên hệ thống khóa tự quản Depot Tân Bình
+                ✓ Mã đã được kích hoạt trên hệ thống khóa tự quản Cơ sở Tân Bình
               </p>
             </div>
           ) : (

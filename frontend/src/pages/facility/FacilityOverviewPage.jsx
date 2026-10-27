@@ -42,9 +42,8 @@ export default function FacilityOverviewPage() {
             <div className="facility-telemetry__left">
               <div className="telemetry-item">
                 <Warehouse size={16} className="text-muted" />
-                <span className="telemetry-bold">Depot:</span>
-                <span>Tân Bình Gateway</span>
-                <span className="tag-facility">VN-SGN-01</span>
+                <span className="telemetry-bold">Cơ sở:</span>
+                <span>Tân Bình (VN-SGN-01)</span>
               </div>
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">

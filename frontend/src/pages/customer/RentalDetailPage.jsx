@@ -60,7 +60,7 @@ export default function RentalDetailPage() {
               <span>Đơn thuê của tôi</span>
             </Link>
             <span className="rd-breadcrumb__sep">/</span>
-            <span>Depot Tân Bình (VN-SGN-01)</span>
+            <span>Cơ sở Tân Bình</span>
             <span className="rd-breadcrumb__sep">/</span>
             <span className="rd-breadcrumb__current font-mono">
               {reservation?.code || `ID #${reservationId}`}

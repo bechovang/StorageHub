@@ -56,9 +56,8 @@
 .dot-pulse-green {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 0;
   background-color: var(--color-status-success, #16a34a);
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
   display: inline-block;
 }
 
@@ -211,7 +210,7 @@
 .policy-version-badge__dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 0;
 }
 
 .policy-version-badge__dot--active {

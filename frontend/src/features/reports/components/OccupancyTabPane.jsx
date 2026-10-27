@@ -17,7 +17,7 @@ export function OccupancyTabPane({ onDrilldown }) {
             className="reports-btn reports-btn--secondary reports-btn--sm"
             onClick={() => onDrilldown("occupancy")}
           >
-            Xem 37 kho đang thuê →
+            Xem danh sách kho đang thuê →
           </button>
         </div>
 

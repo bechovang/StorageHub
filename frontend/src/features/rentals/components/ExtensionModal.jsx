@@ -27,32 +27,42 @@ export default function ExtensionModal({
     reservation,
     onConfirmExtension,
 }) {
-    const currentEndDateStr = reservation?.endDate || "2026-08-18";
+    const currentEndDateStr = reservation?.endDate || new Date().toISOString().split("T")[0];
     const currentEndDate = useMemo(() => new Date(currentEndDateStr), [currentEndDateStr]);
 
     // Giá thuê 1 tháng & tỷ lệ cọc
-    const monthlyRent = reservation?.quote?.monthlyRent || 345000;
+    const monthlyRent = reservation?.quote?.monthlyRent || reservation?.unit?.monthlyPrice || 345000;
     const depositRate = 0.1; // 10%
-    const currentDepositHeld = reservation?.depositAmount || 103500;
-    const currentDurationMonths = reservation?.durationMonths || 3;
+    const currentDepositHeld = reservation?.depositAmount || Math.round(monthlyRent * depositRate);
+    const currentDurationMonths = reservation?.durationMonths || 1;
 
-    // Giới hạn xung đột (Conflict boundary): Đơn kế tiếp bắt đầu ngày 19/10/2026 (theo kịch bản demo PRD UJ-1)
-    // Ngày muộn nhất được phép trả là 18/10/2026
-    const conflictStartDateStr = reservation?.nextReservationStartDate || "2026-10-19";
-    const latestAllowedCheckoutStr = "2026-10-18";
-    const conflictStartDate = useMemo(() => new Date(conflictStartDateStr), [conflictStartDateStr]);
+    // Giới hạn xung đột (Conflict boundary): Chỉ áp dụng nếu backend báo có đơn tiếp theo
+    const conflictStartDateStr = reservation?.nextReservationStartDate || null;
+    const conflictStartDate = useMemo(
+        () => (conflictStartDateStr ? new Date(conflictStartDateStr) : null),
+        [conflictStartDateStr]
+    );
+    const latestAllowedCheckoutStr = useMemo(() => {
+        if (!conflictStartDate) return null;
+        const d = new Date(conflictStartDate);
+        d.setDate(d.getDate() - 1);
+        return d.toISOString().split("T")[0];
+    }, [conflictStartDate]);
 
-    // Ngày checkout mới được chọn (mặc định gợi ý +2 tháng: 18/10/2026)
-    const [selectedDateStr, setSelectedDateStr] = useState("2026-10-18");
-    const [extensionMonths, setExtensionMonths] = useState(2);
+    // Ngày checkout mới được chọn (mặc định gợi ý +1 tháng tính từ currentEndDate)
+    const [extensionMonths, setExtensionMonths] = useState(1);
+    const [selectedDateStr, setSelectedDateStr] = useState(() => {
+        const target = new Date(currentEndDate);
+        target.setMonth(target.getMonth() + 1);
+        return target.toISOString().split("T")[0];
+    });
     const [submitting, setSubmitting] = useState(false);
 
     // Tính toán ngày và kiểm tra xung đột
     const selectedDate = useMemo(() => new Date(selectedDateStr), [selectedDateStr]);
 
     const isConflict = useMemo(() => {
-        if (!selectedDateStr) return false;
-        // Nếu ngày mới lớn hơn hoặc bằng ngày bắt đầu của đơn đặt chỗ kế tiếp
+        if (!selectedDateStr || !conflictStartDate) return false;
         return selectedDate >= conflictStartDate;
     }, [selectedDate, conflictStartDate, selectedDateStr]);
 
@@ -202,7 +212,7 @@ export default function ExtensionModal({
                     </div>
 
                     {/* Cảnh báo Conflict Boundary */}
-                    {isConflict && (
+                    {isConflict && conflictStartDateStr && latestAllowedCheckoutStr && (
                         <div className="rd-conflict-alert">
                             <Warning size={20} weight="fill" className="rd-conflict-alert__icon" />
                             <div>

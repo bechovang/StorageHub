@@ -25,12 +25,11 @@ const CustomDonutTooltip = ({ active, payload }) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderBottom: "1px solid rgba(255,255,255,0.25)",
+            borderBottom: "1px solid rgba(255,255,255,0.2)",
             paddingBottom: 5,
             marginBottom: 6,
-            fontWeight: 800,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
+            fontWeight: 700,
+            fontSize: "0.8rem",
           }}
         >
           <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -45,28 +44,14 @@ const CustomDonutTooltip = ({ active, payload }) => {
             />
             {item.name}
           </span>
-          <span style={{ color: "var(--color-muted, #a3a3a3)" }}>[{item.key}]</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
           <span style={{ color: "#a3a3a3" }}>SỐ LƯỢNG:</span>
           <strong>{item.value} KHO</strong>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span style={{ color: "#a3a3a3" }}>TỶ TRỌNG:</span>
-          <strong style={{ color: "#4ade80" }}>{pct}%</strong>
-        </div>
-        <div
-          style={{
-            borderTop: "1px dashed rgba(255,255,255,0.2)",
-            paddingTop: 5,
-            marginTop: 4,
-            fontSize: "0.68rem",
-            color: "var(--color-accent, #dc2626)",
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-          }}
-        >
-          &gt;&gt; NHẤP ĐỂ DRILL-DOWN CHI TIẾT
+          <strong style={{ color: "#ffffff" }}>{pct}%</strong>
         </div>
       </div>
     );

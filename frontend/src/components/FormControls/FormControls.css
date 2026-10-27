@@ -81,6 +81,7 @@
   background: var(--color-surface);
   border: var(--border-strong);
   border-radius: 0px;
+  flex-shrink: 0;
   transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
@@ -102,7 +103,6 @@
   outline-offset: 2px;
 }
 
-/* Form grid and input groups from prototype */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -144,4 +144,14 @@
 .input-group--wide {
   grid-column: 1 / -1;
   border-right: 0;
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .input-group {
+    border-right: 0;
+  }
 }

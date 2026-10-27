@@ -5,6 +5,7 @@ import {
   PERMISSION_GROUPS,
   getPermissionMatrix,
 } from "../../../services/userService.js";
+import { getRoleLabel } from "../../../utils/statusLabels.js";
 
 export function PermissionMatrixView({
   selectedMatrixRole,
@@ -49,7 +50,7 @@ export function PermissionMatrixView({
                 onClick={() => setSelectedMatrixRole(isSelected ? "ALL" : r.key)}
               >
                 <div className="matrix-role-card__top">
-                  <span className={`role-chip ${r.badgeClass}`}>{r.key}</span>
+                  <span className={`role-chip ${r.badgeClass}`}>{getRoleLabel(r.key)}</span>
                   <span className="matrix-role-persona">Mẫu: {r.persona}</span>
                 </div>
                 <h4 className="matrix-role-title">{r.title}</h4>
