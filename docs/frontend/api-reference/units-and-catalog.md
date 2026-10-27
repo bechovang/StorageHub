@@ -70,6 +70,11 @@ Các API phục vụ tìm kiếm kho, xem thông số kỹ thuật, phân trang,
 > - Danh sách catalog hiển thị các kho có trạng thái `AVAILABLE`.
 > - Nếu một khách hàng mới chỉ khởi tạo đơn đặt chỗ (`PENDING_PAYMENT`) nhưng **chưa thanh toán tiền cọc**, kho vẫn tiếp tục được coi là khả dụng trên danh mục tìm kiếm (`Còn trống · Cọc để giữ chỗ`).
 > - Kho chỉ chính thức chuyển sang `RESERVED` và khóa lại sau khi có giao dịch thanh toán cọc thành công (`SUCCEEDED`).
+>
+> [!TIP]
+> **Dữ Liệu Seed Demo (Flyway V19)**:
+> - Cơ sở dữ liệu và mock service được nạp đầy đủ **40 kho khả dụng** (`AVAILABLE`) để phân bố trọn vẹn 4 trang (12 kho/trang: 12, 12, 12, 4).
+> - Phân bổ gồm: 10 tủ Locker (1.5 m²), 11 kho nhỏ S (5 m²), 12 kho vừa M (8 m²), và 7 kho lớn L (15 m²) tại cơ sở Tân Bình.
 
 ---
 
