@@ -380,7 +380,6 @@ export default function LandingPage() {
         >
           <div className="landing-container">
             <div className="landing-section-header">
-              <span className="landing-section-tag">// 02. HƯỚNG DẪN KÍCH THƯỚC</span>
               <h2 id="sizes-heading" className="landing-section-title">
                 Chọn Kích Thước Kho Phù Hợp Nhu Cầu
               </h2>
@@ -508,7 +507,6 @@ export default function LandingPage() {
         <section className="landing-section landing-pillars" aria-labelledby="pillars-heading">
           <div className="landing-container">
             <div className="landing-section-header">
-              <span className="landing-section-tag">// 03. ƯU THẾ VƯỢT TRỘI</span>
               <h2 id="pillars-heading" className="landing-section-title">
                 Tại Sao Hơn 1.000+ Khách Hàng Chọn StorageHub?
               </h2>
@@ -539,7 +537,6 @@ export default function LandingPage() {
         <section className="landing-section landing-steps" aria-labelledby="steps-heading">
           <div className="landing-container">
             <div className="landing-section-header">
-              <span className="landing-section-tag">// 04. QUY TRÌNH THUÊ KHO</span>
               <h2 id="steps-heading" className="landing-section-title">
                 Thuê Kho Tự Quản Chỉ Trong 3 Bước
               </h2>
@@ -572,7 +569,6 @@ export default function LandingPage() {
         >
           <div className="landing-container">
             <div className="landing-section-header">
-              <span className="landing-section-tag">// 05. MẠNG LƯỚI CƠ SỞ</span>
               <h2 id="facilities-heading" className="landing-section-title">
                 Mạng Lưới Cơ Sở StorageHub
               </h2>
@@ -677,7 +673,6 @@ export default function LandingPage() {
         <section className="landing-section landing-faq" aria-labelledby="faq-heading">
           <div className="landing-container">
             <div className="landing-section-header">
-              <span className="landing-section-tag">// 06. HỎI ĐÁP PHỔ BIẾN</span>
               <h2 id="faq-heading" className="landing-section-title">
                 Câu Hỏi Thường Gặp
               </h2>

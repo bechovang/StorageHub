@@ -30,17 +30,6 @@
   max-width: 800px;
 }
 
-.landing-section-tag {
-  display: inline-block;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--color-accent, #dc2626);
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
 .landing-section-title {
   font-family: var(--font-display, "Inter Tight", Arial, sans-serif);
   font-size: clamp(1.8rem, 3.5vw, 2.6rem);
@@ -495,10 +484,6 @@
 .landing-steps {
   background: #000000;
   color: #ffffff;
-}
-
-.landing-steps .landing-section-tag {
-  color: #ef4444;
 }
 
 .landing-steps .landing-section-title {
