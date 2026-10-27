@@ -159,7 +159,7 @@ export function useBrowseUnits() {
   };
 
   // Lấy tên loại kho đang được lọc để hiển thị trên chip
-  const activeTypeName = filterOptions.types.find(
+  const activeTypeName = (filterOptions.types || filterOptions.unitTypes || []).find(
     (t) => String(t.id) === String(activeFilters.typeId),
   )?.name;
 

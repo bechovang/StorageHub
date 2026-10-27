@@ -45,7 +45,7 @@ export default function ReportsPage() {
   } = useReports();
 
   return (
-    <AppShell brandHref="/overview" roleLabel="BUSINESS OPS">
+    <AppShell>
       <div className="reports-page">
         {/* ── 1. Telemetry Context Strip ── */}
         <aside className="reports-telemetry">
@@ -53,8 +53,8 @@ export default function ReportsPage() {
             <div className="reports-telemetry__left">
               <div className="telemetry-item">
                 <Warehouse size={15} weight="duotone" className="text-muted" />
-                <span className="telemetry-bold">Facility VN-SGN-01</span>
-                <span className="text-muted">(Tân Bình Gateway)</span>
+                <span className="telemetry-bold">Cơ sở Tân Bình</span>
+                <span className="text-muted">(VN-SGN-01)</span>
               </div>
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">
@@ -68,23 +68,8 @@ export default function ReportsPage() {
           </div>
         </aside>
 
-        {/* ── Sub Navigation Links for Business Ops ── */}
-        <nav className="reports-subnav">
-          <div className="reports-subnav__inner">
-            <Link to="/overview" className="reports-subnav__link">
-              Tổng quan
-            </Link>
-            <Link to="/policy" className="reports-subnav__link">
-              Chính sách & Biểu giá
-            </Link>
-            <Link to="/reports" className="reports-subnav__link reports-subnav__link--active">
-              Báo cáo tài chính
-            </Link>
-          </div>
-        </nav>
-
         {/* ── 2. Main Canvas ── */}
-        <main className="reports-canvas">
+        <div className="reports-canvas">
           {/* Page Header & Period Controls */}
           <section className="reports-header">
             <div>
@@ -239,7 +224,7 @@ export default function ReportsPage() {
               onDrilldown={setActiveDrilldownKey}
             />
           )}
-        </main>
+        </div>
 
         {/* ── 6. Drill-down Drawer ── */}
         <DrilldownDrawer

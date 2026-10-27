@@ -200,7 +200,9 @@ export function RevenueTabPane({ monthlyData = [], onDrilldown, onExportCSV }) {
               <div style={{ marginBottom: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", fontFamily: "var(--font-mono, monospace)", marginBottom: 4 }}>
                   <span style={{ fontWeight: 600 }}>VietQR / NAPAS</span>
-                  <span style={{ color: "#dc2626", fontWeight: 700 }}>92.4% (34.60M ₫)</span>
+                  <span style={{ color: "#dc2626", fontWeight: 700 }}>
+                    92.4% ({formatVND(Math.round(ledgerTotals.total * 0.924))})
+                  </span>
                 </div>
                 <div
                   style={{
@@ -219,7 +221,7 @@ export function RevenueTabPane({ monthlyData = [], onDrilldown, onExportCSV }) {
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", fontFamily: "var(--font-mono, monospace)", marginTop: 6, color: "var(--color-secondary, #555555)" }}>
                   <span>Chuyển khoản trực tiếp</span>
-                  <span>7.6% (2.85M ₫)</span>
+                  <span>7.6% ({formatVND(ledgerTotals.total - Math.round(ledgerTotals.total * 0.924))})</span>
                 </div>
               </div>
             </div>
@@ -311,7 +313,7 @@ export function RevenueTabPane({ monthlyData = [], onDrilldown, onExportCSV }) {
                       <button
                         type="button"
                         className="btn-ledger-detail"
-                        onClick={() => onDrilldown?.("REVENUE")}
+                        onClick={() => onDrilldown?.("REVENUE", row.month)}
                       >
                         Xem chi tiết →
                       </button>

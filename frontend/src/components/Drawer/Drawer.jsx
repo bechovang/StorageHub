@@ -16,7 +16,6 @@ export default function Drawer({
   const isActualOpen = Boolean(open ?? isOpen);
   const resolvedHeaderLabel = headerLabel || title || "CHI TIẾT";
 
-  // Xử lý phím Escape và khóa cuộn body khi Drawer đang mở
   useEffect(() => {
     if (!isActualOpen) return undefined;
 
@@ -56,7 +55,7 @@ export default function Drawer({
           <button
             type="button"
             className="drawer__close"
-            aria-label="Close drawer"
+            aria-label="Đóng ngăn chi tiết"
             onClick={() => onClose?.()}
           >
             ×

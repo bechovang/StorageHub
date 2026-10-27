@@ -45,7 +45,7 @@ export default function PolicyManagementPage() {
   } = usePolicyManagement();
 
   return (
-    <AppShell brandHref="/overview" roleLabel={user?.role || "BUSINESS OPS"}>
+    <AppShell>
       <div className="policy-page">
         {/* ── 1. Telemetry Context Strip (Swiss Architecture) ── */}
         <aside className="policy-telemetry">
@@ -53,8 +53,8 @@ export default function PolicyManagementPage() {
             <div className="policy-telemetry__left">
               <div className="telemetry-item">
                 <Warehouse size={15} weight="duotone" className="text-muted" />
-                <span className="telemetry-bold">Facility VN-SGN-01</span>
-                <span className="text-muted">(Tân Bình Gateway)</span>
+                <span className="telemetry-bold">Cơ sở Tân Bình</span>
+                <span className="text-muted">(VN-SGN-01)</span>
               </div>
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">
@@ -68,21 +68,6 @@ export default function PolicyManagementPage() {
           </div>
         </aside>
 
-        {/* ── Sub Navigation Links for Business Ops ── */}
-        <nav className="policy-subnav">
-          <div className="policy-subnav__inner">
-            <Link to="/overview" className="policy-subnav__link">
-              Tổng quan
-            </Link>
-            <Link to="/policy" className="policy-subnav__link policy-subnav__link--active">
-              Chính sách & Biểu giá
-            </Link>
-            <Link to="/reports" className="policy-subnav__link">
-              Báo cáo tài chính
-            </Link>
-          </div>
-        </nav>
-
         {/* ── 2. Toast Notification ── */}
         {toastMessage && (
           <div className="policy-toast" role="alert">
@@ -91,7 +76,7 @@ export default function PolicyManagementPage() {
           </div>
         )}
 
-        <main className="policy-canvas">
+        <div className="policy-canvas">
           {/* ── 3. Page Header / Title Row ── */}
           <section className="policy-header">
             <div className="policy-header__left">
@@ -112,7 +97,7 @@ export default function PolicyManagementPage() {
                       }`}
                     />
                     <span>
-                      Rental Policy {persistedPolicy.version} · Hiệu lực từ {persistedPolicy.effectiveDate}
+                      Chính sách cho thuê {persistedPolicy.version} · Hiệu lực từ {persistedPolicy.effectiveDate}
                     </span>
                   </span>
                   {hasChanges && (
@@ -176,7 +161,7 @@ export default function PolicyManagementPage() {
                     </p>
                   </div>
                   <div className="policy-card__tags">
-                    <span className="policy-tag policy-tag--facility">Phạm vi: Tân Bình Gateway</span>
+                    <span className="policy-tag policy-tag--facility">Phạm vi: Cơ sở Tân Bình</span>
                     <span className="policy-tag policy-tag--status">
                       {hasChanges ? "Bản thảo chưa lưu" : "Đang áp dụng"}
                     </span>
@@ -235,7 +220,7 @@ export default function PolicyManagementPage() {
               capRulesRef={capRulesRef}
             />
           </div>
-        </main>
+        </div>
       </div>
     </AppShell>
   );

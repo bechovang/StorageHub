@@ -5,11 +5,11 @@ import AppShell from "../../components/AppShell/AppShell.jsx";
 import "./ForbiddenPage.css";
 
 const ROLE_LANDINGS = {
-  CUSTOMER: { path: "/browse", name: "Browse Units" },
-  STAFF: { path: "/tasks", name: "Task Board" },
-  FACILITY_MANAGER: { path: "/facility", name: "Facility Overview" },
-  BUSINESS_OPS: { path: "/overview", name: "Business Overview" },
-  SYSTEM_ADMIN: { path: "/users", name: "User Management" },
+  CUSTOMER: { path: "/browse", name: "Khám phá ô kho" },
+  STAFF: { path: "/tasks", name: "Bảng công việc" },
+  FACILITY_MANAGER: { path: "/facility", name: "Tổng quan cơ sở" },
+  BUSINESS_OPS: { path: "/overview", name: "Tổng quan kinh doanh" },
+  SYSTEM_ADMIN: { path: "/users", name: "Quản trị tài khoản" },
 };
 
 export default function ForbiddenPage() {
@@ -25,13 +25,13 @@ export default function ForbiddenPage() {
         <div className="forbidden-card">
           <div className="forbidden-badge">
             <ShieldWarning size={20} weight="fill" />
-            <span>HTTP 403 · FORBIDDEN</span>
+            <span>KHÔNG CÓ QUYỀN TRUY CẬP</span>
           </div>
 
-          <h1 className="forbidden-title">Không thể truy cập trang này</h1>
+          <h1 className="forbidden-title">Bạn không có quyền truy cập trang này</h1>
 
           <p className="forbidden-desc">
-            Trang bạn đang tìm kiếm không khả dụng đối với tài khoản của bạn hoặc yêu cầu quyền hạn chuyên biệt.
+            Tài khoản hiện tại không được phân quyền mở khu vực này. Bạn có thể quay về màn hình làm việc chính hoặc đăng nhập bằng tài khoản khác.
           </p>
 
           <div className="forbidden-actions">
@@ -41,7 +41,7 @@ export default function ForbiddenPage() {
               onClick={() => navigate(userLanding.path, { replace: true })}
             >
               <ArrowLeft size={16} weight="bold" />
-              <span>Quay về trang chủ</span>
+              <span>Về {userLanding.name}</span>
             </button>
 
             <button

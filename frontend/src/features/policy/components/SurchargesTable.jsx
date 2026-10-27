@@ -50,7 +50,7 @@ export function SurchargesTable({
                 <div className="policy-cell-content">
                   <span className="policy-cell-title">Phí phạt trả kho trễ</span>
                   <span className="policy-cell-sub">
-                    <span className="policy-code-badge">#SUR-001</span> Late Checkout
+                    Phụ phí quá hạn bàn giao
                   </span>
                 </div>
               </td>
@@ -75,7 +75,7 @@ export function SurchargesTable({
                 </div>
                 {isLateFeeViolated && (
                   <div className="policy-field-error">
-                    Vượt trần cứng 10% tại v3 (#CAP-04)
+                    Vượt trần quy định tối đa 10%
                   </div>
                 )}
                 {!isLateFeeViolated && isLateFeeModified && (
@@ -119,7 +119,7 @@ export function SurchargesTable({
                 <div className="policy-cell-content">
                   <span className="policy-cell-title">Tỷ lệ tiền cọc tối thiểu</span>
                   <span className="policy-cell-sub">
-                    <span className="policy-code-badge">#SUR-003</span> Security Deposit
+                    Ký quỹ bảo đảm hợp đồng
                   </span>
                 </div>
               </td>
@@ -144,7 +144,7 @@ export function SurchargesTable({
                 </div>
                 {isDepositViolated && (
                   <div className="policy-field-error">
-                    Không được dưới sàn 10% (#CAP-08)
+                    Không được dưới sàn tối thiểu 10%
                   </div>
                 )}
                 {!isDepositViolated && isDepositModified && (
@@ -188,7 +188,7 @@ export function SurchargesTable({
                 <div className="policy-cell-content">
                   <span className="policy-cell-title">Thời gian đệm vệ sinh kho</span>
                   <span className="policy-cell-sub">
-                    <span className="policy-code-badge">#OPS-012</span> Turnover Buffer
+                    Giãn cách dọn dẹp chuyển giao
                   </span>
                 </div>
               </td>
@@ -213,7 +213,7 @@ export function SurchargesTable({
                 </div>
                 {isBufferViolated && (
                   <div className="policy-field-error">
-                    Thời gian đệm từ 1 đến 5 ngày (#OPS-012)
+                    Thời gian đệm phải từ 1 đến 7 ngày
                   </div>
                 )}
                 {!isBufferViolated && isBufferModified && (
@@ -222,7 +222,7 @@ export function SurchargesTable({
               </td>
               <td>
                 <div className="policy-cap-cell">
-                  <span className="policy-cap-limit">1 - 5 ngày</span>
+                  <span className="policy-cap-limit">1 - 7 ngày</span>
                   <span className="policy-cap-note">Quy trình vệ sinh tiêu chuẩn</span>
                 </div>
               </td>
@@ -249,7 +249,7 @@ export function SurchargesTable({
                 <div className="policy-cell-content">
                   <span className="policy-cell-title">Bồi thường hư hại ô kho</span>
                   <span className="policy-cell-sub">
-                    <span className="policy-code-badge">#SUR-002</span> Damage Assessment
+                    Đánh giá hao mòn & thiệt hại
                   </span>
                 </div>
               </td>

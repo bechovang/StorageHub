@@ -15,6 +15,10 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
   const [error, setError] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
 
+  useEffect(() => {
+    setSelectedEntity(isLoginHistory ? "USER" : "ALL");
+  }, [isLoginHistory]);
+
   const abortControllerRef = useRef(null);
 
   const loadLogs = useCallback(async (signal) => {

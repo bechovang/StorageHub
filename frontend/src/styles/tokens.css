@@ -57,33 +57,44 @@
 
   --color-surface-page: var(--color-neutral);
   --color-surface-panel: var(--color-surface);
+  --color-surface-subtle: var(--color-neutral);
   --color-surface-strong: var(--color-ink);
   --color-surface-disabled: var(--color-disabled);
+  --color-neutral-dark: #171717;
 
   --color-border-default: var(--color-line);
   --color-border-strong: var(--color-line-strong);
+  --color-border: var(--color-line);
+  --color-divider: var(--color-line);
 
   --color-action-primary: var(--color-accent);
   --color-action-primary-hover: var(--color-accent-dark);
+  --color-primary-hover: #262626;
+  --color-accent-subtle: #fef2f2;
 
   --color-status-success: #16a34a;
   --color-status-success-tint: #f0fdf4;
   --color-status-success-border: #bbf7d0;
-  --color-status-warning: #f59e0b;
+  --color-status-warning: #d97706;
+  --color-status-warning-tint: #fffbeb;
+  --color-status-warning-border: #fde68a;
   --color-status-danger: var(--color-accent);
+  --color-status-danger-tint: #fef2f2;
+  --color-status-danger-border: #fecaca;
   --color-status-info: #2563eb;
   --color-status-info-tint: #eff6ff;
   --color-status-info-border: #bfdbfe;
+  --shadow-sm: none;
 
   /* Data Visualization & Chart Tokens (Swiss Monochromatic Red Tonal Scale) */
-  --chart-red-900: #450a0a; /* Level 1: Escrow locked / Deep wine */
-  --chart-red-800: #7f1d1d; /* Level 2: Maintenance alert / Dark maroon */
-  --chart-red-700: #991b1b; /* Level 3: Overdue / Dark brick */
-  --chart-red-600: #dc2626; /* Level 4: CORE ACCENT - Rented units & Base Rent */
-  --chart-red-500: #ef4444; /* Level 5: Reserved pipeline / Vivid rose */
-  --chart-red-400: #f87171; /* Level 6: Surcharges / Preparing / Soft coral */
-  --chart-red-300: #fca5a5; /* Level 7: Secondary gateway / Pale tint */
-  --chart-red-100: #fee2e2; /* Level 8: Light tint */
+  --chart-red-900: #450a0a;
+  --chart-red-800: #7f1d1d;
+  --chart-red-700: #991b1b;
+  --chart-red-600: #dc2626;
+  --chart-red-500: #ef4444;
+  --chart-red-400: #f87171;
+  --chart-red-300: #fca5a5;
+  --chart-red-100: #fee2e2;
 
   /* Semantic Chart Aliases */
   --color-chart-rent: var(--chart-red-600);
@@ -106,6 +117,7 @@
   --font-size-3xl: 3rem;
 
   --font-weight-regular: 400;
+  --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;

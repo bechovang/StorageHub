@@ -31,7 +31,7 @@ export default function MyRentalsPage() {
         <nav className="my-rentals-page__breadcrumb" aria-label="Breadcrumb">
           <span>StorageHub VN</span>
           <span className="my-rentals-page__breadcrumb-sep">/</span>
-          <span>Depot SGN-01 (Tân Bình)</span>
+          <span>Cơ sở Tân Bình</span>
           <span className="my-rentals-page__breadcrumb-sep">/</span>
           <span className="my-rentals-page__breadcrumb-current">
             Đơn thuê của tôi
@@ -49,7 +49,7 @@ export default function MyRentalsPage() {
             </div>
             <p className="my-rentals-page__subtitle">
               Theo dõi hợp đồng thuê kho, mã nhận chỗ và lịch sử thanh toán tại
-              Depot Tân Bình.
+              Cơ sở Tân Bình.
             </p>
           </div>
 

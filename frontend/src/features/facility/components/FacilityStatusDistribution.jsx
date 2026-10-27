@@ -16,7 +16,7 @@ export default function FacilityStatusDistribution({
           </p>
         </div>
         <div className="facility-status-panel__total">
-          <span className="text-muted">Tổng quy mô depot:</span>
+          <span className="text-muted">Tổng quy mô cơ sở:</span>
           <strong className="tag-total-units">{statusStats.TOTAL} kho vật lý</strong>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function FacilityStatusDistribution({
               .map((key) => {
                 const cfg = statusConfigs[key];
                 const count = statusStats[key] || 0;
-                const pct = ((count / statusStats.TOTAL) * 100).toFixed(1);
+                const pct = statusStats.TOTAL > 0 ? ((count / statusStats.TOTAL) * 100).toFixed(1) : "0.0";
 
                 return (
                   <button
@@ -132,7 +132,7 @@ export default function FacilityStatusDistribution({
                   >
                     <div className="status-pill-btn__dot" style={{ backgroundColor: cfg.color }} />
                     <div className="status-pill-btn__info">
-                      <span className="status-pill-btn__label">{cfg.label.split(" ")[0]}</span>
+                      <span className="status-pill-btn__label">{cfg.label}</span>
                       <span className="status-pill-btn__nums">
                         <strong>{count}</strong> ({pct}%)
                       </span>

@@ -7,8 +7,8 @@ export default function Modal({
   isOpen,
   title,
   children,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel = "Xác nhận",
+  cancelLabel = "Hủy",
   onConfirm,
   onClose,
   showFooter,
@@ -39,7 +39,6 @@ export default function Modal({
     return null;
   }
 
-  // Tự động ẩn footer mặc định nếu component không truyền onConfirm và không yêu cầu showFooter
   const shouldRenderFooter = showFooter !== undefined ? showFooter : Boolean(onConfirm);
 
   return (
@@ -61,7 +60,7 @@ export default function Modal({
           <button
             className="modal__close"
             type="button"
-            aria-label="Close dialog"
+            aria-label="Đóng hộp thoại"
             onClick={onClose}
           >
             ×

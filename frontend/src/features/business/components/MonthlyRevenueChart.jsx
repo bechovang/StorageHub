@@ -144,10 +144,6 @@ export default function MonthlyRevenueChart({ monthlyData }) {
             <Bar dataKey="rent" name="Tiền thuê kho" stackId="revenue" fill="#dc2626" radius={[0, 0, 0, 0]} maxBarSize={36} />
             <Bar dataKey="surcharge" name="Phụ thu" stackId="revenue" fill="#f87171" radius={[0, 0, 0, 0]} maxBarSize={36} />
             <Bar dataKey="deposits" name="Tiền cọc giữ (Escrow)" fill="#450a0a" radius={[0, 0, 0, 0]} maxBarSize={24} />
-            <Legend
-              wrapperStyle={{ paddingTop: 10, fontSize: "0.75rem", fontFamily: "var(--font-mono, monospace)" }}
-              formatter={(val) => <span style={{ color: "#000000", fontWeight: 700 }}>{val}</span>}
-            />
           </BarChart>
         </ResponsiveContainer>
       </div>

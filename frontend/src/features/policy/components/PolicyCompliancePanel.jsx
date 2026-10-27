@@ -40,11 +40,6 @@ export function PolicyCompliancePanel({
           <div className="policy-checklist">
             <div className="policy-checklist__item policy-checklist__item--pass">
               <CheckCircle size={18} weight="fill" className="text-success shrink-0" />
-              <span>Chiết khấu cam kết thanh toán 3 tháng hợp lệ (7.5%)</span>
-            </div>
-
-            <div className="policy-checklist__item policy-checklist__item--pass">
-              <CheckCircle size={18} weight="fill" className="text-success shrink-0" />
               <span>Ngưỡng đền bù sơn sàn epoxy 15% đồng bộ phụ lục hợp đồng</span>
             </div>
 
@@ -109,34 +104,30 @@ export function PolicyCompliancePanel({
 
         {/* 2. Hard Caps Reference */}
         <div className="policy-side-section">
-          <div className="policy-side-label">Bảng tra cứu trần quy chế cứng (#CAPS)</div>
+          <div className="policy-side-label">Bảng tra cứu quy chuẩn chính sách</div>
           <div className="policy-cap-box">
             <div className="policy-cap-row">
               <span className="policy-cap-name">Trần phụ thu trả trễ:</span>
               <span className="policy-cap-value policy-cap-value--error">
-                {HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}.0%{" "}
-                <span className="text-muted text-[10px] font-normal">(#CAP-04)</span>
+                {HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}.0%
               </span>
             </div>
             <div className="policy-cap-row">
               <span className="policy-cap-name">Sàn cọc bảo đảm:</span>
               <span className="policy-cap-value text-ink">
-                {HARD_CAPS.SECURITY_DEPOSIT_MIN_PERCENT}% / 100.000 ₫{" "}
-                <span className="text-muted text-[10px] font-normal">(#CAP-08)</span>
+                {HARD_CAPS.SECURITY_DEPOSIT_MIN_PERCENT}%
               </span>
             </div>
             <div className="policy-cap-row">
               <span className="policy-cap-name">Khung đệm vệ sinh:</span>
               <span className="policy-cap-value text-ink">
-                {HARD_CAPS.TURNOVER_BUFFER_MIN_DAYS} - {HARD_CAPS.TURNOVER_BUFFER_MAX_DAYS} ngày{" "}
-                <span className="text-muted text-[10px] font-normal">(#OPS-012)</span>
+                {HARD_CAPS.TURNOVER_BUFFER_MIN_DAYS} - {HARD_CAPS.TURNOVER_BUFFER_MAX_DAYS} ngày
               </span>
             </div>
             <div className="policy-cap-row">
               <span className="policy-cap-name">Hạn ký phụ lục quầy:</span>
               <span className="policy-cap-value text-ink">
-                7 ngày{" "}
-                <span className="text-muted text-[10px] font-normal">(#CAP-14)</span>
+                7 ngày
               </span>
             </div>
           </div>
