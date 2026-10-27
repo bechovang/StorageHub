@@ -35,19 +35,19 @@ function FullPageTrafficNetwork() {
 
   const { width: w, height: h } = dimensions;
 
-  // ── 1. Tuyến Vành Đai Đông (East Arterial Corridor) ──
+  // ── 1. Tuyến Vành Đai Đông (Hành Lang Cao Tốc Đô Thị Đông) ──
   const pathEast = `M ${w * 0.84} 100 Q ${w * 0.94} ${h * 0.12} ${w * 0.88} ${h * 0.22} T ${w * 0.93} ${h * 0.38} Q ${w * 0.85} ${h * 0.50} ${w * 0.91} ${h * 0.62} T ${w * 0.87} ${h * 0.76} Q ${w * 0.94} ${h * 0.88} ${w * 0.78} ${h - 120}`;
 
-  // ── 2. Tuyến Vành Đai Tây (West Arterial Corridor) ──
+  // ── 2. Tuyến Vành Đai Tây (Hành Lang Vành Đai Tây - Tân Bình - Q6) ──
   const pathWest = `M ${w * 0.14} 120 Q ${w * 0.05} ${h * 0.15} ${w * 0.10} ${h * 0.27} T ${w * 0.07} ${h * 0.44} Q ${w * 0.15} ${h * 0.59} ${w * 0.08} ${h * 0.74} T ${w * 0.16} ${h - 160}`;
 
-  // ── 3. Tuyến Xuyên Tâm Uốn Lượn (Central Transversal Express) ──
+  // ── 3. Tuyến Xuyên Tâm Uốn Lượn (Trục Xuyên Tâm Huyết Mạch NKKN - CMTT - Nguyễn Văn Linh) ──
   const pathTransversal = `M ${w * 0.75} 260 Q ${w * 0.52} ${h * 0.14} ${w * 0.36} ${h * 0.22} T ${w * 0.22} ${h * 0.34} Q ${w * 0.62} ${h * 0.48} ${w * 0.68} ${h * 0.54} T ${w * 0.35} ${h * 0.68} Q ${w * 0.76} ${h * 0.81} ${w * 0.50} ${h - 140}`;
 
-  // ── 4. Tuyến Nối Ngang Vành Đai Giữa (Mid Ring Connector) ──
+  // ── 4. Tuyến Nối Ngang Vành Đai Giữa (Vòng Đai Nội Đô Đi Vào Khu Bàn Cờ) ──
   const pathMidRing = `M ${w * 0.10} ${h * 0.38} Q ${w * 0.50} ${h * 0.35} ${w * 0.92} ${h * 0.40}`;
 
-  // ── 5. Tuyến Nối Ngang Vành Đai Dưới (Lower Ring Connector) ──
+  // ── 5. Tuyến Nối Ngang Vành Đai Dưới (Đại Lộ Ven Kênh Tàu Hủ - Võ Văn Kiệt) ──
   const pathLowerRing = `M ${w * 0.08} ${h * 0.72} Q ${w * 0.48} ${h * 0.74} ${w * 0.88} ${h * 0.71}`;
 
   return (
@@ -69,7 +69,7 @@ function FullPageTrafficNetwork() {
             height="48"
             patternUnits="userSpaceOnUse"
           >
-            <circle cx="2" cy="2" r="1" fill="var(--color-line)" opacity="0.45" />
+            <circle cx="2" cy="2" r="1" fill="var(--color-line)" opacity="0.4" />
           </pattern>
 
           {/* Glow filter for accent nodes */}
@@ -87,6 +87,86 @@ function FullPageTrafficNetwork() {
 
         {/* Background Subtle Dot Matrix */}
         <rect width="100%" height="100%" fill="url(#ambientTrafficGrid)" />
+
+        {/* ── MẠNG LƯỚI HẺM XƯƠNG CÁ DÀY ĐẶC DỌC HAI HÀNH LANG (VIETNAMESE DENSITY) ── */}
+        <g stroke="var(--color-line)" strokeWidth="0.8" opacity="0.4" fill="none">
+          {/* Hẻm xương cá hành lang Tây */}
+          {[0.14, 0.19, 0.24, 0.29, 0.35, 0.42, 0.48, 0.55, 0.62, 0.70, 0.78, 0.85].map((factor, idx) => (
+            <g key={`alley-w-${idx}`}>
+              <line
+                x1={w * 0.08}
+                y1={h * factor}
+                x2={w * 0.03}
+                y2={h * factor + 18}
+              />
+              <line
+                x1={w * 0.10}
+                y1={h * factor + 8}
+                x2={w * 0.14}
+                y2={h * factor + 26}
+              />
+            </g>
+          ))}
+
+          {/* Hẻm xương cá hành lang Đông */}
+          {[0.12, 0.18, 0.25, 0.32, 0.39, 0.46, 0.53, 0.60, 0.68, 0.75, 0.83, 0.90].map((factor, idx) => (
+            <g key={`alley-e-${idx}`}>
+              <line
+                x1={w * 0.90}
+                y1={h * factor}
+                x2={w * 0.96}
+                y2={h * factor + 16}
+              />
+              <line
+                x1={w * 0.88}
+                y1={h * factor + 10}
+                x2={w * 0.83}
+                y2={h * factor + 28}
+              />
+            </g>
+          ))}
+
+          {/* Lưới ô cờ các khu phố bàn cờ tại các khoảng đệm giữa các section */}
+          {/* Khoảng đệm 1: Giữa Hero & Storage Sizes */}
+          {[0, 1, 2, 3].map((i) => (
+            <line
+              key={`grid-1-h-${i}`}
+              x1={w * 0.15}
+              y1={h * 0.18 + i * 14}
+              x2={w * 0.28}
+              y2={h * 0.18 + i * 14}
+            />
+          ))}
+          {[0, 1, 2, 3, 4].map((j) => (
+            <line
+              key={`grid-1-v-${j}`}
+              x1={w * 0.15 + j * 32}
+              y1={h * 0.18}
+              x2={w * 0.15 + j * 32}
+              y2={h * 0.18 + 42}
+            />
+          ))}
+
+          {/* Khoảng đệm 2: Giữa Pillars & Steps */}
+          {[0, 1, 2, 3].map((i) => (
+            <line
+              key={`grid-2-h-${i}`}
+              x1={w * 0.72}
+              y1={h * 0.48 + i * 14}
+              x2={w * 0.86}
+              y2={h * 0.48 + i * 14}
+            />
+          ))}
+          {[0, 1, 2, 3, 4].map((j) => (
+            <line
+              key={`grid-2-v-${j}`}
+              x1={w * 0.72 + j * 32}
+              y1={h * 0.48}
+              x2={w * 0.72 + j * 32}
+              y2={h * 0.48 + 42}
+            />
+          ))}
+        </g>
 
         {/* ── ARTERIAL LINES (ĐƯỜNG GIAO THÔNG MỜ MỜ NỐI DÀI TOÀN TRANG) ── */}
 
@@ -197,43 +277,45 @@ function FullPageTrafficNetwork() {
           className="traffic-flow-dash"
         />
 
-        {/* ── NÚT GIAO NGHỆ THUẬT (GEOMETRIC HUBS - 0 GHI CHÚ ĐỊA ĐIỂM) ── */}
-        {/* Hub 1: Giao lộ Hero Đông */}
+        {/* ── NÚT GIAO VÒNG XOAY BÙNG BINH HÌNH HỌC (0 CHỮ ĐỊA DANH) ── */}
+        {/* Hub 1: Bùng binh phía Bắc / Hero */}
         <g transform={`translate(${w * 0.84}, 100)`}>
-          <circle r="14" fill="none" stroke="var(--color-accent)" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+          <circle r="18" fill="none" stroke="var(--color-accent)" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+          <circle r="10" fill="var(--color-surface)" stroke="var(--color-accent)" strokeWidth="1.8" />
           <circle r="4" fill="var(--color-accent)" />
         </g>
 
-        {/* Hub 2: Giao lộ Sizes Tây */}
+        {/* Hub 2: Bùng binh Tây / Sizes */}
         <g transform={`translate(${w * 0.10}, ${h * 0.27})`}>
-          <rect x="-6" y="-6" width="12" height="12" fill="var(--color-surface)" stroke="var(--color-line-strong)" strokeWidth="1.5" />
-          <rect x="-2" y="-2" width="4" height="4" fill="var(--color-ink)" />
+          <circle r="14" fill="none" stroke="var(--color-line-strong)" strokeWidth="1.2" strokeDasharray="3 2" opacity="0.6" />
+          <circle r="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" strokeWidth="1.8" />
+          <rect x="-2.5" y="-2.5" width="5" height="5" fill="var(--color-ink)" />
         </g>
 
-        {/* Hub 3: Giao lộ Giữa Tuyến Xuyên Tâm & Vành Đai Đông */}
+        {/* Hub 3: Vòng xoay Trung Tâm / Pillars - Steps */}
         <g transform={`translate(${w * 0.68}, ${h * 0.54})`}>
-          <circle r="16" fill="none" stroke="var(--color-accent)" strokeWidth="1.2" className="page-hub-pulse" />
-          <rect x="-7" y="-7" width="14" height="14" fill="var(--color-surface)" stroke="var(--color-accent)" strokeWidth="2" />
-          <rect x="-2.5" y="-2.5" width="5" height="5" fill="var(--color-accent)" />
+          <circle r="22" fill="none" stroke="var(--color-accent)" strokeWidth="1.2" className="page-hub-pulse" />
+          <circle r="12" fill="var(--color-surface)" stroke="var(--color-accent)" strokeWidth="2.2" />
+          <circle r="4.5" fill="var(--color-accent)" />
         </g>
 
-        {/* Hub 4: Giao lộ Facilities Tây */}
+        {/* Hub 4: Bùng binh Vành Đai Dưới / Facilities */}
         <g transform={`translate(${w * 0.08}, ${h * 0.74})`}>
-          <circle r="12" fill="none" stroke="var(--color-line-strong)" strokeWidth="1" strokeDasharray="2 2" opacity="0.6" />
+          <circle r="16" fill="none" stroke="var(--color-line-strong)" strokeWidth="1" strokeDasharray="2 2" opacity="0.6" />
+          <circle r="9" fill="var(--color-surface)" stroke="var(--color-line-strong)" strokeWidth="1.8" />
           <circle r="3.5" fill="var(--color-ink)" />
         </g>
 
-        {/* Hub 5: Giao lộ Cuối CTA */}
+        {/* Hub 5: Nút Giao Lõi Nam Sài Gòn / Bottom CTA */}
         <g transform={`translate(${w * 0.50}, ${h - 140})`}>
-          <circle r="18" fill="none" stroke="var(--color-accent)" strokeWidth="1.2" className="page-hub-pulse" />
-          <rect x="-6" y="-6" width="12" height="12" fill="var(--color-surface)" stroke="var(--color-accent)" strokeWidth="2" />
-          <rect x="-2" y="-2" width="4" height="4" fill="var(--color-accent)" />
+          <circle r="24" fill="none" stroke="var(--color-accent)" strokeWidth="1.2" className="page-hub-pulse" />
+          <circle r="12" fill="var(--color-surface)" stroke="var(--color-accent)" strokeWidth="2.4" />
+          <circle r="4" fill="var(--color-accent)" />
         </g>
 
         {/* ── CÁC NODE XE CỘ DI CHUYỂN DỌC TOÀN TRANG (VEHICLE PACKETS) ── */}
 
         {/* ── Tuyến Đông (Path East) ── */}
-        {/* Node E1: Đỏ chủ đạo */}
         <g filter="url(#pageGlowAccent)">
           <circle r="5" fill="var(--color-accent)">
             <animateMotion
@@ -254,7 +336,6 @@ function FullPageTrafficNetwork() {
           </circle>
         </g>
 
-        {/* Node E2: Đỏ so le */}
         <g filter="url(#pageGlowAccent)">
           <circle r="4.5" fill="var(--color-accent)">
             <animateMotion
@@ -267,7 +348,6 @@ function FullPageTrafficNetwork() {
           </circle>
         </g>
 
-        {/* Node E3: Đen Ink */}
         <g filter="url(#pageGlowInk)">
           <circle r="4.5" fill="var(--color-ink)">
             <animateMotion
@@ -290,7 +370,6 @@ function FullPageTrafficNetwork() {
         </g>
 
         {/* ── Tuyến Tây (Path West) ── */}
-        {/* Node W1: Đen Ink */}
         <g filter="url(#pageGlowInk)">
           <circle r="4.5" fill="var(--color-ink)">
             <animateMotion
@@ -311,7 +390,6 @@ function FullPageTrafficNetwork() {
           </circle>
         </g>
 
-        {/* Node W2: Đỏ Accent */}
         <g filter="url(#pageGlowAccent)">
           <circle r="4.5" fill="var(--color-accent)">
             <animateMotion
@@ -324,7 +402,6 @@ function FullPageTrafficNetwork() {
           </circle>
         </g>
 
-        {/* Node W3: Đen Ink so le */}
         <circle r="3.5" fill="var(--color-ink)" opacity="0.75">
           <animateMotion
             path={pathWest}
@@ -336,7 +413,6 @@ function FullPageTrafficNetwork() {
         </circle>
 
         {/* ── Tuyến Xuyên Tâm (Path Transversal) ── */}
-        {/* Node T1: Đỏ chính chuyển động nhanh qua giữa trang */}
         <g filter="url(#pageGlowAccent)">
           <circle r="5.5" fill="var(--color-accent)">
             <animateMotion
@@ -357,7 +433,6 @@ function FullPageTrafficNetwork() {
           </circle>
         </g>
 
-        {/* Node T2: Đỏ so le */}
         <g filter="url(#pageGlowAccent)">
           <circle r="4.5" fill="var(--color-accent)">
             <animateMotion
@@ -370,7 +445,6 @@ function FullPageTrafficNetwork() {
           </circle>
         </g>
 
-        {/* Node T3: Đen Ink */}
         <g filter="url(#pageGlowInk)">
           <circle r="4.5" fill="var(--color-ink)">
             <animateMotion
@@ -392,7 +466,6 @@ function FullPageTrafficNetwork() {
           </circle>
         </g>
 
-        {/* Node T4: Đen Ink so le */}
         <circle r="3.5" fill="var(--color-ink)" opacity="0.75">
           <animateMotion
             path={pathTransversal}
@@ -404,7 +477,6 @@ function FullPageTrafficNetwork() {
         </circle>
 
         {/* ── Tuyến Ngang Nối (Mid & Lower Rings) ── */}
-        {/* Node M1: Chuyển động ngang ở giữa trang */}
         <circle r="4" fill="var(--color-secondary)" opacity="0.8">
           <animateMotion
             path={pathMidRing}
@@ -414,7 +486,6 @@ function FullPageTrafficNetwork() {
           />
         </circle>
 
-        {/* Node L1: Chuyển động ngang ở cuối trang */}
         <circle r="4" fill="var(--color-accent)" opacity="0.85">
           <animateMotion
             path={pathLowerRing}

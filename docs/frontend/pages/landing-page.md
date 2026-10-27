@@ -32,14 +32,20 @@ Mục tiêu chính:
 - **Bố cục 2 Cột Đối Xứng (2-Column Grid)**:
   - **Cột Trái**: Tiêu đề H1 Kinetic Text Reveal (*"Lưu Trữ Thông Minh · Tự Quản Tuyệt Đối · Bảo Mật 24/7"*), đoạn mô tả định vị dịch vụ và 2 nút CTA chính.
   - **Cột Phải**: Sa hình Vector mô phỏng Giao thông Logistics ([`LogisticsTrafficMap.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/LogisticsTrafficMap.jsx)):
-    - **Thiết kế tối giản, sạch sẽ (0 ghi chú địa điểm)**: Loại bỏ hoàn toàn các nhãn chữ địa danh/tên đường/tên kho gây rối mắt; tập trung 100% vào các đường line giao thông hình học tinh tế, nút giao hình tròn/vuông đồng tâm và nhịp phát tín hiệu radar.
-    - **Trục đường giao thông hình học**: Trục chính xuyên tâm đôi, các đường vành đai cong nối nhánh và đường kết nối nội bộ.
+    - **Mô phỏng Mật độ Đô thị Việt Nam thực tế (Khảo sát Google Maps)**: Được nhân bản từ bản đồ thực tế TP.HCM (hành lang Tân Bình - Sân bay TSN - Quận 1 - Quận 7) với cấu trúc đường xá đặc trưng:
+      - Tuyến đại lộ xuyên tâm chéo 135° (Trường Sơn -> Bùng binh Lăng Cha Cả -> Nguyễn Văn Trỗi / Nam Kỳ Khởi Nghĩa).
+      - Trục song hành Cách Mạng Tháng Tám (CMTT) qua Ngã 6 Dân Chủ -> Bùng binh Phù Đổng.
+      - Dải kênh Nhiêu Lộc - Thị Nghè uốn lượn tự nhiên cùng cặp đường ven kênh Hoàng Sa - Trường Sa.
+      - Mạng lưới hẻm xương cá và ô cờ bàn cờ Quận 3 dày đặc đặc thù đô thị Việt Nam (stroke 0.8px, opacity 0.6).
+      - Các nút giao vòng xoay / bùng binh đa nhánh (Lăng Cha Cả, Ngã 6 Dân Chủ, Bến Thành) với vòng tròn đồng tâm và nhịp phát sóng radar.
     - **Node xe cộ hoạt họa**: Các đốm tròn mang màu đỏ nhấn (`var(--color-accent)`) và đen (`var(--color-ink)`) di chuyển liên tục dọc theo các tuyến đường với vệt sáng mờ phía sau.
-    - **Khung kỹ thuật chuẩn Swiss Neo-Brutalist**: Thanh trạng thái kỹ thuật tối giản (Status Real-time, Wave bars, Corner crosses `+`), viền đen 2px và đổ bóng đặc 4px 4px.
+    - **Nguyên tắc cốt lõi**: Hoàn toàn **0 ghi chú chữ/nhãn địa danh**, giữ trọn vẻ đẹp vector công nghệ tối giản, tinh tế.
+    - **Khung kỹ thuật chuẩn Swiss Neo-Brutalist**: Thanh trạng thái kỹ thuật tối giản (`VN-HCM // NET-01`, Status Real-time, Wave bars, Corner crosses `+`), viền đen 2px và đổ bóng đặc 4px 4px.
 - **Quick Stats Ribbon (4 thẻ chỉ số)**: Căn giữa trải dài toàn bộ chiều rộng ngay bên dưới 2 cột, tích hợp bộ đếm số tự động `CounterNumber`.
 
 ### 3.1.1. Mạng lưới Giao thông Logistics Toàn Trang (`FullPageTrafficNetwork.jsx`)
 - Component [`FullPageTrafficNetwork.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/FullPageTrafficNetwork.jsx) được gắn làm lớp lót nền (`z-index: 0; pointer-events: none;`) bao phủ 100% chiều cao của trang Landing Page:
+  - **Mật độ hẻm xương cá & ô cờ đô thị Việt Nam**: Bổ sung các mạng hẻm nhánh xương cá chạy dọc hai hành lang Đông - Tây và các cụm ô cờ bàn cờ ở các khoảng đệm giữa các section, tái hiện chân thực mật độ đường bộ dày đặc của TP.HCM.
   - **Tuyến đường giao thông mờ mờ trải dài**: Tuyến Vành Đai Đông, Tuyến Vành Đai Tây, Tuyến Xuyên Tâm uốn lượn hình chữ S và các vòng đai kết nối ngang chạy xuyên suốt qua tất cả các section (Hero ➔ Storage Sizes ➔ 4 Pillars ➔ 3 Steps ➔ Facilities ➔ FAQ ➔ Bottom CTA).
   - **Các node xe cộ liên tục luân chuyển**: Các packet đốm tròn mang mã màu canonical design token (`var(--color-accent)` đỏ và `var(--color-ink)` đen) di chuyển mượt mà ở các tốc độ so le khác nhau bằng SVG `<animateMotion>`, mang lại cảm giác lưu thông xe cộ logistic sống động mọi lúc mọi nơi trên toàn bộ trang.
   - **Đảm bảo khả năng đọc 100%**: Các khối thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) có nền đặc `var(--color-surface)` và đổ bóng khối, các đường line và node xe cộ uốn lượn mờ mờ ở lề trang và luồn sau các thẻ, hoàn toàn không che khuất hay ảnh hưởng đến độ tương phản của chữ.
