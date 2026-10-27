@@ -661,43 +661,67 @@
   letter-spacing: 0.03em;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+  border-radius: var(--radius-none, 0px);
+  box-shadow: var(--btn-shadow);
+  transition: var(--btn-transition);
   white-space: nowrap;
+  user-select: none;
+}
+
+.rental-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--btn-shadow-hover);
+}
+
+.rental-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: var(--btn-shadow-active);
 }
 
 .rental-btn--primary {
   background: var(--color-ink);
   color: var(--color-surface);
   border-color: var(--color-ink);
+  box-shadow: var(--btn-shadow);
 }
 
 .rental-btn--primary:hover {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: var(--color-surface);
+  box-shadow: var(--btn-shadow-hover);
 }
 
 .rental-btn--secondary {
   background: var(--color-surface);
   color: var(--color-ink);
   border: var(--border-strong);
+  box-shadow: var(--btn-shadow-subtle);
 }
 
 .rental-btn--secondary:hover {
   background: var(--color-neutral);
   border-color: var(--color-line-strong);
+  box-shadow: var(--btn-shadow-subtle-hover);
+}
+
+.rental-btn--secondary:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
 }
 
 .rental-btn--ghost {
   background: transparent;
   color: var(--color-secondary);
   border: var(--border);
+  box-shadow: none;
 }
 
 .rental-btn--ghost:hover {
   background: var(--color-surface);
   color: var(--color-ink);
   border-color: var(--color-line-strong);
+  box-shadow: var(--btn-shadow-subtle);
 }
 
 /* ── 8. SKELETON LOADERS ── */

@@ -35,15 +35,24 @@
   height: 28px;
   background-color: #f8fafc;
   border: 1px solid var(--color-border, #cbd5e1);
-  border-radius: 0;
+  border-radius: var(--radius-none, 0px);
   color: #334155;
   cursor: pointer;
-  transition: all 0.15s ease;
+  box-shadow: var(--btn-shadow-subtle);
+  transition: var(--btn-transition);
+  user-select: none;
 }
 
 .unit-calendar-nav-btn:hover {
   background-color: #e2e8f0;
   color: #0f172a;
+  transform: translate(-1px, -1px);
+  box-shadow: var(--btn-shadow-subtle-hover);
+}
+
+.unit-calendar-nav-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
 }
 
 .unit-calendar-weekdays {

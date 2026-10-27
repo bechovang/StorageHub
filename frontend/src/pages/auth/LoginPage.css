@@ -371,12 +371,21 @@
   font: 700 0.78rem/1 var(--font-body);
   letter-spacing: 0.025em;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  box-shadow: var(--btn-shadow);
+  transition: var(--btn-transition);
+  user-select: none;
 }
 
 .login-submit:hover:not(:disabled) {
   background: var(--color-accent-dark);
   border-color: var(--color-accent-dark);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--btn-shadow-hover);
+}
+
+.login-submit:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: var(--btn-shadow-active);
 }
 
 .login-submit:disabled {
@@ -384,6 +393,8 @@
   border-color: var(--color-line);
   color: var(--color-muted);
   cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .login-submit__arrow {

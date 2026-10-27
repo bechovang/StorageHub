@@ -160,6 +160,7 @@
   padding: 0 24px;
   background: var(--color-accent);
   border: 1px solid var(--color-accent);
+  border-radius: var(--radius-none, 0px);
   color: white;
   font: 700 0.8rem / 1 var(--font-body);
   letter-spacing: 0.03em;
@@ -169,12 +170,21 @@
   gap: 8px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 140ms ease;
+  box-shadow: var(--btn-shadow);
+  transition: var(--btn-transition);
+  user-select: none;
 }
 
 .browse-filter-btn:hover {
   background: var(--color-accent-dark);
   border-color: var(--color-accent-dark);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--btn-shadow-hover);
+}
+
+.browse-filter-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: var(--btn-shadow-active);
 }
 
 /* ── Thanh tóm tắt kết quả (Summary Bar) ── */
@@ -301,15 +311,26 @@
   margin-top: var(--space-2);
   padding: 8px 18px;
   background: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  border-radius: var(--radius-none, 0px);
   color: white;
-  border: 0;
   font: 700 0.78rem / 1 var(--font-body);
   cursor: pointer;
-  transition: background-color 140ms ease;
+  box-shadow: var(--btn-shadow);
+  transition: var(--btn-transition);
+  user-select: none;
 }
 
 .browse-empty__btn:hover {
   background: var(--color-accent);
+  border-color: var(--color-accent);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--btn-shadow-hover);
+}
+
+.browse-empty__btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: var(--btn-shadow-active);
 }
 
 /* ── Responsive ── */

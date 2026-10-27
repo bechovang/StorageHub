@@ -312,61 +312,84 @@
   letter-spacing: 0.02em;
   text-decoration: none;
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-standard);
+  box-shadow: var(--btn-shadow);
+  transition: var(--btn-transition);
   border: 1px solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-none, 0px);
   background: transparent;
   color: var(--color-ink);
   line-height: 1.2;
+  user-select: none;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--btn-shadow-hover);
+}
+
+.btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: var(--btn-shadow-active);
 }
 
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .btn--primary {
   background: var(--color-ink);
   color: var(--color-surface);
   border-color: var(--color-ink);
+  box-shadow: var(--btn-shadow);
 }
 
 .btn--primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
+  box-shadow: var(--btn-shadow-hover);
 }
 
 .btn--secondary {
   background: var(--color-neutral);
   color: var(--color-ink);
   border-color: var(--color-line);
+  box-shadow: var(--btn-shadow-subtle);
 }
 
 .btn--secondary:hover:not(:disabled) {
   background: var(--color-disabled);
+  border-color: var(--color-line-strong);
+  box-shadow: var(--btn-shadow-subtle-hover);
 }
 
 .btn--outline {
   background: var(--color-surface);
   color: var(--color-ink);
   border-color: var(--color-line);
+  box-shadow: var(--btn-shadow-subtle);
 }
 
 .btn--outline:hover:not(:disabled) {
   border-color: var(--color-ink);
   background: var(--color-neutral);
+  box-shadow: var(--btn-shadow-subtle-hover);
 }
 
 .btn--danger {
   background: var(--color-accent);
   color: var(--color-surface);
   border-color: var(--color-accent);
+  box-shadow: var(--btn-shadow);
 }
 
 .btn--danger:hover:not(:disabled) {
   background: var(--color-accent-dark);
   border-color: var(--color-accent-dark);
+  box-shadow: var(--btn-shadow-hover);
 }
 
 .btn--sm {

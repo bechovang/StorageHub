@@ -408,18 +408,29 @@
   padding: 8px 4px;
   background: var(--color-surface, #ffffff);
   border: var(--border);
+  border-radius: var(--radius-none, 0px);
   cursor: pointer;
-  transition: all 140ms ease;
+  box-shadow: var(--btn-shadow-subtle);
+  transition: var(--btn-transition);
+  user-select: none;
 }
 
 .pricing-duration-btn:hover {
   border-color: var(--color-ink, #000000);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--btn-shadow-subtle-hover);
+}
+
+.pricing-duration-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
 }
 
 .pricing-duration-btn.is-selected {
   background: var(--color-ink, #000000);
   border-color: var(--color-ink, #000000);
   color: #ffffff;
+  box-shadow: var(--btn-shadow);
 }
 
 .pricing-duration-btn__months {
@@ -663,6 +674,7 @@
   padding: 14px 20px;
   background: var(--color-ink, #000000);
   border: 1px solid var(--color-ink, #000000);
+  border-radius: var(--radius-none, 0px);
   color: #ffffff;
   font: 700 0.85rem / 1 var(--font-mono);
   letter-spacing: 0.06em;
@@ -671,17 +683,28 @@
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-  transition: all 140ms ease;
+  box-shadow: var(--btn-shadow);
+  transition: var(--btn-transition);
+  user-select: none;
 }
 
 .pricing-submit-btn:hover:not(:disabled) {
   background: var(--color-accent, #dc2626);
   border-color: var(--color-accent, #dc2626);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--btn-shadow-hover);
+}
+
+.pricing-submit-btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: var(--btn-shadow-active);
 }
 
 .pricing-submit-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .pricing-submit-btn__arrow {
