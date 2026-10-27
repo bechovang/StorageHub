@@ -5,6 +5,20 @@
 export const PLACEHOLDER_UNIT_IMAGE = "/placeholder.svg";
 
 /**
+ * Chuẩn hóa chuỗi ngày giờ từ Backend (xử lý trường hợp ISO UTC thiếu hậu tố Z)
+ * @param {string|Date} raw
+ * @returns {Date}
+ */
+export function parseBackendDate(raw) {
+  if (raw instanceof Date) return raw;
+  const s = String(raw || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(s)) {
+    return new Date(`${s}Z`);
+  }
+  return new Date(s);
+}
+
+/**
  * Định dạng tiền tệ VND: ví dụ 345000 -> "345.000 ₫"
  * @param {number|string|null|undefined} amount
  * @returns {string}
@@ -14,7 +28,6 @@ export function formatVND(amount) {
   return `${new Intl.NumberFormat("vi-VN").format(Math.round(Number(amount)))} ₫`;
 }
 
-// Alias tương thích ngược cho fmtMoney
 export const fmtMoney = formatVND;
 
 /**
@@ -25,13 +38,11 @@ export const fmtMoney = formatVND;
 export function formatDate(dateStr) {
   if (!dateStr) return "—";
   try {
-    if (typeof dateStr === "string") {
-      const parts = dateStr.split("T")[0].split("-");
-      if (parts.length === 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
+    if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim())) {
+      const parts = dateStr.trim().split("-");
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
-    const d = new Date(dateStr);
+    const d = parseBackendDate(dateStr);
     if (isNaN(d.getTime())) return String(dateStr);
     return d.toLocaleDateString("vi-VN", {
       day: "2-digit",
@@ -43,18 +54,17 @@ export function formatDate(dateStr) {
   }
 }
 
-// Alias tương thích ngược cho fmtDate
 export const fmtDate = formatDate;
 
 /**
- * Định dạng ngày giờ chi tiết (dd/mm/yyyy, hh:mm)
+ * Định dạng ngày giờ chi tiết theo múi giờ Việt Nam (dd/mm/yyyy, hh:mm)
  * @param {string|Date|null|undefined} dateStr
  * @returns {string}
  */
 export function formatDateTime(dateStr) {
   if (!dateStr) return "—";
   try {
-    const d = new Date(dateStr);
+    const d = parseBackendDate(dateStr);
     if (isNaN(d.getTime())) return String(dateStr);
     return d.toLocaleString("vi-VN", {
       day: "2-digit",
@@ -68,18 +78,17 @@ export function formatDateTime(dateStr) {
   }
 }
 
-// Alias tương thích ngược cho fmtDateTime
 export const fmtDateTime = formatDateTime;
 
 /**
- * Định dạng thời gian kiểm toán dạng mono: YYYY-MM-DD HH:mm:ss
+ * Định dạng thời gian kiểm toán dạng mono theo giờ địa phương: YYYY-MM-DD HH:mm:ss
  * @param {string|Date|null|undefined} isoString
  * @returns {string}
  */
 export function formatAuditTimestamp(isoString) {
   if (!isoString) return "—";
   try {
-    const d = new Date(isoString);
+    const d = parseBackendDate(isoString);
     if (isNaN(d.getTime())) return String(isoString);
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -101,7 +110,7 @@ export function formatAuditTimestamp(isoString) {
 export function formatDateLong(dateStr) {
   if (!dateStr) return "—";
   try {
-    const d = new Date(dateStr);
+    const d = parseBackendDate(dateStr);
     if (isNaN(d.getTime())) return String(dateStr);
     return d.toLocaleDateString("vi-VN", {
       weekday: "long",
@@ -121,28 +130,55 @@ export function formatDateLong(dateStr) {
  */
 export function daysUntil(dateStr) {
   if (!dateStr) return null;
-  const target = new Date(dateStr);
+  const target = parseBackendDate(dateStr);
   const now = new Date();
   const diffMs = target.getTime() - now.getTime();
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
 /**
- * Lấy ngày mai theo chuẩn ISO (YYYY-MM-DD)
+ * Lấy ngày hôm nay theo giờ địa phương chuẩn ISO (YYYY-MM-DD) — tránh lỗi lùi ngày UTC
+ * @returns {string}
+ */
+export function getTodayDate() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * Lấy ngày mai theo giờ địa phương chuẩn ISO (YYYY-MM-DD) — tránh lỗi lùi ngày UTC
  * @returns {string}
  */
 export function getTomorrowDate() {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  return d.toISOString().split("T")[0];
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * Cộng thêm số ngày vào chuỗi YYYY-MM-DD theo lịch địa phương
+ * @param {string} baseDateStr
+ * @param {number} days
+ * @returns {string}
+ */
+export function addDaysToDateStr(baseDateStr, days) {
+  const parts = String(baseDateStr || getTodayDate()).split("T")[0].split("-").map(Number);
+  const d = parts.length === 3 ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date();
+  d.setDate(d.getDate() + Number(days || 0));
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 /**
  * Chuẩn hóa chuỗi tiếng Việt: loại bỏ dấu, chuyển về chữ thường, xử lý đ/Đ và khoảng trắng thừa.
- * Phục vụ tìm kiếm tiếng Việt không phân biệt dấu và hoa thường (Accent & Case-insensitive).
- *
- * @param {string|null|undefined} str
- * @returns {string}
  */
 export function normalizeVietnamese(str = "") {
   if (!str) return "";
@@ -156,11 +192,7 @@ export function normalizeVietnamese(str = "") {
 }
 
 /**
- * Kiểm tra xem chuỗi nguồn (target) có chứa từ khóa tìm kiếm (query) hay không (không phân biệt dấu và hoa thường).
- *
- * @param {string|null|undefined} target Chuỗi dữ liệu cần kiểm tra
- * @param {string|null|undefined} query Từ khóa tìm kiếm của người dùng
- * @returns {boolean}
+ * Kiểm tra xem chuỗi nguồn (target) có chứa từ khóa tìm kiếm (query) hay không (không phân biệt dấu).
  */
 export function matchSearch(target = "", query = "") {
   if (!query || !String(query).trim()) return true;
@@ -168,4 +200,3 @@ export function matchSearch(target = "", query = "") {
   const normTarget = normalizeVietnamese(target);
   return normTarget.includes(normQuery);
 }
-

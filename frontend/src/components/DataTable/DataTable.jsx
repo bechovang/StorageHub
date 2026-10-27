@@ -5,16 +5,12 @@ export default function DataTable({
   rows,
   data,
   getRowKey = (row, index) => row.id ?? index,
-  emptyMessage = "No records found.",
+  emptyMessage = "Chưa có dữ liệu hiển thị.",
 }) {
   const tableRows = rows || data || [];
 
   if (!tableRows.length) {
-    return (
-      <div className="data-table__empty">
-        {emptyMessage}
-      </div>
-    );
+    return <div className="data-table__empty">{emptyMessage}</div>;
   }
 
   return (

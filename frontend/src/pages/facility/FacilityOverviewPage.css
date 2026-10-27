@@ -334,27 +334,27 @@
 }
 
 .status-segment--available {
-  background: #059669;
+  background: #171717;
 }
 
 .status-segment--reserved {
-  background: #1e40af;
+  background: #ef4444;
 }
 
 .status-segment--rented {
-  background: #334155;
+  background: #dc2626;
 }
 
 .status-segment--preparing {
-  background: #0284c7;
+  background: #f87171;
 }
 
 .status-segment--maintenance {
-  background: #c2410c;
+  background: #7f1d1d;
 }
 
 .status-segment--retired {
-  background: #767676;
+  background: #737373;
 }
 
 /* Interactive Status Pills Row */

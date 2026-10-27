@@ -16,7 +16,7 @@ export function CleaningRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const handleComplete = async () => {
     try {
       await completeCleaningRitual(task.taskId, checklist);
-      showToast?.(`Đã hoàn tất dọn kho ${task.unitCode}! Kho đã sẵn sàng bàn giao cho khách thuê tiếp theo.`, "success");
+      showToast?.(`Đã hoàn tất dọn kho ${task.unitCode}! Ô kho đã sẵn sàng bàn giao cho khách thuê tiếp theo.`, "success");
       onSuccess();
     } catch (err) {
       showToast?.(err.message || "Lỗi khi cập nhật trạng thái dọn dẹp", "error");
@@ -24,15 +24,15 @@ export function CleaningRitualDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   return (
-    <Drawer open={Boolean(task)} headerLabel={`VỆ SINH KHO · ${task.unitCode}`} onClose={onClose}>
+    <Drawer open={Boolean(task)} headerLabel={`VỆ SINH Ô KHO · ${task.unitCode}`} onClose={onClose}>
       <div className="ritual-flow">
         <div className="ritual-step-card">
           <span className="ritual-step-title">
             <Broom size={18} weight="bold" />
-            Checklist vệ sinh kho tự quản
+            Checklist vệ sinh ô kho tự quản
           </span>
           <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--color-secondary)" }}>
-            Hoàn tất các bước dọn dẹp trước khi đưa Unit trở về trạng thái Available.
+            Hoàn tất các bước dọn dẹp trước khi đưa ô kho trở về trạng thái Sẵn sàng cho thuê.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px", fontSize: "0.82rem" }}>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>

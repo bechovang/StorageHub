@@ -67,7 +67,9 @@ export default function BookingReview({
               {unit.code ? `Kho ${unit.code}` : "Chi tiết kho"}
             </Link>
             <CaretRight size={13} weight="bold" />
-            <span className="booking-breadcrumb__current">Đặt cọc &amp; Thanh toán</span>
+            <span className="booking-breadcrumb__current">
+              {unit.code ? `Ô kho ${unit.code}` : "Ô kho"} · Đặt chỗ
+            </span>
           </nav>
         </div>
 
@@ -88,7 +90,7 @@ export default function BookingReview({
             <div className="unit-spec-card__header">
               <div className="unit-spec-card__title-row">
                 <div className="unit-badges-row">
-                  <span className="code-pill">UNIT {unit.code || "S-3"}</span>
+                  <span className="code-pill">Ô KHO {unit.code || "S-3"}</span>
                   <Badge tone={isAlreadyPaid ? "success" : "warning"}>
                     {isAlreadyPaid ? "Đã giữ kho" : "Chờ thanh toán cọc"}
                   </Badge>
@@ -244,11 +246,11 @@ export default function BookingReview({
                   </div>
                   <div style={{ display: "flex", gap: "10px", marginTop: "12px", width: "100%" }}>
                     <Link
-                      to={`/checkin/${reservation?.id || 1}`}
+                      to={`/rentals/${reservation?.id || 1}/check-in-pass`}
                       className="btn btn--primary"
                       style={{ flex: 1, textAlign: "center", textDecoration: "none" }}
                     >
-                      Mở Check-in Pass nhận kho
+                      Mở Thẻ nhận kho
                     </Link>
                     <Link
                       to="/rentals"

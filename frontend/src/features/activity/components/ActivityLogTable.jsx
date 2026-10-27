@@ -18,6 +18,7 @@ export function ActivityLogTable({
   onSelectEntity,
   searchTerm,
   onSearchChange,
+  isLoginHistory = false,
 }) {
   return (
     <>
@@ -36,38 +37,42 @@ export function ActivityLogTable({
             />
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontSize: "0.78rem",
-              color: "var(--color-secondary)",
-            }}
-          >
-            <Funnel size={14} />
-            <span>Lọc thực thể:</span>
-          </div>
+          {!isLoginHistory && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "0.78rem",
+                color: "var(--color-secondary)",
+              }}
+            >
+              <Funnel size={14} />
+              <span>Lọc thực thể:</span>
+            </div>
+          )}
         </div>
 
         {/* Filter buttons */}
-        <div className="activity-tabs">
-          {Object.values(ENTITY_TYPES).map((entity) => {
-            const isActive = selectedEntity === entity.key;
-            return (
-              <button
-                key={entity.key}
-                type="button"
-                className={`activity-tab-btn ${
-                  isActive ? "activity-tab-btn--active" : ""
-                }`}
-                onClick={() => onSelectEntity(entity.key)}
-              >
-                {entity.label}
-              </button>
-            );
-          })}
-        </div>
+        {!isLoginHistory && (
+          <div className="activity-tabs">
+            {Object.values(ENTITY_TYPES).map((entity) => {
+              const isActive = selectedEntity === entity.key;
+              return (
+                <button
+                  key={entity.key}
+                  type="button"
+                  className={`activity-tab-btn ${
+                    isActive ? "activity-tab-btn--active" : ""
+                  }`}
+                  onClick={() => onSelectEntity(entity.key)}
+                >
+                  {entity.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Activity Logs Table */}

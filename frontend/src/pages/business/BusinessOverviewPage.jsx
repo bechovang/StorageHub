@@ -35,7 +35,7 @@ export default function BusinessOverviewPage() {
   } = useBusinessOverview();
 
   return (
-    <AppShell brandHref="/overview" roleLabel="BUSINESS OPS">
+    <AppShell>
       <div className="biz-overview-page">
         {/* ── 1. Telemetry Context Strip ── */}
         <aside className="biz-telemetry">
@@ -43,8 +43,8 @@ export default function BusinessOverviewPage() {
             <div className="biz-telemetry__left">
               <div className="telemetry-item">
                 <Warehouse size={15} weight="duotone" className="text-muted" />
-                <span className="telemetry-bold">Facility VN-SGN-01</span>
-                <span className="text-muted">(Tân Bình Gateway)</span>
+                <span className="telemetry-bold">Cơ sở Tân Bình</span>
+                <span className="text-muted">(VN-SGN-01)</span>
               </div>
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">
@@ -58,23 +58,8 @@ export default function BusinessOverviewPage() {
           </div>
         </aside>
 
-        {/* ── Sub Navigation Links for Business Ops ── */}
-        <nav className="biz-subnav">
-          <div className="biz-subnav__inner">
-            <Link to="/overview" className="biz-subnav__link biz-subnav__link--active">
-              Tổng quan
-            </Link>
-            <Link to="/policy" className="biz-subnav__link">
-              Chính sách & Biểu giá
-            </Link>
-            <Link to="/reports" className="biz-subnav__link">
-              Báo cáo tài chính
-            </Link>
-          </div>
-        </nav>
-
         {/* ── 2. Main Canvas ── */}
-        <main className="biz-canvas">
+        <div className="biz-canvas">
           {/* Page Header */}
           <section className="biz-header">
             <div>
@@ -97,7 +82,7 @@ export default function BusinessOverviewPage() {
                   value={selectedPeriod}
                   onChange={(e) => setSelectedPeriod(e.target.value)}
                 >
-                  <option value="THIS_QUARTER">Quý này (Q3 2026: 01/07 – 30/09)</option>
+                  <option value="THIS_QUARTER">Quý này (Q4 2026: 01/10 – 31/12)</option>
                   <option value="THIS_MONTH">Tháng này (10/2026)</option>
                   <option value="LAST_MONTH">Tháng trước (09/2026)</option>
                   <option value="YTD">YTD 2026 (01/01 – Hiện tại)</option>
@@ -131,7 +116,7 @@ export default function BusinessOverviewPage() {
             onNavigatePolicy={() => navigate("/policy")}
             onOpenDiff={(pv) => setDiffModalVersion(pv)}
           />
-        </main>
+        </div>
 
         {/* ── 6. Drill-down Drawer (US-31) ── */}
         <BusinessDrilldownDrawer

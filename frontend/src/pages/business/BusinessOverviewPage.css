@@ -53,9 +53,8 @@
 .dot-pulse-green {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--color-status-success, #16a34a);
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
 }
 
 .tabular-clock {
@@ -812,7 +811,7 @@
 .status-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 0;
   flex-shrink: 0;
 }
 

@@ -96,7 +96,7 @@ export function PaymentsSection({ payments = [] }) {
       <div className="rd-payments-footer">
         <div className="rd-payments-note">
           <Receipt size={15} />
-          <span>Hóa đơn điện tử đối soát theo chuẩn VAT Depot SGN-01</span>
+          <span>Hóa đơn điện tử đối soát theo chuẩn VAT Cơ sở Tân Bình</span>
         </div>
         <div className="rd-payments-total">
           <span>Tổng tiền đã tất toán:</span>

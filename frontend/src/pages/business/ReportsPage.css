@@ -54,9 +54,8 @@
 .dot-pulse-green {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--color-status-success, #16a34a);
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
   display: inline-block;
 }
 
@@ -874,7 +873,7 @@
 .dot-period-active {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--color-accent, #dc2626);
   display: inline-block;
   flex-shrink: 0;
@@ -883,7 +882,7 @@
 .dot-period-past {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--color-muted);
   display: inline-block;
   flex-shrink: 0;
@@ -1149,4 +1148,173 @@
 .reports-page .text-muted { color: var(--color-muted, #64748b); }
 .reports-page .text-primary { color: var(--color-accent, #dc2626); }
 .reports-page .text-success { color: var(--color-status-success); }
+
+/* ── Monthly Ledger Section (Swiss Architecture) ── */
+.ledger-card {
+  background: var(--color-surface, #ffffff);
+  border: var(--border-strong, 1px solid #000000);
+  border-radius: var(--radius-none, 0px);
+  overflow: hidden;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
+  margin-top: 24px;
+}
+
+.ledger-header {
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: var(--border-strong, 1px solid #000000);
+  background: var(--color-surface, #ffffff);
+}
+
+.ledger-title {
+  font-family: var(--font-display, inherit);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-ink, #000000);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.ledger-subtitle {
+  font-size: 0.82rem;
+  color: var(--color-secondary, #555555);
+  margin: 3px 0 0 0;
+}
+
+.btn-ledger-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-ink, #000000);
+  border: var(--border-strong, 1px solid #000000);
+  color: var(--color-surface, #ffffff);
+  border-radius: var(--radius-none, 0px);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.25);
+}
+
+.btn-ledger-export:hover {
+  background: var(--color-accent, #dc2626);
+  border-color: var(--color-accent, #dc2626);
+  color: #ffffff;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.4);
+  transform: translate(-1px, -1px);
+}
+
+.btn-ledger-export:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+}
+
+.btn-ledger-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--color-surface, #ffffff);
+  color: var(--color-ink, #000000);
+  border: var(--border-strong, 1px solid #000000);
+  border-radius: var(--radius-none, 0px);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+}
+
+.btn-ledger-detail:hover {
+  background: var(--color-ink, #000000);
+  color: var(--color-surface, #ffffff);
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.35);
+  transform: translate(-1px, -1px);
+}
+
+.btn-ledger-detail:active {
+  transform: translate(1px, 1px);
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2);
+}
+
+.ledger-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.ledger-table th {
+  background: var(--color-surface-page, #f5f5f5);
+  color: var(--color-ink, #000000);
+  font-size: 0.74rem;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 18px;
+  border-bottom: var(--border-strong, 1px solid #000000);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.ledger-table th.text-right {
+  text-align: right;
+}
+
+.ledger-table td {
+  padding: 14px 18px;
+  border-bottom: var(--border, 1px solid #d7d7d7);
+  color: var(--color-ink, #000000);
+  vertical-align: middle;
+}
+
+.ledger-table tr:hover td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.ledger-table tfoot td {
+  background: var(--color-surface-page, #f5f5f5);
+  border-top: var(--border-strong, 2px solid #000000);
+  border-bottom: none;
+  padding: 16px 18px;
+  font-weight: 700;
+}
+
+.ledger-month-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledger-month-name {
+  font-weight: 700;
+  color: var(--color-ink, #000000);
+}
+
+.ledger-badge-closed {
+  font-size: 0.7rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--color-muted, #767676);
+  background: var(--color-disabled, #e8e8e8);
+  padding: 2px 6px;
+  border-radius: 0px;
+  text-transform: uppercase;
+}
+
 

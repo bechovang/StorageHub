@@ -1,5 +1,6 @@
 import { ShieldCheck, Copy } from "@phosphor-icons/react";
 import Modal from "../../../components/Modal/Modal.jsx";
+import { getRoleLabel } from "../../../utils/statusLabels.js";
 
 export function CreateUserModal({
   isOpen,
@@ -52,7 +53,7 @@ export function CreateUserModal({
             <div className="temp-password-val">{createdSuccessData.tempPassword}</div>
             <div style={{ fontSize: "0.78rem", color: "#854d0e" }}>
               Email: <strong>{createdSuccessData.user.email}</strong> | Vai trò:{" "}
-              <strong>{createdSuccessData.user.role}</strong>
+              <strong>{getRoleLabel(createdSuccessData.user.role)}</strong>
             </div>
           </div>
 
@@ -149,7 +150,7 @@ export function CreateUserModal({
               Hủy bỏ
             </button>
             <button type="submit" className="btn btn--primary">
-              Tạo tài khoản & Cấp pass tạm
+              Tạo tài khoản & Cấp mật khẩu tạm
             </button>
           </div>
         </form>

@@ -1,8 +1,12 @@
 import { apiClient, safeParseJson } from "./apiClient";
+import { translateBackendMessage } from "../utils/statusLabels";
+
+let cachedUnread = { count: 0, fetchedAt: 0 };
+const UNREAD_CACHE_TTL_MS = 12000;
 
 /**
  * GET /api/v1/notifications?unread-only=false&page=1&page-size=25
- * Lấy danh sách thông báo của user (FR-34)
+ * Lấy danh sách thông báo của người dùng và tự động Việt hóa nội dung
  */
 export async function getNotifications({ unreadOnly = false, page = 1, pageSize = 25 } = {}) {
   const res = await apiClient(
@@ -10,23 +14,41 @@ export async function getNotifications({ unreadOnly = false, page = 1, pageSize 
   );
   const data = await safeParseJson(res);
   if (!res.ok) throw { status: res.status, ...data };
-  return data; // { items, page, pageSize, total }
+
+  const items = Array.isArray(data?.items)
+    ? data.items.map((item) => ({
+        ...item,
+        title: translateBackendMessage(item.title || ""),
+      }))
+    : [];
+
+  return {
+    ...data,
+    items,
+  };
 }
 
 /**
  * GET /api/v1/notifications/unread-count
- * Đếm số lượng thông báo chưa đọc cho bell badge (FR-33)
+ * Có cơ chế chống gọi lặp khi chuyển trang liên tục
  */
-export async function getUnreadNotificationCount() {
+export async function getUnreadNotificationCount({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && now - cachedUnread.fetchedAt < UNREAD_CACHE_TTL_MS) {
+    return { count: cachedUnread.count };
+  }
   const res = await apiClient("/api/v1/notifications/unread-count");
   const data = await safeParseJson(res);
   if (!res.ok) throw { status: res.status, ...data };
-  return data; // { count }
+  cachedUnread = {
+    count: Number(data?.count || 0),
+    fetchedAt: now,
+  };
+  return data;
 }
 
 /**
  * POST /api/v1/notifications/mark-all-read
- * Đánh dấu đã đọc tất cả thông báo (FR-34)
  */
 export async function markAllNotificationsRead() {
   const res = await apiClient("/api/v1/notifications/mark-all-read", {
@@ -36,5 +58,6 @@ export async function markAllNotificationsRead() {
     const data = await safeParseJson(res);
     throw { status: res.status, ...data };
   }
+  cachedUnread = { count: 0, fetchedAt: Date.now() };
   return true;
 }

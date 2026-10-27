@@ -4,6 +4,7 @@ import {
   getFinancialSummary,
   getDrilldownItems,
   exportFinancialAuditCSV,
+  getMonthlyRevenueChartData,
 } from "../../../services/reportService.js";
 
 export function useReports() {
@@ -25,6 +26,24 @@ export function useReports() {
   const [summary, setSummary] = useState(EMPTY_FINANCIAL_SUMMARY);
   // Dữ liệu Drill-down
   const [drilldownData, setDrilldownData] = useState(null);
+  // Dữ liệu chuỗi thời gian doanh thu hàng tháng từ backend (FR-31)
+  const [monthlyChartData, setMonthlyChartData] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+    getMonthlyRevenueChartData(6)
+      .then((data) => {
+        if (!ignore && Array.isArray(data)) {
+          setMonthlyChartData(data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch monthly chart data for reports:", err);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -106,5 +125,6 @@ export function useReports() {
     handleExportCSV,
     handleApplyCustomRange,
     handleCloseDrilldown,
+    monthlyChartData,
   };
 }

@@ -27,7 +27,7 @@ export function RentalHeroBanner({
         <div className="rd-hero__left">
           <div className="rd-hero__badges">
             <span className="rd-hero__unit-code font-mono">
-              UNIT {reservation.unit?.code || "—"}
+              Ô KHO {reservation.unit?.code || "—"}
             </span>
 
             <span className={`rd-badge rd-badge--${statusColor}`}>
@@ -74,7 +74,7 @@ export function RentalHeroBanner({
           </h1>
 
           <p className="rd-hero__location">
-            Cơ sở: <strong>Tân Bình Gateway (VN-SGN-01)</strong>
+            Cơ sở: <strong>Tân Bình</strong>
             {reservation.unit?.floor && (
               <> · Tầng {reservation.unit.floor}</>
             )}
@@ -101,7 +101,7 @@ export function RentalHeroBanner({
               className="rental-btn rental-btn--primary"
             >
               <QrCode size={16} weight="bold" />
-              Mở Check-in Pass
+              Mở Thẻ nhận kho
               <ArrowRight size={14} weight="bold" />
             </Link>
           )}

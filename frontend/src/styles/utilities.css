@@ -154,10 +154,13 @@
 .font-medium { font-weight: var(--font-weight-medium, 500); }
 .font-normal { font-weight: var(--font-weight-regular, 400); }
 .font-mono { font-family: var(--font-mono); }
+.italic { font-style: italic; }
+.whitespace-nowrap { white-space: nowrap; }
 
 .text-xs { font-size: var(--font-size-xs, 0.75rem); line-height: 1.4; }
 .text-sm { font-size: var(--font-size-sm, 0.82rem); line-height: 1.45; }
 .text-base { font-size: var(--font-size-md, 0.95rem); line-height: 1.5; }
+.text-micro, .text-\[10px\] { font-size: 0.68rem; line-height: 1.35; }
 
 .text-ink { color: var(--color-ink, #000000); }
 .text-ink-secondary { color: var(--color-secondary, #555555); }
@@ -165,6 +168,8 @@
 .text-muted { color: var(--color-muted, #767676); }
 .text-primary { color: var(--color-accent, #dc2626); }
 .text-success { color: var(--color-status-success, #16a34a); }
+.text-warning, .text-amber-700 { color: var(--color-status-warning, #d97706); }
+.text-info { color: var(--color-status-info, #2563eb); }
 .text-error { color: var(--color-status-danger, #dc2626); }
 
 .text-right { text-align: right; }
@@ -178,7 +183,23 @@
 .gap-2 { gap: var(--space-2, 8px); }
 .gap-3 { gap: var(--space-3, 12px); }
 .gap-4 { gap: var(--space-4, 16px); }
-.flex-shrink-0 { flex-shrink: 0; }
+.flex-shrink-0, .shrink-0 { flex-shrink: 0; }
+
+.mt-0\.5 { margin-top: 2px; }
+.mt-1 { margin-top: var(--space-1, 4px); }
+.mt-2 { margin-top: var(--space-2, 8px); }
+.mt-3 { margin-top: var(--space-3, 12px); }
+.mt-4 { margin-top: var(--space-4, 16px); }
+.mt-6 { margin-top: var(--space-5, 24px); }
+.mb-2 { margin-bottom: var(--space-2, 8px); }
+.mx-1 { margin-inline: var(--space-1, 4px); }
+.space-y-6 > * + * { margin-top: var(--space-5, 24px); }
+
+.w-20 { width: 5rem; }
+.w-28 { width: 7rem; }
+.w-32 { width: 8rem; }
+.w-36 { width: 9rem; }
+.w-48 { width: 12rem; }
 
 /* ── Status Badge & Chip System (DRY Canonical) ── */
 .status-badge {
@@ -201,35 +222,36 @@
 .status-chip--available,
 .status-chip--active,
 .status-chip--resolved {
-  background: rgba(22, 163, 74, 0.08);
+  background: var(--color-status-success-tint);
   color: var(--color-status-success);
-  border-color: rgba(22, 163, 74, 0.25);
+  border-color: var(--color-status-success-border);
 }
 
 .status-badge--warning,
 .status-chip--reserved,
 .status-chip--preparing,
 .status-chip--investigating {
-  background: rgba(245, 158, 11, 0.08);
+  background: var(--color-status-warning-tint);
   color: var(--color-status-warning);
-  border-color: rgba(245, 158, 11, 0.25);
+  border-color: var(--color-status-warning-border);
 }
 
 .status-badge--danger,
 .status-chip--maintenance,
 .status-chip--locked,
 .status-chip--escalated {
-  background: rgba(220, 38, 38, 0.08);
+  background: var(--color-status-danger-tint);
   color: var(--color-status-danger);
-  border-color: rgba(220, 38, 38, 0.25);
+  border-color: var(--color-status-danger-border);
 }
 
 .status-badge--info,
+.badge--info,
 .status-chip--rented,
 .status-chip--open {
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
-  border-color: rgba(37, 99, 235, 0.25);
+  background: var(--color-status-info-tint);
+  color: var(--color-status-info);
+  border-color: var(--color-status-info-border);
 }
 
 .status-badge--neutral,
@@ -292,6 +314,7 @@
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-standard);
   border: 1px solid transparent;
+  border-radius: var(--radius);
   background: transparent;
   color: var(--color-ink);
   line-height: 1.2;
@@ -310,8 +333,8 @@
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: #27272a;
-  border-color: #27272a;
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .btn--secondary {
@@ -351,7 +374,42 @@
   font-size: var(--font-size-xs);
 }
 
-/* ── Unified Toast Notification Banner (DRY Canonical) ── */
+.btn--xs {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+}
+
+/* ── Photo Upload Dropzone (Ritual Drawers) ── */
+.ritual-photo-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-ink);
+  background: var(--color-neutral);
+  cursor: pointer;
+  text-align: center;
+  transition: background var(--duration-fast) ease;
+}
+
+.ritual-photo-dropzone:hover {
+  background: var(--color-disabled);
+}
+
+.photo-preview-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: var(--color-status-success-tint);
+  color: var(--color-status-success);
+  border: 1px solid var(--color-status-success-border);
+  font: 700 0.72rem / 1.2 var(--font-mono);
+}
+
+/* ── Unified Toast Notification Banner (Swiss Neo-Brutalist) ── */
 .toast-banner {
   position: fixed;
   bottom: 24px;
@@ -365,29 +423,30 @@
   color: var(--color-surface);
   font-size: var(--font-size-sm);
   font-family: var(--font-body);
-  border: 1px solid var(--color-ink);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  animation: toastSlideIn 200ms ease-out;
+  border: var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 4px 4px 0 var(--color-line-strong);
+  animation: toastSlideIn 160ms ease-out;
 }
 
 .toast-banner--success {
-  background: #0f172a;
+  background: var(--color-ink);
   border-left: 4px solid var(--color-status-success);
 }
 
 .toast-banner--warning {
-  background: #0f172a;
+  background: var(--color-ink);
   border-left: 4px solid var(--color-status-warning);
 }
 
 .toast-banner--error {
-  background: #0f172a;
+  background: var(--color-ink);
   border-left: 4px solid var(--color-status-danger);
 }
 
 @keyframes toastSlideIn {
   from {
-    transform: translateY(12px);
+    transform: translateY(10px);
     opacity: 0;
   }
   to {
@@ -424,4 +483,3 @@
   color: var(--color-muted);
   max-width: 400px;
 }
-

@@ -154,6 +154,13 @@ export function useStaffShifts() {
     };
   }, [rawRoster]);
 
+  // Đảm bảo selectedStaffId luôn tồn tại trong staffList
+  useEffect(() => {
+    if (staffList && staffList.length > 0 && !staffList.some((s) => Number(s.id) === Number(selectedStaffId))) {
+      setSelectedStaffId(staffList[0].id);
+    }
+  }, [staffList, selectedStaffId]);
+
   // Kiểm tra xung đột thời gian thực trên form hiện tại
   const liveConflict = useMemo(() => {
     return detectShiftConflict({

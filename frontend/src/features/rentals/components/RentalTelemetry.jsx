@@ -6,7 +6,7 @@ export default function RentalTelemetry() {
       <div className="rental-telemetry__item">
         <Buildings size={15} weight="bold" className="rental-telemetry__icon" />
         <span>
-          Cơ sở: <strong>Tân Bình Gateway (VN-SGN-01)</strong>
+          Cơ sở: <strong>Tân Bình</strong>
         </span>
       </div>
 

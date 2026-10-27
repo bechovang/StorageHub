@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router";
+import { Routes, Route, Navigate, useParams } from "react-router";
 import { useAuth } from "../context/AuthContext.jsx";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
 
@@ -36,7 +36,7 @@ import UserManagementPage from "../pages/admin/UserManagementPage.jsx";
 import ActivityLogPage from "../pages/common/ActivityLogPage.jsx";
 import SupportPage from "../pages/common/SupportPage.jsx";
 
-const ROLE_LANDINGS = {
+export const ROLE_LANDINGS = {
   CUSTOMER: "/browse",
   STAFF: "/tasks",
   FACILITY_MANAGER: "/facility",
@@ -44,15 +44,17 @@ const ROLE_LANDINGS = {
   SYSTEM_ADMIN: "/users",
 };
 
-/**
- * Root "/" không phải route — FE redirect theo landingRoute của vai trò (routes.yaml).
- */
 function RootRedirect() {
   const { user, isAuthenticated, loading } = useAuth();
   if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/browse" replace />;
   const target = ROLE_LANDINGS[user?.role] || "/browse";
   return <Navigate to={target} replace />;
+}
+
+function LegacyCheckinRedirect() {
+  const { reservationId } = useParams();
+  return <Navigate to={`/rentals/${reservationId}/check-in-pass`} replace />;
 }
 
 export default function AppRouter() {
@@ -66,7 +68,7 @@ export default function AppRouter() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/403" element={<ForbiddenPage />} />
 
-      {/* ── 2. Customer Routes (contracts/routes.yaml) ── */}
+      {/* ── 2. Customer & Public Catalog Routes ── */}
       <Route path="/browse" element={<BrowsePage />} />
       <Route path="/units/:unitId" element={<UnitDetailPage />} />
       <Route
@@ -101,6 +103,7 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route path="/checkin/:reservationId" element={<LegacyCheckinRedirect />} />
       <Route
         path="/support"
         element={
@@ -110,7 +113,7 @@ export default function AppRouter() {
         }
       />
 
-      {/* ── 3. Payment Flow Routes (US-8) ── */}
+      {/* ── 3. Payment Flow Routes ── */}
       <Route
         path="/payment"
         element={
@@ -137,17 +140,17 @@ export default function AppRouter() {
       />
       <Route path="/checkout" element={<Navigate to="/payment" replace />} />
 
-      {/* ── 4. Staff Routes (Chỉ STAFF & SYSTEM_ADMIN) ── */}
+      {/* ── 4. Staff & Facility Task Supervision Routes ── */}
       <Route
         path="/tasks"
         element={
-          <ProtectedRoute allowedRoles={["STAFF", "SYSTEM_ADMIN"]}>
+          <ProtectedRoute allowedRoles={["STAFF", "FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
             <TaskBoardPage />
           </ProtectedRoute>
         }
       />
 
-      {/* ── 5. Facility Manager Routes (Chỉ FACILITY_MANAGER & SYSTEM_ADMIN) ── */}
+      {/* ── 5. Facility Manager & Audit Routes ── */}
       <Route
         path="/facility"
         element={
@@ -175,14 +178,14 @@ export default function AppRouter() {
       <Route
         path="/facility/activity"
         element={
-          <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
+          <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "BUSINESS_OPS", "SYSTEM_ADMIN"]}>
             <ActivityLogPage />
           </ProtectedRoute>
         }
       />
       <Route path="/facility/*" element={<Navigate to="/facility" replace />} />
 
-      {/* ── 6. Business Operations Routes (Chỉ BUSINESS_OPS & SYSTEM_ADMIN) ── */}
+      {/* ── 6. Business Operations Routes ── */}
       <Route
         path="/overview"
         element={
@@ -208,7 +211,7 @@ export default function AppRouter() {
         }
       />
 
-      {/* ── 7. System Administrator Routes (Chỉ SYSTEM_ADMIN) ── */}
+      {/* ── 7. System Administrator Routes ── */}
       <Route
         path="/users"
         element={

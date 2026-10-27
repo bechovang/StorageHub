@@ -71,7 +71,7 @@ export default function UnitManagementPage() {
   } = useUnitManagement();
 
   return (
-    <AppShell brandHref="/facility" roleLabel="FACILITY MANAGER">
+    <AppShell>
       <div className="unit-mgmt-page">
         {/* ── 1. Telemetry Context Strip ── */}
         <section className="mgmt-telemetry" aria-label="Thông tin cơ sở & kiểm toán">
@@ -80,7 +80,7 @@ export default function UnitManagementPage() {
               <div className="telemetry-item">
                 <Warehouse size={16} className="text-muted" />
                 <span className="telemetry-bold">Cơ sở:</span>
-                <span>Tân Bình Gateway (VN-SGN-01)</span>
+                <span>Cơ sở Tân Bình (VN-SGN-01)</span>
               </div>
               <span className="telemetry-divider">|</span>
               <div className="telemetry-item">

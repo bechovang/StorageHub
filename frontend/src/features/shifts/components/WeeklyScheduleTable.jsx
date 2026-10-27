@@ -7,7 +7,7 @@ export default function WeeklyScheduleTable({
   onRemoveShift,
 }) {
   return (
-    <main className="shifts-schedule-col">
+    <section className="shifts-schedule-col">
       <div className="schedule-header">
         <div>
           <h2 className="schedule-title">Lịch trực tuần này</h2>
@@ -58,57 +58,68 @@ export default function WeeklyScheduleTable({
                   if (dayShifts.length === 0) {
                     return (
                       <td key={day.key} className="td-day td-day--off">
-                        <span className="off-label">Nghỉ ca</span>
+                        <span className="off-pill">Nghỉ</span>
                       </td>
                     );
                   }
 
                   return (
-                    <td
-                      key={day.key}
-                      className={`td-day ${
-                        dayShifts.some((s) => s.isConflict)
-                          ? "td-day--conflict"
-                          : ""
-                      }`}
-                    >
-                      <div className="td-shifts-stack">
-                        {dayShifts.map((shift) => (
-                          <div
-                            key={shift.id}
-                            className={`shift-pill ${
-                              shift.isConflict ? "shift-pill--conflict" : ""
-                            }`}
-                          >
-                            <div className="shift-pill__info">
-                              <span className="shift-pill__title">
-                                {shift.shiftWindow === "MORNING"
-                                  ? "Sáng"
-                                  : shift.shiftWindow === "AFTERNOON"
-                                    ? "Chiều"
-                                    : shift.shiftWindow === "FULL_DAY"
-                                      ? "Cả ngày"
-                                      : "Trực"}{" "}
-                                · {shift.zone}
-                              </span>
-                              {shift.isConflict && (
-                                <span className="shift-pill__warn">
-                                  <WarningCircle size={12} weight="fill" />
-                                  Trùng ca!
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              className="shift-pill__del"
-                              onClick={() => onRemoveShift(shift.id)}
-                              title="Xóa ca trực này để giải phóng lịch"
-                              aria-label={`Xóa ca ${shift.zone}`}
+                    <td key={day.key} className="td-day">
+                      <div className="shifts-cell-stack">
+                        {dayShifts.map((s) => {
+                          const isMorning = s.window === "MORNING";
+                          const isAfternoon = s.window === "AFTERNOON";
+                          const isFullDay = s.window === "FULL_DAY";
+
+                          let badgeType = "badge--neutral";
+                          if (isMorning) badgeType = "badge--morning";
+                          if (isAfternoon) badgeType = "badge--afternoon";
+                          if (isFullDay) badgeType = "badge--fullday";
+                          if (s.hasConflict) badgeType = "badge--conflict";
+
+                          return (
+                            <div
+                              key={s.id}
+                              className={`shift-pill ${badgeType}`}
+                              title={
+                                s.hasConflict
+                                  ? `Trùng lịch trực: ${s.conflictReason}`
+                                  : `${s.zoneName} · ${s.timeWindow}`
+                              }
                             >
-                              <Trash size={13} />
-                            </button>
-                          </div>
-                        ))}
+                              <div className="shift-pill__meta">
+                                <span className="shift-pill__zone">
+                                  {s.zoneCode}
+                                </span>
+                                <span className="shift-pill__time">
+                                  {s.window === "MORNING"
+                                    ? "Sáng"
+                                    : s.window === "AFTERNOON"
+                                    ? "Chiều"
+                                    : "Cả ngày"}
+                                </span>
+                              </div>
+
+                              {s.hasConflict && (
+                                <WarningCircle
+                                  size={14}
+                                  weight="fill"
+                                  className="shift-pill__conflict-icon"
+                                />
+                              )}
+
+                              <button
+                                type="button"
+                                className="shift-pill__remove-btn"
+                                onClick={() => onRemoveShift(s.id)}
+                                title="Xóa ca này"
+                                aria-label="Xóa ca trực"
+                              >
+                                <Trash size={12} />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     </td>
                   );
@@ -119,9 +130,8 @@ export default function WeeklyScheduleTable({
         </table>
       </div>
 
-      {/* Legend */}
       <div className="schedule-legend">
-        <span className="legend-label">CHÚ THÍCH:</span>
+        <span className="legend-title">Chú giải:</span>
         <div className="legend-item">
           <span className="legend-box legend-box--morning" />
           <span>Ca sáng (07:00 – 15:00)</span>
@@ -139,6 +149,6 @@ export default function WeeklyScheduleTable({
           <span className="text-error font-semibold">Trùng ca / Xung đột</span>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

@@ -1,27 +1,95 @@
 import { apiClient, safeParseJson } from "./apiClient";
+import { appendActivityLog } from "./activityService";
+import { getTomorrowDate, addDaysToDateStr } from "../utils/formatters";
 
-/**
- * Lấy danh sách options cho bộ lọc (loại kho và kích thước m²)
- */
-export async function getUnitFilterOptions() {
-  const res = await apiClient("/api/v1/units/filter-options");
-  const data = await safeParseJson(res);
-  if (!res.ok) {
-    throw new Error(data.message || "Không thể tải danh mục bộ lọc kho.");
-  }
-  return data;
+const FACILITY_UNITS_STORAGE_KEY = "storagehub_facility_units_v2";
+const ACTIVITY_LOGS_STORAGE_KEY = "storagehub_activity_logs";
+
+export const INITIAL_FACILITY_UNITS = [
+  { id: 1, code: "S-1", typeName: "Ô kho nhỏ (S)", typeCode: "S", typeId: 2, sizeM2: 5.0, floor: 1, zone: "Khu A", status: "AVAILABLE", baseRentPrice: 345000, monthlyPrice: 345000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Gần lối vào tầng 1, thuận tiện bốc xếp" },
+  { id: 2, code: "S-2", typeName: "Ô kho nhỏ (S)", typeCode: "S", typeId: 2, sizeM2: 5.0, floor: 1, zone: "Khu A", status: "AVAILABLE", baseRentPrice: 345000, monthlyPrice: 345000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Sàn khô ráo, khóa điện tử mới" },
+  { id: 3, code: "S-3", typeName: "Ô kho nhỏ (S)", typeCode: "S", typeId: 2, sizeM2: 5.0, floor: 1, zone: "Khu A", status: "AVAILABLE", baseRentPrice: 345000, monthlyPrice: 345000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Đã hoàn tất vệ sinh tiêu chuẩn" },
+  { id: 4, code: "S-4", typeName: "Ô kho nhỏ (S)", typeCode: "S", typeId: 2, sizeM2: 5.0, floor: 1, zone: "Khu A", status: "RENTED", baseRentPrice: 345000, monthlyPrice: 345000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: "Nguyễn Thị Lan", contractRef: "CT-2031", nextEvent: "Đang lưu trữ hoạt động", notes: "Khách thuê định kỳ" },
+  { id: 5, code: "M-1", typeName: "Ô kho vừa (M)", typeCode: "M", typeId: 3, sizeM2: 8.0, floor: 1, zone: "Khu A", status: "RENTED", baseRentPrice: 380000, monthlyPrice: 380000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: "Đỗ Mai Hương", contractRef: "CT-1040", nextEvent: "Đang lưu trữ hoạt động", notes: "Đã bàn giao mã truy cập tại quầy" },
+  { id: 6, code: "M-2", typeName: "Ô kho vừa (M)", typeCode: "M", typeId: 3, sizeM2: 8.0, floor: 2, zone: "Khu B", status: "AVAILABLE", baseRentPrice: 380000, monthlyPrice: 380000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Đã hoàn tất dọn dẹp" },
+  { id: 7, code: "M-3", typeName: "Ô kho vừa (M)", typeCode: "M", typeId: 3, sizeM2: 8.0, floor: 2, zone: "Khu B", status: "RENTED", baseRentPrice: 380000, monthlyPrice: 380000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: "Công ty Alpha", contractRef: "CT-0941", nextEvent: "Hợp đồng thuê dài hạn", notes: "Lưu trữ chứng từ doanh nghiệp" },
+  { id: 8, code: "M-4", typeName: "Ô kho vừa (M)", typeCode: "M", typeId: 3, sizeM2: 8.0, floor: 2, zone: "Khu B", status: "MAINTENANCE", baseRentPrice: 380000, monthlyPrice: 380000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Đang bảo dưỡng khóa điện tử", notes: "Thay pin và kiểm tra chốt cửa" },
+  { id: 9, code: "M-5", typeName: "Ô kho vừa (M)", typeCode: "M", typeId: 3, sizeM2: 8.0, floor: 2, zone: "Khu B", status: "AVAILABLE", baseRentPrice: 380000, monthlyPrice: 380000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Vị trí góc hai mặt thoáng" },
+  { id: 10, code: "L-1", typeName: "Ô kho lớn (L)", typeCode: "L", typeId: 4, sizeM2: 15.0, floor: 2, zone: "Khu B", status: "RESERVED", baseRentPrice: 890000, monthlyPrice: 890000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: "Nguyễn Thị Lan", contractRef: "BK-2026-0012", nextEvent: "Chờ khách đến nhận kho", notes: "Đã thanh toán cọc giữ chỗ 10%" },
+  { id: 11, code: "L-2", typeName: "Ô kho lớn (L)", typeCode: "L", typeId: 4, sizeM2: 15.0, floor: 2, zone: "Khu B", status: "AVAILABLE", baseRentPrice: 890000, monthlyPrice: 890000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Phù hợp lưu trữ nội thất và hàng kiện" },
+  { id: 12, code: "L-3", typeName: "Ô kho lớn (L)", typeCode: "L", typeId: 4, sizeM2: 15.0, floor: 2, zone: "Khu B", status: "PREPARING", baseRentPrice: 890000, monthlyPrice: 890000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Đang vệ sinh khử ẩm", notes: "Chờ nhân viên hoàn thành dọn kho" },
+  { id: 13, code: "LOCK-1", typeName: "Tủ lưu trữ nhỏ", typeCode: "LOCKER", typeId: 1, sizeM2: 1.5, floor: 1, zone: "Khu C", status: "AVAILABLE", baseRentPrice: 100000, monthlyPrice: 100000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Dãy tủ lưu trữ cạnh quầy tiếp đón" },
+  { id: 14, code: "LOCK-2", typeName: "Tủ lưu trữ nhỏ", typeCode: "LOCKER", typeId: 1, sizeM2: 1.5, floor: 1, zone: "Khu C", status: "RENTED", baseRentPrice: 100000, monthlyPrice: 100000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: "Trịnh Gia Huy", contractRef: "CT-1011", nextEvent: "Đang lưu trữ hồ sơ", notes: "Thuê cất tài liệu văn phòng" },
+  { id: 15, code: "LOCK-3", typeName: "Tủ lưu trữ nhỏ", typeCode: "LOCKER", typeId: 1, sizeM2: 1.5, floor: 1, zone: "Khu C", status: "RESERVED", baseRentPrice: 100000, monthlyPrice: 100000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: "Bùi Tuyết Mai", contractRef: "BK-1046", nextEvent: "Đã giữ chỗ chờ nhận kho", notes: "Chờ khách đến quầy ký hợp đồng" },
+  { id: 16, code: "LOCK-4", typeName: "Tủ lưu trữ nhỏ", typeCode: "LOCKER", typeId: 1, sizeM2: 1.5, floor: 1, zone: "Khu C", status: "RETIRED", baseRentPrice: 100000, monthlyPrice: 100000, facilityId: 1, facilityName: "Cơ sở Tân Bình", tenant: null, contractRef: null, nextEvent: "Ngừng khai thác", notes: "Tạm ngưng cho thuê để nâng cấp bản lề" },
+];
+
+export const INITIAL_UNIT_LOGS = [
+  { id: 1, timestamp: "2026-10-18T10:15:00+07:00", actor: "Trần Tuấn (Quản lý cơ sở)", unitCode: "M-2", action: "FIX_STATUS", fromStatus: "RENTED", toStatus: "PREPARING", reason: "Khách đã dọn hết tài sản, chuyển sang bước vệ sinh tiêu chuẩn" },
+  { id: 2, timestamp: "2026-10-17T16:30:00+07:00", actor: "Trần Tuấn (Quản lý cơ sở)", unitCode: "M-4", action: "SET_MAINTENANCE", fromStatus: "AVAILABLE", toStatus: "MAINTENANCE", reason: "Khóa điện tử bị kẹt chốt, cần bảo dưỡng kỹ thuật" },
+  { id: 3, timestamp: "2026-10-16T09:00:00+07:00", actor: "Trần Tuấn (Quản lý cơ sở)", unitCode: "LOCK-4", action: "RETIRE_UNIT", fromStatus: "AVAILABLE", toStatus: "RETIRED", reason: "Tạm ngừng khai thác để nâng cấp dãy tủ Khu C" },
+];
+
+function buildPublicFallbackFilterOptions() {
+  const types = [
+    { id: 1, code: "LOCKER", name: "Tủ lưu trữ nhỏ (1.5 m²)" },
+    { id: 2, code: "S", name: "Ô kho nhỏ — Hạng S (5 m²)" },
+    { id: 3, code: "M", name: "Ô kho vừa — Hạng M (8 m²)" },
+    { id: 4, code: "L", name: "Ô kho lớn — Hạng L (15 m²)" },
+  ];
+  return {
+    types,
+    unitTypes: types,
+    sizes: [1.5, 5, 8, 15],
+    sizesM2: [1.5, 5, 8, 15],
+    facilities: [{ id: 1, name: "Cơ sở Tân Bình" }],
+  };
+}
+
+function mapLocalUnitToPublicDto(u) {
+  return {
+    id: u.id,
+    unitId: u.id,
+    code: u.code,
+    unitCode: u.code,
+    typeId: u.typeId,
+    typeName: u.typeName,
+    sizeM2: u.sizeM2,
+    floor: u.floor,
+    zone: u.zone,
+    status: u.status,
+    baseRentPrice: u.baseRentPrice,
+    monthlyPrice: u.baseRentPrice,
+    facilityId: 1,
+    facilityName: "Cơ sở Tân Bình",
+    description: u.notes || "Ô kho tự quản tiêu chuẩn, trang bị khóa điện tử riêng và giám sát an ninh 24/7.",
+  };
 }
 
 /**
- * Tìm kiếm kho theo bộ lọc
- * @param {object} params
- * @param {number|string} [params.typeId]
- * @param {number|string} [params.sizeM2]
- * @param {string} [params.startDate]
- * @param {number|string} [params.durationMonths]
- * @param {string} [params.sort] "price-asc" | "price-desc"
- * @param {number} [params.page]
- * @param {number} [params.pageSize]
+ * Lấy danh sách options cho bộ lọc (hỗ trợ cả Khách vãng lai khi máy chủ trả 401)
+ */
+export async function getUnitFilterOptions() {
+  try {
+    const res = await apiClient("/api/v1/units/filter-options");
+    if (!res.ok || res.status === 401 || res.status === 403) {
+      return buildPublicFallbackFilterOptions();
+    }
+    const data = await safeParseJson(res);
+    return {
+      types: data.types || data.unitTypes || buildPublicFallbackFilterOptions().types,
+      unitTypes: data.unitTypes || data.types || buildPublicFallbackFilterOptions().unitTypes,
+      sizesM2: data.sizesM2 || data.sizes || buildPublicFallbackFilterOptions().sizesM2,
+      sizes: data.sizes || data.sizesM2 || buildPublicFallbackFilterOptions().sizes,
+      facilities: data.facilities || [{ id: 1, name: "Cơ sở Tân Bình" }],
+    };
+  } catch {
+    return buildPublicFallbackFilterOptions();
+  }
+}
+
+/**
+ * Tìm kiếm ô kho theo bộ lọc (Flow 1: loại, kích thước, ngày bắt đầu, thời hạn thuê)
  */
 export async function searchUnits({
   typeId = "",
@@ -33,6 +101,11 @@ export async function searchUnits({
   page = 1,
   pageSize = 25,
 } = {}) {
+  // Nếu chọn cơ sở chưa khai trương (facilityId !== "" && Number(facilityId) !== 1), trả mảng rỗng trung thực
+  if (facilityId && Number(facilityId) !== 1) {
+    return { items: [], page: 1, pageSize, total: 0, totalPages: 0 };
+  }
+
   const queryParams = new URLSearchParams();
   if (typeId) queryParams.set("type-id", typeId);
   if (sizeM2) queryParams.set("size-m2", sizeM2);
@@ -43,83 +116,116 @@ export async function searchUnits({
   queryParams.set("page", page);
   queryParams.set("page-size", pageSize);
 
-  const res = await apiClient(`/api/v1/units?${queryParams.toString()}`);
-  const data = await safeParseJson(res);
-  if (!res.ok) {
-    throw new Error(data.message || "Không thể tìm kiếm danh sách kho.");
+  try {
+    const res = await apiClient(`/api/v1/units?${queryParams.toString()}`);
+    if (!res.ok || res.status === 401 || res.status === 403) {
+      return filterFallbackPublicUnits({ typeId, sizeM2, sort, page, pageSize });
+    }
+    const data = await safeParseJson(res);
+    return data;
+  } catch {
+    return filterFallbackPublicUnits({ typeId, sizeM2, sort, page, pageSize });
   }
-  return data;
+}
+
+function filterFallbackPublicUnits({ typeId, sizeM2, sort, page, pageSize }) {
+  let list = getFacilityUnits()
+    .filter((u) => u.status !== "RETIRED" && u.status !== "MAINTENANCE")
+    .map(mapLocalUnitToPublicDto);
+
+  if (typeId) {
+    list = list.filter((u) => Number(u.typeId) === Number(typeId));
+  }
+  if (sizeM2) {
+    list = list.filter((u) => Number(u.sizeM2) === Number(sizeM2));
+  }
+  if (sort === "price-desc") {
+    list.sort((a, b) => b.baseRentPrice - a.baseRentPrice);
+  } else {
+    list.sort((a, b) => a.baseRentPrice - b.baseRentPrice);
+  }
+
+  return {
+    items: list.slice((page - 1) * pageSize, page * pageSize),
+    page,
+    pageSize,
+    total: list.length,
+    totalPages: Math.max(1, Math.ceil(list.length / pageSize)),
+  };
 }
 
 /**
- * Lấy chi tiết thông tin kho (FR-6)
- * @param {number|string} unitId
+ * Lấy chi tiết thông tin ô kho (hỗ trợ cả Khách vãng lai)
  */
 export async function getUnitDetail(unitId) {
-  const res = await apiClient(`/api/v1/units/${unitId}`);
-  const data = await safeParseJson(res);
-  if (!res.ok) {
-    throw new Error(data.message || "Không tìm thấy thông tin chi tiết kho.");
+  try {
+    const res = await apiClient(`/api/v1/units/${unitId}`);
+    if (res.status === 401 || res.status === 403) {
+      const found = getFacilityUnits().find((u) => Number(u.id) === Number(unitId));
+      if (!found) throw new Error("Không tìm thấy thông tin chi tiết ô kho.");
+      return mapLocalUnitToPublicDto(found);
+    }
+    const data = await safeParseJson(res);
+    if (!res.ok) {
+      throw new Error(data.message || "Không tìm thấy thông tin chi tiết ô kho.");
+    }
+    return data;
+  } catch (err) {
+    const found = getFacilityUnits().find((u) => Number(u.id) === Number(unitId));
+    if (found) return mapLocalUnitToPublicDto(found);
+    throw err;
   }
-  return data;
 }
 
 /**
- * Lấy bảng giá minh bạch tính toán từ PricingEngine theo Rental Policy active (FR-6, AD-11)
- * @param {number|string} unitId
- * @param {object} params
- * @param {string} params.startDate YYYY-MM-DD
- * @param {number} params.durationMonths
+ * Lấy bảng báo giá minh bạch theo Flow 1:
+ * Tổng tiền thuê = giá thuê tháng × số tháng
+ * Tiền cọc giữ chỗ = 10% × tổng tiền thuê
  */
 export async function getUnitQuote(unitId, { startDate, durationMonths = 3 } = {}) {
   const duration = Math.max(1, parseInt(durationMonths, 10) || 1);
+  const effectiveStart = startDate || getTomorrowDate();
   const queryParams = new URLSearchParams();
-  if (startDate) queryParams.set("start-date", startDate);
+  queryParams.set("start-date", effectiveStart);
   queryParams.set("duration-months", duration);
 
-  const res = await apiClient(`/api/v1/units/${unitId}/quote?${queryParams.toString()}`);
-  const data = await safeParseJson(res);
-  if (!res.ok) {
-    throw new Error(data.message || "Không thể tính toán báo giá thuê kho.");
+  try {
+    const res = await apiClient(`/api/v1/units/${unitId}/quote?${queryParams.toString()}`);
+    if (res.status === 401 || res.status === 403) {
+      return buildFallbackQuote(unitId, effectiveStart, duration);
+    }
+    const data = await safeParseJson(res);
+    if (!res.ok) {
+      return buildFallbackQuote(unitId, effectiveStart, duration);
+    }
+    return data;
+  } catch {
+    return buildFallbackQuote(unitId, effectiveStart, duration);
   }
-  return data;
+}
+
+function buildFallbackQuote(unitId, startDate, durationMonths) {
+  const unit = getFacilityUnits().find((u) => Number(u.id) === Number(unitId)) || INITIAL_FACILITY_UNITS[0];
+  const monthlyRent = Number(unit.baseRentPrice || 345000);
+  const totalRent = monthlyRent * durationMonths;
+  const depositAmount = Math.round(totalRent * 0.1);
+  return {
+    unitId: unit.id,
+    unitCode: unit.code,
+    startDate,
+    endDate: addDaysToDateStr(startDate, durationMonths * 30),
+    durationMonths,
+    monthlyRent,
+    totalRent,
+    depositPercent: 10,
+    depositAmount,
+  };
 }
 
 // ============================================================================
-// FACILITY UNIT MANAGEMENT & GUARDS (US-25, FR-26, FR-20, Flow 4)
+// QUẢN LÝ DANH MỤC Ô KHO CƠ SỞ & RÀNG BUỘC HỢP ĐỒNG (Flow 5 & Flow 7)
 // ============================================================================
 
-const FACILITY_UNITS_STORAGE_KEY = "storagehub_facility_units";
-const ACTIVITY_LOGS_STORAGE_KEY = "storagehub_activity_logs";
-
-export const INITIAL_FACILITY_UNITS = [
-  { id: 1, code: "S-1", typeName: "Kho nhỏ (S)", typeId: 2, sizeM2: 5.0, floor: 1, zone: "Zone A", status: "AVAILABLE", baseRentPrice: 345000, tenant: null, contractRef: null, nextEvent: "Khách hẹn xem kho 14:30", notes: "Gần cửa chính lối vào" },
-  { id: 2, code: "S-2", typeName: "Kho nhỏ (S)", typeId: 2, sizeM2: 5.0, floor: 1, zone: "Zone A", status: "AVAILABLE", baseRentPrice: 345000, tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Sàn khô ráo, khóa số mới" },
-  { id: 3, code: "S-3", typeName: "Kho nhỏ (S)", typeId: 2, sizeM2: 5.0, floor: 1, zone: "Zone A", status: "AVAILABLE", baseRentPrice: 345000, tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Lan đã checkout 10-18, đệm hoàn tất" },
-  { id: 4, code: "S-4", typeName: "Kho nhỏ (S)", typeId: 2, sizeM2: 5.0, floor: 1, zone: "Zone A", status: "RENTED", baseRentPrice: 345000, tenant: "Lê Minh Trí", contractRef: "CT-1038", nextEvent: "Sự cố SR-0032 (Cửa kẹt)", notes: "Đã cử staff hỗ trợ bôi trơn bản lề" },
-  { id: 5, code: "M-1", typeName: "Kho vừa (M)", typeId: 3, sizeM2: 8.0, floor: 1, zone: "Zone A", status: "RENTED", baseRentPrice: 380000, tenant: "Đỗ Mai Hương", contractRef: "CT-1040", nextEvent: "Vừa nhận kho ca sáng", notes: "Đã bàn giao thẻ từ và mã PIN" },
-  { id: 6, code: "M-2", typeName: "Kho vừa (M)", typeId: 3, sizeM2: 8.0, floor: 2, zone: "Zone B", status: "AVAILABLE", baseRentPrice: 380000, tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Đã hoàn tất dọn dẹp" },
-  { id: 7, code: "M-3", typeName: "Kho vừa (M)", typeId: 3, sizeM2: 8.0, floor: 2, zone: "Zone B", status: "RENTED", baseRentPrice: 380000, tenant: "Công ty Alpha Logistics", contractRef: "CT-0941", nextEvent: "Gia hạn thêm 6 tháng", notes: "Doanh nghiệp thuê dài hạn" },
-  { id: 8, code: "M-4", typeName: "Kho vừa (M)", typeId: 3, sizeM2: 8.0, floor: 2, zone: "Zone B", status: "MAINTENANCE", baseRentPrice: 380000, tenant: null, contractRef: null, nextEvent: "Đang sửa khóa thông minh SmartLock", notes: "Thay pin và cập nhật firmware khóa" },
-  { id: 9, code: "M-5", typeName: "Kho vừa (M)", typeId: 3, sizeM2: 8.0, floor: 2, zone: "Zone B", status: "AVAILABLE", baseRentPrice: 380000, tenant: null, contractRef: null, nextEvent: "Sẵn sàng bàn giao", notes: "Góc 2 mặt thoáng" },
-  { id: 10, code: "L-1", typeName: "Kho lớn (L)", typeId: 4, sizeM2: 15.0, floor: 2, zone: "Zone B", status: "RENTED", baseRentPrice: 890000, tenant: "Trần Anh Quân", contractRef: "CT-0912", nextEvent: "Hợp đồng dài hạn 12 tháng", notes: "Kho hàng điện tử gia dụng" },
-  { id: 11, code: "L-2", typeName: "Kho lớn (L)", typeId: 4, sizeM2: 15.0, floor: 2, zone: "Zone B", status: "RENTED", baseRentPrice: 890000, tenant: "Vũ Bảo Long", contractRef: "CT-0925", nextEvent: "Đóng tiền kỳ kế tiếp 01/11", notes: "Lưu trữ nội thất văn phòng" },
-  { id: 12, code: "L-3", typeName: "Kho lớn (L)", typeId: 4, sizeM2: 15.0, floor: 2, zone: "Zone B", status: "PREPARING", baseRentPrice: 890000, tenant: null, contractRef: null, nextEvent: "Đang vệ sinh khử ẩm (Task CL-0102)", notes: "Chờ staff hoàn thành dọn kho" },
-  { id: 13, code: "LOCK-1", typeName: "Locker", typeId: 1, sizeM2: 1.5, floor: 1, zone: "Zone C", status: "AVAILABLE", baseRentPrice: 100000, tenant: null, contractRef: null, nextEvent: "Trống sẵn sàng", notes: "Dãy tủ thông minh cạnh quầy lễ tân" },
-  { id: 14, code: "LOCK-2", typeName: "Locker", typeId: 1, sizeM2: 1.5, floor: 1, zone: "Zone C", status: "RENTED", baseRentPrice: 100000, tenant: "Trịnh Gia Huy", contractRef: "CT-1011", nextEvent: "Gia hạn theo quý", notes: "Thuê cất tài liệu văn phòng" },
-  { id: 15, code: "LOCK-3", typeName: "Locker", typeId: 1, sizeM2: 1.5, floor: 1, zone: "Zone C", status: "RESERVED", baseRentPrice: 100000, tenant: "Bùi Tuyết Mai", contractRef: "BK-1046", nextEvent: "Hạn thanh toán cọc", notes: "Chờ khách xác nhận hợp đồng" },
-  { id: 16, code: "LOCK-4", typeName: "Locker", typeId: 1, sizeM2: 1.5, floor: 1, zone: "Zone C", status: "RETIRED", baseRentPrice: 100000, tenant: null, contractRef: null, nextEvent: "Tạm dừng cho thuê quy hoạch lại", notes: "Khung sắt bị rỉ sét chờ thanh lý" },
-];
-
-export const INITIAL_UNIT_LOGS = [
-  { id: 1, timestamp: "2026-10-18T10:15:00+07:00", actor: "Tuấn (Facility Manager)", unitCode: "M-2", action: "FIX_STATUS", fromStatus: "RENTED", toStatus: "PREPARING", reason: "Khách Hoàng Nam đã dọn xong đồ, chuyển sang chuẩn bị dọn dẹp (Flow 4)" },
-  { id: 2, timestamp: "2026-10-17T16:30:00+07:00", actor: "Tuấn (Facility Manager)", unitCode: "M-4", action: "SET_MAINTENANCE", fromStatus: "AVAILABLE", toStatus: "MAINTENANCE", reason: "Khóa số SmartLock bị kẹt chốt, cần bảo dưỡng kỹ thuật" },
-  { id: 3, timestamp: "2026-10-16T09:00:00+07:00", actor: "Tuấn (Facility Manager)", unitCode: "LOCK-4", action: "RETIRE_UNIT", fromStatus: "AVAILABLE", toStatus: "RETIRED", reason: "Quy hoạch lại khu vực Locker Zone C" },
-];
-
-/**
- * Lấy danh sách toàn bộ Unit trong cơ sở
- */
 export function getFacilityUnits() {
   try {
     const raw = localStorage.getItem(FACILITY_UNITS_STORAGE_KEY);
@@ -127,26 +233,62 @@ export function getFacilityUnits() {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch (err) {
-    console.error("Failed to read facility units:", err);
+  } catch {
+    // Bỏ qua lỗi đọc localStorage
   }
   return [...INITIAL_FACILITY_UNITS];
 }
 
-/**
- * Lưu danh sách units vào localStorage
- */
-export function saveFacilityUnits(units) {
+export async function syncFacilityUnitsWithApi() {
   try {
-    localStorage.setItem(FACILITY_UNITS_STORAGE_KEY, JSON.stringify(units));
-  } catch (err) {
-    console.error("Failed to save facility units:", err);
+    const res = await apiClient("/api/v1/units?page=1&page-size=50");
+    if (!res.ok) return getFacilityUnits();
+    const data = await safeParseJson(res);
+    const apiItems = Array.isArray(data?.items) ? data.items : [];
+    if (apiItems.length === 0) return getFacilityUnits();
+
+    const current = getFacilityUnits();
+    const byCode = new Map(current.map((u) => [u.code, u]));
+
+    apiItems.forEach((apiUnit) => {
+      const code = apiUnit.code || apiUnit.unitCode;
+      if (!code) return;
+      const existing = byCode.get(code);
+      const zoneLabel = String(apiUnit.zone || existing?.zone || "Khu A").replace(/^Zone\s+/i, "Khu ");
+      byCode.set(code, {
+        ...(existing || {}),
+        id: apiUnit.id || apiUnit.unitId || existing?.id,
+        code,
+        typeName: apiUnit.typeName || existing?.typeName || "Ô kho tiêu chuẩn",
+        typeId: apiUnit.typeId || existing?.typeId || 2,
+        sizeM2: Number(apiUnit.sizeM2 || existing?.sizeM2 || 5),
+        floor: Number(apiUnit.floor || existing?.floor || 1),
+        zone: zoneLabel,
+        status: existing?.localOverride ? existing.status : (apiUnit.status || existing?.status || "AVAILABLE"),
+        baseRentPrice: Number(apiUnit.baseRentPrice || apiUnit.monthlyPrice || existing?.baseRentPrice || 345000),
+        tenant: existing?.tenant || null,
+        contractRef: existing?.contractRef || null,
+        nextEvent: existing?.nextEvent || (apiUnit.status === "AVAILABLE" ? "Sẵn sàng bàn giao" : "Theo dõi vận hành"),
+        notes: existing?.notes || apiUnit.description || "Ô kho tiêu chuẩn Cơ sở Tân Bình",
+      });
+    });
+
+    const merged = Array.from(byCode.values());
+    saveFacilityUnits(merged);
+    return merged;
+  } catch {
+    return getFacilityUnits();
   }
 }
 
-/**
- * Lấy nhật ký thao tác kiểm toán (Activity Logs)
- */
+export function saveFacilityUnits(units) {
+  try {
+    localStorage.setItem(FACILITY_UNITS_STORAGE_KEY, JSON.stringify(units));
+  } catch {
+    // Bỏ qua lỗi ghi localStorage
+  }
+}
+
 export function getUnitActivityLogs(unitCode = null) {
   let logs = [...INITIAL_UNIT_LOGS];
   try {
@@ -157,8 +299,8 @@ export function getUnitActivityLogs(unitCode = null) {
         logs = parsed;
       }
     }
-  } catch (err) {
-    console.error("Failed to read activity logs:", err);
+  } catch {
+    // Bỏ qua lỗi đọc nhật ký
   }
 
   if (unitCode) {
@@ -167,11 +309,16 @@ export function getUnitActivityLogs(unitCode = null) {
   return logs;
 }
 
-/**
- * Ghi 1 bản ghi vào Activity Log
- */
-export function addActivityLog({ actor = "Tuấn (Facility Manager)", unitCode, action, fromStatus, toStatus, reason }) {
+export function addActivityLog({
+  actor = "Trần Tuấn (Quản lý cơ sở)",
+  unitCode,
+  action,
+  fromStatus,
+  toStatus,
+  reason,
+}) {
   const logs = getUnitActivityLogs();
+  const cleanReason = reason || "Cập nhật vận hành cơ sở";
   const newEntry = {
     id: Date.now(),
     timestamp: new Date().toISOString(),
@@ -180,32 +327,41 @@ export function addActivityLog({ actor = "Tuấn (Facility Manager)", unitCode, 
     action,
     fromStatus,
     toStatus,
-    reason: reason || "Cập nhật quản trị cơ sở",
+    reason: cleanReason,
   };
   const updatedLogs = [newEntry, ...logs];
   try {
     localStorage.setItem(ACTIVITY_LOGS_STORAGE_KEY, JSON.stringify(updatedLogs));
-  } catch (err) {
-    console.error("Failed to write activity log:", err);
+  } catch {
+    // Ignore storage error
   }
+
+  appendActivityLog({
+    actor,
+    actorRole: "FACILITY_MANAGER",
+    entityType: "UNIT",
+    entityId: unitCode,
+    entityCode: `Ô kho ${unitCode}`,
+    action,
+    fromValue: fromStatus,
+    toValue: toStatus,
+    reason: cleanReason,
+  });
+
   return newEntry;
 }
 
-/**
- * Guard kiểm tra khi Cho nghỉ kho (Retire Unit)
- * @returns {{ allowed: boolean, blocker?: { title: string, message: string, contractRef?: string, tenant?: string, nextEvent?: string } }}
- */
 export function checkRetireGuard(unit) {
   if (unit.status === "RENTED") {
     return {
       allowed: false,
       blocker: {
-        title: "HÀNH ĐỘNG BỊ CHẶN: ĐANG CÓ HỢP ĐỒNG THUÊ HOẠT ĐỘNG",
-        message: `Kho ${unit.code} đang có hợp đồng thuê hoạt động (${unit.contractRef || "CT-ACTIVE"}). Không được cho nghỉ kho khi khách đang lưu trữ tài sản.`,
+        title: "Không thể ngừng khai thác: Ô kho đang có hợp đồng thuê",
+        message: `Ô kho ${unit.code} đang có hợp đồng thuê hiệu lực (${unit.contractRef || "Đang hoạt động"}). Hệ thống không cho phép ngừng khai thác khi khách hàng đang lưu trữ tài sản.`,
         contractRef: unit.contractRef,
         tenant: unit.tenant,
         nextEvent: unit.nextEvent,
-        actionAdvice: "Vui lòng đợi hoặc hoàn tất thủ tục trả kho / thanh lý hợp đồng trước khi cho nghỉ kho.",
+        actionAdvice: "Vui lòng hoàn tất thủ tục trả kho và thanh lý hợp đồng trước khi ngừng khai thác ô kho này.",
       },
     };
   }
@@ -214,12 +370,12 @@ export function checkRetireGuard(unit) {
     return {
       allowed: false,
       blocker: {
-        title: "HÀNH ĐỘNG BỊ CHẶN: ĐANG CÓ ĐƠN ĐẶT CHỖ CHỜ NHẬN KHO",
-        message: `Kho ${unit.code} đang có khách đặt chỗ (${unit.contractRef || "BK-ACTIVE"}). Không được cho nghỉ kho khi chưa giải quyết đơn đặt chỗ.`,
+        title: "Không thể ngừng khai thác: Ô kho đang có đơn giữ chỗ",
+        message: `Ô kho ${unit.code} đang được giữ chỗ cho đơn (${unit.contractRef || "Chờ nhận kho"}). Không thể ngừng khai thác khi đơn đặt chỗ chưa được xử lý.`,
         contractRef: unit.contractRef,
         tenant: unit.tenant,
         nextEvent: unit.nextEvent,
-        actionAdvice: "Vui lòng hủy đơn đặt chỗ hoặc hoàn tiền cọc trước khi cho nghỉ kho.",
+        actionAdvice: "Vui lòng bố trí ô kho thay thế hoặc tất toán hoàn cọc cho khách trước khi ngừng khai thác.",
       },
     };
   }
@@ -227,13 +383,10 @@ export function checkRetireGuard(unit) {
   return { allowed: true };
 }
 
-/**
- * Thực hiện Cho nghỉ kho (Retire Unit) sau khi Guard và Confirm thành công
- */
-export function retireUnit(unitId, actor = "Tuấn (Facility Manager)") {
+export function retireUnit(unitId, actor = "Trần Tuấn (Quản lý cơ sở)") {
   const units = getFacilityUnits();
   const idx = units.findIndex((u) => u.id === Number(unitId));
-  if (idx === -1) throw new Error("Không tìm thấy kho.");
+  if (idx === -1) throw new Error("Không tìm thấy ô kho.");
 
   const unit = units[idx];
   const guard = checkRetireGuard(unit);
@@ -243,7 +396,8 @@ export function retireUnit(unitId, actor = "Tuấn (Facility Manager)") {
 
   const prevStatus = unit.status;
   unit.status = "RETIRED";
-  unit.nextEvent = "Đã ngừng cho thuê";
+  unit.localOverride = true;
+  unit.nextEvent = "Đã ngừng khai thác";
   saveFacilityUnits(units);
 
   addActivityLog({
@@ -252,42 +406,36 @@ export function retireUnit(unitId, actor = "Tuấn (Facility Manager)") {
     action: "RETIRE_UNIT",
     fromStatus: prevStatus,
     toStatus: "RETIRED",
-    reason: "Cho nghỉ kho, rút khỏi danh mục kinh doanh (FR-26)",
+    reason: "Ngừng khai thác ô kho, tạm rút khỏi danh mục cho thuê",
   });
 
   return unit;
 }
 
-/**
- * Guard kiểm tra khi Đưa vào bảo trì (Set Maintenance)
- */
 export function checkMaintenanceGuard(unit) {
   if (unit.status === "RENTED") {
     return {
       allowed: false,
       blocker: {
-        title: "HÀNH ĐỘNG BỊ CHẶN: KHO ĐANG CÓ KHÁCH THUÊ",
-        message: `Kho ${unit.code} đang được khách hàng ${unit.tenant} lưu trữ tài sản. Không thể chuyển trạng thái bảo trì trực tiếp.`,
+        title: "Không thể bảo trì trực tiếp: Ô kho đang có khách lưu trữ",
+        message: `Ô kho ${unit.code} đang được khách hàng ${unit.tenant || "hiện hữu"} lưu trữ tài sản. Không thể chuyển sang bảo trì khi chưa di dời sang ô kho thay thế.`,
         contractRef: unit.contractRef,
         tenant: unit.tenant,
-        actionAdvice: "Nếu phát sinh sự cố, hãy tạo Support Ticket hoặc liên hệ hỗ trợ khách.",
+        actionAdvice: "Nếu xảy ra sự cố khẩn cấp (Flow 7), vui lòng mở mục Hỗ trợ sự cố để điều phối ô kho thay thế và chuyển bảo trì an toàn.",
       },
     };
   }
   return { allowed: true };
 }
 
-/**
- * Chuyển kho sang trạng thái Bảo trì (Maintenance)
- */
-export function setUnitMaintenance(unitId, reason, actor = "Tuấn (Facility Manager)") {
+export function setUnitMaintenance(unitId, reason, actor = "Trần Tuấn (Quản lý cơ sở)") {
   if (!reason || reason.trim().length < 5) {
     throw new Error("Vui lòng nhập lý do bảo trì cụ thể (tối thiểu 5 ký tự).");
   }
 
   const units = getFacilityUnits();
   const idx = units.findIndex((u) => u.id === Number(unitId));
-  if (idx === -1) throw new Error("Không tìm thấy kho.");
+  if (idx === -1) throw new Error("Không tìm thấy ô kho.");
 
   const unit = units[idx];
   const guard = checkMaintenanceGuard(unit);
@@ -295,6 +443,7 @@ export function setUnitMaintenance(unitId, reason, actor = "Tuấn (Facility Man
 
   const prevStatus = unit.status;
   unit.status = "MAINTENANCE";
+  unit.localOverride = true;
   unit.nextEvent = `Đang bảo trì: ${reason.trim()}`;
   saveFacilityUnits(units);
 
@@ -310,18 +459,16 @@ export function setUnitMaintenance(unitId, reason, actor = "Tuấn (Facility Man
   return unit;
 }
 
-/**
- * Hoàn tất bảo trì -> Tự động chuyển qua PREPARING và tạo Cleaning Task theo Buffer (Rule FR-26/20)
- */
-export function finishUnitMaintenance(unitId, actor = "Tuấn (Facility Manager)") {
+export function finishUnitMaintenance(unitId, actor = "Trần Tuấn (Quản lý cơ sở)") {
   const units = getFacilityUnits();
   const idx = units.findIndex((u) => u.id === Number(unitId));
-  if (idx === -1) throw new Error("Không tìm thấy kho.");
+  if (idx === -1) throw new Error("Không tìm thấy ô kho.");
 
   const unit = units[idx];
   const prevStatus = unit.status;
   unit.status = "PREPARING";
-  unit.nextEvent = "Đang dọn dẹp vệ sinh trước khi mở lại (Turnover Buffer)";
+  unit.localOverride = true;
+  unit.nextEvent = "Đang dọn vệ sinh trước khi mở cho thuê lại";
   saveFacilityUnits(units);
 
   addActivityLog({
@@ -330,33 +477,33 @@ export function finishUnitMaintenance(unitId, actor = "Tuấn (Facility Manager)
     action: "FINISH_MAINTENANCE",
     fromStatus: prevStatus,
     toStatus: "PREPARING",
-    reason: "Hoàn tất sửa chữa kỹ thuật; chuyển sang dọn vệ sinh khử khuẩn bàn giao (FR-26/20)",
+    reason: "Hoàn tất sửa chữa kỹ thuật, chuyển sang dọn vệ sinh tiêu chuẩn",
   });
 
   return unit;
 }
 
-/**
- * Sửa trạng thái trực tiếp (Fix status) - Bắt buộc nhập lý do kiểm toán
- */
-export function fixUnitStatus(unitId, newStatus, reason, actor = "Tuấn (Facility Manager)") {
+export function fixUnitStatus(unitId, newStatus, reason, actor = "Trần Tuấn (Quản lý cơ sở)") {
   if (!reason || reason.trim().length < 5) {
-    throw new Error("Lý do điều chỉnh trạng thái là bắt buộc để phục vụ kiểm toán (tối thiểu 5 ký tự).");
+    throw new Error("Vui lòng nhập lý do điều chỉnh trạng thái phục vụ kiểm toán (tối thiểu 5 ký tự).");
   }
 
   const units = getFacilityUnits();
   const idx = units.findIndex((u) => u.id === Number(unitId));
-  if (idx === -1) throw new Error("Không tìm thấy kho.");
+  if (idx === -1) throw new Error("Không tìm thấy ô kho.");
 
   const unit = units[idx];
   const prevStatus = unit.status;
   unit.status = newStatus;
+  unit.localOverride = true;
   if (newStatus === "AVAILABLE") {
     unit.tenant = null;
     unit.contractRef = null;
     unit.nextEvent = "Sẵn sàng bàn giao";
   } else if (newStatus === "PREPARING") {
-    unit.nextEvent = "Đang kiểm tra và chuẩn bị kho";
+    unit.nextEvent = "Đang kiểm tra và vệ sinh ô kho";
+  } else if (newStatus === "RESERVED") {
+    unit.nextEvent = "Đã giữ chỗ chờ khách nhận kho";
   }
   saveFacilityUnits(units);
 
@@ -372,13 +519,14 @@ export function fixUnitStatus(unitId, newStatus, reason, actor = "Tuấn (Facili
   return unit;
 }
 
-/**
- * Sửa thông số cơ bản của kho (Specs)
- */
-export function updateUnitSpecs(unitId, { baseRentPrice, notes, sizeM2, floor, zone }, actor = "Tuấn (Facility Manager)") {
+export function updateUnitSpecs(
+  unitId,
+  { baseRentPrice, notes, sizeM2, floor, zone },
+  actor = "Trần Tuấn (Quản lý cơ sở)"
+) {
   const units = getFacilityUnits();
   const idx = units.findIndex((u) => u.id === Number(unitId));
-  if (idx === -1) throw new Error("Không tìm thấy kho.");
+  if (idx === -1) throw new Error("Không tìm thấy ô kho.");
 
   const unit = units[idx];
   if (baseRentPrice !== undefined) unit.baseRentPrice = Number(baseRentPrice);
@@ -386,6 +534,7 @@ export function updateUnitSpecs(unitId, { baseRentPrice, notes, sizeM2, floor, z
   if (sizeM2 !== undefined) unit.sizeM2 = Number(sizeM2);
   if (floor !== undefined) unit.floor = Number(floor);
   if (zone !== undefined) unit.zone = zone;
+  unit.localOverride = true;
 
   saveFacilityUnits(units);
 
@@ -395,8 +544,242 @@ export function updateUnitSpecs(unitId, { baseRentPrice, notes, sizeM2, floor, z
     action: "UPDATE_SPECS",
     fromStatus: unit.status,
     toStatus: unit.status,
-    reason: `Cập nhật thông số kho (Giá: ${unit.baseRentPrice}đ, Ghi chú: ${unit.notes || "Không"})`,
+    reason: `Cập nhật thông số ô kho (${unit.sizeM2}m², giá thuê ${unit.baseRentPrice.toLocaleString("vi-VN")} ₫/tháng)`,
   });
 
   return unit;
+}
+
+/**
+ * Flow 5 (Node 9): Tạo mới Ô kho (Create Unit)
+ */
+export function createFacilityUnit(
+  { code, typeName = "Ô kho vừa (M)", typeId = 3, sizeM2 = 8, floor = 1, zone = "Khu A", baseRentPrice = 380000, notes = "" },
+  actor = "Trần Tuấn (Quản lý cơ sở)"
+) {
+  const normalizedCode = String(code || "").trim().toUpperCase();
+  if (!normalizedCode) {
+    throw new Error("Vui lòng nhập mã định danh ô kho (ví dụ: M-6, S-5).");
+  }
+
+  const units = getFacilityUnits();
+  if (units.some((u) => u.code.toUpperCase() === normalizedCode)) {
+    throw new Error(`Mã ô kho ${normalizedCode} đã tồn tại trong cơ sở.`);
+  }
+
+  const maxId = units.reduce((m, u) => Math.max(m, Number(u.id) || 0), 0);
+  const newUnit = {
+    id: maxId + 1,
+    code: normalizedCode,
+    typeName,
+    typeId: Number(typeId) || 3,
+    sizeM2: Number(sizeM2) || 5,
+    floor: Number(floor) || 1,
+    zone: zone || "Khu A",
+    status: "AVAILABLE",
+    baseRentPrice: Number(baseRentPrice) || 345000,
+    monthlyPrice: Number(baseRentPrice) || 345000,
+    facilityId: 1,
+    facilityName: "Cơ sở Tân Bình",
+    tenant: null,
+    contractRef: null,
+    nextEvent: "Vừa khởi tạo — Sẵn sàng bàn giao",
+    notes: notes.trim() || "Ô kho mới khởi tạo tại Cơ sở Tân Bình",
+    localOverride: true,
+  };
+
+  units.push(newUnit);
+  saveFacilityUnits(units);
+
+  addActivityLog({
+    actor,
+    unitCode: newUnit.code,
+    action: "CREATE_UNIT",
+    fromStatus: null,
+    toStatus: "AVAILABLE",
+    reason: `Khởi tạo ô kho mới ${newUnit.code} (${newUnit.sizeM2}m² · ${newUnit.zone})`,
+  });
+
+  return newUnit;
+}
+
+/**
+ * Flow 5 (Node 9): Xóa Ô kho không còn sử dụng (Delete Unit — có kiểm tra ràng buộc hợp đồng)
+ */
+export function deleteFacilityUnit(unitId, reason, actor = "Trần Tuấn (Quản lý cơ sở)") {
+  if (!reason || reason.trim().length < 5) {
+    throw new Error("Vui lòng nhập lý do xóa ô kho (tối thiểu 5 ký tự).");
+  }
+  const units = getFacilityUnits();
+  const idx = units.findIndex((u) => u.id === Number(unitId));
+  if (idx === -1) throw new Error("Không tìm thấy ô kho.");
+
+  const unit = units[idx];
+  const guard = checkRetireGuard(unit);
+  if (!guard.allowed) {
+    throw new Error(guard.blocker.message);
+  }
+
+  units.splice(idx, 1);
+  saveFacilityUnits(units);
+
+  addActivityLog({
+    actor,
+    unitCode: unit.code,
+    action: "DELETE_UNIT",
+    fromStatus: unit.status,
+    toStatus: "DELETED",
+    reason: reason.trim(),
+  });
+
+  return unit;
+}
+
+/**
+ * Flow 5 (Node 9): Gộp nhiều ô kho liền kề thành ô kho lớn (Merge Units)
+ */
+export function mergeFacilityUnits(
+  unitIds = [],
+  { newCode, reason },
+  actor = "Trần Tuấn (Quản lý cơ sở)"
+) {
+  if (!Array.isArray(unitIds) || unitIds.length < 2) {
+    throw new Error("Vui lòng chọn ít nhất 2 ô kho trống cùng tầng/khu vực để gộp.");
+  }
+  const normalizedCode = String(newCode || "").trim().toUpperCase();
+  if (!normalizedCode) {
+    throw new Error("Vui lòng nhập mã cho ô kho mới sau khi gộp (ví dụ: XL-1).");
+  }
+  if (!reason || reason.trim().length < 5) {
+    throw new Error("Vui lòng nhập lý do gộp ô kho (tối thiểu 5 ký tự).");
+  }
+
+  const units = getFacilityUnits();
+  const selected = unitIds.map((id) => units.find((u) => u.id === Number(id))).filter(Boolean);
+  if (selected.length < 2) {
+    throw new Error("Không tìm thấy đủ các ô kho đã chọn.");
+  }
+
+  for (const u of selected) {
+    const guard = checkRetireGuard(u);
+    if (!guard.allowed) {
+      throw new Error(`Không thể gộp vì ô kho ${u.code} đang bận hợp đồng/đặt chỗ.`);
+    }
+    if (u.status === "RETIRED") {
+      throw new Error(`Ô kho ${u.code} đã ngừng khai thác, không thể gộp.`);
+    }
+  }
+
+  const firstZone = selected[0].zone;
+  const firstFloor = selected[0].floor;
+  if (selected.some((u) => u.zone !== firstZone || u.floor !== firstFloor)) {
+    throw new Error("Chỉ được phép gộp các ô kho nằm cùng Tầng và cùng Khu vực.");
+  }
+
+  if (units.some((u) => u.code.toUpperCase() === normalizedCode)) {
+    throw new Error(`Mã ô kho ${normalizedCode} đã tồn tại.`);
+  }
+
+  const totalSize = Number(selected.reduce((sum, u) => sum + Number(u.sizeM2 || 0), 0).toFixed(1));
+  const totalPrice = selected.reduce((sum, u) => sum + Number(u.baseRentPrice || 0), 0);
+  const sourceCodes = selected.map((u) => u.code).join(" + ");
+
+  selected.forEach((u) => {
+    u.status = "RETIRED";
+    u.localOverride = true;
+    u.nextEvent = `Đã gộp vào ô kho ${normalizedCode}`;
+  });
+
+  const maxId = units.reduce((m, u) => Math.max(m, Number(u.id) || 0), 0);
+  const mergedUnit = {
+    id: maxId + 1,
+    code: normalizedCode,
+    typeName: totalSize >= 12 ? "Ô kho lớn (L)" : "Ô kho vừa (M)",
+    typeId: totalSize >= 12 ? 4 : 3,
+    sizeM2: totalSize,
+    floor: firstFloor,
+    zone: firstZone,
+    status: "AVAILABLE",
+    baseRentPrice: totalPrice,
+    monthlyPrice: totalPrice,
+    facilityId: 1,
+    facilityName: "Cơ sở Tân Bình",
+    tenant: null,
+    contractRef: null,
+    nextEvent: `Gộp từ (${sourceCodes}) — Sẵn sàng bàn giao`,
+    notes: `Gộp từ ${sourceCodes}: ${reason.trim()}`,
+    localOverride: true,
+  };
+
+  units.push(mergedUnit);
+  saveFacilityUnits(units);
+
+  addActivityLog({
+    actor,
+    unitCode: normalizedCode,
+    action: "MERGE_UNITS",
+    fromStatus: sourceCodes,
+    toStatus: "AVAILABLE",
+    reason: `Gộp (${sourceCodes}) thành ${normalizedCode} (${totalSize}m²): ${reason.trim()}`,
+  });
+
+  return mergedUnit;
+}
+
+/**
+ * Flow 7 (Node f7_maint): Đưa ô kho sự cố nghiêm trọng vào Bảo trì & Chuẩn bị ô kho thay thế cho khách
+ */
+export function emergencyRelocateUnit(
+  damagedUnitCode,
+  replacementUnitCode,
+  reason,
+  actor = "Trần Tuấn (Quản lý cơ sở)"
+) {
+  const units = getFacilityUnits();
+  const damaged = units.find((u) => u.code.toUpperCase() === String(damagedUnitCode || "").trim().toUpperCase());
+  const replacement = units.find((u) => u.code.toUpperCase() === String(replacementUnitCode || "").trim().toUpperCase());
+
+  if (!replacement || replacement.status !== "AVAILABLE") {
+    throw new Error("Vui lòng chọn một ô kho đang Còn trống để bố trí thay thế cho khách hàng.");
+  }
+
+  const tenantName = damaged?.tenant || "Khách hàng hiện hữu";
+  const contractRef = damaged?.contractRef || "Hợp đồng đang thuê";
+
+  if (damaged) {
+    const prevDamagedStatus = damaged.status;
+    damaged.status = "MAINTENANCE";
+    damaged.tenant = null;
+    damaged.contractRef = null;
+    damaged.localOverride = true;
+    damaged.nextEvent = `Bảo trì sự cố khẩn — Khách đã chuyển sang ${replacement.code}`;
+
+    addActivityLog({
+      actor,
+      unitCode: damaged.code,
+      action: "SET_MAINTENANCE",
+      fromStatus: prevDamagedStatus,
+      toStatus: "MAINTENANCE",
+      reason: `Sự cố nghiêm trọng, chuyển khách sang ${replacement.code}: ${reason || "Xử lý sự cố"}`,
+    });
+  }
+
+  replacement.status = "RENTED";
+  replacement.tenant = tenantName;
+  replacement.contractRef = contractRef;
+  replacement.localOverride = true;
+  replacement.nextEvent = `Tiếp nhận thay thế cho ô kho ${damagedUnitCode}`;
+
+  saveFacilityUnits(units);
+
+  addActivityLog({
+    actor,
+    unitCode: replacement.code,
+    action: "RELOCATE_UNIT",
+    fromStatus: "AVAILABLE",
+    toStatus: "RENTED",
+    reason: `Bố trí ô kho thay thế cho khách (${tenantName}) từ ô kho ${damagedUnitCode}`,
+  });
+
+  return { damaged, replacement };
 }

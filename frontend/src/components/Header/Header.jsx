@@ -8,6 +8,8 @@ import {
   WarningCircle,
   Info,
   Check,
+  List,
+  X,
 } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import {
@@ -15,21 +17,27 @@ import {
   getUnreadNotificationCount,
   markAllNotificationsRead,
 } from "../../services/notificationService.js";
+import {
+  ROLE_BADGE_UPPER,
+  getRoleLabel,
+  translateBackendMessage,
+} from "../../utils/statusLabels.js";
+import { parseBackendDate } from "../../utils/formatters.js";
 import "./Header.css";
 
 const ROLE_CONFIGS = {
   CUSTOMER: {
-    label: "KHÁCH HÀNG",
+    label: ROLE_BADGE_UPPER.CUSTOMER,
     landing: "/browse",
     links: [
-      { label: "Tìm thuê kho", href: "/browse" },
-      { label: "Kho của tôi", href: "/rentals" },
+      { label: "Khám phá ô kho", href: "/browse" },
+      { label: "Ô kho của tôi", href: "/rentals" },
       { label: "Thanh toán", href: "/payment" },
       { label: "Hỗ trợ", href: "/support" },
     ],
   },
   STAFF: {
-    label: "STAFF",
+    label: ROLE_BADGE_UPPER.STAFF,
     landing: "/tasks",
     links: [
       { label: "Bảng công việc", href: "/tasks" },
@@ -37,32 +45,34 @@ const ROLE_CONFIGS = {
     ],
   },
   FACILITY_MANAGER: {
-    label: "FACILITY MANAGER",
+    label: ROLE_BADGE_UPPER.FACILITY_MANAGER,
     landing: "/facility",
     links: [
       { label: "Tổng quan", href: "/facility" },
-      { label: "Quản lý kho", href: "/facility/units" },
-      { label: "Ca trực", href: "/facility/shifts" },
+      { label: "Danh mục ô kho", href: "/facility/units" },
+      { label: "Lịch phân ca", href: "/facility/shifts" },
+      { label: "Hỗ trợ sự cố", href: "/support" },
       { label: "Nhật ký", href: "/facility/activity" },
     ],
   },
   BUSINESS_OPS: {
-    label: "BUSINESS OPS",
+    label: ROLE_BADGE_UPPER.BUSINESS_OPS,
     landing: "/overview",
     links: [
       { label: "Tổng quan", href: "/overview" },
-      { label: "Chính sách & Giá", href: "/policy" },
-      { label: "Báo cáo", href: "/reports" },
+      { label: "Chính sách & Biểu phí", href: "/policy" },
+      { label: "Báo cáo tài chính", href: "/reports" },
     ],
   },
   SYSTEM_ADMIN: {
-    label: "SYSTEM ADMIN",
+    label: ROLE_BADGE_UPPER.SYSTEM_ADMIN,
     landing: "/users",
     links: [
-      { label: "Quản lý người dùng", href: "/users" },
+      { label: "Tài khoản", href: "/users" },
       { label: "Lịch sử đăng nhập", href: "/login-history" },
       { label: "Nhật ký hệ thống", href: "/facility/activity" },
-      { label: "Chính sách & Giá", href: "/policy" },
+      { label: "Chính sách & Biểu phí", href: "/policy" },
+      { label: "Khám phá ô kho", href: "/browse" },
     ],
   },
 };
@@ -81,19 +91,20 @@ export default function Header({
 
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
+  const [showMobileNav, setShowMobileNav] = useState(false);
   const avatarMenuRef = useRef(null);
   const notifMenuRef = useRef(null);
 
   const currentRole = user?.role || "CUSTOMER";
   const roleConfig = ROLE_CONFIGS[currentRole] || ROLE_CONFIGS.CUSTOMER;
 
-  const resolvedHome = brandHref || roleConfig.landing;
+  const resolvedHome = brandHref || (isAuthenticated ? roleConfig.landing : "/browse");
   const resolvedRoleLabel =
     roleLabel !== undefined
-      ? roleLabel
+      ? ROLE_BADGE_UPPER[roleLabel] || roleLabel
       : isAuthenticated
       ? roleConfig.label
-      : "GUEST";
+      : ROLE_BADGE_UPPER.GUEST;
 
   const resolvedAvatarText =
     avatarText ||
@@ -113,15 +124,20 @@ export default function Header({
     navLinks ||
     (isAuthenticated
       ? roleConfig.links
-      : [
-          { label: "Khám phá kho", href: "/browse" },
-        ]);
+      : [{ label: "Khám phá ô kho", href: "/browse" }]);
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
 
-  // Poll unread count (FR-33)
+  // Tự động đóng menu di động khi chuyển trang
+  useEffect(() => {
+    setShowMobileNav(false);
+    setShowAvatarMenu(false);
+    setShowNotificationMenu(false);
+  }, [location.pathname]);
+
+  // Poll unread count (chống gọi lặp qua module cache 12s)
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -133,19 +149,19 @@ export default function Header({
           setUnreadCount(Number(data.count || 0));
         }
       } catch {
-        // Fallback im lặng khi chưa có dữ liệu
+        // Bỏ qua khi ngoại tuyến
       }
     }
 
     fetchUnread();
-    const interval = setInterval(fetchUnread, 15000); // 15s poll nhẹ
+    const interval = setInterval(() => fetchUnread(), 30000);
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
   }, [isAuthenticated]);
 
-  // Fetch notification list when dropdown opens (FR-34)
+  // Fetch notification list when dropdown opens
   useEffect(() => {
     if (!showNotificationMenu || !isAuthenticated) return;
 
@@ -157,8 +173,8 @@ export default function Header({
         if (isMounted && data?.items) {
           setNotifications(data.items);
         }
-      } catch (err) {
-        console.warn("Could not load notifications:", err);
+      } catch {
+        // Bỏ qua lỗi tải thông báo
       } finally {
         if (isMounted) setLoadingNotifs(false);
       }
@@ -174,15 +190,12 @@ export default function Header({
     try {
       await markAllNotificationsRead();
       setUnreadCount(0);
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, isRead: true }))
-      );
-    } catch (err) {
-      console.warn("Failed to mark all as read:", err);
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch {
+      // Bỏ qua lỗi đánh dấu đã đọc
     }
   };
 
-  // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(e) {
       if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target)) {
@@ -198,13 +211,28 @@ export default function Header({
 
   const handleLogout = () => {
     setShowAvatarMenu(false);
+    setShowMobileNav(false);
     logout();
+  };
+
+  const computeIsLinkActive = (link) => {
+    if (link.active !== undefined) return link.active;
+    if (location.pathname === link.href) return true;
+    if (link.href === "/") return false;
+    const hasMoreSpecificSibling = resolvedNavLinks.some(
+      (other) =>
+        other.href !== link.href &&
+        other.href.startsWith(link.href + "/") &&
+        (location.pathname === other.href || location.pathname.startsWith(other.href + "/"))
+    );
+    if (hasMoreSpecificSibling) return false;
+    return location.pathname.startsWith(link.href + "/");
   };
 
   return (
     <header className={`app-header ${className}`}>
       <div className="app-header__inner">
-        <Link className="brand" to={resolvedHome} aria-label={`${brandName} home`}>
+        <Link className="brand" to={resolvedHome} aria-label={`Trang chủ ${brandName}`}>
           <span className="brand__mark" aria-hidden="true">
             <i />
             <i />
@@ -214,16 +242,12 @@ export default function Header({
         </Link>
 
         {resolvedNavLinks && resolvedNavLinks.length > 0 ? (
-          <nav className="main-nav" aria-label="Main navigation">
+          <nav className="main-nav" aria-label="Điều hướng chính">
             {resolvedNavLinks.map((link) => {
-              const isActive =
-                link.active !== undefined
-                  ? link.active
-                  : location.pathname === link.href ||
-                    (link.href !== "/" && location.pathname.startsWith(link.href + "/"));
+              const isActive = computeIsLinkActive(link);
               return (
                 <Link
-                  key={link.label}
+                  key={link.href + link.label}
                   to={link.href}
                   className={`main-nav__link ${isActive ? "is-active" : ""}`}
                 >
@@ -246,7 +270,6 @@ export default function Header({
             rightContent
           ) : (
             <>
-              {/* Bell Notifications */}
               {isAuthenticated && (
                 <div className="header-notif-wrapper" ref={notifMenuRef}>
                   <button
@@ -255,20 +278,23 @@ export default function Header({
                     onClick={() => {
                       setShowNotificationMenu((prev) => !prev);
                       setShowAvatarMenu(false);
+                      setShowMobileNav(false);
                     }}
                     aria-label="Thông báo"
                     aria-expanded={showNotificationMenu}
                   >
                     <Bell size={18} weight="bold" />
                     {unreadCount > 0 && (
-                      <span className="header-notif-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                      <span className="header-notif-badge">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
                     )}
                   </button>
 
                   {showNotificationMenu && (
                     <div className="header-dropdown header-dropdown--notif">
                       <div className="header-dropdown__header">
-                        <span className="header-dropdown__title">Thông báo hệ thống</span>
+                        <span className="header-dropdown__title">Thông báo</span>
                         <div className="header-dropdown__actions">
                           {unreadCount > 0 && (
                             <button
@@ -282,7 +308,7 @@ export default function Header({
                             </button>
                           )}
                           <span className="header-dropdown__tag">
-                            {unreadCount > 0 ? `${unreadCount} mới` : "Tất cả đã đọc"}
+                            {unreadCount > 0 ? `${unreadCount} mới` : "Đã xem hết"}
                           </span>
                         </div>
                       </div>
@@ -296,36 +322,60 @@ export default function Header({
                             <p className="header-notif-item__text">Chưa có thông báo nào.</p>
                           </div>
                         ) : (
-                          notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              className={`header-notif-item ${!n.isRead ? "is-unread" : ""}`}
-                            >
-                              {n.type?.includes("CONFIRMED") || n.type?.includes("COMPLETED") || n.type?.includes("SIGNED") ? (
-                                <CheckCircle size={16} className="header-notif-item__icon--success" weight="fill" />
-                              ) : n.type?.includes("EXPIRED") || n.type?.includes("FAILED") ? (
-                                <WarningCircle size={16} className="header-notif-item__icon--danger" weight="fill" />
-                              ) : (
-                                <Info size={16} className="header-notif-item__icon--warning" weight="fill" />
-                              )}
-                              <div className="header-notif-item__content">
-                                {n.deepLink ? (
-                                  <Link
-                                    to={n.deepLink}
-                                    className="header-notif-item__link"
-                                    onClick={() => setShowNotificationMenu(false)}
-                                  >
-                                    <p className="header-notif-item__text">{n.title}</p>
-                                  </Link>
+                          notifications.map((n) => {
+                            const displayTitle = translateBackendMessage(n.title || "");
+                            return (
+                              <div
+                                key={n.id}
+                                className={`header-notif-item ${!n.isRead ? "is-unread" : ""}`}
+                              >
+                                {n.type?.includes("CONFIRMED") ||
+                                n.type?.includes("COMPLETED") ||
+                                n.type?.includes("SIGNED") ? (
+                                  <CheckCircle
+                                    size={16}
+                                    className="header-notif-item__icon--success"
+                                    weight="fill"
+                                  />
+                                ) : n.type?.includes("EXPIRED") || n.type?.includes("FAILED") ? (
+                                  <WarningCircle
+                                    size={16}
+                                    className="header-notif-item__icon--danger"
+                                    weight="fill"
+                                  />
                                 ) : (
-                                  <p className="header-notif-item__text">{n.title}</p>
+                                  <Info
+                                    size={16}
+                                    className="header-notif-item__icon--warning"
+                                    weight="fill"
+                                  />
                                 )}
-                                <span className="header-notif-item__time">
-                                  {n.createdAt ? new Date(n.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "Vừa xong"}
-                                </span>
+                                <div className="header-notif-item__content">
+                                  {n.deepLink ? (
+                                    <Link
+                                      to={n.deepLink}
+                                      className="header-notif-item__link"
+                                      onClick={() => setShowNotificationMenu(false)}
+                                    >
+                                      <p className="header-notif-item__text">{displayTitle}</p>
+                                    </Link>
+                                  ) : (
+                                    <p className="header-notif-item__text">{displayTitle}</p>
+                                  )}
+                                  <span className="header-notif-item__time">
+                                    {n.createdAt
+                                      ? parseBackendDate(n.createdAt).toLocaleString("vi-VN", {
+                                          day: "2-digit",
+                                          month: "2-digit",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })
+                                      : "Vừa xong"}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
                     </div>
@@ -333,7 +383,6 @@ export default function Header({
                 </div>
               )}
 
-              {/* Avatar & User Dropdown */}
               {isAuthenticated ? (
                 <div className="header-avatar-wrapper" ref={avatarMenuRef}>
                   <button
@@ -342,6 +391,7 @@ export default function Header({
                     onClick={() => {
                       setShowAvatarMenu((prev) => !prev);
                       setShowNotificationMenu(false);
+                      setShowMobileNav(false);
                     }}
                     aria-label="Tài khoản cá nhân"
                     aria-expanded={showAvatarMenu}
@@ -361,7 +411,9 @@ export default function Header({
                           {user?.fullName || "Người dùng StorageHub"}
                         </p>
                         <p className="header-user-info__email">{user?.email || ""}</p>
-                        <span className="header-user-info__role">{currentRole}</span>
+                        <span className="header-user-info__role">
+                          {getRoleLabel(currentRole)}
+                        </span>
                       </div>
                       <div className="header-dropdown__divider" />
                       <button
@@ -376,14 +428,87 @@ export default function Header({
                   )}
                 </div>
               ) : (
-                <Link to="/login" className="header-login-btn">
-                  Đăng nhập
-                </Link>
+                <div className="header-guest-actions">
+                  <Link to="/login" className="header-login-btn">
+                    Đăng nhập
+                  </Link>
+                </div>
               )}
             </>
           )}
+
+          {/* Mobile Hamburger Menu Button */}
+          <button
+            type="button"
+            className={`header-mobile-toggle ${showMobileNav ? "is-active" : ""}`}
+            onClick={() => {
+              setShowMobileNav((prev) => !prev);
+              setShowAvatarMenu(false);
+              setShowNotificationMenu(false);
+            }}
+            aria-label={showMobileNav ? "Đóng menu điều hướng" : "Mở menu điều hướng"}
+            aria-expanded={showMobileNav}
+          >
+            {showMobileNav ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Navigation Drawer */}
+      {showMobileNav && (
+        <nav className="mobile-nav" aria-label="Menu điều hướng di động">
+          <div className="mobile-nav__meta">
+            <span className="mobile-nav__role">{resolvedRoleLabel}</span>
+            {isAuthenticated && user?.fullName && (
+              <span className="mobile-nav__user">{user.fullName}</span>
+            )}
+          </div>
+          <div className="mobile-nav__links">
+            {resolvedNavLinks.map((link) => {
+              const isActive = computeIsLinkActive(link);
+              return (
+                <Link
+                  key={`mobile-${link.href}-${link.label}`}
+                  to={link.href}
+                  className={`mobile-nav__link ${isActive ? "is-active" : ""}`}
+                  onClick={() => setShowMobileNav(false)}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+          <div className="mobile-nav__footer">
+            {isAuthenticated ? (
+              <button
+                type="button"
+                className="mobile-nav__logout"
+                onClick={handleLogout}
+              >
+                <SignOut size={16} weight="bold" />
+                <span>Đăng xuất</span>
+              </button>
+            ) : (
+              <div className="mobile-nav__auth-btns">
+                <Link
+                  to="/login"
+                  className="mobile-nav__login"
+                  onClick={() => setShowMobileNav(false)}
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  to="/register"
+                  className="mobile-nav__register"
+                  onClick={() => setShowMobileNav(false)}
+                >
+                  Đăng ký tài khoản
+                </Link>
+              </div>
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

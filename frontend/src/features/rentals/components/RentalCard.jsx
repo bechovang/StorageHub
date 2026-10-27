@@ -39,7 +39,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__tags">
             {/* Unit Mono Badge */}
             <span className="rental-card__unit-code font-mono">
-              {item.unit?.code || "—"}
+              Ô KHO {item.unit?.code || "—"}
             </span>
 
             {/* Swiss Status Badge */}
@@ -98,7 +98,7 @@ export default function RentalCard({ item }) {
             </span>
             <span className="rental-card__sep">·</span>
             <span className="rental-card__depot">
-              Tân Bình Gateway (VN-SGN-01)
+              Cơ sở Tân Bình
             </span>
           </h2>
 

@@ -1,8 +1,8 @@
 import "./Footer.css";
 
 export default function Footer({
-  leftText = "STORAGEHUB / COMPONENT REFERENCE",
-  rightText = "VERSION 1.0 · 2026",
+  leftText = "STORAGEHUB · HỆ THỐNG CHO THUÊ Ô KHO TỰ QUẢN",
+  rightText = "CƠ SỞ TÂN BÌNH · 2026",
   className = "",
 }) {
   return (
@@ -14,4 +14,3 @@ export default function Footer({
     </footer>
   );
 }
-

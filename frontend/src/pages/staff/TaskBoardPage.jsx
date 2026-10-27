@@ -53,19 +53,13 @@ export default function TaskBoardPage() {
   } = useTaskBoard();
 
   return (
-    <AppShell
-      roleLabel="STAFF"
-      navLinks={[
-        { label: "Task Board", href: "/tasks" },
-        { label: "Hỗ trợ sự cố", href: "/support" },
-      ]}
-    >
+    <AppShell>
       <div className="taskboard-container">
         {/* ── Sub-header / Context Bar ── */}
         <div className="taskboard-context-bar">
           <div className="taskboard-context-left">
             <MapPin size={15} weight="bold" />
-            <span>Cơ sở: <strong>Tân Bình Gateway (VN-SGN-01)</strong></span>
+            <span>Cơ sở: <strong>Cơ sở Tân Bình (VN-SGN-01)</strong></span>
             <span style={{ color: "var(--color-line)" }}>/</span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "var(--color-status-success)" }}>
               <span className="status-dot-pulse" />
@@ -80,7 +74,7 @@ export default function TaskBoardPage() {
         </div>
 
         {/* ── Main Canvas ── */}
-        <main className="taskboard-main">
+        <div className="taskboard-main">
           {/* Page Header */}
           <div className="taskboard-header">
             <div className="taskboard-title-group">
@@ -156,7 +150,7 @@ export default function TaskBoardPage() {
               })}
             </div>
           )}
-        </main>
+        </div>
       </div>
 
       {/* ── Snap-back Toast Notification (Chống Done ảo) ── */}
