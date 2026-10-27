@@ -1,8 +1,7 @@
 /* ==========================================================================
-   FullPageTrafficNetwork.css — Ambient Real-World Logistics Traffic Network
-   Displays authentic Ho Chi Minh City urban blueprint watermark with
-   real-time moving logistics delivery nodes along actual transport corridors.
-   0 location labels, 100% design tokens, 60fps GPU acceleration.
+   FullPageTrafficNetwork.css — Ambient Real-World Blueprint Background
+   Displays authentic Ho Chi Minh City urban blueprint watermark.
+   0 location labels, 100% design tokens, clean minimal architectural styling.
    ========================================================================== */
 
 .full-page-traffic {
@@ -44,45 +43,4 @@
     rgba(245, 245, 247, 0.85) 100%
   );
   pointer-events: none;
-}
-
-/* ── SVG Transport Corridors & Nodes Layer ── */
-.full-page-traffic__svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* ── Hub Pulse Animation ── */
-.traffic-hub-pulse {
-  transform-origin: center;
-  animation: trafficHubPulse 2.8s ease-out infinite;
-}
-
-@keyframes trafficHubPulse {
-  0% {
-    r: 6;
-    opacity: 0.85;
-  }
-  60% {
-    r: 22;
-    opacity: 0;
-  }
-  100% {
-    r: 22;
-    opacity: 0;
-  }
-}
-
-/* ── Route Dash Animation ── */
-.traffic-route-dash {
-  animation: trafficRouteDash 1.6s linear infinite;
-}
-
-@keyframes trafficRouteDash {
-  to {
-    stroke-dashoffset: -20;
-  }
 }
