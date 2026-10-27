@@ -42,13 +42,9 @@ export default function UnitCard({
   const volumeM3 = (unit.sizeM2 * 2.8).toFixed(1);
 
   const handleCardClick = (e) => {
-    // Chỉ kích hoạt mở drawer nếu người dùng không click vào button hành động
+    // Click vào card hoặc nút Đặt kho đều chuyển thẳng đến chi tiết kho
     if (e.target.closest("button") || e.target.closest("a")) return;
-    if (onOpenDrawer) {
-      onOpenDrawer(unit);
-    } else {
-      onViewDetails?.(unit);
-    }
+    onViewDetails?.(unit);
   };
 
   return (
@@ -66,7 +62,7 @@ export default function UnitCard({
           }
         }
       }}
-      aria-label={`Xem tổng quan gói kho ${typeLabel} ${unit.sizeM2} m²`}
+      aria-label={`Xem chi tiết kho ${typeLabel} ${unit.sizeM2} m²`}
     >
       <div className="unit-card__visual">
         <img
@@ -81,7 +77,7 @@ export default function UnitCard({
         />
         <span className="unit-card__code">{typeLabel}</span>
 
-        {/* Badge trạng thái ở góc dưới bên phải minh họa (vị trí người dùng chỉ định) kèm tooltip khi hover */}
+        {/* Badge trạng thái ở góc dưới bên phải kèm tooltip khi hover */}
         <div
           className="unit-card__badge-wrapper"
           tabIndex={0}
@@ -128,21 +124,11 @@ export default function UnitCard({
 
           <div className="unit-card__actions" onClick={(e) => e.stopPropagation()}>
             <Button
-              variant="secondary"
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails?.(unit);
-              }}
-            >
-              Chi tiết
-            </Button>
-            <Button
               variant="primary"
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
-                onBook?.(unit);
+                onViewDetails?.(unit);
               }}
             >
               Đặt kho

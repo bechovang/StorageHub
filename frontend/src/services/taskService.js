@@ -57,11 +57,11 @@ export const TASK_STATUSES = {
   DONE: { key: "DONE", label: "Đã hoàn thành", countLabel: "Hoàn thành" },
 };
 
-const RITUAL_CACHE_KEY = "storagehub_task_rituals_v1";
+const RITUAL_CACHE_KEY = "storagehub_task_rituals_v2";
 
 function loadRitualOverrides() {
   try {
-    const raw = sessionStorage.getItem(RITUAL_CACHE_KEY);
+    const raw = localStorage.getItem(RITUAL_CACHE_KEY) || sessionStorage.getItem(RITUAL_CACHE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (err) {
     console.error("Failed to read task ritual state:", err);
@@ -73,6 +73,7 @@ function saveRitualOverride(taskId, patch) {
   try {
     const current = loadRitualOverrides();
     current[taskId] = { ...(current[taskId] || {}), ...patch };
+    localStorage.setItem(RITUAL_CACHE_KEY, JSON.stringify(current));
     sessionStorage.setItem(RITUAL_CACHE_KEY, JSON.stringify(current));
   } catch (err) {
     console.error("Failed to save task ritual state:", err);
@@ -209,7 +210,10 @@ export function checkSnapBackViolation(task) {
       return "Chặn Done ảo: Đơn chưa xác nhận thanh toán tiền cọc!";
     }
     if (!task.ritual?.rentCollected) {
-      return "Chặn Done ảo: Chưa thu 100% tiền thuê kho tại quầy!";
+      return "Chặn Done ảo: Chưa thu đủ 100% tiền thuê kho tại quầy!";
+    }
+    if (!task.ritual?.paymentProofPhoto) {
+      return "Chặn Done ảo: Chưa đính kèm ảnh chụp biên lai thu tiền mặt hoặc chuyển khoản ngân hàng!";
     }
     if (!task.ritual?.contractSigned || !task.ritual?.contractPhotoUrl) {
       return "Chặn Done ảo: Chưa hoàn tất ký hợp đồng và đính kèm ảnh bản ký!";
@@ -232,6 +236,9 @@ export function checkSnapBackViolation(task) {
     }
     if (!task.ritual?.settlementConfirmed) {
       return "Chặn Done ảo: Chưa hoàn tất đối soát tất toán cọc và phụ phí!";
+    }
+    if (!task.ritual?.settlementPhotoUrl) {
+      return "Chặn Done ảo: Chưa đính kèm ảnh chứng từ đối soát hoàn tiền cọc hoặc thu phụ phí!";
     }
     if (!task.ritual?.receiptPrinted) {
       return "Chặn Done ảo: Chưa xuất biên nhận tất toán thanh lý hợp đồng!";
@@ -296,7 +303,7 @@ export async function completeContractRitual(taskId, { contractPhotoUrl }) {
 /**
  * Thực hiện nghiệp vụ Check-in Ritual (US-15)
  */
-export async function completeCheckinRitual(taskId, { paymentMethod, contractPhotoUrl, accessPin }) {
+export async function completeCheckinRitual(taskId, { paymentMethod, contractPhotoUrl, paymentProofPhoto, accessPin }) {
   saveRitualOverride(taskId, {
     status: "DONE",
     accessPin: accessPin || "8842-Active",
@@ -304,9 +311,11 @@ export async function completeCheckinRitual(taskId, { paymentMethod, contractPho
       depositVerified: true,
       rentCollected: true,
       paymentMethod: paymentMethod || "CASH",
+      paymentProofPhoto: paymentProofPhoto || "",
       contractSigned: true,
       contractPhotoUrl: contractPhotoUrl || "/placeholder.svg",
       accessCodeHanded: true,
+      completedAt: new Date().toISOString(),
     },
   });
 
@@ -320,7 +329,7 @@ export async function completeCheckinRitual(taskId, { paymentMethod, contractPho
 /**
  * Thực hiện nghiệp vụ Checkout Ritual (US-21)
  */
-export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged }) {
+export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged, settlementMethod, settlementPhotoUrl }) {
   saveRitualOverride(taskId, {
     status: "DONE",
     ritual: {
@@ -328,8 +337,11 @@ export async function completeCheckoutRitual(taskId, { checklist, damageCharges,
       damageCharges: damageCharges || [],
       refundAmount: refundAmount || 0,
       extraCharged: extraCharged || 0,
+      settlementMethod: settlementMethod || "TRANSFER",
+      settlementPhotoUrl: settlementPhotoUrl || "",
       settlementConfirmed: true,
       receiptPrinted: true,
+      completedAt: new Date().toISOString(),
     },
   });
 

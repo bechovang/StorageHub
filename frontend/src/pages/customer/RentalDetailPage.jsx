@@ -10,6 +10,7 @@ import {
   CreditCard,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import {
   useRentalDetail,
   PaymentsSection,
@@ -24,6 +25,7 @@ import { fmtDate } from "../../utils/rentalConstants.js";
 import "./RentalDetailPage.css";
 
 export default function RentalDetailPage() {
+  const { user } = useAuth();
   const {
     reservationId,
     reservation,
@@ -239,7 +241,12 @@ export default function RentalDetailPage() {
                   </header>
 
                   <div className="rd-card__body">
-                    <ContractsSection contracts={reservation.contracts} />
+                    <ContractsSection
+                      contracts={reservation.contracts}
+                      reservation={reservation}
+                      unit={reservation.unit}
+                      user={user}
+                    />
                   </div>
                 </article>
               </div>

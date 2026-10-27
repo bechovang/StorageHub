@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   CaretRight,
   ShieldCheck,
@@ -8,10 +9,12 @@ import {
   CornersOut,
   IdentificationCard,
   CreditCard,
+  FileText,
 } from "@phosphor-icons/react";
 import { Link } from "react-router";
 import Badge from "../../../components/Badge/Badge.jsx";
 import Button from "../../../components/Button/Button.jsx";
+import ContractViewerModal from "../../../components/ContractModal/ContractViewerModal.jsx";
 import { formatDateTime } from "../../../utils/formatters.js";
 
 export default function BookingReview({
@@ -29,6 +32,7 @@ export default function BookingReview({
   showHistory,
   setShowHistory,
 }) {
+  const [showContractModal, setShowContractModal] = useState(false);
   const unit = reservation?.unit || {};
   const totalRent = (unit.monthlyPrice || 345000) * (reservation?.durationMonths || 3);
   const initials = user?.fullName
@@ -234,6 +238,29 @@ export default function BookingReview({
 
             {/* Nút Thanh toán cọc / Mở Modal & Điều hướng kế tiếp */}
             <div className="financial-card__actions">
+              <button
+                type="button"
+                className="btn-view-contract-link"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--color-primary, #0f172a)",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  marginBottom: "12px",
+                  textDecoration: "underline",
+                  padding: "4px 0",
+                }}
+                onClick={() => setShowContractModal(true)}
+              >
+                <FileText size={16} />
+                <span>Xem văn bản Hợp đồng thuê kho điện tử mẫu</span>
+              </button>
+
               {isAlreadyPaid ? (
                 <>
                   <div className="paid-status-box">
@@ -328,6 +355,14 @@ export default function BookingReview({
           )}
         </div>
       </div>
+
+      <ContractViewerModal
+        isOpen={showContractModal}
+        onClose={() => setShowContractModal(false)}
+        reservation={reservation}
+        unit={unit}
+        user={user}
+      />
     </div>
   );
 }

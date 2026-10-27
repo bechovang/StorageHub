@@ -78,6 +78,30 @@ export function TaskCard({
             Ưu tiên: {task.priority}
           </span>
         )}
+        {task.ritual?.paymentProofPhoto && (
+          <span
+            className="task-card__extra-badge"
+            style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" }}
+          >
+            ✓ Đã lưu ảnh thu tiền
+          </span>
+        )}
+        {task.ritual?.contractPhotoUrl && (
+          <span
+            className="task-card__extra-badge"
+            style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" }}
+          >
+            ✓ Đã lưu ảnh HĐ
+          </span>
+        )}
+        {task.ritual?.settlementPhotoUrl && (
+          <span
+            className="task-card__extra-badge"
+            style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" }}
+          >
+            ✓ Đã lưu ảnh đối soát
+          </span>
+        )}
       </div>
 
       {/* Card Footer & Action Controls */}

@@ -1,6 +1,6 @@
 import { X, Funnel } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
-import { UnitCard } from "../../components";
+import { UnitCard, Pagination } from "../../components/index.jsx";
 import { useAuth } from "../../context/AuthContext";
 import {
   useBrowseUnits,
@@ -25,6 +25,11 @@ export default function BrowsePage() {
     sortOrder,
     units,
     loading,
+    page,
+    pageSize,
+    total,
+    totalPages,
+    handlePageChange,
     selectedUnitForDrawer,
     setSelectedUnitForDrawer,
     handleSearchSubmit,
@@ -83,7 +88,7 @@ export default function BrowsePage() {
                 }}
                 aria-hidden="true"
               />
-              <span>{units.length} kho đang sẵn sàng</span>
+              <span>{total || units.length} kho đang sẵn sàng</span>
             </div>
 
             {/* Active filter chips */}
@@ -163,17 +168,28 @@ export default function BrowsePage() {
             </p>
           </section>
         ) : (
-          <div className="browse-grid">
-            {units.map((unit) => (
-              <UnitCard
-                key={unit.id}
-                unit={unit}
-                onOpenDrawer={handleOpenDrawer}
-                onViewDetails={handleViewDetails}
-                onBook={handleBook}
-              />
-            ))}
-          </div>
+          <>
+            <div className="browse-grid">
+              {units.map((unit) => (
+                <UnitCard
+                  key={unit.id}
+                  unit={unit}
+                  onOpenDrawer={handleOpenDrawer}
+                  onViewDetails={handleViewDetails}
+                  onBook={handleBook}
+                />
+              ))}
+            </div>
+
+            {/* Phân trang danh sách kho (US-6, FR-4) */}
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+            />
+          </>
         )}
       </main>
       </div>
