@@ -17,6 +17,7 @@ import {
   Elevator,
   LockSimple,
   Question,
+  QuestionMarkIcon,
   Buildings,
   ArrowsDownUp,
   Package,
@@ -334,7 +335,7 @@ export default function LandingPage() {
                 onClick={handleScrollToSizes}
               >
                 Chọn kho nào cho hợp lí
-                <Question size={18} weight="bold" />
+                <QuestionMarkIcon size={18} weight="bold" />
               </Button>
             </div>
 
