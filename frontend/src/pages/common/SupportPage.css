@@ -112,10 +112,21 @@
   cursor: pointer;
 }
 
+.support-tab-btn:hover:not(.support-tab-btn--active) {
+  color: var(--color-ink, #000000);
+  background: var(--color-neutral, #f5f5f5);
+  border-color: var(--color-line-strong, #000000);
+}
+
 .support-tab-btn--active {
   background: var(--color-ink, #000000);
-  color: var(--color-surface, #ffffff);
+  color: #ffffff;
   border-color: var(--color-line-strong, #000000);
+}
+
+.support-tab-btn--active:hover {
+  background: var(--color-primary-hover, #262626);
+  color: #ffffff !important;
 }
 
 /* ── Ticket Cards Grid ── */

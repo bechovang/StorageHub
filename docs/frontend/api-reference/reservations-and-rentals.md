@@ -4,7 +4,7 @@ Các API quản lý vòng đời đơn thuê từ lúc đặt cọc, lấy mã n
 
 ---
 
-## 1. Tạo Đơn Đặt Giữ Chỗ Kho
+## 1. Tạo Đơn Đặt Chỗ Kho (Khởi tạo yêu cầu - Chưa khóa chỗ)
 
 - **Method / URL**: `POST /api/v1/reservations`
 - **Quyền hạn**: `CUSTOMER`, `SYSTEM_ADMIN`
@@ -30,6 +30,13 @@ Các API quản lý vòng đời đơn thuê từ lúc đặt cọc, lấy mã n
   "status": "PENDING_PAYMENT"
 }
 ```
+
+> [!IMPORTANT]
+> **Quy Tắc Nghiệp Vụ Khóa Chỗ (Reservation Business Rule)**:
+> - Việc gọi API `POST /api/v1/reservations` chỉ tạo bản ghi ở trạng thái `PENDING_PAYMENT` và lưu snapshot báo giá. **Hệ thống TUYỆT ĐỐI CHƯA GIỮ CHỖ hay khóa ô kho ở bước này**.
+> - Khách hàng khác vẫn có thể nhìn thấy ô kho này khả dụng trên danh mục tìm kiếm (`/browse`).
+> - Ô kho chỉ chính thức được chuyển sang trạng thái `RESERVED` (khóa chỗ thành công, không ai được đặt đè) **SAU KHI KHÁCH HÀNG HOÀN TẤT THANH TOÁN TIỀN CỌC** (khi giao dịch thanh toán cọc chuyển sang `SUCCEEDED`).
+> - Nếu khách hàng chưa thanh toán và có người khác thanh toán cọc thành công trước cho ô kho đó trong cùng khoảng thời gian, đơn thanh toán sau sẽ nhận thông báo lỗi xung đột lịch (`RESERVATION_CONFLICT` / `409 Conflict`).
 
 ---
 

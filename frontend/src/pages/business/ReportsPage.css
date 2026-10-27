@@ -184,14 +184,21 @@
   white-space: nowrap;
 }
 
-.period-chip:hover {
+.period-chip:hover:not(.period-chip--active) {
   color: var(--color-ink, #000000);
+  background: var(--color-neutral, #f5f5f5);
 }
 
 .period-chip--active {
-  background: var(--color-ink);
-  color: var(--color-surface);
-  border-color: var(--color-ink);
+  background: var(--color-ink, #000000);
+  color: #ffffff;
+  border-color: var(--color-ink, #000000);
+}
+
+.period-chip--active:hover {
+  background: var(--color-primary-hover, #262626);
+  color: #ffffff !important;
+  border-color: var(--color-primary-hover, #262626);
 }
 
 .btn-custom-range {
@@ -210,15 +217,21 @@
   transition: all 0.15s ease;
 }
 
-.btn-custom-range:hover {
+.btn-custom-range:hover:not(.btn-custom-range--active) {
   background: var(--color-surface-page, #f8fafc);
   border-color: var(--color-ink, #000000);
 }
 
 .btn-custom-range--active {
-  background: var(--color-ink);
-  color: var(--color-surface);
-  border-color: var(--color-ink);
+  background: var(--color-ink, #000000);
+  color: #ffffff;
+  border-color: var(--color-ink, #000000);
+}
+
+.btn-custom-range--active:hover {
+  background: var(--color-primary-hover, #262626);
+  color: #ffffff !important;
+  border-color: var(--color-primary-hover, #262626);
 }
 
 /* ── Standard Swiss Buttons ── */
@@ -365,20 +378,20 @@
   transition: all 0.15s ease;
 }
 
-.domain-tab:hover {
+.domain-tab:hover:not(.domain-tab--active) {
   background: var(--color-surface-page, #f8fafc);
   border-color: var(--color-ink, #000000);
 }
 
 .domain-tab--active {
-  background: var(--color-ink);
-  color: var(--color-surface);
-  border-color: var(--color-ink);
+  background: var(--color-ink, #000000);
+  color: #ffffff;
+  border-color: var(--color-ink, #000000);
 }
 
 .domain-tab--active:hover {
-  background: var(--color-primary-hover, #27272a);
-  color: var(--color-surface);
+  background: var(--color-primary-hover, #262626);
+  color: #ffffff !important;
 }
 
 .tab-pill {

@@ -27,7 +27,7 @@ Dành cho Tech Lead, Backend và Frontend Architect:
 Mỗi tài liệu tương ứng một Domain nghiệp vụ riêng biệt, đầy đủ Method, URL, Request/Response JSON mẫu:
 - [**Xác thực & Phiên làm việc (Auth & Session)**](./api-reference/auth-and-session.md): Đăng nhập, đăng ký, lấy hồ sơ cá nhân.
 - [**Danh mục kho & Báo giá tự động (Units & Catalog)**](./api-reference/units-and-catalog.md): Bộ lọc, tìm kiếm kho và công cụ báo giá thuê.
-- [**Đơn đặt chỗ, Hợp đồng & Check-in Pass**](./api-reference/reservations-and-rentals.md): Đặt giữ chỗ, mã QR nhận kho, tự gia hạn và yêu cầu trả kho.
+- [**Đơn đặt chỗ, Hợp đồng & Check-in Pass**](./api-reference/reservations-and-rentals.md): Tạo đơn đặt chỗ, thanh toán cọc để giữ chỗ, mã QR nhận kho, tự gia hạn và yêu cầu trả kho.
 - [**Thanh toán & Cổng thanh toán (Payments)**](./api-reference/payments-and-gateways.md): Cổng PayOS thật (VietQR), ví MoMo (OTP giả lập), thẻ ngân hàng (CARD demo).
 - [**Bảng công việc & 4 Nghi thức (Staff Tasks & Rituals)**](./api-reference/staff-tasks-and-rituals.md): Kanban nhân viên, nghi thức check-in, checkout, vệ sinh và ràng buộc Snap-Back.
 - [**Quản lý Cơ sở & Phân ca trực (Facility & Shifts)**](./api-reference/facility-and-shifts.md): Bảng điều khiển tỷ lệ lấp đầy kho và xếp lịch trực tuần tránh trùng giờ.

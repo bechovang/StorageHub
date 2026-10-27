@@ -11,7 +11,7 @@ Tài liệu xác định quyền hạn truy cập của 5 vai trò nghiệp vụ
 | `/browse` | Duyệt danh mục kho | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `/units/:id` | Xem chi tiết thông số kho | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `/login`, `/register` | Đăng nhập / Đăng ký | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `/units/:id/book` | Đặt cọc giữ chỗ kho | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| `/units/:id/book` | Thanh toán cọc giữ chỗ kho | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
 | `/rentals` | Danh sách đơn thuê của tôi | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
 | `/rentals/:id` | Chi tiết hợp đồng & dòng tiền | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
 | `/rentals/:id/check-in-pass` | Mã QR & PIN nhận kho | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |

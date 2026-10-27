@@ -205,13 +205,18 @@
   transition: all 0.15s ease;
 }
 
-.mgmt-status-tab:hover {
-  color: var(--color-ink, #18181b);
+.mgmt-status-tab:hover:not(.mgmt-status-tab--active) {
+  color: var(--color-ink, #000000);
 }
 
 .mgmt-status-tab--active {
-  color: var(--color-accent, #ea580c);
-  border-bottom-color: var(--color-accent, #ea580c);
+  color: var(--color-accent, #dc2626);
+  border-bottom-color: var(--color-accent, #dc2626);
+}
+
+.mgmt-status-tab--active:hover {
+  color: var(--color-accent-dark, #a71919);
+  border-bottom-color: var(--color-accent-dark, #a71919);
 }
 
 .mgmt-tab-count {
@@ -372,9 +377,18 @@
   margin-bottom: -1px;
 }
 
+.drawer-tab:hover:not(.drawer-tab--active) {
+  color: var(--color-ink, #000000);
+}
+
 .drawer-tab--active {
-  color: var(--color-accent, #ea580c);
-  border-bottom-color: var(--color-accent, #ea580c);
+  color: var(--color-accent, #dc2626);
+  border-bottom-color: var(--color-accent, #dc2626);
+}
+
+.drawer-tab--active:hover {
+  color: var(--color-accent-dark, #a71919);
+  border-bottom-color: var(--color-accent-dark, #a71919);
 }
 
 .drawer-form {

@@ -89,8 +89,13 @@
   background: var(--color-accent);
 }
 
-.main-nav__link:hover {
+.main-nav__link:hover:not(.is-active) {
   background: var(--color-neutral);
+}
+
+.main-nav__link.is-active:hover {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
 }
 
 .account-tools {

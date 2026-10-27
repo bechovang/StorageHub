@@ -40,3 +40,4 @@ frontend/src/
 1. **Bảng màu Swiss Red Monochromatic**: Dùng sắc đỏ thương hiệu (`--sh-red-600: #d32f2f`) làm chủ đạo, biến thiên sắc độ từ nhạt đến đậm cho biểu đồ và thẻ dữ liệu; không dùng màu đen đơn độc trên biểu đồ.
 2. **Không phụ thuộc UI Framework nặng**: Dùng CSS thuần với Design Tokens, tốc độ tải trang nhanh và dễ kiểm soát chi tiết từng pixel.
 3. **Phân tầng rõ ràng**: UI Component chỉ đảm nhiệm việc render và nhận sự kiện; toàn bộ logic gọi API và xử lý dữ liệu được tách riêng vào thư mục `src/services/`.
+4. **Bảo vệ độ tương phản trạng thái (State & Hover Contrast Protection)**: Mọi phần tử tương tác (Period chips, Tab pills, Filter segments) khi ở trạng thái kích hoạt (`--active`, `.is-active`) đều bảo toàn độ tương phản màu chữ trắng tuyệt đối (`#ffffff`), sử dụng `:hover:not(...)` và `--active:hover` để ngăn ngừa triệt để lỗi chữ đen trên nền tối.
