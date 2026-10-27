@@ -141,6 +141,8 @@ Mở <http://localhost:5173>.
 
 Vite proxy `/api` → `http://localhost:8080` (xem `frontend/vite.config.js`), nên FE và BE không cần CORS.
 
+> Xem chi tiết toàn diện về kiến trúc kỹ thuật Frontend, Data Flow, đặc tả API và ma trận phân quyền tại [docs/frontend/README.md](frontend/README.md).
+
 ### Tài khoản seed
 
 | Vai trò | Email | Mật khẩu |
