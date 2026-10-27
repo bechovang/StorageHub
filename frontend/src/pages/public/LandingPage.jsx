@@ -333,8 +333,8 @@ export default function LandingPage() {
                 className="landing-hero__btn-secondary"
                 onClick={handleScrollToSizes}
               >
-                Xem hướng dẫn chọn kích thước
-                <ArrowsDownUp size={18} weight="bold" />
+                Chọn kho nào cho hợp lí
+                <Question size={18} weight="bold" />
               </Button>
             </div>
 
@@ -373,7 +373,7 @@ export default function LandingPage() {
           <div className="landing-container">
             <div className="landing-section-header">
               <h2 id="sizes-heading" className="landing-section-title">
-                Từ tủ lưu trữ tài liệu nhỏ gọn đến kho chứa hàng hóa doanh nghiệp rộng rãi
+                Chiếc túi xách nhỏ hay cả căn nhà đều được
               </h2>
             </div>
 
