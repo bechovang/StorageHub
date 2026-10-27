@@ -51,6 +51,9 @@ tags:
   - name: Contracts
   - name: Tasks
   - name: Notifications
+  - name: Facility
+  - name: ActivityLogs
+  - name: Shifts
 
 # ---------------------------------------------------------------------------
 paths:
@@ -1075,7 +1078,117 @@ paths:
         "404": { $ref: "#/components/responses/TaskNotFound" }
         "409": { $ref: "#/components/responses/TaskSnapBack" }
 
+# --------------------- SHIFTS & STAFFING (FR-27) -----------------------
+
+  /shifts:
+    get:
+      tags: [Shifts]
+      summary: Lấy danh sách phân ca trực theo khoảng ngày (FR-27)
+      description: |
+        Hỗ trợ lọc theo startDate, endDate, staffId, zoneId.
+        Phục vụ hiển thị lưới lịch tuần (Schedule · this week) của Facility Manager.
+      operationId: getShifts
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: "Ngày bắt đầu (mặc định đầu tuần hiện tại ICT)" }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: "Ngày kết thúc (mặc định cuối tuần hiện tại ICT)" }
+        - { name: staffId, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo nhân viên" }
+        - { name: zoneId, in: query, schema: { type: integer }, description: "Lọc theo khu vực (Zone)" }
+      responses:
+        "200":
+          description: Danh sách phân công ca trực
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ShiftAssignmentResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+    post:
+      tags: [Shifts]
+      summary: Phân công ca trực mới kèm phát hiện xung đột (FR-27)
+      description: |
+        Facility Manager phân công staff × Zone × ca × ngày.
+        Hệ thống kiểm tra xung đột trước khi lưu (Pre-save validation & rejection).
+        Nếu trùng người - ca - ngày, từ chối với 409 Conflict và thông báo cụ thể.
+      operationId: createShiftAssignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateShiftAssignmentRequest" }
+      responses:
+        "201":
+          description: Phân công ca trực thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShiftAssignmentResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/ShiftConflict" }
+
+  /shifts/{assignmentId}:
+    delete:
+      tags: [Shifts]
+      summary: Hủy phân công ca trực (FR-27)
+      description: Gỡ bỏ ca trực và ghi nhận Activity Log.
+      operationId: deleteShiftAssignment
+      parameters:
+        - { name: assignmentId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "204":
+          description: Đã hủy phân công ca trực
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/ShiftNotFound" }
+
+  /shifts/roster:
+    get:
+      tags: [Shifts]
+      summary: Lấy danh sách nhân sự trực ca kèm thống kê tuần (FR-27 / F5-03)
+      description: Danh sách nhân viên (Staff Roster) kèm số lượng ca đã gán và trạng thái xung đột.
+      operationId: getStaffRoster
+      parameters:
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: "Ngày bắt đầu tuần" }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: "Ngày kết thúc tuần" }
+      responses:
+        "200":
+          description: Danh sách nhân sự và số ca trực
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StaffRosterMember" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
 # --------------------- USERS / SYS-01 (US-28, FR-37) --------------------
+
+  /activity-logs:
+    get:
+      tags: [ActivityLogs]
+      summary: Xem nhật ký hoạt động hệ thống (FR-28 / NFR-6)
+      description: |
+        Audit trail append-only: timestamp, actor, entity, action, from → to, reason.
+        Hỗ trợ lọc theo entityType, query text, date range, phân trang (mặc định 25 rows).
+        Dành cho Facility Manager và System Administrator. Read-only hoàn toàn (cấm sửa/xóa).
+      operationId: getActivityLogs
+      parameters:
+        - { name: query, in: query, schema: { type: string }, description: "Tìm kiếm theo tên actor, action, reason" }
+        - { name: entityType, in: query, schema: { type: string }, description: "Lọc theo entity type (UNIT, RESERVATION, CONTRACT, STAFF_ASSIGNMENT, USER, TICKET, PAYMENT...)" }
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: "Từ ngày (YYYY-MM-DD)" }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: "Đến ngày (YYYY-MM-DD)" }
+        - { name: page, in: query, schema: { type: integer, default: 1, minimum: 1 }, description: "Trang (1-based)" }
+        - { name: pageSize, in: query, schema: { type: integer, default: 25, minimum: 1, maximum: 100 }, description: "Số bản ghi mỗi trang (mặc định 25)" }
+      responses:
+        "200":
+          description: Danh sách nhật ký hoạt động phân trang
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActivityLogPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /users:
     get:
@@ -1127,6 +1240,49 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+
+  /users/login-history:
+    get:
+      tags: [Users]
+      summary: Lịch sử đăng nhập hệ thống — SYS-02 (FR-38)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Xem lịch sử đăng nhập (thành công/thất bại) kèm actor, thời điểm, kết quả và lý do.
+        Hỗ trợ lọc theo userId, trạng thái (ALL, SUCCESS, FAILED), từ khóa query, khoảng ngày và phân trang.
+      operationId: getLoginHistory
+      parameters:
+        - { name: userId, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo ID người dùng cụ thể" }
+        - { name: status, in: query, schema: { type: string, enum: [ALL, SUCCESS, FAILED] }, description: "Lọc theo kết quả đăng nhập" }
+        - { name: query, in: query, schema: { type: string }, description: "Tìm kiếm theo họ tên, email hoặc lý do" }
+        - { name: startDate, in: query, schema: { type: string, format: date }, description: "Từ ngày (YYYY-MM-DD)" }
+        - { name: endDate, in: query, schema: { type: string, format: date }, description: "Đến ngày (YYYY-MM-DD)" }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: Trang danh sách lịch sử đăng nhập
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginHistoryPage" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /users/permissions:
+    get:
+      tags: [Users]
+      summary: Ma trận phân quyền 5 vai trò cố định — (FR-39)
+      description: |
+        Chỉ dành cho SYSTEM_ADMIN.
+        Xem bảng Role × Permission đúng như server enforce (NFR-4). Read-only hoàn toàn, cố định trong code.
+      operationId: getPermissionMatrix
+      responses:
+        "200":
+          description: Bảng ma trận phân quyền hệ thống
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PermissionMatrixResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /users/{userId}:
     get:
@@ -1353,6 +1509,78 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+# ---------------------------------------------------------------------------
+  /facility/overview:
+    get:
+      tags: [Facility]
+      summary: Dữ liệu tổng quan cơ sở vật chất và giám sát vận hành (FR-32)
+      description: |
+        Dành cho FACILITY_MANAGER, SYSTEM_ADMIN, và BUSINESS_OPS.
+        Cung cấp 4 chỉ số KPI: Tỷ lệ lấp đầy (Occupancy), Tỷ lệ hoạt động (Units in Service),
+        Nhiệm vụ trong ngày (Tasks Today), Sự cố leo thang (Open Escalations).
+        Kèm 2 biểu đồ: Phân bổ trạng thái kho và Cơ cấu doanh thu theo loại kho.
+        Kèm 1 bảng dữ liệu: Hàng chờ dọn dẹp & bàn giao (Turnover Queue).
+      operationId: getFacilityOverview
+      responses:
+        "200":
+          description: Dữ liệu bảng điều khiển tổng quan cơ sở
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityOverviewResponse"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /facility/drilldown:
+    get:
+      tags: [Facility]
+      summary: Danh sách chi tiết kho phục vụ KPI drill-down (FR-32)
+      description: |
+        Dành cho FACILITY_MANAGER, SYSTEM_ADMIN, và BUSINESS_OPS.
+        Bấm vào bất kỳ KPI nào (ví dụ Occupancy -> RENTED, Maintenance -> MAINTENANCE) để xem danh sách chi tiết các kho tương ứng.
+        Hỗ trợ lọc theo trạng thái (status), tìm kiếm theo từ khóa (query) và phân trang.
+      operationId: getFacilityDrilldown
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [AVAILABLE, RESERVED, RENTED, PREPARING, MAINTENANCE, RETIRED, ALL]
+          description: Lọc theo trạng thái kho
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Tìm kiếm theo mã kho, loại kho hoặc khu vực
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Số trang (1-based)
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+            maximum: 100
+          description: Số dòng trên mỗi trang
+      responses:
+        "200":
+          description: Danh sách kho phân trang theo bộ lọc drill-down
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacilityDrilldownResponse"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
 components:
 
   securitySchemes:
@@ -1410,6 +1638,18 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
           example: { code: USER_NOT_FOUND, message: "Không tìm thấy người dùng này.", fieldErrors: [] }
+    ShiftConflict:
+      description: Xung đột phân công ca trực (FR-27 — người-ca-ngày đã tồn tại)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: SHIFT_ASSIGNMENT_CONFLICT, message: "Minh is already assigned Morning shift, Zone B on Oct 12. Choose another staff member or another shift.", fieldErrors: [{ field: "shift", code: "CONFLICT", message: "Trùng ca trực" }] }
+    ShiftNotFound:
+      description: Không tìm thấy phân công ca trực
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: SHIFT_NOT_FOUND, message: "Không tìm thấy phân công ca trực này.", fieldErrors: [] }
 
 
   schemas:
@@ -1423,7 +1663,7 @@ components:
         code:
           type: string
           description: Machine code UPPER_SNAKE
-          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, USER_NOT_FOUND, INTERNAL_ERROR]
+          enum: [VALIDATION_FAILED, AUTH_INVALID_CREDENTIALS, AUTH_ACCOUNT_LOCKED, AUTH_EMAIL_EXISTS, AUTH_TOKEN_INVALID, ROLE_FORBIDDEN, UNIT_NOT_FOUND, RESERVATION_NOT_FOUND, RESERVATION_INVALID_STATE, BOOKING_UNIT_TAKEN, PAYMENT_NOT_FOUND, PAYMENT_DUPLICATE, PAYMENT_INVALID_STATE, PAYMENT_EXPIRED, CONTRACT_NOT_FOUND, TASK_NOT_FOUND, TASK_SNAP_BACK, TASK_INVALID_STATE, USER_NOT_FOUND, SHIFT_ASSIGNMENT_CONFLICT, SHIFT_NOT_FOUND, INTERNAL_ERROR]
         message: { type: string, description: "Message human-readable theo khuôn NFR-7 (chuyện gì + hệ quả + 1 bước kế)" }
         fieldErrors:
           type: array
@@ -2112,3 +2352,247 @@ components:
             type: object
             additionalProperties: true
 
+    FacilityOverviewResponse:
+      type: object
+      required: [occupancy, unitsInService, tasksToday, escalations, statusDistribution, revenueMix, turnoverQueue]
+      properties:
+        occupancy:
+          $ref: "#/components/schemas/OccupancyKpi"
+        unitsInService:
+          $ref: "#/components/schemas/UnitsInServiceKpi"
+        tasksToday:
+          $ref: "#/components/schemas/TasksTodayKpi"
+        escalations:
+          $ref: "#/components/schemas/EscalationsKpi"
+        statusDistribution:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusDistributionItem"
+        revenueMix:
+          type: array
+          items:
+            $ref: "#/components/schemas/RevenueMixItem"
+        turnoverQueue:
+          type: array
+          items:
+            $ref: "#/components/schemas/TurnoverQueueItem"
+
+    OccupancyKpi:
+      type: object
+      required: [rate, rentedUnits, totalUnits, trend]
+      properties:
+        rate: { type: number, format: double, example: 87.5 }
+        rentedUnits: { type: integer, example: 35 }
+        totalUnits: { type: integer, example: 40 }
+        trend: { type: string, example: "+2.4% so với tuần trước" }
+
+    UnitsInServiceKpi:
+      type: object
+      required: [operationalUnits, totalUnits, operationalRate, maintenanceUnits]
+      properties:
+        operationalUnits: { type: integer, example: 38 }
+        totalUnits: { type: integer, example: 40 }
+        operationalRate: { type: number, format: double, example: 95.0 }
+        maintenanceUnits: { type: integer, example: 2 }
+
+    TasksTodayKpi:
+      type: object
+      required: [totalTasks, completed, inProgress, pending]
+      properties:
+        totalTasks: { type: integer, example: 12 }
+        completed: { type: integer, example: 7 }
+        inProgress: { type: integer, example: 3 }
+        pending: { type: integer, example: 2 }
+
+    EscalationsKpi:
+      type: object
+      required: [openCount, highPriorityCount, highlight]
+      properties:
+        openCount: { type: integer, example: 1 }
+        highPriorityCount: { type: integer, example: 1 }
+        highlight: { type: string, example: "SR-0032 · Kho S-4 (LOST_ACCESS)" }
+
+    StatusDistributionItem:
+      type: object
+      required: [status, count, percentage]
+      properties:
+        status: { type: string, example: "RENTED" }
+        count: { type: integer, example: 35 }
+        percentage: { type: number, format: double, example: 87.5 }
+
+    RevenueMixItem:
+      type: object
+      required: [category, rentedCount, monthlyRevenue, percentage]
+      properties:
+        category: { type: string, example: "Small" }
+        rentedCount: { type: integer, example: 15 }
+        monthlyRevenue: { type: number, example: 5175000 }
+        percentage: { type: number, format: double, example: 35.5 }
+
+    TurnoverQueueItem:
+      type: object
+      required: [unitCode, unitType, zoneCode, taskType, status, staffName, workDate]
+      properties:
+        taskId: { type: integer, format: int64, nullable: true, example: 101 }
+        unitCode: { type: string, example: "S-1" }
+        unitType: { type: string, example: "Small" }
+        zoneCode: { type: string, example: "Zone A" }
+        taskType: { type: string, example: "CLEANING" }
+        status: { type: string, example: "IN_PROGRESS" }
+        staffName: { type: string, example: "Trần Văn Bình" }
+        workDate: { type: string, format: date, example: "2026-10-21" }
+
+    FacilityDrilldownItem:
+      type: object
+      required: [unitId, code, unitType, sizeM2, zoneCode, floor, status, rentPrice]
+      properties:
+        unitId: { type: integer, format: int64, example: 1 }
+        code: { type: string, example: "S-3" }
+        unitType: { type: string, example: "Small" }
+        sizeM2: { type: number, format: double, example: 5.0 }
+        zoneCode: { type: string, example: "Zone A" }
+        floor: { type: integer, example: 1 }
+        status: { type: string, example: "RENTED" }
+        rentPrice: { type: number, example: 345000 }
+        tenantName: { type: string, nullable: true, example: "Nguyễn Thị Lan" }
+        rentalCode: { type: string, nullable: true, example: "BK-1042" }
+
+    FacilityDrilldownResponse:
+    # --------------------------- Login History & Permission Matrix (FR-38, FR-39) ---------------------
+
+    LoginHistoryItem:
+      type: object
+      required: [logId, action, status, timestamp]
+      properties:
+        logId: { type: integer, format: int64, example: 10 }
+        userId: { type: integer, format: int64, nullable: true, example: 7 }
+        fullName: { type: string, example: "Vũ Văn Vũ" }
+        email: { type: string, nullable: true, example: "vu@demo.storagehub.vn" }
+        role: { type: string, nullable: true, example: "STAFF" }
+        action: { type: string, example: "LOGIN_FAILED" }
+        status: { type: string, example: "FAILED" }
+        reason: { type: string, nullable: true, example: "Wrong password" }
+        timestamp: { type: string, format: date-time, example: "2026-10-20T07:58:12Z" }
+
+    LoginHistoryPage:
+      type: object
+      required: [items, page, pageSize, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacilityDrilldownItem"
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 25 }
+        totalItems: { type: integer, format: int64, example: 35 }
+        totalPages: { type: integer, example: 2 }
+        statusFilter: { type: string, nullable: true, example: "RENTED" }
+
+          items: { $ref: "#/components/schemas/LoginHistoryItem" }
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 25 }
+        totalItems: { type: integer, format: int64, example: 50 }
+        totalPages: { type: integer, example: 2 }
+
+    PermissionItem:
+      type: object
+      required: [id, name, description, roles]
+      properties:
+        id: { type: string, example: "P-BROWSE" }
+        name: { type: string, example: "Tìm kiếm & Đặt giữ chỗ ô kho" }
+        description: { type: string, example: "Tra cứu danh mục kho trống..." }
+        roles:
+          type: object
+          additionalProperties:
+            type: boolean
+
+    PermissionGroup:
+      type: object
+      required: [category, description, permissions]
+      properties:
+        category: { type: string, example: "1. Phân hệ Khách hàng & Thuê kho" }
+        description: { type: string, example: "Các chức năng phục vụ khách tìm kiếm..." }
+        permissions:
+          type: array
+          items: { $ref: "#/components/schemas/PermissionItem" }
+
+    PermissionMatrixResponse:
+      type: object
+      required: [roles, groups]
+      properties:
+        roles:
+          type: array
+          items: { type: string }
+          example: ["CUSTOMER", "STAFF", "FACILITY_MANAGER", "BUSINESS_OPS", "SYSTEM_ADMIN"]
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/PermissionGroup" }
+    # --------------------------- Activity Log (FR-28) ---------------------
+
+    ActivityLogItem:
+      type: object
+      required: [logId, entityType, action, createdAt]
+      properties:
+        logId: { type: integer, format: int64, example: 1 }
+        actorId: { type: integer, format: int64, nullable: true, example: 4 }
+        actorName: { type: string, nullable: true, example: "Phạm Tuấn" }
+        actorEmail: { type: string, nullable: true, example: "tuan@demo.storagehub.vn" }
+        actorRole: { type: string, nullable: true, example: "FACILITY_MANAGER" }
+        entityType: { type: string, example: "UNIT" }
+        entityId: { type: integer, format: int64, nullable: true, example: 3 }
+        action: { type: string, example: "STATUS_CHANGE" }
+        fromValue: { type: string, nullable: true, example: "RENTED" }
+        toValue: { type: string, nullable: true, example: "PREPARING" }
+        reason: { type: string, nullable: true, example: "Sửa trạng thái thực tế kho không dùng" }
+        createdAt: { type: string, format: date-time, example: "2026-10-01T14:22:00Z" }
+
+    ActivityLogPage:
+      type: object
+      required: [items, page, pageSize, total, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ActivityLogItem" }
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 25 }
+        total: { type: integer, format: int64, example: 48 }
+        totalPages: { type: integer, example: 2 }
+
+    # ------------------------------- Shifts (FR-27) -----------------------
+
+    ShiftAssignmentResponse:
+      type: object
+      required: [assignmentId, staffId, staffName, zoneId, zoneCode, shift, workDate]
+      properties:
+        assignmentId: { type: integer, format: int64, example: 101 }
+        staffId: { type: integer, format: int64, example: 2 }
+        staffName: { type: string, example: "Minh Nguyễn" }
+        staffCode: { type: string, example: "KC-8842" }
+        zoneId: { type: integer, example: 2 }
+        zoneCode: { type: string, example: "B" }
+        zoneName: { type: string, example: "Zone B (Ground Floor Units)" }
+        shift: { type: string, enum: [MORNING, AFTERNOON, EVENING], example: "MORNING" }
+        workDate: { type: string, format: date, example: "2026-10-12" }
+        createdAt: { type: string, format: date-time }
+
+    CreateShiftAssignmentRequest:
+      type: object
+      required: [staffId, zoneId, shift, workDate]
+      properties:
+        staffId: { type: integer, format: int64, example: 2 }
+        zoneId: { type: integer, example: 2 }
+        shift: { type: string, enum: [MORNING, AFTERNOON, EVENING], example: "MORNING" }
+        workDate: { type: string, format: date, example: "2026-10-12" }
+
+    StaffRosterMember:
+      type: object
+      required: [staffId, fullName, email]
+      properties:
+        staffId: { type: integer, format: int64, example: 2 }
+        fullName: { type: string, example: "Minh Nguyễn" }
+        email: { type: string, format: email, example: "minh@demo.storagehub.vn" }
+        code: { type: string, example: "KC-8842" }
+        roleLabel: { type: string, example: "Staff · Zones A, B (Ground Floor Warden)" }
+        status: { type: string, example: "ON_DUTY" }
+        shiftCount: { type: integer, example: 5 }
+        conflictCount: { type: integer, example: 0 }

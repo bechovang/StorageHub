@@ -64,4 +64,23 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
 
     @Query("SELECT u FROM Unit u JOIN FETCH u.type t JOIN FETCH u.zone z WHERE u.status <> com.storagehub.entity.Unit.Status.RETIRED ORDER BY u.code ASC")
     List<Unit> findAllActiveWithDetails();
+
+    @Query("SELECT u FROM Unit u JOIN FETCH u.type t JOIN FETCH u.zone z JOIN FETCH z.facility f ORDER BY u.code ASC")
+    List<Unit> findAllWithDetails();
+
+    @Query("""
+        SELECT u FROM Unit u
+        JOIN FETCH u.type t
+        JOIN FETCH u.zone z
+        JOIN FETCH z.facility f
+        WHERE (:status IS NULL OR u.status = :status)
+          AND (:query IS NULL OR LOWER(u.code) LIKE LOWER(CONCAT('%', :query, '%'))
+                             OR LOWER(t.name) LIKE LOWER(CONCAT('%', :query, '%'))
+                             OR LOWER(z.code) LIKE LOWER(CONCAT('%', :query, '%')))
+        ORDER BY u.code ASC
+    """)
+    List<Unit> findUnitsForDrilldown(
+            @Param("status") Unit.Status status,
+            @Param("query") String query
+    );
 }

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router";
+import { matchSearch } from "../../../utils/formatters.js";
 import {
   getFacilityUnits,
   updateUnitSpecs,
@@ -10,7 +11,6 @@ import {
   finishUnitMaintenance,
   fixUnitStatus,
   getUnitActivityLogs,
-  resetFacilityUnits,
 } from "../../../services/unitService.js";
 
 export function useUnitManagement() {
@@ -94,13 +94,14 @@ export function useUnitManagement() {
       result = result.filter((u) => u.zone === selectedZone);
     }
     if (searchTerm.trim()) {
-      const q = searchTerm.trim().toLowerCase();
+      const q = searchTerm.trim();
       result = result.filter(
         (u) =>
-          u.code.toLowerCase().includes(q) ||
-          u.typeName.toLowerCase().includes(q) ||
-          (u.tenant && u.tenant.toLowerCase().includes(q)) ||
-          (u.contractRef && u.contractRef.toLowerCase().includes(q))
+          matchSearch(u.code, q) ||
+          matchSearch(u.typeName, q) ||
+          matchSearch(u.zone, q) ||
+          matchSearch(u.tenant, q) ||
+          matchSearch(u.contractRef, q)
       );
     }
     return result;
@@ -239,14 +240,6 @@ export function useUnitManagement() {
     }
   };
 
-  const handleResetDemo = () => {
-    if (confirm("Khôi phục danh sách kho về dữ liệu mẫu ban đầu?")) {
-      resetFacilityUnits();
-      setUnits(getFacilityUnits());
-      showToast("Đã khôi phục dữ liệu danh mục kho về ban đầu.");
-    }
-  };
-
   const handleClearFilters = () => {
     setSelectedZone("ALL");
     setSearchTerm("");
@@ -307,7 +300,6 @@ export function useUnitManagement() {
     handleFinishMaintenance,
     handleInitiateFixStatus,
     handleConfirmFixStatus,
-    handleResetDemo,
     handleClearFilters,
   };
 }

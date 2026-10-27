@@ -6,14 +6,18 @@ import com.storagehub.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 /**
- * Controller quản lý tài khoản người dùng — SYS-01 (FR-37).
+ * Controller quản lý tài khoản người dùng — SYS-01 (FR-37),
+ * Lịch sử đăng nhập — SYS-02 (FR-38) & Ma trận phân quyền — (FR-39).
  * Toàn bộ các thao tác được bảo vệ chỉ dành cho SYSTEM_ADMIN.
  */
 @RestController
@@ -39,6 +43,32 @@ public class UserController {
             @RequestParam(name = "page-size", defaultValue = "20") @Min(value = 1) @Max(value = 100) int pageSize
     ) {
         return ResponseEntity.ok(userService.listUsers(query, role, status, page, pageSize));
+    }
+
+    /**
+     * Lịch sử đăng nhập hệ thống — SYS-02 (FR-38).
+     */
+    @GetMapping("/login-history")
+    public ResponseEntity<LoginHistoryPageResponse> getLoginHistory(
+            @RequestParam(name = "userId", required = false) Long userId,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "startDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(name = "endDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(name = "page", defaultValue = "1") @Min(value = 1, message = "Trang phải từ 1 trở lên") int page,
+            @RequestParam(name = "pageSize", defaultValue = "25") @Min(value = 1) @Max(value = 100) int pageSize
+    ) {
+        return ResponseEntity.ok(userService.getLoginHistory(userId, status, query, startDate, endDate, page, pageSize));
+    }
+
+    /**
+     * Ma trận phân quyền 5 vai trò cố định — (FR-39).
+     */
+    @GetMapping("/permissions")
+    public ResponseEntity<PermissionMatrixResponse> getPermissionMatrix() {
+        return ResponseEntity.ok(userService.getPermissionMatrix());
     }
 
     /**

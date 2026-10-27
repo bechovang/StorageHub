@@ -43,8 +43,12 @@ export function useBrowseUnits() {
   // Tải danh mục loại kho và kích thước khi trang khởi tạo
   useEffect(() => {
     async function loadOptions() {
-      const options = await getUnitFilterOptions();
-      setFilterOptions(options);
+      try {
+        const options = await getUnitFilterOptions();
+        setFilterOptions(options);
+      } catch (err) {
+        console.error("Failed to fetch unit filter options:", err);
+      }
     }
     loadOptions();
   }, []);

@@ -57,289 +57,80 @@ export const TASK_STATUSES = {
   DONE: { key: "DONE", label: "Đã hoàn thành", countLabel: "Hoàn thành" },
 };
 
-const STORAGE_KEY = "storagehub_tasks_v2";
+const RITUAL_CACHE_KEY = "storagehub_task_rituals_v1";
 
-/**
- * Danh sách Task mẫu ban đầu theo đúng snapshot ca sáng Depot Tân Bình (F2-01 mockup & seed DB)
- */
-const INITIAL_TASKS = [
-  {
-    taskId: 1042,
-    type: "CHECK_IN",
-    refCode: "BK-1042",
-    unitCode: "Unit S-3",
-    customerName: "Nguyễn Thị Lan",
-    customerPhone: "0901 234 567",
-    dueTime: "09:00",
-    status: "TODO",
-    workDate: "2026-10-08",
-    accessPin: "8842-Active",
-    rentAmount: 1800000,
-    depositPaid: 180000,
-    // Trạng thái kiểm soát nghiệp vụ check-in ritual (US-15)
-    ritual: {
-      depositVerified: true,
-      rentCollected: false,
-      contractSigned: false,
-      contractPhotoUrl: null,
-      accessCodeHanded: false,
-    },
-  },
-  {
-    taskId: 1043,
-    type: "CLEANING",
-    refCode: "CL-0101",
-    unitCode: "Unit S-1",
-    customerName: "Hệ thống",
-    dueTime: "16:00",
-    status: "TODO",
-    workDate: "2026-10-08",
-    alertNote: "Khách kế tiếp nhận lúc 16:30",
-    ritual: {
-      sweptFloor: false,
-      dehumidifierChecked: false,
-      lockLubricated: false,
-      readyForTenant: false,
-    },
-  },
-  {
-    taskId: 1044,
-    type: "SUPPORT",
-    refCode: "SR-0032",
-    unitCode: "Unit S-4",
-    customerName: "Lê Minh Trí",
-    customerPhone: "0912 888 999",
-    dueTime: "11:30",
-    status: "TODO",
-    workDate: "2026-10-08",
-    priority: "Medium",
-    issueDescription: "Cửa cuốn bị kẹt rãnh dưới góc phải, khó kéo hết hành trình.",
-    ritual: {
-      assignedTo: "Trần Minh",
-      resolvedNote: "",
-      escalated: false,
-      escalationReason: "",
-    },
-  },
-  {
-    taskId: 1045,
-    type: "CHECKOUT",
-    refCode: "RT-0871",
-    unitCode: "Unit M-2",
-    customerName: "Hoàng Nam",
-    customerPhone: "0933 555 777",
-    dueTime: "14:00",
-    status: "IN_PROGRESS",
-    workDate: "2026-10-08",
-    depositAmount: 360000,
-    rentalMonths: 3,
-    // Trạng thái kiểm soát nghiệp vụ checkout ritual (US-21)
-    ritual: {
-      checklist: {
-        accessCard: "OK",
-        padlock: "OK",
-        cleanliness: "MINOR", // Có vết bẩn nhẹ
-        structure: "OK",
-      },
-      damageCharges: [
-        { id: 1, item: "Vệ sinh sàn khử ố", amount: 100000, reason: "Vết dầu xe đọng góc trái kho" }
-      ],
-      settlementConfirmed: false,
-      receiptPrinted: false,
-    },
-  },
-  {
-    taskId: 1046,
-    type: "CLEANING",
-    refCode: "CL-0102",
-    unitCode: "Unit L-3",
-    customerName: "Hệ thống",
-    dueTime: "15:00",
-    status: "IN_PROGRESS",
-    workDate: "2026-10-08",
-    alertNote: "12 m² · Cần hút ẩm khử mùi",
-    ritual: {
-      sweptFloor: true,
-      dehumidifierChecked: false,
-      lockLubricated: false,
-      readyForTenant: false,
-    },
-  },
-  {
-    taskId: 1047,
-    type: "CONTRACT",
-    refCode: "CT-1044",
-    unitCode: "Unit S-2",
-    customerName: "Phạm Tuấn",
-    customerPhone: "0944 111 222",
-    dueTime: "10:15",
-    status: "DONE",
-    workDate: "2026-10-08",
-    ritual: {
-      contractSigned: true,
-      contractPhotoUrl: "/placeholder.svg",
-    },
-  },
-  {
-    taskId: 1048,
-    type: "CHECK_IN",
-    refCode: "BK-1040",
-    unitCode: "Unit M-1",
-    customerName: "Đỗ Mai Hương",
-    dueTime: "08:30",
-    status: "DONE",
-    workDate: "2026-10-08",
-    accessPin: "1940-Active",
-    rentAmount: 3600000,
-    depositPaid: 360000,
-    ritual: {
-      depositVerified: true,
-      rentCollected: true,
-      contractSigned: true,
-      contractPhotoUrl: "/placeholder.svg",
-      accessCodeHanded: true,
-    },
-  },
-  {
-    taskId: 1049,
-    type: "CONTRACT",
-    refCode: "CT-1042-A1",
-    unitCode: "Unit S-3",
-    customerName: "Nguyễn Thị Lan",
-    customerPhone: "0901 234 567",
-    dueTime: "Hạn 7 ngày",
-    status: "IN_PROGRESS",
-    workDate: "2026-10-08",
-    alertNote: "Phụ lục gia hạn +2 tháng (chờ ký tại quầy)",
-    ritual: {
-      contractSigned: false,
-      contractPhotoUrl: null,
-    },
-  },
-];
-
-export function resetLocalTasks() {
+function loadRitualOverrides() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_TASKS));
-  } catch (err) {
-    console.error("Failed to reset tasks:", err);
-  }
-  return INITIAL_TASKS;
-}
-
-function loadLocalTasks() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(RITUAL_CACHE_KEY);
     if (raw) return JSON.parse(raw);
   } catch (err) {
-    console.error("Failed to read tasks:", err);
+    console.error("Failed to read task ritual state:", err);
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_TASKS));
-  return INITIAL_TASKS;
+  return {};
 }
 
-function saveLocalTasks(tasks) {
+function saveRitualOverride(taskId, patch) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    const current = loadRitualOverrides();
+    current[taskId] = { ...(current[taskId] || {}), ...patch };
+    sessionStorage.setItem(RITUAL_CACHE_KEY, JSON.stringify(current));
   } catch (err) {
-    console.error("Failed to save tasks:", err);
+    console.error("Failed to save task ritual state:", err);
   }
 }
 
 /**
- * Lấy danh sách nhiệm vụ của ca trực
+ * Lấy danh sách nhiệm vụ của ca trực từ Backend: GET /api/v1/tasks
  */
 export async function getStaffTasks(params = {}) {
-  try {
-    const query = new URLSearchParams();
-    if (params.workDate) query.set("workDate", params.workDate);
-    if (params.shift) query.set("shift", params.shift);
-    if (params.type) query.set("type", params.type);
-    if (params.status) query.set("status", params.status);
-    const queryString = query.toString() ? `?${query.toString()}` : "";
+  const query = new URLSearchParams();
+  if (params.workDate) query.set("workDate", params.workDate);
+  if (params.shift) query.set("shift", params.shift);
+  if (params.type) query.set("type", params.type);
+  if (params.status) query.set("status", params.status);
+  const queryString = query.toString() ? `?${query.toString()}` : "";
 
-    const res = await apiClient(`/api/v1/tasks${queryString}`);
-    if (res.ok) {
-      const serverTasks = await safeParseJson(res);
-      if (Array.isArray(serverTasks)) {
-        const localTasks = loadLocalTasks();
-        const mergedMap = new Map();
-
-        // Ưu tiên đưa local tasks vào để không mất dữ liệu demo
-        localTasks.forEach((t) => mergedMap.set(t.taskId, t));
-
-        // Hợp nhất dữ liệu thật từ Backend (bao gồm các task Checkout mới từ Database)
-        serverTasks.forEach((st) => {
-          const local = mergedMap.get(st.taskId);
-          mergedMap.set(st.taskId, {
-            ...st,
-            ritual: {
-              ...(st.ritual || {}),
-              ...(local?.ritual || {}),
-            },
-          });
-        });
-
-        const merged = Array.from(mergedMap.values());
-        saveLocalTasks(merged);
-        return merged;
-      }
-    }
-  } catch (err) {
-    console.warn("Backend getStaffTasks failed, using local storage:", err);
+  const res = await apiClient(`/api/v1/tasks${queryString}`);
+  const data = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || "Không thể tải danh sách nhiệm vụ ca trực.");
   }
-  return loadLocalTasks();
+
+  const overrides = loadRitualOverrides();
+  const list = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : [];
+
+  return list.map((task) => {
+    const ov = overrides[task.taskId];
+    if (!ov) return task;
+    return {
+      ...task,
+      status: ov.status || task.status,
+      accessPin: ov.accessPin || task.accessPin,
+      priority: ov.priority || task.priority,
+      ritual: {
+        ...(task.ritual || {}),
+        ...(ov.ritual || {}),
+      },
+    };
+  });
 }
 
 /**
- * Cập nhật trạng thái nhiệm vụ (To do -> In progress -> Done)
+ * Cập nhật trạng thái nhiệm vụ (To do -> In progress -> Done): PATCH /api/v1/tasks/{taskId}/status
  */
 export async function updateTaskStatus(taskId, newStatus) {
-  try {
-    const res = await apiClient(`/api/v1/tasks/${taskId}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) {
-      const updated = await safeParseJson(res);
-      const tasks = loadLocalTasks();
-      const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
-      if (idx !== -1) {
-        tasks[idx] = { ...tasks[idx], ...updated };
-        saveLocalTasks(tasks);
-      }
-      return updated;
-    } else {
-      const errData = await safeParseJson(res);
-      if (errData && errData.message) {
-        throw new Error(errData.message);
-      }
-    }
-  } catch (err) {
-    if (err.message && (err.message.includes("Chặn Done ảo") || err.message.includes("nhiệm vụ"))) {
-      throw err;
-    }
+  const res = await apiClient(`/api/v1/tasks/${taskId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: newStatus }),
+  });
+
+  const data = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || "Không thể cập nhật trạng thái nhiệm vụ.");
   }
 
-  const tasks = loadLocalTasks();
-  const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
-  if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ");
-
-  const task = tasks[idx];
-
-  // Kiểm tra rule chống Done ảo (Snap-back FR-22)
-  if (newStatus === "DONE") {
-    const violation = checkSnapBackViolation(task);
-    if (violation) {
-      throw new Error(violation);
-    }
-  }
-
-  task.status = newStatus;
-  tasks[idx] = task;
-  saveLocalTasks(tasks);
-  return task;
+  saveRitualOverride(taskId, { status: newStatus });
+  return data;
 }
 
 /**
@@ -423,54 +214,61 @@ export function checkSnapBackViolation(task) {
  * Thực hiện ký hợp đồng / phụ lục tại quầy (US-19)
  */
 export async function completeContractRitual(taskId, { contractPhotoUrl }) {
-  const tasks = loadLocalTasks();
-  const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
-  if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ Ký hợp đồng");
+  saveRitualOverride(taskId, {
+    status: "DONE",
+    ritual: {
+      contractSigned: true,
+      contractPhotoUrl: contractPhotoUrl || "/placeholder.svg",
+    },
+  });
 
-  const task = tasks[idx];
-  task.ritual = {
-    ...task.ritual,
-    contractSigned: true,
-    contractPhotoUrl: contractPhotoUrl || "/placeholder.svg",
-  };
-  task.status = "DONE";
-
-  tasks[idx] = task;
-  saveLocalTasks(tasks);
-  return task;
+  try {
+    await updateTaskStatus(taskId, "DONE");
+  } catch (err) {
+    console.warn("Backend status sync deferred for contract ritual:", err);
+  }
 }
 
 /**
  * Thực hiện nghiệp vụ Check-in Ritual (US-15)
  */
 export async function completeCheckinRitual(taskId, { paymentMethod, contractPhotoUrl, accessPin }) {
-  const tasks = loadLocalTasks();
-  const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
-  if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ Check-in");
+  saveRitualOverride(taskId, {
+    status: "DONE",
+    accessPin: accessPin || "8842-Active",
+    ritual: {
+      depositVerified: true,
+      rentCollected: true,
+      paymentMethod: paymentMethod || "CASH",
+      contractSigned: true,
+      contractPhotoUrl: contractPhotoUrl || "/placeholder.svg",
+      accessCodeHanded: true,
+    },
+  });
 
-  const task = tasks[idx];
-  task.ritual = {
-    ...task.ritual,
-    depositVerified: true,
-    rentCollected: true,
-    paymentMethod: paymentMethod || "CASH",
-    contractSigned: true,
-    contractPhotoUrl: contractPhotoUrl || "/placeholder.svg",
-    accessCodeHanded: true,
-  };
-  task.accessPin = accessPin || task.accessPin || "8842-Active";
-  task.status = "DONE";
-
-  tasks[idx] = task;
-  saveLocalTasks(tasks);
-  return task;
+  try {
+    await updateTaskStatus(taskId, "DONE");
+  } catch (err) {
+    console.warn("Backend status sync deferred for check-in ritual:", err);
+  }
 }
 
 /**
  * Thực hiện nghiệp vụ Checkout Ritual (US-21)
  */
 export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged }) {
-  // Cố gắng gọi API backend nếu online
+  saveRitualOverride(taskId, {
+    status: "DONE",
+    ritual: {
+      checklist,
+      damageCharges: damageCharges || [],
+      refundAmount: refundAmount || 0,
+      extraCharged: extraCharged || 0,
+      settlementConfirmed: true,
+      receiptPrinted: true,
+    },
+  });
+
   try {
     const res = await apiClient(`/api/v1/tasks/${taskId}/complete-checkout`, {
       method: "POST",
@@ -479,97 +277,78 @@ export async function completeCheckoutRitual(taskId, { checklist, damageCharges,
         damageFee: extraCharged || 0,
       }),
     });
-    if (res.ok) {
-      const data = await safeParseJson(res);
-      console.log("Backend checkout completed successfully:", data);
+    if (!res.ok) {
+      await updateTaskStatus(taskId, "DONE");
     }
   } catch (err) {
-    console.warn("Backend complete checkout ritual failed, continuing locally:", err);
+    console.warn("Backend checkout ritual API call failed, falling back to updateTaskStatus:", err);
+    try {
+      await updateTaskStatus(taskId, "DONE");
+    } catch (statusErr) {
+      console.warn("Backend status sync deferred for checkout ritual:", statusErr);
+    }
   }
 
-  const tasks = loadLocalTasks();
-  const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
-  if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ Checkout");
-
-  const task = tasks[idx];
-  task.ritual = {
-    ...task.ritual,
-    checklist,
-    damageCharges: damageCharges || [],
-    refundAmount: refundAmount || 0,
-    extraCharged: extraCharged || 0,
-    settlementConfirmed: true,
-    receiptPrinted: true,
-  };
-  task.status = "DONE";
-
-  // Sau khi Checkout thành công -> Tự động sinh task dọn kho CLEANING cho Unit này theo quy định
-  const newCleaningTaskId = Math.max(...tasks.map((t) => t.taskId), 1050) + 1;
-  const newCleaningTask = {
-    taskId: newCleaningTaskId,
-    type: "CLEANING",
-    refCode: `CL-${newCleaningTaskId}`,
-    unitCode: task.unitCode,
-    customerName: "Hệ thống (Tự động sau trả kho)",
-    dueTime: "17:00",
-    status: "TODO",
-    workDate: task.workDate,
-    alertNote: "Cần dọn dẹp và kiểm tra kho sau khi khách trả",
-    ritual: {
-      sweptFloor: false,
-      dehumidifierChecked: false,
-      lockLubricated: false,
-      readyForTenant: false,
-    },
-  };
-
-  tasks.push(newCleaningTask);
-  saveLocalTasks(tasks);
-  return { checkoutTask: task, newCleaningTask };
+  // Tự động tạo task dọn kho CLEANING qua POST /api/v1/tasks
+  try {
+    await apiClient("/api/v1/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        type: "CLEANING",
+        refCode: `CL-${Date.now().toString().slice(-4)}`,
+        dueTime: "17:00",
+        alertNote: "Cần dọn dẹp và kiểm tra kho sau khi khách trả",
+      }),
+    });
+  } catch (err) {
+    console.warn("Failed to auto-create cleaning task:", err);
+  }
 }
 
 /**
  * Hoàn tất dọn kho (Cleaning)
  */
 export async function completeCleaningRitual(taskId, checklistState) {
-  const tasks = loadLocalTasks();
-  const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
-  if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ");
+  saveRitualOverride(taskId, {
+    status: "DONE",
+    ritual: {
+      ...checklistState,
+      readyForTenant: true,
+    },
+  });
 
-  const task = tasks[idx];
-  task.ritual = {
-    ...task.ritual,
-    ...checklistState,
-    readyForTenant: true,
-  };
-  task.status = "DONE";
-  tasks[idx] = task;
-  saveLocalTasks(tasks);
-  return task;
+  await updateTaskStatus(taskId, "DONE");
 }
 
 /**
  * Xử lý hoặc chuyển tiếp Ticket Support
  */
 export async function resolveSupportTicket(taskId, { note, escalate = false, escalateReason = "" }) {
-  const tasks = loadLocalTasks();
-  const idx = tasks.findIndex((t) => t.taskId === Number(taskId));
-  if (idx === -1) throw new Error("Không tìm thấy nhiệm vụ");
-
-  const task = tasks[idx];
   if (escalate) {
     if (!escalateReason.trim()) {
       throw new Error("Lý do báo cáo sự cố lên Quản lý (Escalate) là bắt buộc!");
     }
-    task.ritual.escalated = true;
-    task.ritual.escalationReason = escalateReason;
-    task.priority = "High";
-  } else {
-    task.ritual.resolvedNote = note;
-    task.status = "DONE";
+    saveRitualOverride(taskId, {
+      priority: "High",
+      ritual: {
+        escalated: true,
+        escalationReason: escalateReason,
+      },
+    });
+    return;
   }
 
-  tasks[idx] = task;
-  saveLocalTasks(tasks);
-  return task;
+  saveRitualOverride(taskId, {
+    status: "DONE",
+    ritual: {
+      resolvedNote: note,
+      escalated: false,
+    },
+  });
+
+  try {
+    await updateTaskStatus(taskId, "DONE");
+  } catch (err) {
+    console.warn("Backend status sync deferred for support ritual:", err);
+  }
 }

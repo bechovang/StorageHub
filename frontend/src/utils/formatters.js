@@ -72,6 +72,28 @@ export function formatDateTime(dateStr) {
 export const fmtDateTime = formatDateTime;
 
 /**
+ * Định dạng thời gian kiểm toán dạng mono: YYYY-MM-DD HH:mm:ss
+ * @param {string|Date|null|undefined} isoString
+ * @returns {string}
+ */
+export function formatAuditTimestamp(isoString) {
+  if (!isoString) return "—";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return String(isoString);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    const ss = String(d.getSeconds()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+  } catch {
+    return String(isoString);
+  }
+}
+
+/**
  * Định dạng ngày đầy đủ có thứ trong tuần (vi-VN)
  * @param {string|Date|null|undefined} dateStr
  * @returns {string}
@@ -114,3 +136,36 @@ export function getTomorrowDate() {
   d.setDate(d.getDate() + 1);
   return d.toISOString().split("T")[0];
 }
+
+/**
+ * Chuẩn hóa chuỗi tiếng Việt: loại bỏ dấu, chuyển về chữ thường, xử lý đ/Đ và khoảng trắng thừa.
+ * Phục vụ tìm kiếm tiếng Việt không phân biệt dấu và hoa thường (Accent & Case-insensitive).
+ *
+ * @param {string|null|undefined} str
+ * @returns {string}
+ */
+export function normalizeVietnamese(str = "") {
+  if (!str) return "";
+  return String(str)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Kiểm tra xem chuỗi nguồn (target) có chứa từ khóa tìm kiếm (query) hay không (không phân biệt dấu và hoa thường).
+ *
+ * @param {string|null|undefined} target Chuỗi dữ liệu cần kiểm tra
+ * @param {string|null|undefined} query Từ khóa tìm kiếm của người dùng
+ * @returns {boolean}
+ */
+export function matchSearch(target = "", query = "") {
+  if (!query || !String(query).trim()) return true;
+  const normQuery = normalizeVietnamese(query);
+  const normTarget = normalizeVietnamese(target);
+  return normTarget.includes(normQuery);
+}
+

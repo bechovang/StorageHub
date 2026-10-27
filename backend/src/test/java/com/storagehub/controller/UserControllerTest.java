@@ -208,4 +208,46 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.email").value("staff@storagehub.vn"))
                 .andExpect(jsonPath("$.temporaryPassword").value("NewResetPass#1"));
     }
+
+    @Test
+    @DisplayName("GET /api/v1/users/login-history: 200 OK trả về danh sách lịch sử đăng nhập phân trang (FR-38)")
+    void testGetLoginHistory_Success() throws Exception {
+        LoginHistoryItemResponse item = new LoginHistoryItemResponse(
+                1L, 7L, "Vũ Văn Vũ", "vu@demo.storagehub.vn", "STAFF", "LOGIN_FAILED", "FAILED", "Wrong password", LocalDateTime.now()
+        );
+        LoginHistoryPageResponse response = new LoginHistoryPageResponse(List.of(item), 1, 25, 1, 1);
+
+        when(userService.getLoginHistory(any(), any(), any(), any(), any(), eq(1), eq(25)))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/users/login-history")
+                        .principal(adminAuth)
+                        .param("status", "FAILED")
+                        .param("page", "1")
+                        .param("pageSize", "25"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].logId").value(1))
+                .andExpect(jsonPath("$.items[0].action").value("LOGIN_FAILED"))
+                .andExpect(jsonPath("$.items[0].status").value("FAILED"))
+                .andExpect(jsonPath("$.items[0].reason").value("Wrong password"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/users/permissions: 200 OK trả về ma trận phân quyền (FR-39)")
+    void testGetPermissionMatrix_Success() throws Exception {
+        PermissionMatrixResponse response = new PermissionMatrixResponse(
+                List.of("CUSTOMER", "STAFF", "FACILITY_MANAGER", "BUSINESS_OPS", "SYSTEM_ADMIN"),
+                List.of(new PermissionMatrixResponse.PermissionGroupDto(
+                        "1. Phân hệ Khách hàng", "Mô tả", List.of()
+                ))
+        );
+
+        when(userService.getPermissionMatrix()).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/users/permissions")
+                        .principal(adminAuth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roles[0]").value("CUSTOMER"))
+                .andExpect(jsonPath("$.groups[0].category").value("1. Phân hệ Khách hàng"));
+    }
 }

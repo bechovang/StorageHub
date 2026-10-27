@@ -49,6 +49,9 @@ class UserServiceTest {
     @Mock
     private LogService logService;
 
+    @Mock
+    private com.storagehub.repository.ActivityLogRepository activityLogRepository;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -264,5 +267,41 @@ class UserServiceTest {
 
         verify(userRepository).save(targetUser);
         verify(logService).log(eq(adminActor), eq("USER"), eq(2L), eq("PASSWORD_RESET"), isNull(), isNull(), anyString());
+    }
+
+    @Test
+    @DisplayName("getLoginHistory: Tra cứu lịch sử đăng nhập phân trang thành công (FR-38)")
+    void testGetLoginHistory_Success() {
+        com.storagehub.entity.ActivityLog log1 = new com.storagehub.entity.ActivityLog();
+        log1.setLogId(101L);
+        log1.setActor(adminActor);
+        log1.setEntityType("USER");
+        log1.setEntityId(1L);
+        log1.setAction("LOGIN");
+        log1.setToValue("SUCCESS");
+        log1.setReason("Đăng nhập thành công");
+        log1.setCreatedAt(java.time.LocalDateTime.now());
+
+        when(activityLogRepository.findLoginHistory(eq(1L), eq("SUCCESS"), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(log1), org.springframework.data.domain.PageRequest.of(0, 25), 1));
+
+        LoginHistoryPageResponse response = userService.getLoginHistory(1L, "SUCCESS", null, null, null, 1, 25);
+
+        assertThat(response).isNotNull();
+        assertThat(response.totalItems()).isEqualTo(1);
+        assertThat(response.items()).hasSize(1);
+        assertThat(response.items().get(0).action()).isEqualTo("LOGIN");
+        assertThat(response.items().get(0).status()).isEqualTo("SUCCESS");
+    }
+
+    @Test
+    @DisplayName("getPermissionMatrix: Trả về bảng ma trận 5 roles và 4 phân hệ chuẩn (FR-39)")
+    void testGetPermissionMatrix_Success() {
+        PermissionMatrixResponse response = userService.getPermissionMatrix();
+
+        assertThat(response).isNotNull();
+        assertThat(response.roles()).containsExactly("CUSTOMER", "STAFF", "FACILITY_MANAGER", "BUSINESS_OPS", "SYSTEM_ADMIN");
+        assertThat(response.groups()).hasSize(4);
+        assertThat(response.groups().get(0).permissions()).isNotEmpty();
     }
 }

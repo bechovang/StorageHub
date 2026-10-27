@@ -64,14 +64,12 @@ class PayOsPaymentGatewayTest {
     }
 
     @Test
-    @DisplayName("orderCode ngoài dải StorageHub → PaymentWebhookException")
-    void rejectsForeignOrderCode() throws Exception {
+    @DisplayName("orderCode ngoài dải StorageHub (payload mẫu PayOS 123) → bỏ qua, trả empty")
+    void ignoresForeignOrderCodeAsProbe() throws Exception {
         WebhookData data = webhookData(42L, 50_000L);
         String payload = signedPayload(data, 50_000L);
 
-        assertThatThrownBy(() -> gateway.verifyWebhook(payload))
-                .isInstanceOf(PaymentWebhookException.class)
-                .hasMessageContaining("orderCode");
+        assertThat(gateway.verifyWebhook(payload)).isEmpty();
     }
 
     private WebhookData webhookData(long orderCode, long amount) {
