@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
 
 // Auth & Public Pages
+import LandingPage from "../pages/public/LandingPage.jsx";
 import LoginPage from "../pages/auth/LoginPage.jsx";
 import RegisterPage from "../pages/auth/RegisterPage.jsx";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage.jsx";
@@ -61,7 +62,7 @@ export default function AppRouter() {
   return (
     <Routes>
       {/* ── 1. Public & Root Routes ── */}
-      <Route path="/" element={<RootRedirect />} />
+      <Route path="/" element={<LandingPage />} />
 
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
