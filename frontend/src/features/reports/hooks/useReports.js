@@ -62,7 +62,7 @@ export function useReports() {
   useEffect(() => {
     if (!activeDrilldownKey) return;
     let ignore = false;
-    getDrilldownItems(activeDrilldownKey)
+    getDrilldownItems(activeDrilldownKey, "", selectedPeriod, customRange)
       .then((data) => {
         if (!ignore) setDrilldownData(data);
       })
@@ -72,7 +72,7 @@ export function useReports() {
     return () => {
       ignore = true;
     };
-  }, [activeDrilldownKey]);
+  }, [activeDrilldownKey, selectedPeriod, customRange]);
 
   // Lọc dòng trong drilldown
   const filteredDrilldownRows = useMemo(() => {

@@ -118,7 +118,7 @@ export default function UnitDetailPage() {
                   Kho {typeLabel} · {unit.sizeM2} m²
                 </h1>
                 <Badge tone={isSoon ? "warning" : "success"}>
-                  {isSoon ? "Sắp khả dụng" : "Đang trống · Nhận kho ngay"}
+                  {isSoon ? "Sắp khả dụng" : "Đang trống · Cọc để giữ chỗ"}
                 </Badge>
               </div>
               <p className="unit-detail-meta">

@@ -98,7 +98,7 @@ export default function BrowseUnitDrawer({
                 onBook(selectedUnit);
               }}
             >
-              Đặt kho ngay
+              Đặt kho & Thanh toán cọc
             </Button>
           </div>
         </div>
@@ -113,12 +113,15 @@ export default function BrowseUnitDrawer({
           </h2>
           <div className="browse-drawer-status-bar">
             <Badge tone={isSoon ? "warning" : "success"}>
-              {isSoon ? "Sắp khả dụng" : "Còn trống · Nhận kho ngay"}
+              {isSoon ? "Sắp khả dụng" : "Còn trống · Cọc để giữ chỗ"}
             </Badge>
             <span className="browse-drawer-rent-pill">
               {formatVND(price)} / tháng
             </span>
           </div>
+          <p style={{ fontSize: "0.8rem", color: "var(--color-ink-muted, #737373)", margin: "8px 0 0" }}>
+            * Lưu ý: Ô kho chỉ chính thức được khóa giữ chỗ (RESERVED) sau khi bạn hoàn tất thanh toán tiền cọc 10%.
+          </p>
         </div>
 
         {/* Hình ảnh trực quan không gian kho */}

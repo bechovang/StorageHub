@@ -180,7 +180,7 @@ export default function UnitPricingCalculator({
         </div>
 
         <p className="deposit-box-explanation">
-          ✓ Tiền cọc giúp giữ chỗ kho cho bạn và được{" "}
+          ✓ Khoản cọc 10% là điều kiện bắt buộc để <strong>khóa giữ chỗ chính thức (RESERVED)</strong> cho ô kho. Trong thời gian chưa thanh toán, ô kho vẫn khả dụng cho khách hàng khác đặt. Tiền cọc sẽ được{" "}
           <strong>hoàn trả 100%</strong> vào tài khoản của bạn ngay khi kết
           thúc hợp đồng.
         </p>
@@ -191,7 +191,7 @@ export default function UnitPricingCalculator({
         <div className="due-now-row">
           <div>
             <span className="due-now-label">THANH TOÁN HÔM NAY:</span>
-            <span className="due-now-sub">Tiền cọc giữ chỗ kho</span>
+            <span className="due-now-sub">Tiền cọc để khóa giữ chỗ kho</span>
           </div>
           <strong className="due-now-amount">{formatVND(dueNow)}</strong>
         </div>
@@ -207,7 +207,7 @@ export default function UnitPricingCalculator({
         onClick={onBookNow}
         disabled={quoteLoading}
       >
-        <span>Đặt kho & Thanh toán cọc</span>
+        <span>Đặt kho & Thanh toán cọc giữ chỗ</span>
         <span className="pricing-submit-btn__arrow">→</span>
       </button>
 

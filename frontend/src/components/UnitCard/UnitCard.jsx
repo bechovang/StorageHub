@@ -30,11 +30,11 @@ export default function UnitCard({
 
   const availableLine = isSoon
     ? (availableDate ? `Dự kiến trống từ ${formatDate(availableDate)}` : "Sắp có kho trống")
-    : "Đang có sẵn · Nhận kho ngay";
+    : "Còn trống · Cọc để giữ chỗ";
 
   const subline = isSoon
-    ? "Đang dọn dẹp để bàn giao cho khách mới"
-    : "Ra vào chủ động bằng mã PIN riêng 24/7";
+    ? "Đang chuẩn bị bàn giao cho khách mới"
+    : "Thanh toán cọc 10% để khóa giữ chỗ · Ra vào 24/7";
 
   const price = unit.baseMonthlyRent ?? unit.monthlyPrice ?? 0;
   const typeLabel = unit.typeName || unit.type || "Tiêu chuẩn";
