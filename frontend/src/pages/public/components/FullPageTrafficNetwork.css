@@ -1,54 +1,88 @@
 /* ==========================================================================
-   FullPageTrafficNetwork.css — Ambient Logistics Traffic Network
-   Ambient traffic routes and moving nodes across entire homepage.
+   FullPageTrafficNetwork.css — Ambient Real-World Logistics Traffic Network
+   Displays authentic Ho Chi Minh City urban blueprint watermark with
+   real-time moving logistics delivery nodes along actual transport corridors.
    0 location labels, 100% design tokens, 60fps GPU acceleration.
    ========================================================================== */
 
 .full-page-traffic {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
 }
 
+/* ── Realistic Map Watermark Layer ── */
+.full-page-traffic__map-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.full-page-traffic__map-img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 38%;
+  opacity: 0.32;
+  filter: grayscale(100%) contrast(112%);
+  transform: translateZ(0);
+}
+
+.full-page-traffic__map-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 72% 32%,
+    rgba(245, 245, 247, 0.12) 0%,
+    rgba(245, 245, 247, 0.55) 60%,
+    rgba(245, 245, 247, 0.85) 100%
+  );
+  pointer-events: none;
+}
+
+/* ── SVG Transport Corridors & Nodes Layer ── */
 .full-page-traffic__svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
 }
 
-/* ── Dash Stream Animation ── */
-.traffic-flow-dash {
-  animation: trafficFlowDash 1.4s linear infinite;
-}
-
-@keyframes trafficFlowDash {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
-
-/* ── Concentric Hub Pulse ── */
-.page-hub-pulse {
+/* ── Hub Pulse Animation ── */
+.traffic-hub-pulse {
   transform-origin: center;
-  animation: pageHubPulse 2.8s ease-out infinite;
+  animation: trafficHubPulse 2.8s ease-out infinite;
 }
 
-@keyframes pageHubPulse {
+@keyframes trafficHubPulse {
   0% {
-    r: 10;
-    opacity: 0.8;
+    r: 6;
+    opacity: 0.85;
   }
   60% {
-    r: 28;
+    r: 22;
     opacity: 0;
   }
   100% {
-    r: 28;
+    r: 22;
     opacity: 0;
+  }
+}
+
+/* ── Route Dash Animation ── */
+.traffic-route-dash {
+  animation: trafficRouteDash 1.6s linear infinite;
+}
+
+@keyframes trafficRouteDash {
+  to {
+    stroke-dashoffset: -20;
   }
 }

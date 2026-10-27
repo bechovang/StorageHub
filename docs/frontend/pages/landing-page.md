@@ -38,15 +38,17 @@ Mục tiêu chính:
 - **Quick Stats Ribbon (4 thẻ chỉ số)**: Căn giữa trải dài toàn bộ chiều rộng ngay bên dưới 2 cột, tích hợp bộ đếm số tự động `CounterNumber`.
 
 ### 3.1.1. Sa Bàn Video Background Toàn Trang (`FullPageTrafficNetwork.jsx`)
-- Component [`FullPageTrafficNetwork.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/FullPageTrafficNetwork.jsx) được gắn làm lớp lót video background chìm bên dưới (`z-index: 0; pointer-events: none;`) bao phủ 100% chiều cao của toàn bộ trang Landing Page:
-  - **Tái hiện Chân Thực Mật Độ Đô Thị TP.HCM (Trace từ ảnh Google Maps 2560x1440)**:
-    - **Thủy lưu tự nhiên**: Dải uốn lượn thực tế của Sông Sài Gòn (ôm trọn Thanh Đa, Thủ Thiêm, Bến Bạch Đằng, Quận 7), Kênh Nhiêu Lộc - Thị Nghè (Tân Bình qua Phú Nhuận, Q3 sang Ba Son), Kênh Tàu Hủ - Bến Nghé (Chợ Lớn qua Q5, Q1) và Kênh Đôi - Kênh Tẻ.
-    - **Hệ thống đại lộ huyết mạch thực tế**: Trục Sân bay TSN (Trường Sơn -> Lăng Cha Cả -> Nguyễn Văn Trỗi -> Nam Kỳ Khởi Nghĩa -> Bến Thành), trục Cách Mạng Tháng Tám (CMTT), Đại lộ Võ Văn Kiệt - Hầm Thủ Thiêm - Mai Chí Thọ, Xa Lộ Hà Nội / Võ Nguyên Giáp, Phạm Văn Đồng, Điện Biên Phủ, Võ Thị Sáu, Ba Tháng Hai, Trần Hưng Đạo, Nguyễn Hữu Thọ, Huỳnh Tấn Phát, Nguyễn Văn Linh.
-    - **Các nút giao vòng xoay / bùng binh đa nhánh thực tế**: Lăng Cha Cả, Ngã 6 Dân Chủ, Vòng xoay Bến Thành, Ngã 7 Lý Thái Tổ, Hàng Xanh, Cầu Sài Gòn, Cầu Phú Mỹ với các vòng xuyến đồng tâm và nhịp phát sóng radar.
-    - **Mạng lưới hẻm xương cá & ô cờ bàn cờ siêu dày**: Ô cờ Bàn Cờ Quận 3, khu thương xá Chợ Lớn, quy hoạch KĐT Phú Mỹ Hưng và hệ thống hẻm xương cá dendritic Tân Bình, Phú Nhuận đan dày đặc.
-  - **Các node xe cộ liên tục luân chuyển (Video Background Effect)**: Các packet đốm tròn mang mã màu canonical design token (`var(--color-accent)` đỏ và `var(--color-ink)` đen) di chuyển mượt mà ở các tốc độ so le khác nhau bằng SVG `<animateMotion>` dọc theo 8 tuyến đại lộ thực tế.
-  - **Đảm bảo khả năng đọc 100%**: Các khối thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) có nền đặc `var(--color-surface)` và đổ bóng khối, các đường line và node xe cộ uốn lượn mờ mờ ở lề trang và luồn sau các thẻ, hoàn toàn không che khuất hay ảnh hưởng đến độ tương phản của chữ.
-  - **Tuyệt đối không nhãn chữ địa danh**: Tuân thủ triệt để nguyên tắc không gắn bất kỳ ghi chú văn bản nào lên đường giao thông, tạo nên vẻ đẹp thuần vector hiện đại và tinh tế.
+- Component [`FullPageTrafficNetwork.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/FullPageTrafficNetwork.jsx) được gắn làm lớp lót video background chìm bên dưới (`position: fixed; inset: 0; z-index: 0; pointer-events: none;`):
+  - **Bản đồ Thực Địa Kỹ Thuật Số TP.HCM (2560x2304 WebP Siêu Nhẹ 454KB - `hcm_map_blueprint.webp`)**:
+    - **100% Hình thái địa lý thực tế**: Hiển thị trọn vẹn dải uốn lượn đặc trưng của Sông Sài Gòn (ôm trọn bán đảo Thanh Đa, Thảo Điền, bán đảo Thủ Thiêm, Bến Bạch Đằng, Quận 7), Sông Đồng Nai, Kênh Nhiêu Lộc - Thị Nghè, Kênh Tàu Hủ - Bến Nghé và Kênh Đôi - Kênh Tẻ.
+    - **Mạng lưới đô thị & đường phố dày đặc**: Toàn bộ hệ thống đường phố, đại lộ huyết mạch, cầu cống, nút giao và mạng lưới hẻm phố chuẩn bản đồ thực địa TP.HCM.
+    - **Phong cách Architectural Blueprint Watermark**: Xử lý đơn sắc tông sáng kỹ thuật số với độ mờ tinh tế (~32%) hòa trộn trên nền `var(--color-surface-page)` và lớp phủ radial gradient che chắn nhẹ ở khu vực chữ bên trái, đảm bảo văn bản đọc sắc nét 100%.
+  - **Mô phỏng Giao thông Logistics Động (Video Background Effect)**:
+    - **Hành lang giao thông thực tế**: Tuyến Đại lộ Phạm Văn Đồng (Sân bay TSN ➔ Thủ Đức), Xa Lộ Hà Nội / Võ Nguyên Giáp, Đại lộ Võ Văn Kiệt ➔ Hầm Thủ Thiêm ➔ Mai Chí Thọ ➔ Cảng Cát Lái, trục Bắc Nam Nam Kỳ Khởi Nghĩa / Nguyễn Văn Trỗi, Đại lộ Nguyễn Văn Linh và thủy lộ vận tải container trên Sông Sài Gòn.
+    - **Node xe chuyển động liên tục**: Các packet đốm tròn mang mã màu canonical design token (`var(--color-accent)` đỏ và `var(--color-ink)` đen) lướt êm ái trên các tuyến đường ở các chu kỳ so le (11s - 22s) bằng SVG `<animateMotion>`.
+    - **Radar Pulses tại các đầu mối Logistics trọng điểm**: Hiệu ứng sóng radar tỏa tròn tại Hub Tân Bình (cơ sở flagship StorageHub gần sân bay TSN), Hub Thủ Đức, Bến Thành Central, Cảng Cát Lái và Hub Phú Mỹ Hưng.
+  - **Đảm bảo khả năng đọc 100%**: Tất cả thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) đều có nền đặc `var(--color-surface, #ffffff)` và đổ bóng khối rắn, nền bản đồ và luồng xe uốn lượn tinh tế dưới nền mà không gây rối mắt.
+  - **Tuyệt đối không nhãn chữ địa danh**: Bản đồ sạch 100% nhãn chữ, giữ trọn vẹn nét tối giản hiện đại.
 
 ### 3.2. Hướng dẫn & Đo lường Kích thước Kho (`#storage-sizes`, `.landing-sizes`)
 - **Tiêu đề nổi bật**: *"Chiếc <span style="color:#dc2626">túi xách</span> nhỏ hay cả <span style="color:#dc2626">căn nhà</span> đều được"* với từ khóa nổi bật bằng màu đỏ và kích thước phóng to.
