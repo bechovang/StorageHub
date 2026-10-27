@@ -29,25 +29,24 @@ Mục tiêu chính:
 ## 3. Cấu trúc các Phần nội dung (Sections)
 
 ### 3.1. Hero Section (`.landing-hero`)
-- **Bố cục 2 Cột Đối Xứng (2-Column Grid)**:
-  - **Cột Trái**: Tiêu đề H1 Kinetic Text Reveal (*"Lưu Trữ Thông Minh · Tự Quản Tuyệt Đối · Bảo Mật 24/7"*), đoạn mô tả định vị dịch vụ và 2 nút CTA chính.
-  - **Cột Phải**: Sa hình Vector mô phỏng Giao thông Logistics ([`LogisticsTrafficMap.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/LogisticsTrafficMap.jsx)):
-    - **Mô phỏng Mật độ Đô thị Việt Nam thực tế (Khảo sát Google Maps)**: Được nhân bản từ bản đồ thực tế TP.HCM (hành lang Tân Bình - Sân bay TSN - Quận 1 - Quận 7) với cấu trúc đường xá đặc trưng:
-      - Tuyến đại lộ xuyên tâm chéo 135° (Trường Sơn -> Bùng binh Lăng Cha Cả -> Nguyễn Văn Trỗi / Nam Kỳ Khởi Nghĩa).
-      - Trục song hành Cách Mạng Tháng Tám (CMTT) qua Ngã 6 Dân Chủ -> Bùng binh Phù Đổng.
-      - Dải kênh Nhiêu Lộc - Thị Nghè uốn lượn tự nhiên cùng cặp đường ven kênh Hoàng Sa - Trường Sa.
-      - Mạng lưới hẻm xương cá và ô cờ bàn cờ Quận 3 dày đặc đặc thù đô thị Việt Nam (stroke 0.8px, opacity 0.6).
-      - Các nút giao vòng xoay / bùng binh đa nhánh (Lăng Cha Cả, Ngã 6 Dân Chủ, Bến Thành) với vòng tròn đồng tâm và nhịp phát sóng radar.
-    - **Node xe cộ hoạt họa**: Các đốm tròn mang màu đỏ nhấn (`var(--color-accent)`) và đen (`var(--color-ink)`) di chuyển liên tục dọc theo các tuyến đường với vệt sáng mờ phía sau.
-    - **Nguyên tắc cốt lõi**: Hoàn toàn **0 ghi chú chữ/nhãn địa danh**, giữ trọn vẻ đẹp vector công nghệ tối giản, tinh tế.
-    - **Khung kỹ thuật chuẩn Swiss Neo-Brutalist**: Thanh trạng thái kỹ thuật tối giản (`VN-HCM // NET-01`, Status Real-time, Wave bars, Corner crosses `+`), viền đen 2px và đổ bóng đặc 4px 4px.
+- **Bố cục 2 Cột Co Giãn Thoải Mái (Flexible 2-Column Grid)**:
+  - **Cột Trái**: Tiêu đề H1 Kinetic Text Reveal (*"Lưu Trữ Thông Minh · Tự Quản Tuyệt Đối · Bảo Mật 24/7"*), đoạn mô tả định vị dịch vụ và 2 nút CTA chính, với không gian căn lề thoải mái, tự nhiên.
+  - **Cột Phải**: Khung sườn vị trí chờ dành cho Slider hình ảnh tương lai (`.landing-hero__slider-placeholder`):
+    - Khung viền nét đứt thanh lịch (`2px dashed var(--color-line)`), nền trong suốt đón ánh sáng từ sa bàn background phía sau.
+    - Huy hiệu nhận diện kỹ thuật: `SLIDER // VISUAL SHOWCASE - Reserved for Future Image & Facility Slider`.
+    - Trả lại trọn vẹn độ co giãn rộng rãi, thoáng đãng cho Hero section mà không bị bó hẹp trong các ô hộp tĩnh.
 - **Quick Stats Ribbon (4 thẻ chỉ số)**: Căn giữa trải dài toàn bộ chiều rộng ngay bên dưới 2 cột, tích hợp bộ đếm số tự động `CounterNumber`.
 
-### 3.1.1. Mạng lưới Giao thông Logistics Toàn Trang (`FullPageTrafficNetwork.jsx`)
-- Component [`FullPageTrafficNetwork.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/FullPageTrafficNetwork.jsx) được gắn làm lớp lót nền (`z-index: 0; pointer-events: none;`) bao phủ 100% chiều cao của trang Landing Page:
-  - **Mật độ hẻm xương cá & ô cờ đô thị Việt Nam**: Bổ sung các mạng hẻm nhánh xương cá chạy dọc hai hành lang Đông - Tây và các cụm ô cờ bàn cờ ở các khoảng đệm giữa các section, tái hiện chân thực mật độ đường bộ dày đặc của TP.HCM.
-  - **Tuyến đường giao thông mờ mờ trải dài**: Tuyến Vành Đai Đông, Tuyến Vành Đai Tây, Tuyến Xuyên Tâm uốn lượn hình chữ S và các vòng đai kết nối ngang chạy xuyên suốt qua tất cả các section (Hero ➔ Storage Sizes ➔ 4 Pillars ➔ 3 Steps ➔ Facilities ➔ FAQ ➔ Bottom CTA).
-  - **Các node xe cộ liên tục luân chuyển**: Các packet đốm tròn mang mã màu canonical design token (`var(--color-accent)` đỏ và `var(--color-ink)` đen) di chuyển mượt mà ở các tốc độ so le khác nhau bằng SVG `<animateMotion>`, mang lại cảm giác lưu thông xe cộ logistic sống động mọi lúc mọi nơi trên toàn bộ trang.
+### 3.1.1. Sa Bàn Video Background Toàn Trang (`FullPageTrafficNetwork.jsx`)
+- Component [`FullPageTrafficNetwork.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/FullPageTrafficNetwork.jsx) được gắn làm lớp lót video background chìm bên dưới (`z-index: 0; pointer-events: none;`) bao phủ 100% chiều cao của toàn bộ trang Landing Page:
+  - **Tái hiện Chân Thực Mật Độ Đô Thị TP.HCM (Khảo Sát Thực Địa Google Maps)**:
+    - **Thủy lưu tự nhiên**: Dải uốn lượn mềm mại của Sông Sài Gòn (bờ Đông), Kênh Nhiêu Lộc - Thị Nghè (khu vực phía trên), Kênh Tàu Hủ (khu vực giữa).
+    - **Đại lộ huyết mạch**: Trục chéo 135° Trường Sơn ➔ Bùng binh Lăng Cha Cả ➔ Nguyễn Văn Trỗi / Nam Kỳ Khởi Nghĩa, trục Cách Mạng Tháng Tám (CMTT), Đại lộ Võ Văn Kiệt và Đại lộ Nguyễn Văn Linh (Nam Sài Gòn).
+    - **Các nút giao vòng xoay / bùng binh đa nhánh**: Lăng Cha Cả, Ngã 6 Dân Chủ, Bến Thành, Ngã 7 Lý Thái Tổ, Hàng Xanh, Phú Mỹ Hưng với vòng tròn đồng tâm và nhịp phát sóng radar.
+    - **Mạng lưới hẻm xương cá & ô cờ bàn cờ siêu dày**: Các cụm hẻm xương cá phân nhánh 30-50m và các khối bàn cờ trải dài toàn bộ chiều dài trang, tái hiện trọn vẹn bản sắc đường xá Việt Nam.
+  - **Các node xe cộ liên tục luân chuyển (Video Background Effect)**: Các packet đốm tròn mang mã màu canonical design token (`var(--color-accent)` đỏ và `var(--color-ink)` đen) di chuyển mượt mà ở các tốc độ so le khác nhau bằng SVG `<animateMotion>`, mang lại cảm giác lưu thông xe cộ logistic sống động mọi lúc mọi nơi trên toàn bộ trang như một thước phim video background.
+  - **Đảm bảo khả năng đọc 100%**: Các khối thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) có nền đặc `var(--color-surface)` và đổ bóng khối, các đường line và node xe cộ uốn lượn mờ mờ ở lề trang và luồn sau các thẻ, hoàn toàn không che khuất hay ảnh hưởng đến độ tương phản của chữ.
+  - **Tuyệt đối không nhãn chữ địa danh**: Tuân thủ triệt để nguyên tắc không gắn bất kỳ ghi chú văn bản nào lên đường giao thông, tạo nên vẻ đẹp thuần vector hiện đại và tinh tế.
   - **Đảm bảo khả năng đọc 100%**: Các khối thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) có nền đặc `var(--color-surface)` và đổ bóng khối, các đường line và node xe cộ uốn lượn mờ mờ ở lề trang và luồn sau các thẻ, hoàn toàn không che khuất hay ảnh hưởng đến độ tương phản của chữ.
   - **Tuyệt đối không nhãn chữ địa danh**: Tuân thủ triệt để nguyên tắc không gắn bất kỳ ghi chú văn bản nào lên đường giao thông, tạo nên vẻ đẹp thuần vector hiện đại và tinh tế.
 

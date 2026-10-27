@@ -21,7 +21,6 @@ import {
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import Button from "../../components/Button/Button.jsx";
-import LogisticsTrafficMap from "./components/LogisticsTrafficMap.jsx";
 import FullPageTrafficNetwork from "./components/FullPageTrafficNetwork.jsx";
 import "./LandingPage.css";
 
@@ -449,9 +448,18 @@ export default function LandingPage() {
                 </motion.div>
               </div>
 
-              {/* Right Column: Interactive Logistics Traffic Arterial Radar Map */}
+              {/* Right Column: Reserved for Future Interactive Visual Slider */}
               <div className="landing-hero__visual">
-                <LogisticsTrafficMap />
+                <div className="landing-hero__slider-placeholder">
+                  <div className="slider-placeholder__content">
+                    <span className="slider-placeholder__badge">
+                      SLIDER // VISUAL SHOWCASE
+                    </span>
+                    <span className="slider-placeholder__hint">
+                      Reserved for Future Image & Facility Slider
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
