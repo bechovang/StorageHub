@@ -56,7 +56,7 @@ Mục tiêu chính:
 - **Hợp đồng số & Bàn giao ảnh** (`FileText`): Chụp ảnh đối soát hiện trạng minh bạch qua Thẻ nhận kho (Check-in Pass).
 
 ### 3.4. Quy trình 3 Bước Thuê Kho Số Hóa (`.landing-steps`)
-- Thiết kế nền đen tối tương phản cao (`#000000` / `#111827`) với bóng khối viền đỏ.
+- Đồng bộ nền sáng thanh lịch (`var(--color-surface, #ffffff)`), thẻ bước chân phương viền đen bóng khối đen chuẩn Swiss Neo-Brutalist sẵn sàng cho các hiệu ứng chuyển cảnh mượt mà.
 - **Bước 01**: Chọn kho trực tuyến trên sơ đồ 3D / danh mục.
 - **Bước 02**: Đặt cọc 10% qua VietQR và kích hoạt mã PIN lập tức.
 - **Bước 03**: Đến cơ sở, nhập PIN mở cửa và tự do quản lý 24/7.
@@ -74,7 +74,7 @@ Mục tiêu chính:
 - Giải đáp 5 thắc mắc cốt lõi: thời gian thuê tối thiểu (từ 1 tháng), cơ chế hoàn cọc 10%, ra vào ban đêm/ngày lễ, bảo hiểm hàng hóa và thủ tục nâng/hạ kích thước kho.
 
 ### 3.7. Banner Kêu Gọi Hành Động Cuối Trang (`.landing-cta-banner`)
-- Nền đen `#0f172a` với viền đỏ dày 3px, tiêu đề *"GIẢI PHÓNG KHÔNG GIAN NGAY HÔM NAY"*, nút kêu gọi cỡ lớn *"Khám phá tất cả 40 kho ngay"* dẫn đến `/browse`.
+- Nền sáng trung tính (`var(--color-neutral, #f5f5f5)`), viền trên đen đậm, tiêu đề *"GIẢI PHÓNG KHÔNG GIAN NGAY HÔM NAY"*, nút kêu gọi cỡ lớn *"Khám phá tất cả 40 kho ngay"* dẫn đến `/browse`.
 
 ---
 

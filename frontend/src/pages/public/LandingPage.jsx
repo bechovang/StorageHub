@@ -38,7 +38,6 @@ const STORAGE_SIZES = [
     badge: "TIẾT KIỆM",
     badgeType: "neutral",
     target: "Sinh viên, cá nhân cần cất tài liệu/đồ quý giá.",
-    capacity: "8 - 12 thùng carton, vali du lịch, tài liệu hồ sơ, đồ dùng cá nhân.",
     features: [
       "Chứa 8 - 12 thùng carton tiêu chuẩn",
       "Vali du lịch, balo, tài liệu hồ sơ",
@@ -56,7 +55,6 @@ const STORAGE_SIZES = [
     badge: "TIÊU CHUẨN",
     badgeType: "neutral",
     target: "Người chuyển trọ, gia đình nhỏ sửa nhà.",
-    capacity: "Đồ đạc 1 phòng ngủ, 1-2 xe máy, 25-30 thùng đồ, nệm gấp, thiết bị điện tử.",
     features: [
       "Toàn bộ đồ đạc 1 phòng ngủ cá nhân",
       "Chỗ đỗ vừa 1 - 2 xe máy / xe đạp",
@@ -74,7 +72,6 @@ const STORAGE_SIZES = [
     badge: "PHỔ BIẾN NHẤT",
     badgeType: "accent",
     target: "Hộ gia đình chuyển nhà, shop kinh doanh lưu kho hàng.",
-    capacity: "Nội thất căn hộ 1-2 phòng ngủ, sofa, tủ lạnh, máy giặt, 50+ thùng carton.",
     features: [
       "Nội thất nguyên căn hộ 1 - 2 phòng ngủ",
       "Sofa, tủ lạnh, máy giặt, bàn ăn",
@@ -89,10 +86,9 @@ const STORAGE_SIZES = [
     sizeM2: "16.0 m²",
     dimensions: "4.0m × 4.0m × 3.0m",
     priceText: "~900.000 đ/tháng",
-    badge: "DOANH NGHIỆP",
+    badge: "LÂU DÀI",
     badgeType: "neutral",
     target: "Doanh nghiệp thương mại điện tử, lưu trữ lâu dài.",
-    capacity: "Kho hàng kinh doanh lớn, thiết bị máy móc, nội thất nguyên căn 3 phòng ngủ.",
     features: [
       "Toàn bộ nội thất nhà phố / 3 phòng ngủ",
       "Kiện pallet hàng hóa kinh doanh, máy móc",
@@ -108,25 +104,25 @@ const PILLARS = [
     icon: Key,
     title: "Mã PIN cá nhân 100%",
     description:
-      "Mở kho tức thì bằng bàn phím số riêng biệt, chủ động 24/7 không cần chờ lễ tân hay bảo vệ. Bạn là người duy nhất sở hữu mã mở cửa.",
+      "Mở kho tức thì bằng bàn phím số riêng biệt, chủ động 24/7 không cần chờ lễ tân hay bảo vệ. Bạn là người duy nhất sở hữu mã mở cửa",
   },
   {
     icon: Receipt,
     title: "Cọc chỉ 10% & Minh bạch",
     description:
-      "Không phát sinh phụ phí ẩn. Chỉ cọc 10% để xác nhận giữ kho. Hoàn cọc tự động qua tài khoản ngân hàng trong 24h sau khi kiểm tra trả kho.",
+      "Không phát sinh phụ phí ẩn. Chỉ cọc 10% để xác nhận giữ kho. Hoàn cọc tự động qua tài khoản ngân hàng trong 24h sau khi kiểm tra trả kho",
   },
   {
     icon: ShieldCheck,
     title: "An ninh & PCCC đa lớp",
     description:
-      "Hệ thống camera giám sát liên tục 24/7, đầu dò khói nhiệt PCCC tiêu chuẩn và kiểm soát độ ẩm chống ẩm mốc hư hại hàng hóa tuyệt đối.",
+      "Hệ thống camera giám sát liên tục 24/7, đầu dò khói nhiệt PCCC tiêu chuẩn và kiểm soát độ ẩm chống ẩm mốc hư hại hàng hóa tuyệt đối",
   },
   {
     icon: FileText,
     title: "Hợp đồng số & Bàn giao ảnh",
     description:
-      "Mọi lịch sử nhận/trả kho đều được chụp ảnh đối soát minh bạch qua Thẻ nhận kho kỹ thuật số và hợp đồng điện tử có giá trị pháp lý.",
+      "Mọi lịch sử nhận/trả kho đều được chụp ảnh đối soát minh bạch qua Thẻ nhận kho kỹ thuật số và hợp đồng điện tử có giá trị pháp lý",
   },
 ];
 
@@ -136,19 +132,19 @@ const STEPS = [
     step: "01",
     title: "Chọn kho trực tuyến",
     description:
-      "Khám phá sơ đồ kho 3D trực quan, lọc diện tích từ 1.5m² đến 16m² phù hợp chính xác ngân sách và lượng đồ đạc của bạn.",
+      "Khám phá sơ đồ kho 3D trực quan, lọc diện tích từ 1.5m² đến 16m² phù hợp chính xác ngân sách và lượng đồ đạc của bạn",
   },
   {
     step: "02",
     title: "Đặt cọc 10% & Nhận PIN",
     description:
-      "Thanh toán cọc 10% an toàn trực tuyến. Hệ thống lập tức kích hoạt hợp đồng điện tử và cấp mã PIN mở kho riêng cho bạn.",
+      "Thanh toán cọc 10% an toàn trực tuyến. Hệ thống lập tức kích hoạt hợp đồng điện tử và cấp mã PIN mở kho riêng cho bạn",
   },
   {
     step: "03",
     title: "Tự do mở kho 24/7",
     description:
-      "Đến cơ sở bất kỳ lúc nào ngày hay đêm, nhập mã PIN tại cửa ra vào và ô kho. Quản lý kho hoàn toàn chủ động và riêng tư.",
+      "Đến cơ sở bất kỳ lúc nào ngày hay đêm, nhập mã PIN tại cửa ra vào và ô kho. Quản lý kho hoàn toàn chủ động và riêng tư",
   },
 ];
 
@@ -157,7 +153,7 @@ const FAQ_ITEMS = [
   {
     q: "Thời gian thuê kho tối thiểu tại StorageHub là bao lâu?",
     a: "Thời gian thuê kho tại StorageHub vô cùng linh hoạt, tối thiểu từ 1 tháng. Bạn có thể gia hạn tự động hàng tháng hoặc kết thúc hợp đồng bất kỳ lúc nào tùy theo nhu cầu thực tế.",
-  },
+  },  
   {
     q: "Tiền đặt cọc 10% được hoàn trả như thế nào?",
     a: "Tiền cọc 10% nhằm đảm bảo giữ chỗ và trang thiết bị kho. Sau khi bạn làm thủ tục trả kho và đối soát hình ảnh hiện trạng, tiền cọc sẽ được hoàn trả tự động qua chuyển khoản ngân hàng trong vòng 24 giờ.",
@@ -378,9 +374,8 @@ export default function LandingPage() {
               {STORAGE_SIZES.map((unit) => (
                 <article
                   key={unit.id}
-                  className={`size-card ${
-                    unit.badgeType === "accent" ? "size-card--featured" : ""
-                  }`}
+                  className={`size-card ${unit.badgeType === "accent" ? "size-card--featured" : ""
+                    }`}
                 >
                   <div className="size-card__top">
                     <div className="size-card__meta">
@@ -397,11 +392,6 @@ export default function LandingPage() {
                   </div>
 
                   <div className="size-card__details">
-                    <div className="size-card__detail-block">
-                      <span className="detail-label">Sức chứa ước tính:</span>
-                      <p className="detail-value">{unit.capacity}</p>
-                    </div>
-
                     <div className="size-card__detail-block">
                       <span className="detail-label">Phù hợp cho:</span>
                       <p className="detail-value detail-value--highlight">
@@ -446,9 +436,6 @@ export default function LandingPage() {
               <h2 id="pillars-heading" className="landing-section-title">
                 Tại Sao Hơn 1.000+ Khách Hàng Chọn StorageHub?
               </h2>
-              <p className="landing-section-subtitle">
-                Mô hình kho tự quản thông minh khép kín, trao quyền kiểm soát và bảo mật tài sản tuyệt đối.
-              </p>
             </div>
 
             <div className="pillars-grid">
@@ -476,9 +463,6 @@ export default function LandingPage() {
               <h2 id="steps-heading" className="landing-section-title">
                 Thuê Kho Tự Quản Chỉ Trong 3 Bước
               </h2>
-              <p className="landing-section-subtitle">
-                Quy trình số hóa 100% từ lúc chọn kho trên bản đồ đến khi nhập PIN mở cửa cất đồ.
-              </p>
             </div>
 
             <div className="steps-grid">
