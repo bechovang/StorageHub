@@ -41,7 +41,7 @@ Các API phục vụ tìm kiếm kho, xem thông số kỹ thuật, phân trang,
 - **Hàm Service**: `src/services/unitService.js` ➔ `searchUnits(params)`
 - **Hook Xử Lý Giao Diện**: `src/features/catalog/hooks/useBrowseUnits.js`
   - Quản lý trạng thái: `page`, `pageSize: 12`, `total`, `totalPages`, `handlePageChange`.
-  - Kết hợp với component `Pagination.jsx` hiển thị thanh chuyển trang với nút *Trước / Sau*, danh sách số trang và thông tin "Hiển thị X - Y trên tổng số Z kho".
+  - Kết hợp với component `Pagination.jsx` hiển thị thanh chuyển trang tối giản căn giữa (không viền, nền trong suốt, loại bỏ dòng text phụ "Hiển thị...") với nút *Trước / Sau* và danh sách số trang.
 - **Response Thành Công (`200 OK`)**:
 ```json
 {

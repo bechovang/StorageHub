@@ -196,17 +196,33 @@ Dành cho thẻ `<button>` độc lập hoặc thẻ liên kết `<a>` muốn t�
 <button type="button" class="btn btn--secondary btn--sm">Đóng</button>
 ```
 
-### 5.4. Kế Thừa Cho Thẻ Tương Tác (Interactive Cards & UnitCard)
-Các thẻ kho tương tác (`UnitCard.jsx` / `UnitCard.css`) kế thừa trực tiếp cơ chế đổ bóng và chuyển động cơ học của Button:
+### 5.4. Kế Thừa Cho Thẻ Tương Tác & Thẻ Người Dùng (User-Facing Cards)
+Toàn bộ các loại thẻ giao diện người dùng (ngoài các trang auth và trang nội bộ) đều kế thừa trực tiếp cơ chế đổ bóng và chuyển động cơ học của Button:
+- **Phạm vi áp dụng**:
+  - **Duyệt kho (`/browse`)**: Thẻ kho `UnitCard.jsx` (`.unit-card`).
+  - **Kho của tôi (`/rentals`)**: Thẻ đơn thuê `RentalCard.jsx` (`.rental-card`).
+  - **Chi tiết đơn thuê (`/rentals/:id`)**: Thẻ thông số `RentalSpecsCard.jsx` và các khối thẻ (`.rd-card`).
+  - **Chi tiết kho (`/units/:id`)**: Thẻ thông tin (`.unit-detail-card`), thẻ trình chiếu ảnh (`.unit-detail-slider-card`) và bảng tính giá (`.unit-detail-pricing-panel`).
+  - **Thẻ nhận kho (`/rentals/:id/check-in-pass`)**: Thẻ Boarding Pass (`.cip__pass-card`).
+  - **Hỗ trợ khách hàng (`/support`)**: Thẻ chỉ số (`.support-stat-card`) và thẻ yêu cầu hỗ trợ (`.ticket-card`).
+  - **Thanh toán (`/payment`)**: Các thẻ khối tài chính (`.swiss-card`).
 - **Design Tokens ánh xạ**:
   - `--card-shadow: var(--btn-shadow);` (Mặc định `2px 2px 0px rgba(0, 0, 0, 0.25)`)
   - `--card-shadow-hover: var(--btn-shadow-hover);` (Mở rộng `3px 3px 0px rgba(0, 0, 0, 0.4)`)
   - `--card-shadow-active: var(--btn-shadow-active);` (Thu hẹp `1px 1px 0px rgba(0, 0, 0, 0.2)`)
   - `--card-transition: border-color var(--duration-fast) var(--ease-standard), box-shadow 0.15s ease, transform 0.15s ease;`
 - **Hành vi tương tác cơ học**:
-  - **Trạng thái bình thường**: Toàn bộ thẻ kho có bóng đổ khối cứng 2px.
-  - **Trạng thái Hover**: Thẻ trượt nâng nhẹ chếch lên `transform: translate(-1px, -1px)`, bóng đổ mở rộng lên 3px và viền chuyển đỏ thương hiệu `--color-accent`.
+  - **Trạng thái bình thường**: Toàn bộ thẻ có viền nét `border-radius: 0px` và bóng đổ khối cứng 2px.
+  - **Trạng thái Hover**: Thẻ trượt nâng nhẹ chếch lên `transform: translate(-1px, -1px)`, bóng đổ mở rộng lên 3px và viền chuyển sang màu tương phản hoặc đỏ `--color-accent`.
   - **Trạng thái Active**: Khi click vào thẻ, thẻ thụt xuống `transform: translate(1px, 1px)` và bóng đổ co lại 1px, tạo cảm giác nhấn phím vật lý chân thực.
+
+### 5.5. Chuẩn Hóa Thanh Điều Hướng Phân Trang (Centered Floating Pagination)
+- **Component**: `Pagination.jsx` (`.pagination-bar`).
+- **Nguyên tắc thiết kế tối giản**:
+  - Loại bỏ hoàn toàn màu nền (`background-color: transparent`) và đường viền (`border: none`).
+  - Lược bỏ hoàn toàn dòng text phụ (`Hiển thị X – Y trong tổng số Z kho`) để không gây nhiễu thị giác.
+  - Cụm điều hướng (Nút *Trước*, các số trang, nút *Sau*) được đưa vào **chính giữa trang** (`justify-content: center`).
+  - Mỗi nút chuyển trang kế thừa đầy đủ bóng đổ `--btn-shadow-subtle`, hover `-1px -1px`, và nút trang hiện tại (`is-active`) có bóng `--btn-shadow` nổi bật trên nền đen.
 
 ---
 

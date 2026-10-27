@@ -349,14 +349,24 @@
 .rental-card {
   position: relative;
   background: var(--color-surface);
-  border: var(--border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+  border: var(--border-strong);
+  border-radius: var(--radius-none, 0px);
+  box-shadow: var(--card-shadow, var(--btn-shadow));
+  transition: border-color var(--duration-fast) var(--ease-standard),
+              box-shadow 0.15s ease,
+              transform 0.15s ease;
+  cursor: pointer;
 }
 
 .rental-card:hover {
-  border-color: var(--color-line-strong);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-color: var(--color-accent);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--card-shadow-hover, var(--btn-shadow-hover));
+}
+
+.rental-card:active {
+  transform: translate(1px, 1px);
+  box-shadow: var(--card-shadow-active, var(--btn-shadow-active));
 }
 
 /* 4px Left Status Stripe */

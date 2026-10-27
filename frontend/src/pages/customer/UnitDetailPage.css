@@ -134,6 +134,8 @@
 .unit-detail-card {
   background: var(--color-surface, #ffffff);
   border: var(--border-strong);
+  border-radius: var(--radius-none, 0px);
+  box-shadow: var(--card-shadow, var(--btn-shadow));
   overflow: hidden;
 }
 
@@ -169,6 +171,8 @@
   position: relative;
   background: var(--color-surface-page, #f5f5f5);
   border: var(--border-strong);
+  border-radius: var(--radius-none, 0px);
+  box-shadow: var(--card-shadow, var(--btn-shadow));
   overflow: hidden;
 }
 
@@ -354,11 +358,12 @@
 .unit-detail-pricing-panel {
   background: var(--color-surface, #ffffff);
   border: var(--border-strong);
+  border-radius: var(--radius-none, 0px);
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--card-shadow, var(--btn-shadow));
 }
 
 .pricing-panel-header {

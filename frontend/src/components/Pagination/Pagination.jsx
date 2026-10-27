@@ -5,15 +5,9 @@ export default function Pagination({
   currentPage = 1,
   totalPages = 1,
   onPageChange,
-  totalItems,
-  pageSize = 12,
   className = "",
 }) {
   if (totalPages <= 1) return null;
-
-  // Tính khoảng hiển thị (vd: 1-12 trong 40 kho)
-  const startItem = (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems || totalPages * pageSize);
 
   // Tạo mảng số trang hiển thị
   const pages = [];
@@ -32,18 +26,6 @@ export default function Pagination({
 
   return (
     <nav className={`pagination-bar ${className}`} aria-label="Phân trang danh sách kho">
-      <div className="pagination-info">
-        {totalItems ? (
-          <span>
-            Hiển thị <strong>{startItem} – {endItem}</strong> trong tổng số <strong>{totalItems}</strong> kho
-          </span>
-        ) : (
-          <span>
-            Trang <strong>{currentPage}</strong> / <strong>{totalPages}</strong>
-          </span>
-        )}
-      </div>
-
       <div className="pagination-controls">
         <button
           type="button"
