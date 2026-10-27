@@ -39,14 +39,12 @@ Mục tiêu chính:
 
 ### 3.1.1. Sa Bàn Video Background Toàn Trang (`FullPageTrafficNetwork.jsx`)
 - Component [`FullPageTrafficNetwork.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/FullPageTrafficNetwork.jsx) được gắn làm lớp lót video background chìm bên dưới (`z-index: 0; pointer-events: none;`) bao phủ 100% chiều cao của toàn bộ trang Landing Page:
-  - **Tái hiện Chân Thực Mật Độ Đô Thị TP.HCM (Khảo Sát Thực Địa Google Maps)**:
-    - **Thủy lưu tự nhiên**: Dải uốn lượn mềm mại của Sông Sài Gòn (bờ Đông), Kênh Nhiêu Lộc - Thị Nghè (khu vực phía trên), Kênh Tàu Hủ (khu vực giữa).
-    - **Đại lộ huyết mạch**: Trục chéo 135° Trường Sơn ➔ Bùng binh Lăng Cha Cả ➔ Nguyễn Văn Trỗi / Nam Kỳ Khởi Nghĩa, trục Cách Mạng Tháng Tám (CMTT), Đại lộ Võ Văn Kiệt và Đại lộ Nguyễn Văn Linh (Nam Sài Gòn).
-    - **Các nút giao vòng xoay / bùng binh đa nhánh**: Lăng Cha Cả, Ngã 6 Dân Chủ, Bến Thành, Ngã 7 Lý Thái Tổ, Hàng Xanh, Phú Mỹ Hưng với vòng tròn đồng tâm và nhịp phát sóng radar.
-    - **Mạng lưới hẻm xương cá & ô cờ bàn cờ siêu dày**: Các cụm hẻm xương cá phân nhánh 30-50m và các khối bàn cờ trải dài toàn bộ chiều dài trang, tái hiện trọn vẹn bản sắc đường xá Việt Nam.
-  - **Các node xe cộ liên tục luân chuyển (Video Background Effect)**: Các packet đốm tròn mang mã màu canonical design token (`var(--color-accent)` đỏ và `var(--color-ink)` đen) di chuyển mượt mà ở các tốc độ so le khác nhau bằng SVG `<animateMotion>`, mang lại cảm giác lưu thông xe cộ logistic sống động mọi lúc mọi nơi trên toàn bộ trang như một thước phim video background.
-  - **Đảm bảo khả năng đọc 100%**: Các khối thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) có nền đặc `var(--color-surface)` và đổ bóng khối, các đường line và node xe cộ uốn lượn mờ mờ ở lề trang và luồn sau các thẻ, hoàn toàn không che khuất hay ảnh hưởng đến độ tương phản của chữ.
-  - **Tuyệt đối không nhãn chữ địa danh**: Tuân thủ triệt để nguyên tắc không gắn bất kỳ ghi chú văn bản nào lên đường giao thông, tạo nên vẻ đẹp thuần vector hiện đại và tinh tế.
+  - **Tái hiện Chân Thực Mật Độ Đô Thị TP.HCM (Trace từ ảnh Google Maps 2560x1440)**:
+    - **Thủy lưu tự nhiên**: Dải uốn lượn thực tế của Sông Sài Gòn (ôm trọn Thanh Đa, Thủ Thiêm, Bến Bạch Đằng, Quận 7), Kênh Nhiêu Lộc - Thị Nghè (Tân Bình qua Phú Nhuận, Q3 sang Ba Son), Kênh Tàu Hủ - Bến Nghé (Chợ Lớn qua Q5, Q1) và Kênh Đôi - Kênh Tẻ.
+    - **Hệ thống đại lộ huyết mạch thực tế**: Trục Sân bay TSN (Trường Sơn -> Lăng Cha Cả -> Nguyễn Văn Trỗi -> Nam Kỳ Khởi Nghĩa -> Bến Thành), trục Cách Mạng Tháng Tám (CMTT), Đại lộ Võ Văn Kiệt - Hầm Thủ Thiêm - Mai Chí Thọ, Xa Lộ Hà Nội / Võ Nguyên Giáp, Phạm Văn Đồng, Điện Biên Phủ, Võ Thị Sáu, Ba Tháng Hai, Trần Hưng Đạo, Nguyễn Hữu Thọ, Huỳnh Tấn Phát, Nguyễn Văn Linh.
+    - **Các nút giao vòng xoay / bùng binh đa nhánh thực tế**: Lăng Cha Cả, Ngã 6 Dân Chủ, Vòng xoay Bến Thành, Ngã 7 Lý Thái Tổ, Hàng Xanh, Cầu Sài Gòn, Cầu Phú Mỹ với các vòng xuyến đồng tâm và nhịp phát sóng radar.
+    - **Mạng lưới hẻm xương cá & ô cờ bàn cờ siêu dày**: Ô cờ Bàn Cờ Quận 3, khu thương xá Chợ Lớn, quy hoạch KĐT Phú Mỹ Hưng và hệ thống hẻm xương cá dendritic Tân Bình, Phú Nhuận đan dày đặc.
+  - **Các node xe cộ liên tục luân chuyển (Video Background Effect)**: Các packet đốm tròn mang mã màu canonical design token (`var(--color-accent)` đỏ và `var(--color-ink)` đen) di chuyển mượt mà ở các tốc độ so le khác nhau bằng SVG `<animateMotion>` dọc theo 8 tuyến đại lộ thực tế.
   - **Đảm bảo khả năng đọc 100%**: Các khối thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) có nền đặc `var(--color-surface)` và đổ bóng khối, các đường line và node xe cộ uốn lượn mờ mờ ở lề trang và luồn sau các thẻ, hoàn toàn không che khuất hay ảnh hưởng đến độ tương phản của chữ.
   - **Tuyệt đối không nhãn chữ địa danh**: Tuân thủ triệt để nguyên tắc không gắn bất kỳ ghi chú văn bản nào lên đường giao thông, tạo nên vẻ đẹp thuần vector hiện đại và tinh tế.
 
