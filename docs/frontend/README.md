@@ -17,7 +17,7 @@ Dành cho người mới cần cài đặt và chạy thử hệ thống ngay:
 ### 2. 🏗️ Kiến Trúc Hệ Thống (Architecture)
 Dành cho Tech Lead, Backend và Frontend Architect:
 - [**Tổng quan Công nghệ & Cấu trúc Mã nguồn**](./architecture/overview-and-techstack.md): Tech stack (React 19, Vite 8, Recharts), cấu trúc cây thư mục `src/` và nguyên tắc thiết kế.
-- [**Hệ Thống Design Tokens & Chuẩn Hóa Nút Bấm (Button System)**](./architecture/design-tokens-and-buttons.md): Đặc tả Design Tokens cho Button, chuẩn hiệu ứng shadow & micro-transitions, tuân thủ DRY code.
+- [**Hệ Thống Design Tokens & Quy Chuẩn Giao Diện**](./architecture/design-tokens.md): Toàn bộ đặc tả Design Tokens (Bảng màu, Typography, Spacing, Shadows, Buttons, Motion, Z-Index, Contrast Rules) theo chuẩn Swiss Neo-Brutalism.
 - [**Luồng Dữ Liệu & HTTP Client (`apiClient.js`)**](./architecture/data-flow-and-client.md): Sơ đồ vòng đời request/response, tự động gắn JWT token, thu hồi phiên 401 và cơ chế Hybrid Fallback.
 - [**Quản lý Trạng thái Ứng dụng**](./architecture/state-and-caching.md): Phạm vi của `AuthContext`, `NotificationContext` và kỹ thuật Cập nhật lạc quan (Optimistic UI) cho Kanban và ca trực.
 - [**Xử lý Lỗi & Bản địa hóa Tiếng Việt**](./architecture/error-handling-and-i18n.md): Chuẩn cấu trúc lỗi Envelope AD-8 và từ điển thông điệp lỗi tiếng Việt thân thiện.
