@@ -41,8 +41,8 @@ Mục tiêu chính:
   - `24/7` Ra vào tự do không hẹn trước 365 ngày/năm.
 
 ### 3.2. Hướng dẫn & Đo lường Kích thước Kho (`#storage-sizes`, `.landing-sizes`)
-- Hỗ trợ bộ lọc tab nhanh: `Tất cả kích thước`, `Locker (1.5 m²)`, `Small S (4 m²)`, `Medium M (8 m²)`, `Large L (16 m²)`.
-- Hiển thị 4 thẻ đơn vị kho với thông số chi tiết:
+- **Tiêu đề nổi bật**: *"Chiếc <span style="color:#dc2626">túi xách</span> nhỏ hay cả <span style="color:#dc2626">căn nhà</span> đều được"* với từ khóa nổi bật bằng màu đỏ và kích thước phóng to.
+- Lưới hiển thị trực diện toàn bộ 4 thẻ kích thước kho (không cần tab bộ lọc):
   1. **Locker (1.5 m²)**: ~100.000 đ/tháng. Sức chứa 8-12 thùng carton, vali du lịch, tài liệu hồ sơ cá nhân.
   2. **Small S (4 m²)**: ~345.000 đ/tháng. Chứa vừa đồ 1 phòng ngủ, 1-2 xe máy, 25-30 thùng đồ, nệm gấp.
   3. **Medium M (8 m²)**: ~380.000 đ/tháng. Badge *"PHỔ BIẾN NHẤT"*. Chứa đồ căn hộ 1-2 phòng ngủ, sofa, tủ lạnh, máy giặt, 50+ thùng carton.

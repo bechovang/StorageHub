@@ -178,7 +178,6 @@ const FAQ_ITEMS = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("ALL");
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   // SEO: Update Title, Meta tags, and Structured Data (JSON-LD)
@@ -289,11 +288,6 @@ export default function LandingPage() {
     setOpenFaqIndex((prev) => (prev === index ? -1 : index));
   };
 
-  const displayedSizes =
-    activeTab === "ALL"
-      ? STORAGE_SIZES
-      : STORAGE_SIZES.filter((s) => s.id === activeTab);
-
   return (
     <AppShell brandHref="/" showFooter={true}>
       <div className="landing-page">
@@ -373,63 +367,15 @@ export default function LandingPage() {
         >
           <div className="landing-container">
             <div className="landing-section-header">
-              <h2 id="sizes-heading" className="landing-section-title">
-                Chiếc túi xách nhỏ hay cả căn nhà đều được
+              <h2 id="sizes-heading" className="landing-section-title landing-sizes__headline">
+                Chiếc <span className="highlight-keyword">túi xách</span> nhỏ hay cả{" "}
+                <span className="highlight-keyword">căn nhà</span> đều được
               </h2>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="sizes-filter-tabs" role="tablist" aria-label="Chọn kích thước kho">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "ALL"}
-                className={`tab-btn ${activeTab === "ALL" ? "tab-btn--active" : ""}`}
-                onClick={() => setActiveTab("ALL")}
-              >
-                Tất cả kích thước
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "LOCKER"}
-                className={`tab-btn ${activeTab === "LOCKER" ? "tab-btn--active" : ""}`}
-                onClick={() => setActiveTab("LOCKER")}
-              >
-                Locker (1.5 m²)
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "SMALL"}
-                className={`tab-btn ${activeTab === "SMALL" ? "tab-btn--active" : ""}`}
-                onClick={() => setActiveTab("SMALL")}
-              >
-                Small S (4 m²)
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "MEDIUM"}
-                className={`tab-btn ${activeTab === "MEDIUM" ? "tab-btn--active" : ""}`}
-                onClick={() => setActiveTab("MEDIUM")}
-              >
-                Medium M (8 m²)
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === "LARGE"}
-                className={`tab-btn ${activeTab === "LARGE" ? "tab-btn--active" : ""}`}
-                onClick={() => setActiveTab("LARGE")}
-              >
-                Large L (16 m²)
-              </button>
             </div>
 
             {/* Grid 4 Unit Types */}
             <div className="sizes-grid">
-              {displayedSizes.map((unit) => (
+              {STORAGE_SIZES.map((unit) => (
                 <article
                   key={unit.id}
                   className={`size-card ${
