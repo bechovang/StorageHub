@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
+import { motion, AnimatePresence, useInView, animate } from "motion/react";
 import {
   ArrowRight,
   ShieldCheck,
@@ -9,22 +10,97 @@ import {
   Warehouse,
   Check,
   CaretDown,
-  CaretUp,
   MapPin,
   Clock,
-  InfoIcon,
+  Info as InfoIcon,
   Truck,
   Elevator,
   LockSimple,
-  Question,
-  QuestionMarkIcon,
   Buildings,
-  ArrowsDownUp,
-  Package,
+  Question as QuestionMarkIcon,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import Button from "../../components/Button/Button.jsx";
 import "./LandingPage.css";
+
+// ── Soft Easing Curve (easeOutQuart canonical: [0.22, 1, 0.36, 1]) ──
+const SOFT_EASE = [0.22, 1, 0.36, 1];
+
+// ── Animation Variants ──
+const heroTitleVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const titleLineVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.55,
+      ease: SOFT_EASE,
+    },
+  },
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 28 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: SOFT_EASE,
+    },
+  },
+};
+
+/**
+ * CounterNumber Component — Tự động nhảy số mượt mà từ 0 đến giá trị đích khi cuộn vào viewport
+ */
+function CounterNumber({ value, suffix = "", prefix = "", duration = 1.2 }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.25 });
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const controls = animate(0, value, {
+      duration,
+      ease: SOFT_EASE,
+      onUpdate(latest) {
+        setDisplayValue(Math.floor(latest));
+      },
+    });
+    return () => controls.stop();
+  }, [isInView, value, duration]);
+
+  return (
+    <span ref={ref} className="stat-card__metric">
+      {prefix}
+      {displayValue}
+      {suffix}
+    </span>
+  );
+}
 
 // ── Dữ liệu 4 loại kích thước kho tự quản ──
 const STORAGE_SIZES = [
@@ -290,64 +366,112 @@ export default function LandingPage() {
         {/* ── 1. HERO SECTION ── */}
         <section className="landing-hero" aria-label="Giới thiệu StorageHub">
           <div className="landing-hero__inner">
-            {/* Main H1 */}
-            <h1 className="landing-hero__title">
-              Lưu Trữ Thông Minh
+            {/* Main H1 with Kinetic Text Reveal */}
+            <motion.h1
+              className="landing-hero__title"
+              variants={heroTitleVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.span className="hero-title-line" variants={titleLineVariants}>
+                Lưu Trữ Thông Minh
+              </motion.span>
               <br />
-              <span className="landing-hero__title-accent">Tự Quản Tuyệt Đối</span>
+              <motion.span
+                className="hero-title-line landing-hero__title-accent"
+                variants={titleLineVariants}
+              >
+                Tự Quản Tuyệt Đối
+              </motion.span>
               <br />
-              Bảo Mật 24/7
-            </h1>
+              <motion.span className="hero-title-line" variants={titleLineVariants}>
+                Bảo Mật 24/7
+              </motion.span>
+            </motion.h1>
 
             {/* Lead Paragraph */}
-            <p className="landing-hero__lead">
+            <motion.p
+              className="landing-hero__lead"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: SOFT_EASE, delay: 0.35 }}
+            >
               Giải pháp cho thuê kho tự quản thông minh dành cho cá nhân và doanh
               nghiệp tại TP.HCM. Đặt kho trực tuyến chỉ trong 3 phút, cọc 10% giữ
               chỗ tức thì, chủ động ra vào 24/7 không hẹn trước với mã PIN cá
               nhân bảo mật tuyệt đối.
-            </p>
+            </motion.p>
 
-            {/* Action CTAs */}
-            <div className="landing-hero__actions">
-              <Button
-                variant="primary"
-                size="large"
-                className="landing-hero__btn-primary"
-                onClick={() => navigate("/browse")}
+            {/* Action CTAs with Hover & Tap Interactions */}
+            <motion.div
+              className="landing-hero__actions"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: SOFT_EASE, delay: 0.45 }}
+            >
+              <motion.div
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15, ease: SOFT_EASE }}
               >
-                Khám phá kho ngay
-                <ArrowRight size={18} weight="bold" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="large"
-                className="landing-hero__btn-secondary"
-                onClick={handleScrollToSizes}
+                <Button
+                  variant="primary"
+                  size="large"
+                  className="landing-hero__btn-primary"
+                  onClick={() => navigate("/browse")}
+                >
+                  Khám phá kho ngay
+                  <ArrowRight size={18} weight="bold" />
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15, ease: SOFT_EASE }}
               >
-                Chọn kho nào cho hợp lí
-                <QuestionMarkIcon size={18} weight="bold" />
-              </Button>
-            </div>
+                <Button
+                  variant="secondary"
+                  size="large"
+                  className="landing-hero__btn-secondary"
+                  onClick={handleScrollToSizes}
+                >
+                  Chọn kho nào cho hợp lí
+                  <QuestionMarkIcon size={18} weight="bold" />
+                </Button>
+              </motion.div>
+            </motion.div>
 
-            {/* Quick Stats Ribbon (4 metric cards) */}
-            <div className="landing-hero__stats" role="region" aria-label="Thống kê cơ sở">
+            {/* Quick Stats Ribbon with Smooth Counter Numbers */}
+            <div
+              className="landing-hero__stats"
+              role="region"
+              aria-label="Thống kê cơ sở"
+            >
               <div className="stat-card">
-                <span className="stat-card__metric">40+</span>
+                <CounterNumber value={40} suffix="+" />
                 <span className="stat-card__label">Kho đang sẵn sàng</span>
                 <span className="stat-card__sub">Cơ sở Tân Bình</span>
               </div>
               <div className="stat-card">
-                <span className="stat-card__metric">100%</span>
+                <CounterNumber value={100} suffix="%" />
                 <span className="stat-card__label">Tự quản bằng mã PIN riêng</span>
                 <span className="stat-card__sub">Không cần lễ tân</span>
               </div>
               <div className="stat-card">
-                <span className="stat-card__metric">10%</span>
+                <CounterNumber value={10} suffix="%" />
                 <span className="stat-card__label">Đặt cọc trực tuyến</span>
                 <span className="stat-card__sub">Giữ chỗ tức thì</span>
               </div>
               <div className="stat-card">
-                <span className="stat-card__metric">24/7</span>
+                <motion.span
+                  className="stat-card__metric"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, amount: 0.25 }}
+                  transition={{ duration: 0.5, ease: SOFT_EASE }}
+                >
+                  24/7
+                </motion.span>
                 <span className="stat-card__label">Ra vào tự do không hẹn trước</span>
                 <span className="stat-card__sub">365 ngày/năm</span>
               </div>
@@ -362,20 +486,39 @@ export default function LandingPage() {
           aria-labelledby="sizes-heading"
         >
           <div className="landing-container">
-            <div className="landing-section-header">
+            <motion.div
+              className="landing-section-header"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.5, ease: SOFT_EASE }}
+            >
               <h2 id="sizes-heading" className="landing-section-title landing-sizes__headline">
                 Chiếc <span className="highlight-keyword">túi xách</span> nhỏ hay cả{" "}
                 <span className="highlight-keyword">căn nhà</span> đều được
               </h2>
-            </div>
+            </motion.div>
 
-            {/* Grid 4 Unit Types */}
-            <div className="sizes-grid">
+            {/* Grid 4 Unit Types with Stagger Entrance and Lift Hover */}
+            <motion.div
+              className="sizes-grid"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.15 }}
+            >
               {STORAGE_SIZES.map((unit) => (
-                <article
+                <motion.article
                   key={unit.id}
-                  className={`size-card ${unit.badgeType === "accent" ? "size-card--featured" : ""
-                    }`}
+                  variants={itemVariants}
+                  whileHover={{
+                    y: -4,
+                    boxShadow: "5px 5px 0px var(--color-ink)",
+                    transition: { duration: 0.15, ease: SOFT_EASE },
+                  }}
+                  className={`size-card ${
+                    unit.badgeType === "accent" ? "size-card--featured" : ""
+                  }`}
                 >
                   <div className="size-card__top">
                     <div className="size-card__meta">
@@ -423,61 +566,136 @@ export default function LandingPage() {
                       <ArrowRight size={16} weight="bold" />
                     </Button>
                   </div>
-                </article>
+                </motion.article>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* ── 3. WHY CHOOSE STORAGEHUB - 4 PILLARS ── */}
         <section className="landing-section landing-pillars" aria-labelledby="pillars-heading">
           <div className="landing-container">
-            <div className="landing-section-header">
+            <motion.div
+              className="landing-section-header"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.5, ease: SOFT_EASE }}
+            >
               <h2 id="pillars-heading" className="landing-section-title">
                 Hơn <span className="highlight-keyword">1000+</span> Khách Hàng Tin Tưởng ?
               </h2>
-            </div>
+            </motion.div>
 
-            <div className="pillars-grid">
+            <motion.div
+              className="pillars-grid"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+            >
               {PILLARS.map((p, idx) => {
                 const IconComponent = p.icon;
                 return (
-                  <div key={idx} className="pillar-card">
-                    <div className="pillar-card__icon-wrapper">
+                  <motion.div
+                    key={idx}
+                    className="pillar-card"
+                    variants={itemVariants}
+                    whileHover={{
+                      y: -4,
+                      boxShadow: "5px 5px 0px var(--color-ink)",
+                      transition: { duration: 0.15, ease: SOFT_EASE },
+                    }}
+                  >
+                    <motion.div
+                      className="pillar-card__icon-wrapper"
+                      whileHover={{ rotate: [0, -8, 8, 0], scale: 1.05 }}
+                      transition={{ duration: 0.3, ease: SOFT_EASE }}
+                    >
                       <IconComponent size={28} weight="bold" />
-                    </div>
+                    </motion.div>
                     <div className="pillar-card__number">0{idx + 1}</div>
                     <h3 className="pillar-card__title">{p.title}</h3>
                     <p className="pillar-card__desc">{p.description}</p>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* ── 4. 3-STEP PROCESS ── */}
         <section className="landing-section landing-steps" aria-labelledby="steps-heading">
           <div className="landing-container">
-            <div className="landing-section-header">
+            <motion.div
+              className="landing-section-header"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.5, ease: SOFT_EASE }}
+            >
               <h2 id="steps-heading" className="landing-section-title">
                 Thuê Kho Chỉ Trong <span className="highlight-keyword">3</span> Bước
               </h2>
-            </div>
+            </motion.div>
 
-            <div className="steps-grid">
-              {STEPS.map((s, idx) => (
-                <div key={idx} className="step-card">
-                  <div className="step-card__badge">BƯỚC {s.step}</div>
-                  <h3 className="step-card__title">{s.title}</h3>
-                  <p className="step-card__desc">{s.description}</p>
-                  <div className="step-card__footer">
-                    {idx === 0 && <span className="step-sub">3D Catalog trực tuyến</span>}
-                    {idx === 1 && <span className="step-sub">VietQR & Hợp đồng số</span>}
-                    {idx === 2 && <span className="step-sub">Bàn giao số qua Check-in Pass</span>}
-                  </div>
-                </div>
-              ))}
+            <div className="steps-container-wrapper">
+              {/* Connecting progress path line across 3 steps */}
+              <div className="steps-connector" aria-hidden="true">
+                <motion.div
+                  className="steps-connector__bar"
+                  initial={{ scaleX: 0 }}
+                  whileInView={{ scaleX: 1 }}
+                  viewport={{ once: true, amount: 0.25 }}
+                  transition={{ duration: 0.7, ease: SOFT_EASE, delay: 0.15 }}
+                />
+              </div>
+
+              <motion.div
+                className="steps-grid"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.15,
+                      delayChildren: 0.1,
+                    },
+                  },
+                }}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.25 }}
+              >
+                {STEPS.map((s, idx) => (
+                  <motion.div
+                    key={idx}
+                    className="step-card"
+                    variants={{
+                      hidden: { opacity: 0, y: 30 },
+                      visible: {
+                        opacity: 1,
+                        y: 0,
+                        transition: { duration: 0.5, ease: SOFT_EASE },
+                      },
+                    }}
+                    whileHover={{
+                      y: -4,
+                      boxShadow: "6px 6px 0px var(--color-ink)",
+                      transition: { duration: 0.15, ease: SOFT_EASE },
+                    }}
+                  >
+                    <div className="step-card__badge">BƯỚC {s.step}</div>
+                    <h3 className="step-card__title">{s.title}</h3>
+                    <p className="step-card__desc">{s.description}</p>
+                    <div className="step-card__footer">
+                      {idx === 0 && <span className="step-sub">3D Catalog trực tuyến</span>}
+                      {idx === 1 && <span className="step-sub">VietQR & Hợp đồng số</span>}
+                      {idx === 2 && <span className="step-sub">Bàn giao số qua Check-in Pass</span>}
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
           </div>
         </section>
@@ -488,18 +706,47 @@ export default function LandingPage() {
           aria-labelledby="facilities-heading"
         >
           <div className="landing-container">
-            <div className="landing-section-header">
+            <motion.div
+              className="landing-section-header"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.5, ease: SOFT_EASE }}
+            >
               <h2 id="facilities-heading" className="landing-section-title">
                 vị trí giao thông <span className="highlight-keyword">huyết mạch TP.HCM</span>
               </h2>
-            </div>
+            </motion.div>
 
-            <div className="facilities-grid">
+            <motion.div
+              className="facilities-grid"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+            >
               {/* Cơ sở Tân Bình */}
-              <article className="facility-card facility-card--active">
+              <motion.article
+                className="facility-card facility-card--active"
+                variants={{
+                  hidden: { opacity: 0, scale: 0.97, y: 20 },
+                  visible: {
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    transition: { duration: 0.5, ease: SOFT_EASE },
+                  },
+                }}
+                whileHover={{
+                  y: -4,
+                  boxShadow: "6px 6px 0px var(--color-ink)",
+                  transition: { duration: 0.15, ease: SOFT_EASE },
+                }}
+              >
                 <div className="facility-card__header">
                   <span className="facility-badge facility-badge--active">
-                    ● Đang hoạt động
+                    <span className="status-dot-pulse-mini" aria-hidden="true" />
+                    Đang hoạt động
                   </span>
                 </div>
                 <h3 className="facility-card__name">Cơ sở Tân Bình</h3>
@@ -536,10 +783,26 @@ export default function LandingPage() {
                     <ArrowRight size={16} weight="bold" />
                   </Button>
                 </div>
-              </article>
+              </motion.article>
 
               {/* Cơ sở Quận 7 */}
-              <article className="facility-card facility-card--upcoming">
+              <motion.article
+                className="facility-card facility-card--upcoming"
+                variants={{
+                  hidden: { opacity: 0, scale: 0.97, y: 20 },
+                  visible: {
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    transition: { duration: 0.5, ease: SOFT_EASE, delay: 0.1 },
+                  },
+                }}
+                whileHover={{
+                  y: -4,
+                  boxShadow: "6px 6px 0px var(--color-ink)",
+                  transition: { duration: 0.15, ease: SOFT_EASE },
+                }}
+              >
                 <div className="facility-card__header">
                   <span className="facility-badge facility-badge--upcoming">
                     ▲ Sắp khai trương
@@ -579,22 +842,28 @@ export default function LandingPage() {
                     <InfoIcon size={16} weight="bold" />
                   </Button>
                 </div>
-              </article>
-            </div>
+              </motion.article>
+            </motion.div>
           </div>
         </section>
 
-        {/* ── 6. INTERACTIVE FAQ ACCORDION ── */}
+        {/* ── 6. INTERACTIVE FAQ ACCORDION (With AnimatePresence Height Transition) ── */}
         <section className="landing-section landing-faq" aria-labelledby="faq-heading">
           <div className="landing-container">
-            <div className="landing-section-header">
+            <motion.div
+              className="landing-section-header"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.5, ease: SOFT_EASE }}
+            >
               <h2 id="faq-heading" className="landing-section-title">
                 Câu Hỏi Thường Gặp
               </h2>
               <p className="landing-section-subtitle">
                 Mọi thông tin bạn cần biết trước khi bắt đầu thuê kho tại StorageHub.
               </p>
-            </div>
+            </motion.div>
 
             <div className="faq-accordion" role="region" aria-label="Danh sách câu hỏi thường gặp">
               {FAQ_ITEMS.map((item, index) => {
@@ -614,24 +883,34 @@ export default function LandingPage() {
                     >
                       <span className="faq-question-index">0{index + 1}.</span>
                       <span className="faq-question-text">{item.q}</span>
-                      <span className="faq-question-icon" aria-hidden="true">
-                        {isOpen ? (
-                          <CaretUp size={20} weight="bold" />
-                        ) : (
-                          <CaretDown size={20} weight="bold" />
-                        )}
-                      </span>
-                    </button>
-                    {isOpen && (
-                      <div
-                        id={`faq-answer-${index}`}
-                        role="region"
-                        aria-labelledby={`faq-question-${index}`}
-                        className="faq-answer"
+                      <motion.span
+                        className="faq-question-icon"
+                        aria-hidden="true"
+                        animate={{ rotate: isOpen ? 180 : 0 }}
+                        transition={{ duration: 0.3, ease: SOFT_EASE }}
                       >
-                        <p>{item.a}</p>
-                      </div>
-                    )}
+                        <CaretDown size={20} weight="bold" />
+                      </motion.span>
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          id={`faq-answer-${index}`}
+                          role="region"
+                          aria-labelledby={`faq-question-${index}`}
+                          className="faq-answer-wrapper"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.35, ease: SOFT_EASE }}
+                          style={{ overflow: "hidden" }}
+                        >
+                          <div className="faq-answer">
+                            <p>{item.a}</p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 );
               })}
@@ -644,7 +923,13 @@ export default function LandingPage() {
           className="landing-cta-banner"
           aria-label="Kêu gọi hành động thuê kho"
         >
-          <div className="landing-container landing-cta-banner__inner">
+          <motion.div
+            className="landing-container landing-cta-banner__inner"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.55, ease: SOFT_EASE }}
+          >
             <div className="landing-cta-banner__badge">
               <LockSimple size={16} weight="bold" />
               <span>GIẢI PHÁP LƯU TRỮ SỐ 1 TP.HCM</span>
@@ -656,7 +941,12 @@ export default function LandingPage() {
               Đăng ký thuê kho tự quản thông minh chỉ từ 100.000 đ/tháng. Đặt cọc
               online 10% nhận ngay mã PIN cá nhân ra vào 24/7.
             </p>
-            <div className="landing-cta-banner__actions">
+            <motion.div
+              className="landing-cta-banner__actions"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2, ease: SOFT_EASE }}
+            >
               <Button
                 variant="primary"
                 size="large"
@@ -666,8 +956,8 @@ export default function LandingPage() {
                 Khám phá tất cả 40 kho ngay
                 <ArrowRight size={20} weight="bold" />
               </Button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
       </div>
     </AppShell>

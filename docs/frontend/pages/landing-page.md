@@ -97,4 +97,34 @@ Khi người dùng truy cập trang `/`:
 - **Build Check**: Chạy `npm run build` trong `frontend`, hoàn thành thành công 0 lỗi biên dịch.
 - **Tương tác**: Kiểm thử click FAQ đóng/mở chuẩn xác, bộ lọc tab kích thước kho phản hồi tức thì, các nút CTA điều hướng chính xác về `/browse`.
 - **Responsive Viewport**: Kiểm thử toàn diện trên Desktop (1440px) và Mobile (375px), bố cục lưới tự động co giãn không tràn ngang hay vỡ chữ.
-- **Ảnh chụp kiểm thử**: Lưu trữ tại `verify_landing_page_full.png` và thư mục artifact.
+- **Ảnh chụp kiểm thử**: Lưu trữ tại `verify_landing_page_full.png`, `verify_landing_motion.png` và thư mục artifact.
+
+---
+
+## 6. Bộ Hiệu Ứng Chuyển Cảnh & Tương Tác Động (Motion Suite)
+
+Toàn bộ hệ thống chuyển động trên Landing Page được tích hợp bằng thư viện `motion/react` chính thức cho React 19, tuân thủ nguyên tắc **Soft Easing** (`[0.22, 1, 0.36, 1]`) và cơ chế **Native Scroll**:
+
+1. **Hero Section (`.landing-hero`)**:
+   - **Kinetic Text Reveal**: Tiêu đề H1 trượt xuất hiện so le (`staggerChildren: 0.1s`, `y: [24, 0]`, `opacity: [0, 1]`).
+   - **CounterNumber**: Chỉ số ribbon tự động nhảy số mượt mà từ 0 đến giá trị đích khi cuộn vào viewport (`0` ➔ `40+`, `0%` ➔ `100%`, `0%` ➔ `10%`, `24/7` scale-fade).
+   - **CTA Hover & Tap**: Hiệu ứng nhấc nhẹ khi rê chuột (`whileHover={{ y: -2 }}`) và thu nhỏ nhẹ khi nhấn (`whileTap={{ scale: 0.98 }}`).
+2. **Kích Thước Kho (`#storage-sizes`)**:
+   - Tiêu đề và lưới 4 thẻ kích thước trượt xuất hiện so le khi cuộn tới (`staggerChildren: 0.08s`, `y: [28, 0]`, `opacity: [0, 1]`).
+   - Thẻ kho nhấc cao nhẹ và tăng bóng đổ tương tác (`whileHover={{ y: -4, boxShadow: "5px 5px 0px var(--color-ink)" }}`).
+3. **4 Trụ Cột Giá Trị (`.landing-pillars`)**:
+   - Các thẻ trụ cột xuất hiện so le khi cuộn tới.
+   - Micro-interaction: Biểu tượng icon tự động xoay nhẹ và nảy lên khi rê chuột vào thẻ (`whileHover={{ rotate: [0, -8, 8, 0], scale: 1.05 }}`).
+4. **Quy Trình 3 Bước (`.landing-steps`)**:
+   - Xuất hiện tuần tự 1 ➔ 2 ➔ 3 với `staggerChildren: 0.15s`.
+   - Bổ sung đường dẫn tiến độ kết nối giữa các bước (`.steps-connector`) tự động vẽ dải màu đỏ (`scaleX: [0, 1]`) khi người dùng cuộn tới.
+5. **Mạng Lưới Cơ Sở (`.landing-facilities`)**:
+   - Thẻ cơ sở xuất hiện phóng đại nhẹ (`scale: [0.97, 1]`, `opacity: [0, 1]`).
+   - Đốm trạng thái xanh tại cơ sở Tân Bình nhấp nháy êm dịu (`.status-dot-pulse-mini`).
+6. **Hỏi Đáp Thường Gặp Accordion (`.landing-faq`)**:
+   - Bọc nội dung trả lời trong `<AnimatePresence initial={false}>` và `<motion.div>` tính toán chiều cao tự động mượt mà (`height: 0` ➔ `height: "auto"`), không bị ngắt quãng khung hình.
+   - Mũi tên Caret xoay mượt 180 độ theo trạng thái mở/đóng (`rotate: isOpen ? 180 : 0`).
+7. **Banner Kêu Gọi Cuối Trang (`.landing-cta-banner`)**:
+   - Khối banner xuất hiện khi cuộn tới đáy trang.
+   - Nút hành động chính có hiệu ứng nâng nhẹ khi rê chuột (`whileHover={{ scale: 1.02 }}`).
+
