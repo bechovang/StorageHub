@@ -245,24 +245,24 @@ export function usePayment() {
                 id: detail.id,
                 code: detail.code || `RSV-${detail.id}`,
                 status: detail.status,
-                depositAmount: detail.depositAmount || 103500,
+                depositAmount: detail.depositAmount || 0,
                 depositStatus: detail.depositStatus || (isPaid ? "HELD" : "UNPAID"),
-                durationMonths: detail.durationMonths || 3,
-                startDate: detail.startDate || "2026-10-03",
-                endDate: detail.endDate || "2027-01-03",
-                unit: {
-                  id: detail.unit?.id || detail.unitId,
-                  code: detail.unit?.code || "S-3",
-                  sizeM2: detail.unit?.sizeM2 || 5,
-                  typeName: detail.unit?.typeName || "Indoor Climate-Controlled Storage",
-                  monthlyPrice: Math.round(
-                    ((detail.depositAmount || 103500) * 10) / (detail.durationMonths || 3)
-                  ),
-                  depot: "Tân Bình Gateway",
-                  building: "Building B · Level 2",
-                  dimensions: "2.0m (W) × 2.5m (L) × 2.8m (H)",
-                  volume: "14.0 m³",
-                },
+                durationMonths: detail.durationMonths || 1,
+                startDate: detail.startDate || null,
+                endDate: detail.endDate || null,
+                unit: detail.unit
+                  ? {
+                      id: detail.unit.id || detail.unitId,
+                      code: detail.unit.code || `UNIT-${detail.unitId || detail.unit.id}`,
+                      sizeM2: detail.unit.sizeM2 || 0,
+                      typeName: detail.unit.typeName || "Kho lưu trữ",
+                      monthlyPrice: detail.unit.monthlyPrice || detail.unit.baseMonthlyRent || 0,
+                      depot: detail.unit.depot || detail.unit.facilityName || "StorageHub",
+                      building: detail.unit.building || "",
+                      dimensions: detail.unit.dimensions || "",
+                      volume: detail.unit.volume || "",
+                    }
+                  : null,
               });
 
               loadPaymentHistory(resIdToFetch);
@@ -715,26 +715,6 @@ export function usePayment() {
     }
   };
 
-  const handleSimulateVNPaySuccess = () => {
-    stopPolling();
-    const mockReceipt = `REC-VNPAY-${Date.now().toString().slice(-6)}`;
-    setPaymentSession((prev) => ({
-      ...(prev || {}),
-      status: "SUCCEEDED",
-      receiptCode: mockReceipt,
-      amount: reservation?.depositAmount || 103500,
-      method: "VNPAY",
-    }));
-    setNotificationToast({
-      type: "PAYMENT_CONFIRMED",
-      title: "Thanh toán cọc thành công",
-      body: `Biên lai ${mockReceipt} đã được cấp. Đơn đặt chỗ đã chuyển sang trạng thái RESERVED.`,
-    });
-    if (reservationRef.current?.id) {
-      loadPaymentHistory(reservationRef.current.id);
-    }
-  };
-
   const handleCreateTestReservation = async () => {
     try {
       setLoadingReservation(true);
@@ -814,24 +794,24 @@ export function usePayment() {
           id: detail.id,
           code: detail.code || `RSV-${detail.id}`,
           status: detail.status,
-          depositAmount: detail.depositAmount || 103500,
+          depositAmount: detail.depositAmount || 0,
           depositStatus: detail.depositStatus || (isPaid ? "HELD" : "UNPAID"),
-          durationMonths: detail.durationMonths || 3,
-          startDate: detail.startDate || "2026-10-03",
-          endDate: detail.endDate || "2027-01-03",
-          unit: {
-            id: detail.unit?.id || detail.unitId,
-            code: detail.unit?.code || "S-3",
-            sizeM2: detail.unit?.sizeM2 || 5,
-            typeName: detail.unit?.typeName || "Indoor Climate-Controlled Storage",
-            monthlyPrice: Math.round(
-              ((detail.depositAmount || 103500) * 10) / (detail.durationMonths || 3)
-            ),
-            depot: "Tân Bình Gateway",
-            building: "Building B · Level 2",
-            dimensions: "2.0m (W) × 2.5m (L) × 2.8m (H)",
-            volume: "14.0 m³",
-          },
+          durationMonths: detail.durationMonths || 1,
+          startDate: detail.startDate || null,
+          endDate: detail.endDate || null,
+          unit: detail.unit
+            ? {
+                id: detail.unit.id || detail.unitId,
+                code: detail.unit.code || `UNIT-${detail.unitId || detail.unit.id}`,
+                sizeM2: detail.unit.sizeM2 || 0,
+                typeName: detail.unit.typeName || "Kho lưu trữ",
+                monthlyPrice: detail.unit.monthlyPrice || detail.unit.baseMonthlyRent || 0,
+                depot: detail.unit.depot || detail.unit.facilityName || "StorageHub",
+                building: detail.unit.building || "",
+                dimensions: detail.unit.dimensions || "",
+                volume: detail.unit.volume || "",
+              }
+            : null,
         });
 
         handleResetOrSwitch();
@@ -911,7 +891,6 @@ export function usePayment() {
     handleResetOrSwitch,
     handleSelectMethod,
     handleCheckPaymentStatus,
-    handleSimulateVNPaySuccess,
     handleCreateTestReservation,
     handleSelectReservation,
     handleCopyReceipt,

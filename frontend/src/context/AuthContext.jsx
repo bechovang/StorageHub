@@ -78,7 +78,7 @@ export function AuthProvider({ children }) {
                 isOffline = true;
             }
 
-            // Fallback tài khoản demo khi backend chưa chạy (để tiện test FE)
+            // Fallback tài khoản demo khi backend chưa chạy (chỉ kích hoạt trong môi trường DEV nội bộ)
             const DEMO_ACCOUNTS = {
                 "tuan@demo.storagehub.vn": { id: 4, fullName: "Phạm Tuấn", email: "tuan@demo.storagehub.vn", role: "FACILITY_MANAGER", landing: "/facility" },
                 "nam@demo.storagehub.vn": { id: 5, fullName: "Hoàng Nam", email: "nam@demo.storagehub.vn", role: "SYSTEM_ADMIN", landing: "/users" },
@@ -87,7 +87,8 @@ export function AuthProvider({ children }) {
                 "lan@demo.storagehub.vn": { id: 1, fullName: "Nguyễn Thị Lan", email: "lan@demo.storagehub.vn", role: "CUSTOMER", landing: "/browse" },
             };
 
-            if (isOffline && DEMO_ACCOUNTS[trimmedEmail]) {
+            if (import.meta.env.DEV && isOffline && DEMO_ACCOUNTS[trimmedEmail]) {
+                console.warn("[AuthContext] DEV MODE: Backend offline, cấp token giả lập cho tài khoản demo:", trimmedEmail);
                 const demoUser = DEMO_ACCOUNTS[trimmedEmail];
                 const mockToken = "mock_jwt_token_" + demoUser.role;
                 tokenStorage.set(mockToken);
@@ -207,11 +208,11 @@ export function AuthProvider({ children }) {
                 body: JSON.stringify({ email: email.trim() }),
             });
 
-            // Nếu Backend chưa bật (Vite trả 502 Bad Gateway) hoặc lỗi gateway trong môi trường dev:
-            // Tự động trả mock response chuẩn FR-3 để hỗ trợ test giao diện Frontend
             if (res.status === 502 || res.status === 503 || res.status === 504) {
-                return {
-                    message: "Nếu email này tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi đến hòm thư của bạn.",
+                throw {
+                    status: res.status,
+                    code: "GATEWAY_ERROR",
+                    message: "Máy chủ dịch vụ email hiện không khả dụng. Vui lòng thử lại sau.",
                 };
             }
 
@@ -229,8 +230,10 @@ export function AuthProvider({ children }) {
         } catch (err) {
             // Trường hợp mất kết nối mạng hoặc server offline
             if (err.name === "TypeError" || !err.status) {
-                return {
-                    message: "Nếu email này tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi đến hòm thư của bạn.",
+                throw {
+                    status: 503,
+                    code: "NETWORK_ERROR",
+                    message: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra đường truyền mạng.",
                 };
             }
             throw err;
