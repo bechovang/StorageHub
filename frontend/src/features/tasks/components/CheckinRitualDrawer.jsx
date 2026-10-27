@@ -158,7 +158,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 <div style={{ textAlign: "right" }}>
                   <span style={{ fontSize: "0.72rem", color: "#64748b", textTransform: "uppercase" }}>Vị trí kho:</span>
                   <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--color-primary)" }}>
-                    Ô kho {task.unitCode}
+                    Kho {task.unitCode}
                   </div>
                 </div>
               </div>
@@ -461,7 +461,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
             <div style={{ textAlign: "left", fontSize: "0.82rem", background: "#f8fafc", padding: "12px", border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: "6px" }}>
               <div>Khách hàng: <strong>{task.customerName}</strong></div>
               <div>Số điện thoại: <strong>{task.customerPhone}</strong></div>
-              <div>Ô kho được cấp: <strong>{task.unitCode}</strong></div>
+              <div>Kho được cấp: <strong>{task.unitCode}</strong></div>
               <div>Mã PIN truy cập: <strong style={{ color: "#16a34a" }}>{task.accessPin || "8842-Active"}</strong></div>
             </div>
             <Button style={{ marginTop: "16px" }} fullWidth onClick={() => setShowFullPassModal(false)}>

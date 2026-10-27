@@ -23,9 +23,9 @@ export function RentalSpecsCard({ reservation }) {
             </div>
 
             <div className="rd-meta-row">
-              <span className="rd-meta-row__label">Mã ô kho</span>
+              <span className="rd-meta-row__label">Mã kho</span>
               <span className="rd-meta-row__value font-mono font-bold">
-                Ô kho {reservation.unit?.code}
+                Kho {reservation.unit?.code}
               </span>
             </div>
 
@@ -87,7 +87,7 @@ export function RentalSpecsCard({ reservation }) {
               </span>
             </div>
             <p className="rd-card__hint">
-              Nhập mã này tại bàn phím số gắn trên cửa ô kho hoặc trạm kiểm soát ra vào Cơ sở để mở khóa.
+              Nhập mã này tại bàn phím số gắn trên cửa kho hoặc trạm kiểm soát ra vào Cơ sở để mở khóa.
             </p>
           </div>
         </article>

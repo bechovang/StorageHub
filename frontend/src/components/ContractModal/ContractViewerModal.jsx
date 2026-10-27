@@ -22,7 +22,7 @@ export default function ContractViewerModal({
   const customerPhone = usr.phone || res.customerPhone || "0901234567";
   const customerEmail = usr.email || "lan@demo.storagehub.vn";
   const unitCode = u.code || res.unitCode || "S-3";
-  const typeName = u.typeName || "Ô kho nhỏ (S)";
+  const typeName = u.typeName || "Kho nhỏ (S)";
   const sizeM2 = u.sizeM2 || 5;
   const volumeM3 = (sizeM2 * 2.8).toFixed(1);
   const monthlyRent = u.baseMonthlyRent || u.monthlyPrice || 345000;
@@ -76,7 +76,7 @@ export default function ContractViewerModal({
             </p>
             <div className="contract-title-wrap">
               <h1 className="contract-main-title">
-                HỢP ĐỒNG THUÊ Ô KHO TỰ QUẢN
+                HỢP ĐỒNG THUÊ KHO TỰ QUẢN
               </h1>
               <p className="contract-sub-title">
                 (SELF-STORAGE LEASE & SERVICES AGREEMENT)
@@ -144,12 +144,12 @@ export default function ContractViewerModal({
           {/* Các điều khoản pháp lý */}
           <section className="contract-clauses">
             <div className="contract-clause-item">
-              <h3 className="clause-title">ĐIỀU 1: ĐỐI TƯỢNG VÀ THÔNG SỐ Ô KHO THUÊ</h3>
+              <h3 className="clause-title">ĐIỀU 1: ĐỐI TƯỢNG VÀ THÔNG SỐ KHO THUÊ</h3>
               <p>
-                Bên A đồng ý cho Bên B thuê ô kho tự quản thuộc hệ thống kho thông minh StorageHub với các thông số kỹ thuật được xác thực sau:
+                Bên A đồng ý cho Bên B thuê kho tự quản thuộc hệ thống kho thông minh StorageHub với các thông số kỹ thuật được xác thực sau:
               </p>
               <ul>
-                <li>Mã định danh ô kho: <strong>{unitCode}</strong> thuộc {typeName}.</li>
+                <li>Mã định danh kho: <strong>{unitCode}</strong> thuộc {typeName}.</li>
                 <li>Diện tích sàn sử dụng: <strong>{sizeM2} m²</strong> · Thể tích thông thủy: <strong>~{volumeM3} m³</strong> (Trần cao tiêu chuẩn 2.8m).</li>
                 <li>Hạ tầng kỹ thuật: Cửa cuốn thép dập gân dán seal bảo vệ, hệ thống khóa số PIN điện tử riêng biệt, hệ thống quạt thông gió và kiểm soát độ ẩm &lt; 65%.</li>
               </ul>
@@ -174,7 +174,7 @@ export default function ContractViewerModal({
             <div className="contract-clause-item">
               <h3 className="clause-title">ĐIỀU 3: QUY CHẾ RA VÀO VÀ NGUYÊN TẮC AN TOÀN</h3>
               <p>
-                3.1. Bên B có toàn quyền ra vào ô kho của mình 24 giờ trong ngày, 7 ngày trong tuần thông qua mã PIN điện tử cá nhân được cấp tại quầy tiếp đón.
+                3.1. Bên B có toàn quyền ra vào kho của mình 24 giờ trong ngày, 7 ngày trong tuần thông qua mã PIN điện tử cá nhân được cấp tại quầy tiếp đón.
               </p>
               <p>
                 3.2. Bên B tuyệt đối không được lưu trữ: hóa chất độc hại, chất lỏng dễ bắt lửa, chất nổ, vũ khí, động vật sống, thực phẩm tươi sống dễ ôi thiu hoặc tài sản phi pháp theo luật pháp Việt Nam.

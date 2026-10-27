@@ -29,7 +29,7 @@ export default function CreateTicketModal({
         )}
 
         <div className="form-field">
-          <label className="form-field__label">Ô kho gặp sự cố *</label>
+          <label className="form-field__label">Kho gặp sự cố *</label>
           <input
             type="text"
             required

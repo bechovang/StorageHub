@@ -10,12 +10,12 @@ Tài liệu mô tả cách thanh Header tự động thích ứng với từng v
 
 | Vai Trò Đăng Nhập | Các Mục Menu Hiển Thị Trên Header |
 |---|---|
-| **Chưa đăng nhập** | `Khám phá ô kho` (/browse), `Đăng nhập` (/login) |
-| **CUSTOMER** | `Khám phá ô kho` (/browse), `Ô kho của tôi` (/rentals), `Hỗ trợ` (/support) |
+| **Chưa đăng nhập** | `Khám phá kho` (/browse), `Đăng nhập` (/login) |
+| **CUSTOMER** | `Khám phá kho` (/browse), `Kho của tôi` (/rentals), `Hỗ trợ` (/support) |
 | **STAFF** | `Bảng công việc` (/tasks), `Hỗ trợ sự cố` (/support) |
-| **FACILITY_MANAGER** | `Tổng quan` (/facility), `Danh mục ô kho` (/facility/units), `Lịch phân ca` (/facility/shifts), `Hỗ trợ sự cố` (/support), `Nhật ký` (/facility/activity) |
+| **FACILITY_MANAGER** | `Tổng quan` (/facility), `Danh mục kho` (/facility/units), `Lịch phân ca` (/facility/shifts), `Hỗ trợ sự cố` (/support), `Nhật ký` (/facility/activity) |
 | **BUSINESS_OPS** | `Tổng quan` (/overview), `Chính sách & Biểu phí` (/policy), `Báo cáo tài chính` (/reports) |
-| **SYSTEM_ADMIN** | `Tài khoản` (/users), `Lịch sử đăng nhập` (/login-history), `Nhật ký hệ thống` (/facility/activity), `Chính sách & Biểu phí` (/policy), `Khám phá ô kho` (/browse) |
+| **SYSTEM_ADMIN** | `Tài khoản` (/users), `Lịch sử đăng nhập` (/login-history), `Nhật ký hệ thống` (/facility/activity), `Chính sách & Biểu phí` (/policy), `Khám phá kho` (/browse) |
 
 > [!NOTE]
 > **Quy Tắc Điều Hướng Thanh Toán & Hóa Đơn**:

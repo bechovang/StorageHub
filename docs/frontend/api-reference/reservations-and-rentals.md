@@ -33,10 +33,10 @@ Các API quản lý vòng đời đơn thuê từ lúc đặt cọc, lấy mã n
 
 > [!IMPORTANT]
 > **Quy Tắc Nghiệp Vụ Khóa Chỗ (Reservation Business Rule)**:
-> - Việc gọi API `POST /api/v1/reservations` chỉ tạo bản ghi ở trạng thái `PENDING_PAYMENT` và lưu snapshot báo giá. **Hệ thống TUYỆT ĐỐI CHƯA GIỮ CHỖ hay khóa ô kho ở bước này**.
-> - Khách hàng khác vẫn có thể nhìn thấy ô kho này khả dụng trên danh mục tìm kiếm (`/browse`).
-> - Ô kho chỉ chính thức được chuyển sang trạng thái `RESERVED` (khóa chỗ thành công, không ai được đặt đè) **SAU KHI KHÁCH HÀNG HOÀN TẤT THANH TOÁN TIỀN CỌC** (khi giao dịch thanh toán cọc chuyển sang `SUCCEEDED`).
-> - Nếu khách hàng chưa thanh toán và có người khác thanh toán cọc thành công trước cho ô kho đó trong cùng khoảng thời gian, đơn thanh toán sau sẽ nhận thông báo lỗi xung đột lịch (`RESERVATION_CONFLICT` / `409 Conflict`).
+> - Việc gọi API `POST /api/v1/reservations` chỉ tạo bản ghi ở trạng thái `PENDING_PAYMENT` và lưu snapshot báo giá. **Hệ thống TUYỆT ĐỐI CHƯA GIỮ CHỖ hay khóa kho ở bước này**.
+> - Khách hàng khác vẫn có thể nhìn thấy kho này khả dụng trên danh mục tìm kiếm (`/browse`).
+> - Kho chỉ chính thức được chuyển sang trạng thái `RESERVED` (khóa chỗ thành công, không ai được đặt đè) **SAU KHI KHÁCH HÀNG HOÀN TẤT THANH TOÁN TIỀN CỌC** (khi giao dịch thanh toán cọc chuyển sang `SUCCEEDED`).
+> - Nếu khách hàng chưa thanh toán và có người khác thanh toán cọc thành công trước cho kho đó trong cùng khoảng thời gian, đơn thanh toán sau sẽ nhận thông báo lỗi xung đột lịch (`RESERVATION_CONFLICT` / `409 Conflict`).
 
 ---
 
@@ -74,7 +74,7 @@ Các API quản lý vòng đời đơn thuê từ lúc đặt cọc, lấy mã n
 - **Nội dung pháp lý**:
   - **Bên Cho Thuê (Bên A)**: CÔNG TY CỔ PHẦN DỊCH VỤ LƯU TRỮ THÔNG MINH STORAGEHUB VIỆT NAM (Đại diện, MST, Trụ sở).
   - **Bên Thuê (Bên B)**: Họ và tên khách hàng, Số CCCD / Hộ chiếu, Số điện thoại liên hệ.
-  - **Điều 1 - Thông tin ô kho & Thời hạn**: Mã kho, diện tích (m²), kích thước (Dài × Rộng × Cao), chi nhánh kho bãi, ngày bắt đầu và kết thúc thuê.
+  - **Điều 1 - Thông tin kho & Thời hạn**: Mã kho, diện tích (m²), kích thước (Dài × Rộng × Cao), chi nhánh kho bãi, ngày bắt đầu và kết thúc thuê.
   - **Điều 2 - Giá thuê & Tiền đặt cọc 10%**: Giá thuê niêm yết hàng tháng, tỷ lệ đặt cọc 10% giữ chỗ, quy chế thanh toán phần còn lại khi làm thủ tục Check-in nhận kho.
   - **Điều 3 - Quy chế ra vào & An toàn an ninh**: Bàn giao mã PIN cá nhân mở khóa cửa cuốn 24/7, cấm lưu trữ chất cháy nổ / hóa chất độc hại, cam kết không tự ý thay đổi kết cấu vách ngăn.
   - **Điều 4 - Bồi thường & Thanh lý hợp đồng**: Quy tắc khấu trừ tiền cọc theo biên bản kiểm tra cơ sở vật chất (4 hạng mục), đối soát hoàn cọc hoặc truy thu phụ phí khi checkout.

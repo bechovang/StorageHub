@@ -30,8 +30,8 @@ const ROLE_CONFIGS = {
     label: ROLE_BADGE_UPPER.CUSTOMER,
     landing: "/browse",
     links: [
-      { label: "Khám phá ô kho", href: "/browse" },
-      { label: "Ô kho của tôi", href: "/rentals" },
+      { label: "Khám phá kho", href: "/browse" },
+      { label: "Kho của tôi", href: "/rentals" },
       { label: "Hỗ trợ", href: "/support" },
     ],
   },
@@ -48,7 +48,7 @@ const ROLE_CONFIGS = {
     landing: "/facility",
     links: [
       { label: "Tổng quan", href: "/facility" },
-      { label: "Danh mục ô kho", href: "/facility/units" },
+      { label: "Danh mục kho", href: "/facility/units" },
       { label: "Lịch phân ca", href: "/facility/shifts" },
       { label: "Hỗ trợ sự cố", href: "/support" },
       { label: "Nhật ký", href: "/facility/activity" },
@@ -71,7 +71,7 @@ const ROLE_CONFIGS = {
       { label: "Lịch sử đăng nhập", href: "/login-history" },
       { label: "Nhật ký hệ thống", href: "/facility/activity" },
       { label: "Chính sách & Biểu phí", href: "/policy" },
-      { label: "Khám phá ô kho", href: "/browse" },
+      { label: "Khám phá kho", href: "/browse" },
     ],
   },
 };
@@ -123,7 +123,7 @@ export default function Header({
     navLinks ||
     (isAuthenticated
       ? roleConfig.links
-      : [{ label: "Khám phá ô kho", href: "/browse" }]);
+      : [{ label: "Khám phá kho", href: "/browse" }]);
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);

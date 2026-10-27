@@ -35,7 +35,7 @@ export default function Pagination({
       <div className="pagination-info">
         {totalItems ? (
           <span>
-            Hiển thị <strong>{startItem} – {endItem}</strong> trong tổng số <strong>{totalItems}</strong> ô kho
+            Hiển thị <strong>{startItem} – {endItem}</strong> trong tổng số <strong>{totalItems}</strong> kho
           </span>
         ) : (
           <span>

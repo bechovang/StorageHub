@@ -54,7 +54,7 @@ export default function BookingReview({
           <span>{unit.depot || "Cơ sở Tân Bình"}</span>
           <CaretRight size={13} weight="bold" />
           <span className="booking-breadcrumb__current">
-            {unit.code ? `Ô kho ${unit.code}` : "Ô kho"} · Đặt chỗ
+            {unit.code ? `Kho ${unit.code}` : "Kho"} · Đặt chỗ
           </span>
         </nav>
 
@@ -75,7 +75,7 @@ export default function BookingReview({
             <div className="unit-spec-card__header">
               <div className="unit-spec-card__title-row">
                 <div className="unit-badges-row">
-                  <span className="code-pill">Ô KHO {unit.code || "S-3"}</span>
+                  <span className="code-pill">KHO {unit.code || "S-3"}</span>
                   <Badge tone={isAlreadyPaid ? "success" : "warning"}>
                     {isAlreadyPaid ? "Đã giữ kho (RESERVED)" : "Chưa giữ kho · Cần thanh toán cọc"}
                   </Badge>
@@ -105,7 +105,7 @@ export default function BookingReview({
                 color: "#92400e",
                 lineHeight: "1.45",
               }}>
-                <strong>Lưu ý quan trọng về giữ chỗ:</strong> Ô kho chỉ chính thức được chuyển sang trạng thái <strong>RESERVED</strong> và khóa giữ chỗ sau khi bạn hoàn tất thanh toán cọc. Trong thời gian này, ô kho vẫn khả dụng cho khách hàng khác.
+                <strong>Lưu ý quan trọng về giữ chỗ:</strong> Kho chỉ chính thức được chuyển sang trạng thái <strong>RESERVED</strong> và khóa giữ chỗ sau khi bạn hoàn tất thanh toán cọc. Trong thời gian này, kho vẫn khả dụng cho khách hàng khác.
               </div>
             )}
 
@@ -231,7 +231,7 @@ export default function BookingReview({
               </div>
               <p className="deposit-highlight__note">
                 {isAlreadyPaid
-                  ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống. Ô kho đã chính thức được khóa giữ chỗ (RESERVED)."
+                  ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống. Kho đã chính thức được khóa giữ chỗ (RESERVED)."
                   : "Hoàn tất thanh toán cọc để chính thức giữ chỗ kho (RESERVED). Tiền cọc được hoàn trả 100% khi kết thúc hợp đồng."}
               </p>
             </div>

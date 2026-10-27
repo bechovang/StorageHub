@@ -1,7 +1,7 @@
 /**
  * StorageHub — Support Ticket Service (US-23 / FR-23 / FR-24 / Flow 7)
  * Quản lý vòng đời yêu cầu hỗ trợ & sự cố:
- * - Khách hàng tạo yêu cầu gắn với ô kho đang thuê + phân loại + mô tả
+ * - Khách hàng tạo yêu cầu gắn với kho đang thuê + phân loại + mô tả
  * - Nhân viên tiếp nhận (OPEN -> IN_PROGRESS), xử lý hoàn tất (RESOLVED) hoặc chuyển cấp Quản lý (ESCALATED)
  * - Quản lý cơ sở điều phối xử lý sự cố thông thường hoặc di dời & bảo trì khẩn cấp (Flow 7)
  */
@@ -77,7 +77,7 @@ export const INITIAL_TICKETS = [
     status: "RESOLVED",
     assignedStaff: "Minh Nguyễn",
     assignedRole: "STAFF",
-    description: "Cửa cuốn ô kho S-3 kéo xuống bị kẹt ở đoạn giữa, phát ra tiếng kêu lớn.",
+    description: "Cửa cuốn kho S-3 kéo xuống bị kẹt ở đoạn giữa, phát ra tiếng kêu lớn.",
     resolutionNote: "Đã kiểm tra bảo dưỡng thanh trượt, tra dầu bôi trơn bản lề. Cửa hoạt động trơn tru.",
     escalationReason: null,
     managerPlan: null,
@@ -102,7 +102,7 @@ export const INITIAL_TICKETS = [
     status: "OPEN",
     assignedStaff: "Minh Nguyễn",
     assignedRole: "STAFF",
-    description: "Tôi quên mã mở khóa ô kho S-3 sau khi chuyển đồ xong sáng nay.",
+    description: "Tôi quên mã mở khóa kho S-3 sau khi chuyển đồ xong sáng nay.",
     resolutionNote: null,
     escalationReason: null,
     managerPlan: null,
@@ -260,7 +260,7 @@ export function createSupportTicket({
   description,
 }) {
   if (!unitCode || !unitCode.trim()) {
-    throw new Error("Vui lòng chọn ô kho đang thuê gặp sự cố.");
+    throw new Error("Vui lòng chọn kho đang thuê gặp sự cố.");
   }
 
   if (!description || !description.trim()) {
@@ -312,7 +312,7 @@ export function createSupportTicket({
     action: "CREATED",
     fromValue: null,
     toValue: "OPEN",
-    reason: `Khách báo sự cố "${INCIDENT_TYPES[incidentType]?.label || incidentType}" tại ô kho ${newTicket.unitCode}`,
+    reason: `Khách báo sự cố "${INCIDENT_TYPES[incidentType]?.label || incidentType}" tại kho ${newTicket.unitCode}`,
   });
 
   return newTicket;
@@ -362,7 +362,7 @@ export function acceptSupportTicket({
     action: "STATUS_CHANGED",
     fromValue: prevStatus,
     toValue: "IN_PROGRESS",
-    reason: `Tiếp nhận xử lý yêu cầu hỗ trợ tại ô kho ${updatedTicket.unitCode}`,
+    reason: `Tiếp nhận xử lý yêu cầu hỗ trợ tại kho ${updatedTicket.unitCode}`,
   });
 
   return updatedTicket;
@@ -383,7 +383,7 @@ export function dispatchSupportTicketByManager({
     throw new Error("Vui lòng nhập phương án xử lý và chỉ đạo kỹ thuật.");
   }
   if (mode === "SEVERE" && (!replacementUnitCode || !replacementUnitCode.trim())) {
-    throw new Error("Vui lòng chọn ô kho trống thay thế để di dời hàng hóa khẩn cấp.");
+    throw new Error("Vui lòng chọn kho trống thay thế để di dời hàng hóa khẩn cấp.");
   }
 
   const tickets = loadRawTickets();
@@ -399,7 +399,7 @@ export function dispatchSupportTicketByManager({
 
   const formattedPlan =
     mode === "SEVERE"
-      ? `Di dời khẩn cấp từ ô kho ${current.unitCode} sang ô kho thay thế ${targetReplacement}: ${managerPlan.trim()}`
+      ? `Di dời khẩn cấp từ kho ${current.unitCode} sang kho thay thế ${targetReplacement}: ${managerPlan.trim()}`
       : managerPlan.trim();
 
   const updatedTicket = {
@@ -538,7 +538,7 @@ export function escalateSupportTicket({
       status: "ESCALATED",
       assignedStaff: "Phạm Tuấn",
       assignedRole: "FACILITY_MANAGER",
-      description: description || `Sự cố kỹ thuật phát sinh tại ô kho ${unitCode || "S-1"}`,
+      description: description || `Sự cố kỹ thuật phát sinh tại kho ${unitCode || "S-1"}`,
       resolutionNote: null,
       escalationReason: escalationReason.trim(),
       managerPlan: null,

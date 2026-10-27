@@ -139,7 +139,7 @@ export default function CheckInPassPage() {
                                     <Package size={16} weight="fill" />
                                 </span>
                                 <div>
-                                    <span className="cip__info-item__label">Ô kho</span>
+                                    <span className="cip__info-item__label">Kho</span>
                                     <span className="cip__info-item__value">
                                         {pass.unit?.code || "—"}
                                         {pass.unit?.typeName && (

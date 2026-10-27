@@ -300,7 +300,7 @@ export const ROLE_DEFINITIONS = [
     title: "Quản lý cơ sở",
     badgeClass: "role-badge--manager",
     persona: "Phạm Tuấn",
-    description: "Quản lý trưởng cơ sở Tân Bình, phân công ca trực nhân viên, điều chỉnh trạng thái ô kho và giám sát nhật ký hoạt động.",
+    description: "Quản lý trưởng cơ sở Tân Bình, phân công ca trực nhân viên, điều chỉnh trạng thái kho và giám sát nhật ký hoạt động.",
   },
   {
     key: "BUSINESS_OPS",
@@ -328,7 +328,7 @@ export const PERMISSION_GROUPS = [
     permissions: [
       {
         id: "P-BROWSE",
-        name: "Tìm kiếm & Đặt giữ chỗ ô kho",
+        name: "Tìm kiếm & Đặt giữ chỗ kho",
         desc: "Tra cứu danh mục kho trống theo kích thước, tầng, xem biểu giá và thanh toán tiền cọc giữ chỗ.",
         CUSTOMER: true, STAFF: false, FACILITY_MANAGER: false, BUSINESS_OPS: false, SYSTEM_ADMIN: true,
       },
@@ -341,7 +341,7 @@ export const PERMISSION_GROUPS = [
       {
         id: "P-TICKET-CREATE",
         name: "Gửi yêu cầu hỗ trợ sự cố",
-        desc: "Tạo phiếu báo cáo sự cố kỹ thuật (khóa số, máy hút ẩm, thẻ từ) gắn trực tiếp với mã ô kho đang thuê.",
+        desc: "Tạo phiếu báo cáo sự cố kỹ thuật (khóa số, máy hút ẩm, thẻ từ) gắn trực tiếp với mã kho đang thuê.",
         CUSTOMER: true, STAFF: true, FACILITY_MANAGER: true, BUSINESS_OPS: false, SYSTEM_ADMIN: true,
       },
     ],
@@ -370,7 +370,7 @@ export const PERMISSION_GROUPS = [
       },
       {
         id: "P-UNIT-MGMT",
-        name: "Điều chỉnh trạng thái & Bảo trì ô kho",
+        name: "Điều chỉnh trạng thái & Bảo trì kho",
         desc: "Chuyển kho vào bảo trì, đưa kho ra khỏi khai thác (Retire) hoặc sửa trạng thái khẩn cấp kèm lý do kiểm toán.",
         CUSTOMER: false, STAFF: false, FACILITY_MANAGER: true, BUSINESS_OPS: false, SYSTEM_ADMIN: true,
       },

@@ -68,8 +68,8 @@ Các API phục vụ tìm kiếm kho, xem thông số kỹ thuật, phân trang,
 > [!NOTE]
 > **Quy Tắc Hiển Thị Trạng Thái Khả Dụng (Availability Business Rule)**:
 > - Danh sách catalog hiển thị các kho có trạng thái `AVAILABLE`.
-> - Nếu một khách hàng mới chỉ khởi tạo đơn đặt chỗ (`PENDING_PAYMENT`) nhưng **chưa thanh toán tiền cọc**, ô kho vẫn tiếp tục được coi là khả dụng trên danh mục tìm kiếm (`Còn trống · Cọc để giữ chỗ`).
-> - Ô kho chỉ chính thức chuyển sang `RESERVED` và khóa lại sau khi có giao dịch thanh toán cọc thành công (`SUCCEEDED`).
+> - Nếu một khách hàng mới chỉ khởi tạo đơn đặt chỗ (`PENDING_PAYMENT`) nhưng **chưa thanh toán tiền cọc**, kho vẫn tiếp tục được coi là khả dụng trên danh mục tìm kiếm (`Còn trống · Cọc để giữ chỗ`).
+> - Kho chỉ chính thức chuyển sang `RESERVED` và khóa lại sau khi có giao dịch thanh toán cọc thành công (`SUCCEEDED`).
 
 ---
 

@@ -26,7 +26,7 @@ Giao diện StorageHub tuân thủ trường phái **Swiss Style (International 
 | `--color-ink` | `#000000` | Màu mực đen thuần, viền cấp 1, tiêu đề chính, bóng tương phản cao |
 | `--color-surface` | `#ffffff` | Màu nền thẻ, panel, modal, bề mặt tương tác |
 | `--color-neutral` | `#f5f5f5` | Màu nền canvas tổng thể trang, nền chip phụ |
-| `--color-neutral-dark` | `#171717` | Màu nền xám đen cho ô kho có sẵn, nhãn phụ tối |
+| `--color-neutral-dark` | `#171717` | Màu nền xám đen cho kho có sẵn, nhãn phụ tối |
 | `--color-secondary` | `#555555` | Màu chữ phụ, mô tả phụ cấp 2 |
 | `--color-muted` | `#767676` | Màu chữ chú thích mờ, placeholder, thời gian phụ |
 | `--color-line` | `#d7d7d7` | Đường kẻ phân cách, viền thẻ mặc định |
@@ -197,14 +197,14 @@ Dành cho thẻ `<button>` độc lập hoặc thẻ liên kết `<a>` muốn t�
 ```
 
 ### 5.4. Kế Thừa Cho Thẻ Tương Tác (Interactive Cards & UnitCard)
-Các thẻ ô kho tương tác (`UnitCard.jsx` / `UnitCard.css`) kế thừa trực tiếp cơ chế đổ bóng và chuyển động cơ học của Button:
+Các thẻ kho tương tác (`UnitCard.jsx` / `UnitCard.css`) kế thừa trực tiếp cơ chế đổ bóng và chuyển động cơ học của Button:
 - **Design Tokens ánh xạ**:
   - `--card-shadow: var(--btn-shadow);` (Mặc định `2px 2px 0px rgba(0, 0, 0, 0.25)`)
   - `--card-shadow-hover: var(--btn-shadow-hover);` (Mở rộng `3px 3px 0px rgba(0, 0, 0, 0.4)`)
   - `--card-shadow-active: var(--btn-shadow-active);` (Thu hẹp `1px 1px 0px rgba(0, 0, 0, 0.2)`)
   - `--card-transition: border-color var(--duration-fast) var(--ease-standard), box-shadow 0.15s ease, transform 0.15s ease;`
 - **Hành vi tương tác cơ học**:
-  - **Trạng thái bình thường**: Toàn bộ thẻ ô kho có bóng đổ khối cứng 2px.
+  - **Trạng thái bình thường**: Toàn bộ thẻ kho có bóng đổ khối cứng 2px.
   - **Trạng thái Hover**: Thẻ trượt nâng nhẹ chếch lên `transform: translate(-1px, -1px)`, bóng đổ mở rộng lên 3px và viền chuyển đỏ thương hiệu `--color-accent`.
   - **Trạng thái Active**: Khi click vào thẻ, thẻ thụt xuống `transform: translate(1px, 1px)` và bóng đổ co lại 1px, tạo cảm giác nhấn phím vật lý chân thực.
 

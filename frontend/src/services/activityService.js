@@ -12,7 +12,7 @@ const STORAGE_KEY = "storagehub_activity_logs_v4";
 // Chỉ chứa các nhóm lọc thực thể duy nhất (đã loại bỏ khóa trùng lặp STAFF_ASSIGNMENT gây lặp 2 nút "Ca trực")
 export const ENTITY_TYPES = {
   ALL: { key: "ALL", label: "Tất cả", badgeClass: "" },
-  UNIT: { key: "UNIT", label: "Ô kho", badgeClass: "badge-entity--unit" },
+  UNIT: { key: "UNIT", label: "Kho", badgeClass: "badge-entity--unit" },
   RESERVATION: { key: "RESERVATION", label: "Đơn thuê", badgeClass: "badge-entity--reservation" },
   CONTRACT: { key: "CONTRACT", label: "Hợp đồng", badgeClass: "badge-entity--contract" },
   PAYMENT: { key: "PAYMENT", label: "Thanh toán", badgeClass: "badge-entity--payment" },
@@ -41,10 +41,10 @@ export const ROLE_LABELS = {
 export const ACTION_BADGES = {
   STATUS_CHANGE: { label: "Đổi trạng thái", class: "badge-action--status" },
   CREATED: { label: "Tạo mới", class: "badge-action--create" },
-  CREATE_UNIT: { label: "Tạo ô kho", class: "badge-action--create" },
+  CREATE_UNIT: { label: "Tạo kho", class: "badge-action--create" },
   DELETED: { label: "Xóa bỏ", class: "badge-action--fail" },
-  DELETE_UNIT: { label: "Xóa ô kho", class: "badge-action--fail" },
-  MERGE_UNITS: { label: "Gộp ô kho", class: "badge-action--extend" },
+  DELETE_UNIT: { label: "Xóa kho", class: "badge-action--fail" },
+  MERGE_UNITS: { label: "Gộp kho", class: "badge-action--extend" },
   UPDATED: { label: "Cập nhật", class: "badge-action--fix" },
   UPDATE_SPECS: { label: "Cập nhật thông số", class: "badge-action--fix" },
   EXTENDED: { label: "Gia hạn hợp đồng", class: "badge-action--extend" },
@@ -57,7 +57,7 @@ export const ACTION_BADGES = {
   SET_MAINTENANCE: { label: "Chuyển bảo trì", class: "badge-action--maintenance" },
   FINISH_MAINTENANCE: { label: "Hoàn tất bảo trì", class: "badge-action--resolve" },
   RETIRE_UNIT: { label: "Ngừng khai thác", class: "badge-action--retire" },
-  RELOCATE_UNIT: { label: "Đổi ô kho sự cố", class: "badge-action--maintenance" },
+  RELOCATE_UNIT: { label: "Đổi kho sự cố", class: "badge-action--maintenance" },
   RESOLVED: { label: "Đã giải quyết", class: "badge-action--resolve" },
   ESCALATED: { label: "Chuyển cấp Quản lý", class: "badge-action--escalate" },
   ROLE_CHANGED: { label: "Đổi vai trò", class: "badge-action--fix" },

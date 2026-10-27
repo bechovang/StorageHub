@@ -56,7 +56,7 @@ export default function RentalEmptyState({
       </div>
       <h3 className="rental-empty-state__title">Bạn chưa có đơn thuê nào</h3>
       <p className="rental-empty-state__desc">
-        Khám phá các ô kho tự quản an ninh, tiện lợi tại cơ sở Tân Bình và chọn kho phù hợp với nhu cầu của bạn ngay hôm nay.
+        Khám phá các kho tự quản an ninh, tiện lợi tại cơ sở Tân Bình và chọn kho phù hợp với nhu cầu của bạn ngay hôm nay.
       </p>
     </div>
   );

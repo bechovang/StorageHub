@@ -39,7 +39,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__tags">
             {/* Unit Mono Badge */}
             <span className="rental-card__unit-code font-mono">
-              Ô KHO {item.unit?.code || "—"}
+              KHO {item.unit?.code || "—"}
             </span>
 
             {/* Swiss Status Badge */}

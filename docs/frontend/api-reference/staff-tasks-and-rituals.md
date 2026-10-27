@@ -94,13 +94,13 @@ Giao diện thực hiện qua ngăn kéo **`CheckoutRitualDrawer.jsx`** gồm 4 
    - Nếu thu thêm phụ phí: Bắt buộc ảnh biên lai thu tiền phụ phí hoặc màn hình chuyển khoản thành công của khách.
    - Nếu cân bằng: Bắt buộc ảnh chụp Biên bản nghiệm thu bàn giao và thanh lý hợp đồng.
    - Tự động lưu trữ vào `localStorage` theo `taskId` để bảo lưu vĩnh viễn không bị mất ảnh.
-   - Sau khi hoàn tất, hệ thống tự động phát sinh nhiệm vụ dọn kho **`CLEANING`** cho ô kho vừa trả.
+   - Sau khi hoàn tất, hệ thống tự động phát sinh nhiệm vụ dọn kho **`CLEANING`** cho kho vừa trả.
 
 ---
 
 ### (C) Nghi thức Vệ sinh kho (`CLEANING`):
 
-Thực hiện dọn dẹp, kiểm tra độ ẩm, tra dầu ổ khóa và xác nhận ô kho sẵn sàng bàn giao cho khách mới (`readyForTenant: true`).
+Thực hiện dọn dẹp, kiểm tra độ ẩm, tra dầu ổ khóa và xác nhận kho sẵn sàng bàn giao cho khách mới (`readyForTenant: true`).
 
 ---
 

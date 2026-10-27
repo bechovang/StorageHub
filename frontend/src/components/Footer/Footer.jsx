@@ -1,7 +1,7 @@
 import "./Footer.css";
 
 export default function Footer({
-  leftText = "STORAGEHUB · HỆ THỐNG CHO THUÊ Ô KHO TỰ QUẢN",
+  leftText = "STORAGEHUB · HỆ THỐNG CHO THUÊ KHO TỰ QUẢN",
   rightText = "CƠ SỞ TÂN BÌNH · 2026",
   className = "",
 }) {

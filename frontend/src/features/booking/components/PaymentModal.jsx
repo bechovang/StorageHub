@@ -58,7 +58,7 @@ function PaymentInvoiceSummary({ unit, reservation, formatVND }) {
           color: "#92400e",
           lineHeight: "1.4"
         }}>
-          <strong>Quy tắc giữ chỗ:</strong> Ô kho chỉ được chuyển sang trạng thái <strong>RESERVED (Đã giữ chỗ)</strong> sau khi bạn hoàn tất thanh toán cọc.
+          <strong>Quy tắc giữ chỗ:</strong> Kho chỉ được chuyển sang trạng thái <strong>RESERVED (Đã giữ chỗ)</strong> sau khi bạn hoàn tất thanh toán cọc.
         </div>
       </div>
     </div>
@@ -167,7 +167,7 @@ export default function PaymentModal({
                   ? "Giao dịch chưa hoàn tất và tài khoản của bạn chưa bị trừ tiền."
                   : isTerminalExpired
                     ? "Mã thanh toán đã hết thời gian hiệu lực sau 5 phút."
-                    : `Thanh toán cọc để khóa giữ chỗ ô kho ${unit.code || "S-3"} · REF: ${
+                    : `Thanh toán cọc để khóa giữ chỗ kho ${unit.code || "S-3"} · REF: ${
                       reservation?.code || "RSV-2026-S3"
                     }`}
             </p>
@@ -221,7 +221,7 @@ export default function PaymentModal({
                   {formatVND(paymentSession?.amount || reservation?.depositAmount)}
                 </h3>
                 <p className="terminal-desc">
-                  Khoản đặt cọc đã được xác nhận thành công! Ô kho <strong>{unit.code || "S-3"}</strong>{" "}
+                  Khoản đặt cọc đã được xác nhận thành công! Kho <strong>{unit.code || "S-3"}</strong>{" "}
                   đã chính thức chuyển sang trạng thái <strong>RESERVED (Đã giữ chỗ)</strong> và được đảm bảo giữ cho bạn đến ngày nhận kho{" "}
                   <strong>{reservation?.startDate}</strong>. Mã PIN vào kho sẽ tự động kích
                   hoạt lúc 08:00 sáng ngày nhận kho.

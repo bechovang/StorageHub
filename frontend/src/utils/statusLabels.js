@@ -2,7 +2,7 @@
  * Bộ từ điển chuẩn hóa Tiếng Việt tập trung cho toàn bộ hệ thống StorageHub
  * Quy tắc thuật ngữ chuẩn:
  * - Facility -> Cơ sở (VD: Cơ sở Tân Bình)
- * - Storage Unit -> Ô kho (VD: Ô kho M-2)
+ * - Storage Unit -> Kho (VD: Kho M-2)
  * - Check-in Pass -> Thẻ nhận kho
  */
 
@@ -90,10 +90,10 @@ export const TASK_TYPE_LABELS = {
   CHECK_IN: "Nhận kho",
   CHECKOUT: "Trả kho",
   CHECK_OUT: "Trả kho",
-  CLEANING: "Vệ sinh ô kho",
+  CLEANING: "Vệ sinh kho",
   SUPPORT: "Hỗ trợ sự cố",
   CONTRACT: "Ký phụ lục",
-  MAINTENANCE: "Bảo trì ô kho",
+  MAINTENANCE: "Bảo trì kho",
 };
 
 export const TICKET_STATUS_LABELS = {
@@ -111,9 +111,9 @@ export const AUDIT_ACTION_LABELS = {
   SET_MAINTENANCE: "Chuyển bảo trì",
   FINISH_MAINTENANCE: "Hoàn tất bảo trì",
   RETIRE_UNIT: "Ngừng khai thác",
-  CREATE_UNIT: "Tạo ô kho mới",
-  DELETE_UNIT: "Xóa ô kho",
-  MERGE_UNITS: "Gộp ô kho",
+  CREATE_UNIT: "Tạo kho mới",
+  DELETE_UNIT: "Xóa kho",
+  MERGE_UNITS: "Gộp kho",
   CREATED: "Tạo mới",
   UPDATED: "Cập nhật",
   DELETED: "Xóa bỏ",
@@ -130,7 +130,7 @@ export const AUDIT_ACTION_LABELS = {
 
 export const ENTITY_TYPE_LABELS = {
   ALL: "Tất cả",
-  UNIT: "Ô kho",
+  UNIT: "Kho",
   RESERVATION: "Đơn thuê",
   CONTRACT: "Hợp đồng",
   PAYMENT: "Thanh toán",
@@ -204,7 +204,7 @@ export function translateBackendMessage(raw = "") {
 
   // Notification translations
   text = text
-    .replace(/^Booking confirmed\s*[—–-]\s*([A-Z0-9-]+)\s+reserved\.?$/i, "Đặt chỗ thành công — Ô kho $1 đã được giữ chỗ.")
+    .replace(/^Booking confirmed\s*[—–-]\s*([A-Z0-9-]+)\s+reserved\.?$/i, "Đặt chỗ thành công — Kho $1 đã được giữ chỗ.")
     .replace(/^Reservation\s+([A-Z0-9-]+)\s+confirmed\.?$/i, "Đơn giữ chỗ $1 đã được xác nhận.")
     .replace(/^Deposit paid\s*[—–-]\s*(.+)$/i, "Đã nhận tiền cọc giữ chỗ — $1")
     .replace(/^Check-in completed\s*[—–-]\s*(.+)$/i, "Hoàn tất bàn giao nhận kho — $1")
@@ -214,8 +214,8 @@ export function translateBackendMessage(raw = "") {
     .replace(/^(SR-\d+)\s+resolved\s*[—–-]\s*(.+)$/i, "Yêu cầu hỗ trợ $1 đã xử lý xong — $2")
     .replace(/^(SR-\d+)\s+escalated\s*[—–-]\s*(.+)$/i, "Yêu cầu hỗ trợ $1 đã chuyển lên Quản lý cơ sở — $2")
     .replace(/sticky door fixed\.?/gi, "đã khắc phục kẹt cửa kho.")
-    .replace(/\b(\d+)\s+unit\s+tương tự\b/gi, "$1 ô kho tương tự")
-    .replace(/\bUnit\s+([A-Z0-9-]+)\b/g, "Ô kho $1");
+    .replace(/\b(\d+)\s+unit\s+tương tự\b/gi, "$1 kho tương tự")
+    .replace(/\bUnit\s+([A-Z0-9-]+)\b/g, "Kho $1");
 
   return text;
 }

@@ -120,7 +120,7 @@ export default function BrowseUnitDrawer({
             </span>
           </div>
           <p style={{ fontSize: "0.8rem", color: "var(--color-ink-muted, #737373)", margin: "8px 0 0" }}>
-            * Lưu ý: Ô kho chỉ chính thức được khóa giữ chỗ (RESERVED) sau khi bạn hoàn tất thanh toán tiền cọc 10%.
+            * Lưu ý: Kho chỉ chính thức được khóa giữ chỗ (RESERVED) sau khi bạn hoàn tất thanh toán tiền cọc 10%.
           </p>
         </div>
 

@@ -21,7 +21,7 @@ export default function TicketCard({
       <div className="ticket-card__header">
         <div>
           <span className="ticket-card__code">{t.code}</span>
-          <span className="ticket-card__unit-tag">Ô KHO: {t.unitCode}</span>
+          <span className="ticket-card__unit-tag">KHO: {t.unitCode}</span>
           <span style={{ fontSize: "0.78rem", color: "var(--color-muted)", marginLeft: "10px" }}>
             ({t.zoneCode})
           </span>
