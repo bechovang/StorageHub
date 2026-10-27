@@ -5,6 +5,7 @@
    ========================================================================== */
 
 .landing-page {
+  position: relative;
   width: 100%;
   background-color: var(--color-surface-page);
   color: var(--color-ink);
@@ -21,6 +22,8 @@
 
 /* ── Section Header (DRY for all landing sections) ── */
 .landing-section {
+  position: relative;
+  z-index: 1;
   padding: var(--space-16) 0;
   border-bottom: 2px solid var(--color-line-strong);
 }
@@ -53,7 +56,9 @@
    ========================================================================== */
 
 .landing-hero {
-  background: var(--color-surface);
+  position: relative;
+  z-index: 1;
+  background: transparent;
   border-bottom: 2px solid var(--color-line-strong);
   padding: var(--space-16) 0 var(--space-12);
 }
@@ -217,7 +222,7 @@
    ========================================================================== */
 
 .landing-sizes {
-  background: var(--color-neutral);
+  background: transparent;
 }
 
 .landing-sizes__headline {
@@ -414,7 +419,7 @@
    ========================================================================== */
 
 .landing-pillars {
-  background: var(--color-surface);
+  background: transparent;
 }
 
 .pillars-grid {
@@ -425,7 +430,7 @@
 
 .pillar-card {
   position: relative;
-  background: var(--color-neutral);
+  background: var(--color-surface);
   border: 2px solid var(--color-line-strong);
   padding: 28px var(--space-5);
   box-shadow: 3px 3px 0px var(--color-ink);
@@ -485,7 +490,7 @@
    ========================================================================== */
 
 .landing-steps {
-  background: var(--color-surface);
+  background: transparent;
   color: var(--color-ink);
 }
 
@@ -591,7 +596,7 @@
    ========================================================================== */
 
 .landing-facilities {
-  background: var(--color-neutral);
+  background: transparent;
 }
 
 .facilities-grid {
@@ -729,7 +734,7 @@
    ========================================================================== */
 
 .landing-faq {
-  background: var(--color-surface);
+  background: transparent;
 }
 
 .faq-accordion {
@@ -752,7 +757,7 @@
   align-items: center;
   gap: var(--space-4);
   padding: 22px var(--space-5);
-  background: transparent;
+  background: var(--color-surface);
   border: none;
   border-radius: var(--radius-none);
   text-align: left;
@@ -796,7 +801,7 @@
 
 .faq-answer {
   padding: 0 var(--space-5) var(--space-5) 56px;
-  background: var(--color-surface-subtle);
+  background: var(--color-surface);
   border-top: 1px dashed var(--color-line);
 }
 
@@ -812,7 +817,7 @@
    ========================================================================== */
 
 .landing-cta-banner {
-  background: var(--color-neutral);
+  background: transparent;
   color: var(--color-ink);
   padding: 80px 0;
   border-top: 2px solid var(--color-line-strong);
@@ -824,6 +829,11 @@
   flex-direction: column;
   align-items: center;
   max-width: 840px;
+  margin: 0 auto;
+  background: var(--color-surface);
+  border: 2px solid var(--color-line-strong);
+  box-shadow: 6px 6px 0px var(--color-ink);
+  padding: 56px 40px;
 }
 
 .landing-cta-banner__badge {

@@ -1,0 +1,54 @@
+/* ==========================================================================
+   FullPageTrafficNetwork.css — Ambient Logistics Traffic Network
+   Ambient traffic routes and moving nodes across entire homepage.
+   0 location labels, 100% design tokens, 60fps GPU acceleration.
+   ========================================================================== */
+
+.full-page-traffic {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.full-page-traffic__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Dash Stream Animation ── */
+.traffic-flow-dash {
+  animation: trafficFlowDash 1.4s linear infinite;
+}
+
+@keyframes trafficFlowDash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+/* ── Concentric Hub Pulse ── */
+.page-hub-pulse {
+  transform-origin: center;
+  animation: pageHubPulse 2.8s ease-out infinite;
+}
+
+@keyframes pageHubPulse {
+  0% {
+    r: 10;
+    opacity: 0.8;
+  }
+  60% {
+    r: 28;
+    opacity: 0;
+  }
+  100% {
+    r: 28;
+    opacity: 0;
+  }
+}

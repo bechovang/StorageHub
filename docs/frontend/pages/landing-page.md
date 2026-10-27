@@ -31,12 +31,19 @@ Mục tiêu chính:
 ### 3.1. Hero Section (`.landing-hero`)
 - **Bố cục 2 Cột Đối Xứng (2-Column Grid)**:
   - **Cột Trái**: Tiêu đề H1 Kinetic Text Reveal (*"Lưu Trữ Thông Minh · Tự Quản Tuyệt Đối · Bảo Mật 24/7"*), đoạn mô tả định vị dịch vụ và 2 nút CTA chính.
-  - **Cột Phải**: Sa bàn Vector mô phỏng Giao thông Logistics thời gian thực ([`LogisticsTrafficMap.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/LogisticsTrafficMap.jsx)):
-    - **Trục đường huyết mạch thực tế TP.HCM**: Trục 1 (Sân bay Tân Sơn Nhất ➔ Đ. Hoàng Văn Thụ ➔ Đ. Nam Kỳ Khởi Nghĩa ➔ Đ. Nguyễn Văn Linh kết nối 2 cơ sở), Trục 2 (Cộng Hòa - Võ Văn Kiệt), Trục 3 (Mai Chí Thọ - Cầu Thủ Thiêm).
+  - **Cột Phải**: Sa hình Vector mô phỏng Giao thông Logistics ([`LogisticsTrafficMap.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/LogisticsTrafficMap.jsx)):
+    - **Thiết kế tối giản, sạch sẽ (0 ghi chú địa điểm)**: Loại bỏ hoàn toàn các nhãn chữ địa danh/tên đường/tên kho gây rối mắt; tập trung 100% vào các đường line giao thông hình học tinh tế, nút giao hình tròn/vuông đồng tâm và nhịp phát tín hiệu radar.
+    - **Trục đường giao thông hình học**: Trục chính xuyên tâm đôi, các đường vành đai cong nối nhánh và đường kết nối nội bộ.
     - **Node xe cộ hoạt họa**: Các đốm tròn mang màu đỏ nhấn (`var(--color-accent)`) và đen (`var(--color-ink)`) di chuyển liên tục dọc theo các tuyến đường với vệt sáng mờ phía sau.
-    - **Trạm Depot & Sân bay**: Đánh dấu trực quan Sân bay Tân Sơn Nhất, Cơ sở Tân Bình (DEPOT-01 đang hoạt động với vòng xung nhịp radar đỏ) và Cơ sở Quận 7 (DEPOT-02 sắp mở).
-    - **HUD Telemetry Bar**: Hiển thị trạng thái tọa độ GPS `10°49'N 106°39'E`, thời gian lưu thông xe tải ~18 phút và trạng thái lưu thông 24/7.
+    - **Khung kỹ thuật chuẩn Swiss Neo-Brutalist**: Thanh trạng thái kỹ thuật tối giản (Status Real-time, Wave bars, Corner crosses `+`), viền đen 2px và đổ bóng đặc 4px 4px.
 - **Quick Stats Ribbon (4 thẻ chỉ số)**: Căn giữa trải dài toàn bộ chiều rộng ngay bên dưới 2 cột, tích hợp bộ đếm số tự động `CounterNumber`.
+
+### 3.1.1. Mạng lưới Giao thông Logistics Toàn Trang (`FullPageTrafficNetwork.jsx`)
+- Component [`FullPageTrafficNetwork.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/FullPageTrafficNetwork.jsx) được gắn làm lớp lót nền (`z-index: 0; pointer-events: none;`) bao phủ 100% chiều cao của trang Landing Page:
+  - **Tuyến đường giao thông mờ mờ trải dài**: Tuyến Vành Đai Đông, Tuyến Vành Đai Tây, Tuyến Xuyên Tâm uốn lượn hình chữ S và các vòng đai kết nối ngang chạy xuyên suốt qua tất cả các section (Hero ➔ Storage Sizes ➔ 4 Pillars ➔ 3 Steps ➔ Facilities ➔ FAQ ➔ Bottom CTA).
+  - **Các node xe cộ liên tục luân chuyển**: Các packet đốm tròn mang mã màu canonical design token (`var(--color-accent)` đỏ và `var(--color-ink)` đen) di chuyển mượt mà ở các tốc độ so le khác nhau bằng SVG `<animateMotion>`, mang lại cảm giác lưu thông xe cộ logistic sống động mọi lúc mọi nơi trên toàn bộ trang.
+  - **Đảm bảo khả năng đọc 100%**: Các khối thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) có nền đặc `var(--color-surface)` và đổ bóng khối, các đường line và node xe cộ uốn lượn mờ mờ ở lề trang và luồn sau các thẻ, hoàn toàn không che khuất hay ảnh hưởng đến độ tương phản của chữ.
+  - **Tuyệt đối không nhãn chữ địa danh**: Tuân thủ triệt để nguyên tắc không gắn bất kỳ ghi chú văn bản nào lên đường giao thông, tạo nên vẻ đẹp thuần vector hiện đại và tinh tế.
 
 ### 3.2. Hướng dẫn & Đo lường Kích thước Kho (`#storage-sizes`, `.landing-sizes`)
 - **Tiêu đề nổi bật**: *"Chiếc <span style="color:#dc2626">túi xách</span> nhỏ hay cả <span style="color:#dc2626">căn nhà</span> đều được"* với từ khóa nổi bật bằng màu đỏ và kích thước phóng to.

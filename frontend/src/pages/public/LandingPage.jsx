@@ -22,6 +22,7 @@ import {
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import Button from "../../components/Button/Button.jsx";
 import LogisticsTrafficMap from "./components/LogisticsTrafficMap.jsx";
+import FullPageTrafficNetwork from "./components/FullPageTrafficNetwork.jsx";
 import "./LandingPage.css";
 
 // ── Soft Easing Curve (easeOutQuart canonical: [0.22, 1, 0.36, 1]) ──
@@ -364,6 +365,9 @@ export default function LandingPage() {
   return (
     <AppShell brandHref="/" showFooter={true}>
       <div className="landing-page">
+        {/* Full-Page Ambient Logistics Traffic Network */}
+        <FullPageTrafficNetwork />
+
         {/* ── 1. HERO SECTION ── */}
         <section className="landing-hero" aria-label="Giới thiệu StorageHub">
           <div className="landing-hero__inner">

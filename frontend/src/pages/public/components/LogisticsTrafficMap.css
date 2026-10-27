@@ -1,5 +1,6 @@
 /* ==========================================================================
-   LogisticsTrafficMap.css — Traffic Simulation & Arterial Radar Map
+   LogisticsTrafficMap.css — Traffic Simulation Sa Hình
+   Clean vector schematic, 0 location labels, 100% design tokens.
    ========================================================================== */
 
 .logistics-map-card {
@@ -13,12 +14,12 @@
   flex-direction: column;
 }
 
-/* ── HUD Header Bar ── */
-.logistics-map__hud-header {
+/* ── Top Technical Status Ribbon ── */
+.logistics-map__top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px var(--space-4);
+  padding: 6px var(--space-4);
   background: var(--color-surface-subtle);
   border-bottom: 1px solid var(--color-line-strong);
   font-family: var(--font-mono);
@@ -26,13 +27,14 @@
   letter-spacing: 0.04em;
 }
 
-.hud-header__left {
+.top-bar__left {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  position: relative;
 }
 
-.hud-radar-dot {
+.top-bar__radar-dot {
   width: 7px;
   height: 7px;
   background-color: var(--color-status-success);
@@ -53,28 +55,63 @@
   }
 }
 
-.hud-title {
+.top-bar__tech-id {
   font-weight: var(--font-weight-bold);
   color: var(--color-ink);
-  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
 }
 
-.hud-header__right {
+.top-bar__center {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 3px;
 }
 
-.hud-coords {
-  color: var(--color-muted);
+.top-bar__wave-bar {
+  display: inline-block;
+  width: 2px;
+  height: 10px;
+  background: var(--color-line-strong);
+  opacity: 0.3;
+  animation: waveBar 1.2s ease-in-out infinite alternate;
 }
 
-.hud-live-tag {
-  background: var(--color-accent);
-  color: var(--color-surface);
-  padding: 2px 6px;
+.top-bar__wave-bar:nth-child(2) {
+  animation-delay: 0.2s;
+  height: 14px;
+}
+.top-bar__wave-bar:nth-child(3) {
+  animation-delay: 0.4s;
+  height: 8px;
+}
+.top-bar__wave-bar:nth-child(4) {
+  animation-delay: 0.6s;
+  height: 12px;
+}
+
+@keyframes waveBar {
+  0% {
+    opacity: 0.2;
+    transform: scaleY(0.6);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scaleY(1.2);
+  }
+}
+
+.top-bar__right {
+  display: flex;
+  align-items: center;
+}
+
+.top-bar__corner-cross,
+.bottom-bar__corner-cross {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
   font-weight: var(--font-weight-bold);
-  font-size: 0.65rem;
+  color: var(--color-muted);
 }
 
 /* ── Canvas SVG Wrapper ── */
@@ -92,75 +129,30 @@
   display: block;
 }
 
-/* ── SVG Text & Elements ── */
-.svg-label-area {
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.08em;
-  fill: var(--color-muted);
-  opacity: 0.55;
-  text-transform: uppercase;
+/* ── Road & Pulse Lines ── */
+.road-pulse-stream {
+  animation: roadPulseDash 1.2s linear infinite;
 }
 
-.svg-road-name {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.04em;
-  fill: var(--color-secondary);
-  opacity: 0.75;
-}
-
-.svg-station-title {
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.04em;
-  fill: var(--color-ink);
-}
-
-.svg-station-sub {
-  font-family: var(--font-mono);
-  font-size: 7px;
-  fill: var(--color-muted);
-}
-
-/* Depot Tags */
-.depot-tag-bg {
-  box-shadow: 2px 2px 0px var(--color-ink);
-}
-
-.depot-tag-title {
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  font-weight: var(--font-weight-black);
-  letter-spacing: 0.04em;
-  fill: var(--color-ink);
-}
-
-.depot-tag-status {
-  font-family: var(--font-mono);
-  font-size: 7.5px;
-  font-weight: var(--font-weight-bold);
-  fill: var(--color-accent);
-}
-
-.depot-tag-sub {
-  font-family: var(--font-mono);
-  font-size: 7.5px;
-  font-weight: var(--font-weight-bold);
-  fill: var(--color-status-warning);
+@keyframes roadPulseDash {
+  to {
+    stroke-dashoffset: -20;
+  }
 }
 
 .depot-pulse-ring {
-  animation: depotRingPulse 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  transform-origin: center;
+  animation: depotPulse 2.4s ease-out infinite;
 }
 
-@keyframes depotRingPulse {
+@keyframes depotPulse {
   0% {
     r: 8;
-    opacity: 0.9;
+    opacity: 0.85;
+  }
+  60% {
+    r: 22;
+    opacity: 0;
   }
   100% {
     r: 22;
@@ -168,59 +160,51 @@
   }
 }
 
-.road-pulse-stream {
-  animation: roadStreamDash 1.2s linear infinite;
-}
-
-@keyframes roadStreamDash {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
-
-/* ── HUD Telemetry Footer Bar ── */
-.logistics-map__hud-footer {
+/* ── Bottom Technical Status Bar ── */
+.logistics-map__bottom-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px var(--space-4);
+  padding: 6px var(--space-4);
   background: var(--color-surface-subtle);
   border-top: 1px solid var(--color-line-strong);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
 }
 
-.telemetry-item {
+.bottom-bar__indicator {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
-.telemetry-label {
-  color: var(--color-muted);
-}
-
-.telemetry-value {
+.indicator-label {
   font-weight: var(--font-weight-bold);
-  color: var(--color-ink);
+  color: var(--color-muted);
+  letter-spacing: 0.05em;
 }
 
-.telemetry-value.highlight-red {
-  color: var(--color-accent);
+.indicator-live-tag {
+  background: var(--color-accent);
+  color: var(--color-surface);
+  padding: 1px 5px;
+  font-weight: var(--font-weight-black);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
 }
 
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .logistics-map__hud-header,
-  .logistics-map__hud-footer {
-    font-size: 0.65rem;
-  }
+.bottom-bar__tracks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
-  .hud-coords {
-    display: none;
-  }
+.track-pill {
+  width: 14px;
+  height: 3px;
+  background: var(--color-line);
+}
 
-  .telemetry-item:nth-child(3) {
-    display: none;
-  }
+.track-pill--active {
+  background: var(--color-ink);
 }
