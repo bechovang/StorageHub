@@ -21,6 +21,7 @@ import {
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import Button from "../../components/Button/Button.jsx";
+import LogisticsTrafficMap from "./components/LogisticsTrafficMap.jsx";
 import "./LandingPage.css";
 
 // ── Soft Easing Curve (easeOutQuart canonical: [0.22, 1, 0.36, 1]) ──
@@ -366,80 +367,89 @@ export default function LandingPage() {
         {/* ── 1. HERO SECTION ── */}
         <section className="landing-hero" aria-label="Giới thiệu StorageHub">
           <div className="landing-hero__inner">
-            {/* Main H1 with Kinetic Text Reveal */}
-            <motion.h1
-              className="landing-hero__title"
-              variants={heroTitleVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.span className="hero-title-line" variants={titleLineVariants}>
-                Lưu Trữ Thông Minh
-              </motion.span>
-              <br />
-              <motion.span
-                className="hero-title-line landing-hero__title-accent"
-                variants={titleLineVariants}
-              >
-                Tự Quản Tuyệt Đối
-              </motion.span>
-              <br />
-              <motion.span className="hero-title-line" variants={titleLineVariants}>
-                Bảo Mật 24/7
-              </motion.span>
-            </motion.h1>
-
-            {/* Lead Paragraph */}
-            <motion.p
-              className="landing-hero__lead"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: SOFT_EASE, delay: 0.35 }}
-            >
-              Giải pháp cho thuê kho tự quản thông minh dành cho cá nhân và doanh
-              nghiệp tại TP.HCM. Đặt kho trực tuyến chỉ trong 3 phút, cọc 10% giữ
-              chỗ tức thì, chủ động ra vào 24/7 không hẹn trước với mã PIN cá
-              nhân bảo mật tuyệt đối.
-            </motion.p>
-
-            {/* Action CTAs with Hover & Tap Interactions */}
-            <motion.div
-              className="landing-hero__actions"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: SOFT_EASE, delay: 0.45 }}
-            >
-              <motion.div
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15, ease: SOFT_EASE }}
-              >
-                <Button
-                  variant="primary"
-                  size="large"
-                  className="landing-hero__btn-primary"
-                  onClick={() => navigate("/browse")}
+            <div className="landing-hero__grid">
+              <div className="landing-hero__content">
+                {/* Main H1 with Kinetic Text Reveal */}
+                <motion.h1
+                  className="landing-hero__title"
+                  variants={heroTitleVariants}
+                  initial="hidden"
+                  animate="visible"
                 >
-                  Khám phá kho ngay
-                  <ArrowRight size={18} weight="bold" />
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15, ease: SOFT_EASE }}
-              >
-                <Button
-                  variant="secondary"
-                  size="large"
-                  className="landing-hero__btn-secondary"
-                  onClick={handleScrollToSizes}
+                  <motion.span className="hero-title-line" variants={titleLineVariants}>
+                    Lưu Trữ Thông Minh
+                  </motion.span>
+                  <br />
+                  <motion.span
+                    className="hero-title-line landing-hero__title-accent"
+                    variants={titleLineVariants}
+                  >
+                    Tự Quản Tuyệt Đối
+                  </motion.span>
+                  <br />
+                  <motion.span className="hero-title-line" variants={titleLineVariants}>
+                    Bảo Mật 24/7
+                  </motion.span>
+                </motion.h1>
+
+                {/* Lead Paragraph */}
+                <motion.p
+                  className="landing-hero__lead"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, ease: SOFT_EASE, delay: 0.35 }}
                 >
-                  Chọn kho nào cho hợp lí
-                  <QuestionMarkIcon size={18} weight="bold" />
-                </Button>
-              </motion.div>
-            </motion.div>
+                  Giải pháp cho thuê kho tự quản thông minh dành cho cá nhân và doanh
+                  nghiệp tại TP.HCM. Đặt kho trực tuyến chỉ trong 3 phút, cọc 10% giữ
+                  chỗ tức thì, chủ động ra vào 24/7 không hẹn trước với mã PIN cá
+                  nhân bảo mật tuyệt đối.
+                </motion.p>
+
+                {/* Action CTAs with Hover & Tap Interactions */}
+                <motion.div
+                  className="landing-hero__actions"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, ease: SOFT_EASE, delay: 0.45 }}
+                >
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: SOFT_EASE }}
+                  >
+                    <Button
+                      variant="primary"
+                      size="large"
+                      className="landing-hero__btn-primary"
+                      onClick={() => navigate("/browse")}
+                    >
+                      Khám phá kho ngay
+                      <ArrowRight size={18} weight="bold" />
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: SOFT_EASE }}
+                  >
+                    <Button
+                      variant="secondary"
+                      size="large"
+                      className="landing-hero__btn-secondary"
+                      onClick={handleScrollToSizes}
+                    >
+                      Chọn kho nào cho hợp lí
+                      <QuestionMarkIcon size={18} weight="bold" />
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              </div>
+
+              {/* Right Column: Interactive Logistics Traffic Arterial Radar Map */}
+              <div className="landing-hero__visual">
+                <LogisticsTrafficMap />
+              </div>
+            </div>
 
             {/* Quick Stats Ribbon with Smooth Counter Numbers */}
             <div

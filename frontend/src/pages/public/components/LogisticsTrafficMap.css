@@ -1,0 +1,226 @@
+/* ==========================================================================
+   LogisticsTrafficMap.css — Traffic Simulation & Arterial Radar Map
+   ========================================================================== */
+
+.logistics-map-card {
+  width: 100%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-line-strong);
+  border-radius: var(--radius-none);
+  box-shadow: 4px 4px 0px var(--color-ink);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HUD Header Bar ── */
+.logistics-map__hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px var(--space-4);
+  background: var(--color-surface-subtle);
+  border-bottom: 1px solid var(--color-line-strong);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.hud-header__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hud-radar-dot {
+  width: 7px;
+  height: 7px;
+  background-color: var(--color-status-success);
+  border-radius: 50%;
+  box-shadow: 0 0 0 rgba(22, 163, 74, 0.4);
+  animation: radarPulse 1.8s infinite;
+}
+
+@keyframes radarPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(22, 163, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
+  }
+}
+
+.hud-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-ink);
+  text-transform: uppercase;
+}
+
+.hud-header__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hud-coords {
+  color: var(--color-muted);
+}
+
+.hud-live-tag {
+  background: var(--color-accent);
+  color: var(--color-surface);
+  padding: 2px 6px;
+  font-weight: var(--font-weight-bold);
+  font-size: 0.65rem;
+}
+
+/* ── Canvas SVG Wrapper ── */
+.logistics-map__canvas-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 480 / 340;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.logistics-map__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── SVG Text & Elements ── */
+.svg-label-area {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  fill: var(--color-muted);
+  opacity: 0.55;
+  text-transform: uppercase;
+}
+
+.svg-road-name {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  fill: var(--color-secondary);
+  opacity: 0.75;
+}
+
+.svg-station-title {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  fill: var(--color-ink);
+}
+
+.svg-station-sub {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  fill: var(--color-muted);
+}
+
+/* Depot Tags */
+.depot-tag-bg {
+  box-shadow: 2px 2px 0px var(--color-ink);
+}
+
+.depot-tag-title {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: var(--font-weight-black);
+  letter-spacing: 0.04em;
+  fill: var(--color-ink);
+}
+
+.depot-tag-status {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: var(--font-weight-bold);
+  fill: var(--color-accent);
+}
+
+.depot-tag-sub {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-weight: var(--font-weight-bold);
+  fill: var(--color-status-warning);
+}
+
+.depot-pulse-ring {
+  animation: depotRingPulse 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes depotRingPulse {
+  0% {
+    r: 8;
+    opacity: 0.9;
+  }
+  100% {
+    r: 22;
+    opacity: 0;
+  }
+}
+
+.road-pulse-stream {
+  animation: roadStreamDash 1.2s linear infinite;
+}
+
+@keyframes roadStreamDash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+/* ── HUD Telemetry Footer Bar ── */
+.logistics-map__hud-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px var(--space-4);
+  background: var(--color-surface-subtle);
+  border-top: 1px solid var(--color-line-strong);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.telemetry-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.telemetry-label {
+  color: var(--color-muted);
+}
+
+.telemetry-value {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-ink);
+}
+
+.telemetry-value.highlight-red {
+  color: var(--color-accent);
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .logistics-map__hud-header,
+  .logistics-map__hud-footer {
+    font-size: 0.65rem;
+  }
+
+  .hud-coords {
+    display: none;
+  }
+
+  .telemetry-item:nth-child(3) {
+    display: none;
+  }
+}

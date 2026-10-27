@@ -29,17 +29,14 @@ Mục tiêu chính:
 ## 3. Cấu trúc các Phần nội dung (Sections)
 
 ### 3.1. Hero Section (`.landing-hero`)
-- **Status Badge**: `● Hệ thống kho tự quản thông minh hàng đầu TP.HCM · 40+ kho sẵn sàng` với chấm xanh nhấp nháy động (`.status-dot-pulse`).
-- **H1 Headline**: `"Lưu Trữ Thông Minh. Tự Quản Tuyệt Đối. Bảo Mật 24/7."`
-- **Mô tả hành động**: Nhấn mạnh quy trình đặt kho 3 phút, cọc 10%, mã PIN mở kho riêng 24/7 không cần qua lễ tân.
-- **CTAs chính**:
-  - Nút sơ cấp (Primary): `"Khám phá kho ngay"` ➔ Điều hướng tới `/browse`.
-  - Nút thứ cấp (Secondary): `"Xem hướng dẫn chọn kích thước"` ➔ Cuộn mượt (smooth scroll) tới `#storage-sizes`.
-- **Quick Stats Ribbon (4 thẻ chỉ số)**:
-  - `40+` Kho đang sẵn sàng tại cơ sở Tân Bình.
-  - `100%` Tự quản bằng mã PIN riêng biệt.
-  - `10%` Đặt cọc online giữ chỗ tức thì.
-  - `24/7` Ra vào tự do không hẹn trước 365 ngày/năm.
+- **Bố cục 2 Cột Đối Xứng (2-Column Grid)**:
+  - **Cột Trái**: Tiêu đề H1 Kinetic Text Reveal (*"Lưu Trữ Thông Minh · Tự Quản Tuyệt Đối · Bảo Mật 24/7"*), đoạn mô tả định vị dịch vụ và 2 nút CTA chính.
+  - **Cột Phải**: Sa bàn Vector mô phỏng Giao thông Logistics thời gian thực ([`LogisticsTrafficMap.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/LogisticsTrafficMap.jsx)):
+    - **Trục đường huyết mạch thực tế TP.HCM**: Trục 1 (Sân bay Tân Sơn Nhất ➔ Đ. Hoàng Văn Thụ ➔ Đ. Nam Kỳ Khởi Nghĩa ➔ Đ. Nguyễn Văn Linh kết nối 2 cơ sở), Trục 2 (Cộng Hòa - Võ Văn Kiệt), Trục 3 (Mai Chí Thọ - Cầu Thủ Thiêm).
+    - **Node xe cộ hoạt họa**: Các đốm tròn mang màu đỏ nhấn (`var(--color-accent)`) và đen (`var(--color-ink)`) di chuyển liên tục dọc theo các tuyến đường với vệt sáng mờ phía sau.
+    - **Trạm Depot & Sân bay**: Đánh dấu trực quan Sân bay Tân Sơn Nhất, Cơ sở Tân Bình (DEPOT-01 đang hoạt động với vòng xung nhịp radar đỏ) và Cơ sở Quận 7 (DEPOT-02 sắp mở).
+    - **HUD Telemetry Bar**: Hiển thị trạng thái tọa độ GPS `10°49'N 106°39'E`, thời gian lưu thông xe tải ~18 phút và trạng thái lưu thông 24/7.
+- **Quick Stats Ribbon (4 thẻ chỉ số)**: Căn giữa trải dài toàn bộ chiều rộng ngay bên dưới 2 cột, tích hợp bộ đếm số tự động `CounterNumber`.
 
 ### 3.2. Hướng dẫn & Đo lường Kích thước Kho (`#storage-sizes`, `.landing-sizes`)
 - **Tiêu đề nổi bật**: *"Chiếc <span style="color:#dc2626">túi xách</span> nhỏ hay cả <span style="color:#dc2626">căn nhà</span> đều được"* với từ khóa nổi bật bằng màu đỏ và kích thước phóng to.
