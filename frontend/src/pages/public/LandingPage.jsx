@@ -12,7 +12,7 @@ import {
   CaretUp,
   MapPin,
   Clock,
-  Sparkle,
+  InfoIcon,
   Truck,
   Elevator,
   LockSimple,
@@ -153,7 +153,7 @@ const FAQ_ITEMS = [
   {
     q: "Thời gian thuê kho tối thiểu tại StorageHub là bao lâu?",
     a: "Thời gian thuê kho tại StorageHub vô cùng linh hoạt, tối thiểu từ 1 tháng. Bạn có thể gia hạn tự động hàng tháng hoặc kết thúc hợp đồng bất kỳ lúc nào tùy theo nhu cầu thực tế.",
-  },  
+  },
   {
     q: "Tiền đặt cọc 10% được hoàn trả như thế nào?",
     a: "Tiền cọc 10% nhằm đảm bảo giữ chỗ và trang thiết bị kho. Sau khi bạn làm thủ tục trả kho và đối soát hình ảnh hiện trạng, tiền cọc sẽ được hoàn trả tự động qua chuyển khoản ngân hàng trong vòng 24 giờ.",
@@ -434,7 +434,7 @@ export default function LandingPage() {
           <div className="landing-container">
             <div className="landing-section-header">
               <h2 id="pillars-heading" className="landing-section-title">
-                Tại Sao Hơn 1.000+ Khách Hàng Chọn StorageHub?
+                Hơn <span className="highlight-keyword">1000+</span> Khách Hàng Tin Tưởng ?
               </h2>
             </div>
 
@@ -461,7 +461,7 @@ export default function LandingPage() {
           <div className="landing-container">
             <div className="landing-section-header">
               <h2 id="steps-heading" className="landing-section-title">
-                Thuê Kho Tự Quản Chỉ Trong 3 Bước
+                Thuê Kho Chỉ Trong <span className="highlight-keyword">3</span> Bước
               </h2>
             </div>
 
@@ -490,11 +490,8 @@ export default function LandingPage() {
           <div className="landing-container">
             <div className="landing-section-header">
               <h2 id="facilities-heading" className="landing-section-title">
-                Mạng Lưới Cơ Sở StorageHub
+                vị trí giao thông <span className="highlight-keyword">huyết mạch TP.HCM</span>
               </h2>
-              <p className="landing-section-subtitle">
-                Hệ thống kho tự quản chuẩn quốc tế tại các vị trí giao thông huyết mạch TP.HCM.
-              </p>
             </div>
 
             <div className="facilities-grid">
@@ -504,7 +501,6 @@ export default function LandingPage() {
                   <span className="facility-badge facility-badge--active">
                     ● Đang hoạt động
                   </span>
-                  <span className="facility-card__code">DEPOT-01</span>
                 </div>
                 <h3 className="facility-card__name">Cơ sở Tân Bình</h3>
                 <div className="facility-card__address">
@@ -548,7 +544,6 @@ export default function LandingPage() {
                   <span className="facility-badge facility-badge--upcoming">
                     ▲ Sắp khai trương
                   </span>
-                  <span className="facility-card__code">DEPOT-02</span>
                 </div>
                 <h3 className="facility-card__name">Cơ sở Quận 7</h3>
                 <div className="facility-card__address">
@@ -581,7 +576,7 @@ export default function LandingPage() {
                     onClick={() => navigate("/support")}
                   >
                     Đăng ký nhận thông tin ưu đãi
-                    <Sparkle size={16} weight="bold" />
+                    <InfoIcon size={16} weight="bold" />
                   </Button>
                 </div>
               </article>
