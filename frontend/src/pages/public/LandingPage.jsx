@@ -292,11 +292,11 @@ export default function LandingPage() {
           <div className="landing-hero__inner">
             {/* Main H1 */}
             <h1 className="landing-hero__title">
-              Lưu Trữ Thông Minh.
+              Lưu Trữ Thông Minh
               <br />
-              <span className="landing-hero__title-accent">Tự Quản Tuyệt Đối.</span>
+              <span className="landing-hero__title-accent">Tự Quản Tuyệt Đối</span>
               <br />
-              Bảo Mật 24/7.
+              Bảo Mật 24/7
             </h1>
 
             {/* Lead Paragraph */}

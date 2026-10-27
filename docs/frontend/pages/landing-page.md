@@ -14,6 +14,7 @@ Mục tiêu chính:
 ## 2. Kiến trúc & Vị trí trong Hệ thống
 
 - **Tuyến đường (Route)**: `/`
+- **Mô hình Hiển thị (Rendering Mode)**: 100% **CSR (Client-Side Rendering)** trên kiến trúc Single Page Application (Vite + React 19 + React Router). Không phụ thuộc server-side hydration hay Node.js SSR runtime; toàn bộ trạng thái, tương tác và thẻ SEO / JSON-LD schema được quản lý phía client qua React lifecycle.
 - **File thành phần**: [`LandingPage.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/LandingPage.jsx)
 - **File stylesheet**: [`LandingPage.css`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/LandingPage.css)
 - **App Shell**: Sử dụng [`AppShell`](file:///D:/Workspace/StorageHub/frontend/src/components/AppShell/AppShell.jsx) với `brandHref="/"` và `showFooter={true}`.
