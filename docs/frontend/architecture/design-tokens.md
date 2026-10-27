@@ -196,6 +196,18 @@ Dành cho thẻ `<button>` độc lập hoặc thẻ liên kết `<a>` muốn t�
 <button type="button" class="btn btn--secondary btn--sm">Đóng</button>
 ```
 
+### 5.4. Kế Thừa Cho Thẻ Tương Tác (Interactive Cards & UnitCard)
+Các thẻ ô kho tương tác (`UnitCard.jsx` / `UnitCard.css`) kế thừa trực tiếp cơ chế đổ bóng và chuyển động cơ học của Button:
+- **Design Tokens ánh xạ**:
+  - `--card-shadow: var(--btn-shadow);` (Mặc định `2px 2px 0px rgba(0, 0, 0, 0.25)`)
+  - `--card-shadow-hover: var(--btn-shadow-hover);` (Mở rộng `3px 3px 0px rgba(0, 0, 0, 0.4)`)
+  - `--card-shadow-active: var(--btn-shadow-active);` (Thu hẹp `1px 1px 0px rgba(0, 0, 0, 0.2)`)
+  - `--card-transition: border-color var(--duration-fast) var(--ease-standard), box-shadow 0.15s ease, transform 0.15s ease;`
+- **Hành vi tương tác cơ học**:
+  - **Trạng thái bình thường**: Toàn bộ thẻ ô kho có bóng đổ khối cứng 2px.
+  - **Trạng thái Hover**: Thẻ trượt nâng nhẹ chếch lên `transform: translate(-1px, -1px)`, bóng đổ mở rộng lên 3px và viền chuyển đỏ thương hiệu `--color-accent`.
+  - **Trạng thái Active**: Khi click vào thẻ, thẻ thụt xuống `transform: translate(1px, 1px)` và bóng đổ co lại 1px, tạo cảm giác nhấn phím vật lý chân thực.
+
 ---
 
 ## 6. Chuyển Động (Motion) & Thứ Tự Xếp Lớp (Z-Index)
@@ -231,7 +243,7 @@ Tránh xung đột hiển thị đè nhau giữa các tầng giao diện:
 
 | Nhóm Màn Hình | File CSS Đại Diện | Tokens Áp Dụng | Kết Quả Đạt Được |
 |---|---|---|---|
-| **Duyệt kho (Customer)** | `BrowsePage.css`, `UnitCard.jsx` | `--btn-shadow`, `--btn-transition`, `--radius` | Bộ lọc, nút "Đặt kho", phân trang có bóng khối cơ học đồng bộ |
+| **Duyệt kho (Customer)** | `BrowsePage.css`, `UnitCard.jsx` | `--card-shadow*`, `--btn-shadow*`, `--btn-transition`, `--radius` | Thẻ kho `UnitCard` có bóng khối cơ học và hiệu ứng trượt nâng hover/active như Button; bộ lọc và phân trang đồng bộ |
 | **Chi tiết kho (Customer)** | `UnitDetailPage.css`, `UnitAvailabilityCalendar.css` | `--btn-shadow`, `--color-ink`, `--color-accent` | Chọn tháng, chọn thời hạn và nút cọc giữ chỗ phản hồi xúc giác tốt |
 | **Xác thực (Auth)** | `LoginPage.css`, `ForgotPasswordPage.css` | `--btn-shadow-ink`, `--control-height-lg` | Form đăng nhập/quên mật khẩu cứng cáp, dứt khoát |
 | **Kho của tôi (Customer)** | `MyRentalsPage.css` | `--btn-shadow-subtle`, `--color-status-*` | Nút Check-in Pass, Hợp đồng, Gia hạn đồng nhất các nút nội bộ |

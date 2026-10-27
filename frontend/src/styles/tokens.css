@@ -151,6 +151,12 @@
   --btn-shadow-subtle-hover: 2px 2px 0px rgba(0, 0, 0, 0.3);
   --btn-transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 
+  /* Interactive Cards (UnitCard, etc. inheriting Button Neo-Brutalist Shadow & Motion) */
+  --card-shadow: var(--btn-shadow);
+  --card-shadow-hover: var(--btn-shadow-hover);
+  --card-shadow-active: var(--btn-shadow-active);
+  --card-transition: border-color var(--duration-fast) var(--ease-standard), box-shadow 0.15s ease, transform 0.15s ease;
+
   /* Motion */
   --duration-fast: 120ms;
   --duration-normal: 180ms;
