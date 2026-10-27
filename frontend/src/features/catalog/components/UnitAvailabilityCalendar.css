@@ -131,13 +131,6 @@
   text-decoration: none;
 }
 
-.unit-calendar-check {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  color: #38bdf8;
-}
-
 /* Chú thích màu sắc (Legend) */
 .unit-calendar-legend {
   display: flex;

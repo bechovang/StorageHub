@@ -32,7 +32,6 @@ const ROLE_CONFIGS = {
     links: [
       { label: "Khám phá ô kho", href: "/browse" },
       { label: "Ô kho của tôi", href: "/rentals" },
-      { label: "Thanh toán", href: "/payment" },
       { label: "Hỗ trợ", href: "/support" },
     ],
   },
@@ -120,29 +119,10 @@ export default function Header({
       ? user.email.slice(0, 2).toUpperCase()
       : "SH");
 
-  const isOnCustomerRentalsOrPayment =
-    currentRole === "CUSTOMER" &&
-    (location.pathname.startsWith("/rentals") ||
-      location.pathname.startsWith("/payment") ||
-      location.pathname.startsWith("/checkin"));
-
-  const customerLinks = isOnCustomerRentalsOrPayment
-    ? [
-        { label: "Khám phá ô kho", href: "/browse" },
-        { label: "Ô kho của tôi", href: "/rentals" },
-        { label: "Thanh toán & Hóa đơn", href: "/payment" },
-        { label: "Hỗ trợ", href: "/support" },
-      ]
-    : [
-        { label: "Khám phá ô kho", href: "/browse" },
-        { label: "Ô kho của tôi", href: "/rentals" },
-        { label: "Hỗ trợ", href: "/support" },
-      ];
-
   const resolvedNavLinks =
     navLinks ||
     (isAuthenticated
-      ? (currentRole === "CUSTOMER" ? customerLinks : roleConfig.links)
+      ? roleConfig.links
       : [{ label: "Khám phá ô kho", href: "/browse" }]);
 
   const [unreadCount, setUnreadCount] = useState(0);

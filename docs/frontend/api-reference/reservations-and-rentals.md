@@ -132,4 +132,4 @@ Các API quản lý vòng đời đơn thuê từ lúc đặt cọc, lấy mã n
 
 - Khi khách hàng truy cập trang **Kho của tôi** (`/rentals`), giao diện bổ sung nút hành động liên kết nhanh:
   `<Link to="/payment">Thanh toán & Hóa đơn</Link>`
-- Đồng thời thanh Header tự động mở thêm tab điều hướng **"Thanh toán & Hóa đơn"** để khách hàng kiểm tra lịch sử thanh toán cọc, hóa đơn định kỳ và trạng thái tất toán.
+- Nút này được đặt trực tiếp trong khu vực hành động của trang `/rentals`, không đặt trên thanh điều hướng Header, giúp khách hàng thuận tiện kiểm tra lịch sử thanh toán cọc, hóa đơn định kỳ và trạng thái tất toán khi có nhu cầu.

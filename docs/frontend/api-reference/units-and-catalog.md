@@ -90,7 +90,8 @@ Các API phục vụ tìm kiếm kho, xem thông số kỹ thuật, phân trang,
   - **Lịch tháng trực quan**: Hiển thị lưới ngày trong tháng hiện tại và cho phép điều hướng tháng kế tiếp / tháng trước.
   - **Tô đỏ các ngày đã bị đặt (`is-booked`)**: Các ngày đã có khách thuê, các ngày đã khóa chỗ hoặc các ngày trước thời điểm kho sẵn sàng (`availableFromDate`) được đánh dấu nổi bật bằng màu đỏ cảnh báo, gạch ngang số ngày và có chấm đỏ báo bận.
   - **Chọn ngày bắt đầu thuê thuận tiện**: Khách hàng có thể click trực tiếp vào bất kỳ ô ngày còn trống nào để chọn làm ngày bắt đầu thuê (`startDate`), tự động cập nhật ngay lập tức vào công cụ tính báo giá và đặt cọc 10%.
-  - **Bảng chú giải rõ ràng**: Có phần ghi chú minh bạch (Đã có người đặt - Màu đỏ; Đang chọn - Nền đen chữ trắng; Còn trống - Nền trắng viền xám).
+  - **Trạng thái ô ngày được chọn**: Ô ngày đang chọn chuyển sang nền màu đen (`#0f172a`), chữ trắng tương phản cao, tối giản và sạch sẽ, không hiển thị biểu tượng tick xanh nhằm đảm bảo thị giác gọn gàng chuẩn Swiss Neo-Brutalist.
+  - **Bảng chú giải rõ ràng**: Có phần ghi chú minh bạch (Đã bị đặt - Nền đỏ chữ đỏ; Ngày bạn chọn - Nền đen; Còn trống - Nền trắng viền xám).
 
 ---
 

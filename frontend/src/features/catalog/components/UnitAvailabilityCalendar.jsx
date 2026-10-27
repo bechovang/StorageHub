@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { CaretLeft, CaretRight, Info, CheckCircle } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, Info } from "@phosphor-icons/react";
 import "./UnitAvailabilityCalendar.css";
 import { formatDate, getTomorrowDate } from "../../../utils/formatters.js";
 
@@ -148,11 +148,6 @@ export default function UnitAvailabilityCalendar({
             >
               <span className="unit-calendar-day-number">{item.day}</span>
               {item.isBooked && <span className="unit-calendar-dot is-red" aria-hidden="true" />}
-              {item.isSelected && (
-                <span className="unit-calendar-check" aria-hidden="true">
-                  <CheckCircle size={10} weight="fill" />
-                </span>
-              )}
             </button>
           );
         })}
