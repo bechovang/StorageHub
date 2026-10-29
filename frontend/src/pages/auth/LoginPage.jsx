@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
+import { Eye, EyeClosed } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
 
@@ -10,6 +11,7 @@ import LoginPanel from "../../components/LoginPanel/LoginPanel";
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [generalError, setGeneralError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
@@ -110,18 +112,33 @@ export default function LoginPage() {
                                     <label className="login-field__label" htmlFor="login-password">
                                         Mật khẩu<span aria-hidden="true">*</span>
                                     </label>
-                                    <input
-                                        id="login-password"
-                                        className="login-field__input"
-                                        type="password"
-                                        autoComplete="current-password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        disabled={submitting}
-                                        placeholder="••••••••"
-                                        aria-required="true"
-                                    />
+                                    <div className="login-field__input-wrapper">
+                                        <input
+                                            id="login-password"
+                                            className="login-field__input login-field__input--has-toggle"
+                                            type={showPassword ? "text" : "password"}
+                                            autoComplete="current-password"
+                                            required
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            disabled={submitting}
+                                            placeholder="••••••••"
+                                            aria-required="true"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="login-field__toggle-btn"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                                            tabIndex={-1}
+                                        >
+                                            {showPassword ? (
+                                                <EyeClosed size={18} weight="bold" />
+                                            ) : (
+                                                <Eye size={18} weight="bold" />
+                                            )}
+                                        </button>
+                                    </div>
                                     <div className="login-field__header">
                                         <Link to="/forgot-password" className="login-link login-link--forgot">
                                             Quên mật khẩu?

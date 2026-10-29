@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Check, Square } from "@phosphor-icons/react";
+import { Check, Square, Eye, EyeClosed } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
 import LoginPanel from "../../components/LoginPanel/LoginPanel";
@@ -11,7 +11,9 @@ export default function RegisterPage() {
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [agreeTerms, setAgreeTerms] = useState(true);
 
     const [generalError, setGeneralError] = useState("");
@@ -192,18 +194,33 @@ export default function RegisterPage() {
                                     <label className="login-field__label" htmlFor="register-password">
                                         Mật khẩu<span aria-hidden="true">*</span>
                                     </label>
-                                    <input
-                                        id="register-password"
-                                        className="login-field__input"
-                                        type="password"
-                                        autoComplete="new-password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        disabled={submitting}
-                                        placeholder="••••••••"
-                                        aria-required="true"
-                                    />
+                                    <div className="login-field__input-wrapper">
+                                        <input
+                                            id="register-password"
+                                            className="login-field__input login-field__input--has-toggle"
+                                            type={showPassword ? "text" : "password"}
+                                            autoComplete="new-password"
+                                            required
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            disabled={submitting}
+                                            placeholder="••••••••"
+                                            aria-required="true"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="login-field__toggle-btn"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                                            tabIndex={-1}
+                                        >
+                                            {showPassword ? (
+                                                <EyeClosed size={18} weight="bold" />
+                                            ) : (
+                                                <Eye size={18} weight="bold" />
+                                            )}
+                                        </button>
+                                    </div>
 
                                     {/* Danh sách tiêu chí mật khẩu trực quan */}
                                     <ul className="pwd-requirements" aria-label="Tiêu chí mật khẩu">
@@ -228,18 +245,33 @@ export default function RegisterPage() {
                                     <label className="login-field__label" htmlFor="register-confirm-password">
                                         Xác nhận mật khẩu<span aria-hidden="true">*</span>
                                     </label>
-                                    <input
-                                        id="register-confirm-password"
-                                        className="login-field__input"
-                                        type="password"
-                                        autoComplete="new-password"
-                                        required
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        disabled={submitting}
-                                        placeholder="Nhập lại mật khẩu"
-                                        aria-required="true"
-                                    />
+                                    <div className="login-field__input-wrapper">
+                                        <input
+                                            id="register-confirm-password"
+                                            className="login-field__input login-field__input--has-toggle"
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            autoComplete="new-password"
+                                            required
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            disabled={submitting}
+                                            placeholder="Nhập lại mật khẩu"
+                                            aria-required="true"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="login-field__toggle-btn"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                                            tabIndex={-1}
+                                        >
+                                            {showConfirmPassword ? (
+                                                <EyeClosed size={18} weight="bold" />
+                                            ) : (
+                                                <Eye size={18} weight="bold" />
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Checkbox điều khoản */}

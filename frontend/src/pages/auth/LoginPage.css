@@ -355,6 +355,45 @@
   margin-top: 6px;
 }
 
+/* Password visibility toggle button wrapper */
+.login-field__input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.login-field__input--has-toggle {
+  padding-right: 42px !important;
+}
+
+.login-field__toggle-btn {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color 140ms ease;
+  border-radius: var(--radius-none, 0px);
+}
+
+.login-field__toggle-btn:hover {
+  color: var(--color-ink);
+}
+
+.login-field__toggle-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
 /* Submit button */
 .login-submit {
   margin-top: var(--space-5);
