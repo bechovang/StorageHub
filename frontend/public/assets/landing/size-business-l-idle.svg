@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Heavy Duty Floor Grid -->
+  <g stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="50" y1="210" x2="200" y2="280" />
+    <line x1="200" y1="280" x2="350" y2="210" />
+    <line x1="350" y1="210" x2="200" y2="140" />
+    <line x1="200" y1="140" x2="50" y2="210" />
+    <line x1="125" y1="175" x2="275" y2="245" />
+    <line x1="125" y1="245" x2="275" y2="175" />
+  </g>
+
+  <!-- Tech Metadata Stamp -->
+  <text x="24" y="28" class="mono" font-size="9" font-weight="700" fill="#71717a" letter-spacing="1">TYPE // BUSINESS WAREHOUSE L · 16.0 M²</text>
+  <text x="376" y="28" text-anchor="end" class="mono" font-size="9" font-weight="700" fill="#a1a1aa" letter-spacing="0.5">SCALE 1:50 · ISO 30°</text>
+
+  <!-- WAREHOUSE ROOM SHELL & ROLL-UP SHUTTER (CLOSED / IDLE) -->
+  <g id="warehouse-shell">
+    <!-- Left Wall with Roll-up Door Shutter Frame -->
+    <polygon points="70,195 200,135 200,55 70,115" fill="#f4f4f5" stroke="#18181b" stroke-width="1.75" />
+    
+    <!-- Roll-up Metal Door (Partially Down / 1.2m Idle) -->
+    <polygon points="85,188 155,156 155,100 85,132" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <!-- Horizontal Slats -->
+    <line x1="85" y1="138" x2="155" y2="106" stroke="#71717a" stroke-width="1" />
+    <line x1="85" y1="148" x2="155" y2="116" stroke="#71717a" stroke-width="1" />
+    <line x1="85" y1="158" x2="155" y2="126" stroke="#71717a" stroke-width="1" />
+    <line x1="85" y1="168" x2="155" y2="136" stroke="#71717a" stroke-width="1" />
+    <line x1="85" y1="178" x2="155" y2="146" stroke="#71717a" stroke-width="1" />
+
+    <!-- Back-Right Wall with High Ceiling Beam -->
+    <polygon points="200,135 330,195 330,115 200,55" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+
+    <!-- Floor Slab (Reinforced Concrete 1 Ton/m²) -->
+    <polygon points="70,195 200,255 330,195 200,135" fill="#fafafa" stroke="#18181b" stroke-width="1.75" />
+  </g>
+
+  <!-- INDUSTRIAL HEAVY DUTY PALLET RACK (BACK WALL) -->
+  <g id="pallet-rack" transform="translate(195, 60)">
+    <!-- Upright 1 (Left) -->
+    <rect x="0" y="30" width="5" height="105" fill="#18181b" />
+    <!-- Upright 2 (Right) -->
+    <polygon points="75,62 80,60 80,165 75,167" fill="#18181b" />
+
+    <!-- Horizontal Cross Beams (Tier 1 & Tier 2) -->
+    <!-- Lower Beam -->
+    <polygon points="2,100 78,65 78,71 2,106" fill="#71717a" stroke="#18181b" stroke-width="1.2" />
+    <!-- Upper Beam -->
+    <polygon points="2,65 78,30 78,36 2,71" fill="#71717a" stroke="#18181b" stroke-width="1.2" />
+
+    <!-- Pallet on Upper Rack Tier with Shrink-wrapped Cargo -->
+    <polygon points="12,60 45,45 70,56 37,71" fill="#d4d4d8" stroke="#18181b" stroke-width="1" />
+    <!-- Cargo Box on Upper Tier -->
+    <polygon points="20,56 42,46 42,28 20,38" fill="#f4f4f5" stroke="#18181b" stroke-width="1.2" />
+    <polygon points="42,46 62,55 62,37 42,28" fill="#ffffff" stroke="#18181b" stroke-width="1.2" />
+    <polygon points="20,38 42,28 62,37 40,47" fill="#e4e4e7" stroke="#18181b" stroke-width="1.2" />
+  </g>
+
+  <!-- GROUND WOODEN PALLET WITH BULK CARGO (CENTER FLOOR) -->
+  <g id="ground-pallet" transform="translate(145, 145)">
+    <!-- Wooden Pallet Base -->
+    <polygon points="15,62 70,38 105,53 50,77" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <!-- Pallet Fork Openings -->
+    <polygon points="20,65 32,60 32,68 20,73" fill="#18181b" />
+    <polygon points="38,57 50,52 50,60 38,65" fill="#18181b" />
+
+    <!-- Heavy Commercial Cargo Crate / Box Stack -->
+    <polygon points="22,58 60,41 60,10 22,27" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="60,41 95,56 95,25 60,10" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="22,27 60,10 95,25 57,42" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    
+    <!-- Commercial Shipping Label Stencil -->
+    <rect x="30" y="32" width="22" height="12" fill="#18181b" />
+    <text x="41" y="40" class="mono" font-size="5.5" font-weight="700" fill="#ffffff" text-anchor="middle">PALLET 01</text>
+  </g>
+
+  <!-- HYDRAULIC HAND PALLET JACK (XE NÂNG TAY - IDLE LOWERED) -->
+  <g id="pallet-jack" transform="translate(100, 185)">
+    <!-- Twin Forks resting on floor -->
+    <polygon points="40,25 78,8 84,11 46,28" fill="#71717a" stroke="#18181b" stroke-width="1.2" />
+    <polygon points="30,30 68,13 74,16 36,33" fill="#71717a" stroke="#18181b" stroke-width="1.2" />
+
+    <!-- Jack Hydraulic Pump Base -->
+    <polygon points="18,34 32,28 32,46 18,52" fill="#18181b" stroke="#18181b" stroke-width="1.5" />
+    <!-- Steer Wheels (Lowered) -->
+    <ellipse cx="25" cy="54" rx="6" ry="3" fill="#3f3f46" stroke="#18181b" stroke-width="1" />
+
+    <!-- Tiller Handle (Resting Angled) -->
+    <line x1="25" y1="36" x2="6" y2="10" stroke="#18181b" stroke-width="2.5" />
+    <!-- Handle Grip Loop -->
+    <ellipse cx="6" cy="10" rx="4" ry="7" fill="none" stroke="#18181b" stroke-width="2" transform="rotate(-20, 6, 10)" />
+  </g>
+
+  <!-- Unit Number Stencil -->
+  <rect x="295" y="70" width="26" height="14" fill="#18181b" />
+  <text x="308" y="80" class="mono" font-size="8" font-weight="800" fill="#ffffff" text-anchor="middle">L-04</text>
+
+  <!-- Footer Technical Dimensions Bar -->
+  <line x1="24" y1="272" x2="376" y2="272" stroke="#e4e4e7" stroke-width="1" />
+  <text x="24" y="286" class="mono" font-size="8.5" font-weight="600" fill="#71717a">DIM: 4.0M × 4.0M × 3.0M</text>
+  <text x="376" y="286" text-anchor="end" class="mono" font-size="8.5" font-weight="700" fill="#18181b">[ SÀN TẢI TRỌNG 1 TẤN/M² · XE NÂNG TAY ]</text>
+</svg>

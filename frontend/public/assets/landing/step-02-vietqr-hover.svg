@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+    <!-- Laser Beam Glow Filter -->
+    <filter id="laser-glow" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <linearGradient id="laser-trail" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#dc2626" stop-opacity="0" />
+      <stop offset="70%" stop-color="#dc2626" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#dc2626" stop-opacity="0.45" />
+    </linearGradient>
+  </defs>
+
+  <!-- Technical Background Grid Points (Active) -->
+  <g fill="#dc2626">
+    <circle cx="24" cy="30" r="2" />
+    <circle cx="240" cy="30" r="2" />
+    <circle cx="456" cy="30" r="2" />
+    <circle cx="24" cy="240" r="2" />
+    <circle cx="456" cy="240" r="2" />
+  </g>
+
+  <!-- Header Metadata (Active) -->
+  <text x="24" y="24" class="mono" font-size="9" font-weight="700" fill="#dc2626" letter-spacing="1">STEP 02 // INSTANT CHECKOUT · [PAYMENT VERIFIED]</text>
+  <rect x="330" y="14" width="126" height="15" fill="#16a34a" />
+  <text x="393" y="25" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" fill="#ffffff" letter-spacing="0.5">✓ MATCHED IN 2.4s</text>
+
+  <!-- MAIN CARD CONTAINER (HOVER ACTIVE / SUCCESS) -->
+  <g id="qr-checkout" transform="translate(24, 42)">
+    <!-- Main Chassis Border -->
+    <rect x="0" y="0" width="432" height="180" fill="#ffffff" stroke="#16a34a" stroke-width="2" />
+    
+    <!-- LEFT COLUMN: SCANNING LASER ACTIVE -->
+    <rect x="16" y="16" width="148" height="148" fill="#fafafa" stroke="#16a34a" stroke-width="1.2" />
+    
+    <!-- Corner Targeting Brackets in Accent Red -->
+    <path d="M22 36 V22 H36" stroke="#dc2626" stroke-width="2.5" fill="none" />
+    <path d="M158 36 V22 H144" stroke="#dc2626" stroke-width="2.5" fill="none" />
+    <path d="M22 144 V158 H36" stroke="#dc2626" stroke-width="2.5" fill="none" />
+    <path d="M158 144 V158 H144" stroke="#dc2626" stroke-width="2.5" fill="none" />
+
+    <!-- QR Code Base Pattern -->
+    <rect x="32" y="32" width="30" height="30" fill="none" stroke="#18181b" stroke-width="3" />
+    <rect x="39" y="39" width="16" height="16" fill="#18181b" />
+
+    <rect x="118" y="32" width="30" height="30" fill="none" stroke="#18181b" stroke-width="3" />
+    <rect x="125" y="39" width="16" height="16" fill="#18181b" />
+
+    <rect x="32" y="118" width="30" height="30" fill="none" stroke="#18181b" stroke-width="3" />
+    <rect x="39" y="125" width="16" height="16" fill="#18181b" />
+
+    <g fill="#18181b">
+      <rect x="70" y="32" width="6" height="6" />
+      <rect x="82" y="32" width="12" height="6" />
+      <rect x="100" y="32" width="6" height="6" />
+      <rect x="70" y="44" width="12" height="6" />
+      <rect x="94" y="44" width="12" height="6" />
+      <rect x="76" y="56" width="6" height="12" />
+      <rect x="94" y="56" width="6" height="6" />
+      <rect x="106" y="56" width="6" height="6" />
+
+      <rect x="76" y="76" width="28" height="28" fill="#18181b" />
+      <rect x="78" y="78" width="24" height="24" fill="#ffffff" />
+      <polygon points="84,83 96,83 90,97" fill="#16a34a" />
+
+      <rect x="70" y="112" width="12" height="6" />
+      <rect x="94" y="112" width="18" height="6" />
+      <rect x="124" y="112" width="6" height="12" />
+      <rect x="136" y="112" width="12" height="6" />
+      <rect x="76" y="124" width="6" height="18" />
+      <rect x="94" y="124" width="12" height="6" />
+      <rect x="118" y="124" width="6" height="6" />
+      <rect x="130" y="124" width="12" height="12" />
+      <rect x="88" y="136" width="18" height="6" />
+      <rect x="112" y="136" width="12" height="6" />
+      <rect x="70" y="142" width="6" height="6" />
+      <rect x="136" y="142" width="6" height="6" />
+    </g>
+
+    <!-- DYNAMIC SCAN LASER BEAM SWEEPING DOWN -->
+    <rect x="20" y="55" width="140" height="38" fill="url(#laser-trail)" />
+    <line x1="18" y1="93" x2="162" y2="93" stroke="#dc2626" stroke-width="2.5" filter="url(#laser-glow)" />
+    <line x1="18" y1="93" x2="162" y2="93" stroke="#ffffff" stroke-width="1" />
+
+    <!-- RIGHT COLUMN: SUCCESS RECEIPT + 6-DIGIT PIN CODE GENERATION -->
+    <g transform="translate(180, 16)">
+      <!-- Success Banner Pill -->
+      <rect x="0" y="0" width="240" height="24" fill="#16a34a" />
+      <text x="120" y="16" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" fill="#ffffff">✓ ĐÃ XÁC NHẬN CỌC 38.000 Đ</text>
+
+      <!-- Instant 6-digit PIN Box Header -->
+      <text x="0" y="44" class="mono" font-size="8.5" font-weight="700" fill="#71717a">MÃ PIN ĐIỆN TỬ RIÊNG CỦA BẠN:</text>
+
+      <!-- GIANT 6-DIGIT PIN CODE PILL -->
+      <rect x="0" y="52" width="240" height="48" fill="#18181b" stroke="#16a34a" stroke-width="2" />
+      
+      <!-- 6 Monospace Key Blocks -->
+      <g transform="translate(12, 60)">
+        <rect x="0" y="0" width="30" height="32" fill="#27272a" />
+        <text x="15" y="22" text-anchor="middle" class="mono" font-size="18" font-weight="900" fill="#ffffff">8</text>
+
+        <rect x="36" y="0" width="30" height="32" fill="#27272a" />
+        <text x="51" y="22" text-anchor="middle" class="mono" font-size="18" font-weight="900" fill="#ffffff">4</text>
+
+        <rect x="72" y="0" width="30" height="32" fill="#27272a" />
+        <text x="87" y="22" text-anchor="middle" class="mono" font-size="18" font-weight="900" fill="#ffffff">9</text>
+
+        <rect x="108" y="0" width="30" height="32" fill="#27272a" />
+        <text x="123" y="22" text-anchor="middle" class="mono" font-size="18" font-weight="900" fill="#ffffff">2</text>
+
+        <rect x="144" y="0" width="30" height="32" fill="#27272a" />
+        <text x="159" y="22" text-anchor="middle" class="mono" font-size="18" font-weight="900" fill="#ffffff">0</text>
+
+        <rect x="180" y="0" width="30" height="32" fill="#dc2626" />
+        <text x="195" y="22" text-anchor="middle" class="mono" font-size="18" font-weight="900" fill="#ffffff">1</text>
+      </g>
+
+      <!-- Key Details Summary -->
+      <line x1="0" y1="112" x2="240" y2="112" stroke="#e4e4e7" stroke-width="1" />
+
+      <text x="0" y="126" class="mono" font-size="8" font-weight="700" fill="#18181b">KHO: KHO 204 (TẦNG 2)</text>
+      <text x="240" y="126" text-anchor="end" class="mono" font-size="8" font-weight="800" fill="#16a34a">HỢP ĐỒNG: SHUB-8849</text>
+
+      <!-- Active Pass Badge -->
+      <rect x="0" y="136" width="240" height="18" fill="#dcfce7" stroke="#86efac" stroke-width="1" />
+      <circle cx="12" cy="145" r="3.5" fill="#16a34a" />
+      <text x="22" y="148" class="mono" font-size="7.5" font-weight="800" fill="#15803d">CHECK-IN PASS ĐÃ KÍCH HOẠT · CÓ THỂ ĐẾN KHO NGAY</text>
+    </g>
+  </g>
+
+  <!-- Technical Axis Markers (Active Red) -->
+  <line x1="24" y1="235" x2="456" y2="235" stroke="#16a34a" stroke-width="1.5" />
+  <text x="24" y="252" class="mono" font-size="8.5" font-weight="700" fill="#16a34a">TRẠNG THÁI: CỌC 10% THÀNH CÔNG · HỢP ĐỒNG ĐÃ LƯU TRỮ</text>
+  <text x="456" y="252" text-anchor="end" class="mono" font-size="8.5" font-weight="800" fill="#18181b">[ BƯỚC TIẾP THEO: MỞ CỬA 24/7 BẰNG MÃ PIN ]</text>
+</svg>

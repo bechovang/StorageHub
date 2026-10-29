@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- ISO Floor Grid (Subtle) -->
+  <g stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="80" y1="210" x2="200" y2="270" />
+    <line x1="200" y1="270" x2="320" y2="210" />
+    <line x1="320" y1="210" x2="200" y2="150" />
+    <line x1="200" y1="150" x2="80" y2="210" />
+    <line x1="140" y1="180" x2="260" y2="240" />
+    <line x1="140" y1="240" x2="260" y2="180" />
+  </g>
+
+  <!-- Tech Metadata Stamp -->
+  <text x="24" y="28" class="mono" font-size="9" font-weight="700" fill="#71717a" letter-spacing="1">TYPE // LOCKER 1.5 M²</text>
+  <text x="376" y="28" text-anchor="end" class="mono" font-size="9" font-weight="700" fill="#a1a1aa" letter-spacing="0.5">AXONOMETRIC 30°</text>
+
+  <!-- LOCKER UNIT - IDLE (CLOSED) -->
+  <g id="locker-chassis">
+    <!-- Locker Shadow -->
+    <polygon points="120,245 200,285 270,248 190,210" fill="#000000" opacity="0.06" />
+
+    <!-- Locker Left Side Wall (Isometric Depth) -->
+    <polygon points="130,110 190,140 190,245 130,215" fill="#f4f4f5" stroke="#18181b" stroke-width="1.75" stroke-linejoin="round" />
+    <!-- Vertical Panel Grooves on Side -->
+    <line x1="150" y1="120" x2="150" y2="225" stroke="#d4d4d8" stroke-width="1" />
+    <line x1="170" y1="130" x2="170" y2="235" stroke="#d4d4d8" stroke-width="1" />
+
+    <!-- Locker Top Roof Panel -->
+    <polygon points="130,110 200,75 260,105 190,140" fill="#ffffff" stroke="#18181b" stroke-width="1.75" stroke-linejoin="round" />
+    <!-- Corner gusset bracket -->
+    <polygon points="138,106 146,102 152,105 144,109" fill="#18181b" />
+
+    <!-- Locker Front Face (Door Closed) -->
+    <polygon points="190,140 260,105 260,210 190,245" fill="#ffffff" stroke="#18181b" stroke-width="1.75" stroke-linejoin="round" />
+
+    <!-- Locker Door Seam & Louver Vents -->
+    <rect x="202" y="145" width="22" height="2" transform="skewY(-26.5)" fill="#18181b" />
+    <rect x="202" y="152" width="22" height="2" transform="skewY(-26.5)" fill="#18181b" />
+    <rect x="202" y="159" width="22" height="2" transform="skewY(-26.5)" fill="#18181b" />
+
+    <!-- Door Recessed Handle Frame -->
+    <polygon points="200,165 210,160 210,185 200,190" fill="#f4f4f5" stroke="#18181b" stroke-width="1.25" />
+    
+    <!-- Heavy Duty Padlock (Locked) -->
+    <rect x="203" y="172" width="5" height="6" fill="#18181b" rx="0" />
+    <path d="M204 172 V169 A1.5 1.5 0 0 1 207 169 V172" stroke="#18181b" stroke-width="1.2" fill="none" />
+    <!-- Lock status mini dot -->
+    <circle cx="205.5" cy="175" r="0.8" fill="#ffffff" />
+
+    <!-- Number Badge on Door -->
+    <polygon points="228,125 246,116 246,128 228,137" fill="#18181b" />
+    <text x="237" y="132" class="mono" font-size="7" font-weight="800" fill="#ffffff" text-anchor="middle" transform="rotate(-15, 237, 132)">L-12</text>
+  </g>
+
+  <!-- Standard Suitcase (Beside Locker) -->
+  <g id="suitcase" transform="translate(60, 20)">
+    <!-- Suitcase body -->
+    <polygon points="215,190 240,178 240,218 215,230" fill="#18181b" stroke="#18181b" stroke-width="1.5" stroke-linejoin="round" />
+    <polygon points="202,196 215,190 215,230 202,236" fill="#27272a" stroke="#18181b" stroke-width="1.5" stroke-linejoin="round" />
+    <polygon points="202,196 227,184 240,178 215,190" fill="#3f3f46" stroke="#18181b" stroke-width="1.5" stroke-linejoin="round" />
+    <!-- Retractable Handle -->
+    <line x1="223" y1="185" x2="223" y2="168" stroke="#71717a" stroke-width="1.5" />
+    <line x1="230" y1="182" x2="230" y2="165" stroke="#71717a" stroke-width="1.5" />
+    <line x1="222" y1="168" x2="231" y2="164" stroke="#18181b" stroke-width="2" />
+    <!-- Red luggage ribbon -->
+    <line x1="227" y1="184" x2="227" y2="224" stroke="#dc2626" stroke-width="2" />
+  </g>
+
+  <!-- Stacked Storage Boxes -->
+  <g id="boxes" transform="translate(-25, 20)">
+    <!-- Box 1 (Base Box) -->
+    <polygon points="120,205 150,190 150,215 120,230" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="95,217 120,205 120,230 95,242" fill="#d4d4d8" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="95,217 125,202 150,190 120,205" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <!-- Tape seal on box -->
+    <line x1="120" y1="205" x2="120" y2="230" stroke="#a1a1aa" stroke-width="1.5" />
+
+    <!-- Box 2 (Top Box) -->
+    <polygon points="115,182 140,170 140,192 115,204" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="95,192 115,182 115,204 95,214" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="95,192 120,180 140,170 115,182" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <!-- Fragile handling symbol (micro) -->
+    <text x="122" y="188" class="mono" font-size="5.5" font-weight="700" fill="#dc2626">▲ FRAGILE</text>
+  </g>
+
+  <!-- Footer Technical Dimensions Bar -->
+  <line x1="24" y1="272" x2="376" y2="272" stroke="#e4e4e7" stroke-width="1" />
+  <text x="24" y="286" class="mono" font-size="8.5" font-weight="600" fill="#71717a">DIM: 1.0M × 1.5M × 2.4M</text>
+  <text x="376" y="286" text-anchor="end" class="mono" font-size="8.5" font-weight="700" fill="#18181b">[ KHÓA PIN VẬT LÝ · STANDBY ]</text>
+</svg>

@@ -288,6 +288,211 @@
 }
 
 /* ==========================================================================
+   INTERACTIVE PAIRED VISUAL ASSETS (SWISS NEO-BRUTALIST HOVER MOTION)
+   Standardized 0px radius, transparent backgrounds, paired idle/hover frames
+   ========================================================================== */
+
+.interactive-asset-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.interactive-asset {
+  position: relative;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-none);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.interactive-asset__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.interactive-asset__img--idle {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.interactive-asset__img--hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transform: scale(1.02);
+  pointer-events: none;
+}
+
+/* Card Hover Animations: Seamless Transition between State 1 (Idle) & State 2 (Hover) */
+.size-card:hover .interactive-asset__img--idle,
+.step-card:hover .interactive-asset__img--idle {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.size-card:hover .interactive-asset__img--hover,
+.step-card:hover .interactive-asset__img--hover {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.size-card:hover .interactive-asset,
+.step-card:hover .interactive-asset {
+  border-color: var(--color-ink);
+}
+
+.size-card--featured:hover .interactive-asset {
+  border-color: var(--color-accent);
+}
+
+.interactive-asset__tag-bar {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.interactive-asset__tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-black);
+  color: var(--color-ink);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2px 7px;
+  border: 1px solid var(--color-line-strong);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.interactive-asset__hover-hint {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-muted);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 2px 6px;
+  border: 1px solid var(--color-line);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.04em;
+  transition: color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard);
+}
+
+.hover-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--color-muted);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.size-card:hover .hover-dot,
+.step-card:hover .hover-dot {
+  background-color: var(--color-accent);
+}
+
+.size-card:hover .interactive-asset__hover-hint,
+.step-card:hover .interactive-asset__hover-hint {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.interactive-asset__caption {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--color-text-secondary);
+  margin: var(--space-2) 0 0 0;
+  text-align: left;
+}
+
+/* ==========================================================================
+   FACILITIES REALISTIC PHOTOGRAPHIC / CGI ASSETS
+   ========================================================================== */
+
+.facility-asset-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 2px solid var(--color-line-strong);
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-none);
+}
+
+.facility-asset-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.facility-card:hover .facility-asset-img {
+  transform: scale(1.04);
+}
+
+.facility-asset-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 2;
+}
+
+.facility-asset-tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-black);
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.facility-asset-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: var(--font-weight-bold);
+  padding: 2px 6px;
+  background: var(--color-status-success);
+  color: #ffffff;
+  border-radius: var(--radius-none);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.facility-asset-indicator--upcoming {
+  background: var(--color-accent);
+}
+
+/* ==========================================================================
    ARCHITECTURAL VISUAL PLACEHOLDER SYSTEM (BRUTALIST SLOTS)
    Standardized 2px dashed borders, monospace metadata badges, responsive
    ========================================================================== */

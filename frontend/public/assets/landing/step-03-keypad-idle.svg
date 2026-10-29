@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Technical Background Grid Points -->
+  <g fill="#d4d4d8">
+    <circle cx="24" cy="30" r="1.5" />
+    <circle cx="240" cy="30" r="1.5" />
+    <circle cx="456" cy="30" r="1.5" />
+    <circle cx="24" cy="240" r="1.5" />
+    <circle cx="456" cy="240" r="1.5" />
+  </g>
+
+  <!-- Header Metadata -->
+  <text x="24" y="24" class="mono" font-size="9" font-weight="700" fill="#71717a" letter-spacing="1">STEP 03 // 24/7 PHYSICAL ACCESS · ZERO-TRUST KEYPAD</text>
+  <rect x="340" y="14" width="116" height="15" fill="#18181b" />
+  <text x="398" y="25" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" fill="#ffffff" letter-spacing="0.5">STANDBY // LOCKED</text>
+
+  <!-- KEYPAD CONTAINER & TELEMETRY BREAKDOWN -->
+  <g id="keypad-unit" transform="translate(24, 40)">
+    <!-- Base Mounting Plate -->
+    <rect x="0" y="0" width="432" height="184" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+
+    <!-- LEFT COLUMN: PHYSICAL SMART KEYPAD HARDWARE (x: 20, y: 14) -->
+    <g transform="translate(20, 14)">
+      <!-- Keypad Chassis -->
+      <rect x="0" y="0" width="135" height="156" fill="#18181b" stroke="#18181b" stroke-width="2" />
+
+      <!-- Backlit OLED Display Screen -->
+      <rect x="10" y="10" width="115" height="32" fill="#09090b" stroke="#3f3f46" stroke-width="1" />
+      
+      <!-- Locked Padlock Icon on Screen -->
+      <rect x="18" y="22" width="10" height="9" fill="#eab308" />
+      <path d="M20 22 V18 A3 3 0 0 1 26 18 V22" stroke="#eab308" stroke-width="1.5" fill="none" />
+      <circle cx="23" cy="26" r="1" fill="#09090b" />
+
+      <!-- Screen Masked PIN Dots -->
+      <text x="36" y="27" class="mono" font-size="9" font-weight="800" fill="#eab308" letter-spacing="2">LOCKED [ •••••• ]</text>
+
+      <!-- 12-Key Pushbutton Matrix (3 cols x 4 rows) -->
+      <!-- Row 1: 1, 2, 3 -->
+      <rect x="12" y="50" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="28" y="64" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">1</text>
+
+      <rect x="51" y="50" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="67" y="64" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">2</text>
+
+      <rect x="90" y="50" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="106" y="64" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">3</text>
+
+      <!-- Row 2: 4, 5, 6 -->
+      <rect x="12" y="74" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="28" y="88" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">4</text>
+
+      <rect x="51" y="74" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="67" y="88" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">5</text>
+
+      <rect x="90" y="74" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="106" y="88" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">6</text>
+
+      <!-- Row 3: 7, 8, 9 -->
+      <rect x="12" y="98" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="28" y="112" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">7</text>
+
+      <rect x="51" y="98" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="67" y="112" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">8</text>
+
+      <rect x="90" y="98" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="106" y="112" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">9</text>
+
+      <!-- Row 4: *, 0, # -->
+      <rect x="12" y="122" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="28" y="136" class="mono" font-size="11" font-weight="800" fill="#a1a1aa" text-anchor="middle">*</text>
+
+      <rect x="51" y="122" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="67" y="136" class="mono" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">0</text>
+
+      <rect x="90" y="122" width="32" height="20" fill="#27272a" stroke="#3f3f46" stroke-width="1" />
+      <text x="106" y="136" class="mono" font-size="11" font-weight="800" fill="#a1a1aa" text-anchor="middle">#</text>
+    </g>
+
+    <!-- RIGHT COLUMN: ACCESS TELEMETRY & SPECIFICATION -->
+    <g transform="translate(180, 16)">
+      <text x="0" y="14" class="mono" font-size="8" font-weight="700" fill="#71717a">HARDWARE: SMART ACCESS UNIT V2.4</text>
+      <text x="236" y="14" text-anchor="end" class="mono" font-size="8" font-weight="800" fill="#eab308">STANDBY</text>
+
+      <line x1="0" y1="24" x2="236" y2="24" stroke="#e4e4e7" stroke-width="1" />
+
+      <!-- Specs -->
+      <text x="0" y="44" class="mono" font-size="8.5" font-weight="600" fill="#71717a">CƠ CHẾ MỞ:</text>
+      <text x="236" y="44" text-anchor="end" class="mono" font-size="9" font-weight="800" fill="#18181b">BÀN PHÍM PIN SỐ ĐỘC LẬP</text>
+
+      <text x="0" y="66" class="mono" font-size="8.5" font-weight="600" fill="#71717a">BẢO MẬT:</text>
+      <text x="236" y="66" text-anchor="end" class="mono" font-size="9" font-weight="800" fill="#18181b">ZERO-TRUST · KHÔNG QUA TRUNG GIAN</text>
+
+      <text x="0" y="88" class="mono" font-size="8.5" font-weight="600" fill="#71717a">THỜI GIAN VẬN HÀNH:</text>
+      <text x="236" y="88" text-anchor="end" class="mono" font-size="9" font-weight="800" fill="#dc2626">24/7/365 TOÀN TỰ ĐỘNG</text>
+
+      <line x1="0" y1="104" x2="236" y2="104" stroke="#e4e4e7" stroke-width="1" />
+
+      <!-- Lock Status Box (Idle) -->
+      <rect x="0" y="114" width="236" height="42" fill="#fafafa" stroke="#d4d4d8" stroke-width="1" />
+      <circle cx="16" cy="135" r="4.5" fill="#eab308" />
+      <text x="28" y="131" class="mono" font-size="8.5" font-weight="800" fill="#18181b">CỬA KHO ĐANG KHÓA AN TOÀN</text>
+      <text x="28" y="144" class="mono" font-size="7" font-weight="600" fill="#71717a">NHẬP MÃ PIN 6 SỐ TẠI BÀN PHÍM ĐỂ MỞ CỬA</text>
+    </g>
+  </g>
+
+  <!-- Technical Axis Markers -->
+  <line x1="24" y1="235" x2="456" y2="235" stroke="#e4e4e7" stroke-width="1" />
+  <text x="24" y="252" class="mono" font-size="8.5" font-weight="600" fill="#71717a">ENCRYPTION: HARDWARE ENCLAVE AES-256 · LOG: REALTIME</text>
+  <text x="456" y="252" text-anchor="end" class="mono" font-size="8.5" font-weight="700" fill="#18181b">[ RÊ CHUỘT ĐỂ MÔ PHỎNG NHẬP PIN ]</text>
+</svg>

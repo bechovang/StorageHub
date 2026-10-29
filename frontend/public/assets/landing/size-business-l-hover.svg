@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Heavy Duty Floor Grid (Active Accent Red) -->
+  <g stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="50" y1="210" x2="200" y2="280" stroke="#fca5a5" />
+    <line x1="200" y1="280" x2="350" y2="210" stroke="#fca5a5" />
+    <line x1="350" y1="210" x2="200" y2="140" />
+    <line x1="200" y1="140" x2="50" y2="210" />
+    <line x1="125" y1="175" x2="275" y2="245" stroke="#dc2626" stroke-dasharray="2 0" />
+    <line x1="125" y1="245" x2="275" y2="175" />
+  </g>
+
+  <!-- Logistics Flow Arrows on Floor (Red Active) -->
+  <g stroke="#dc2626" stroke-width="2" fill="none">
+    <path d="M70 230 L110 210 L150 230" stroke-dasharray="4 4" />
+    <polygon points="152,230 144,226 146,233" fill="#dc2626" stroke="none" />
+    <path d="M120 255 L160 235 L200 255" stroke-dasharray="4 4" />
+    <polygon points="202,255 194,251 196,258" fill="#dc2626" stroke="none" />
+  </g>
+
+  <!-- Tech Metadata Stamp (Active) -->
+  <text x="24" y="28" class="mono" font-size="9" font-weight="700" fill="#dc2626" letter-spacing="1">TYPE // BUSINESS WAREHOUSE L · 16.0 M² · [ACTIVE]</text>
+  <rect x="226" y="18" width="150" height="15" fill="#dc2626" />
+  <text x="301" y="29" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" fill="#ffffff" letter-spacing="0.5">1000 KG / M² · LIFT ACTIVE</text>
+
+  <!-- WAREHOUSE ROOM SHELL & ROLL-UP SHUTTER SCROLLED UP -->
+  <g id="warehouse-shell">
+    <!-- Left Wall -->
+    <polygon points="70,195 200,135 200,55 70,115" fill="#f4f4f5" stroke="#18181b" stroke-width="1.75" />
+    
+    <!-- Roll-up Overhead Spool (Door Scrolled Up into Ceiling Drum) -->
+    <ellipse cx="120" cy="115" rx="35" ry="12" fill="#18181b" stroke="#dc2626" stroke-width="1.5" />
+    <ellipse cx="120" cy="118" rx="30" ry="10" fill="#3f3f46" />
+
+    <!-- Open High Clearance Gateway -->
+    <polygon points="85,190 155,158 155,120 85,152" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 3" />
+    
+    <!-- Clearance Height Measurement Line -->
+    <line x1="80" y1="188" x2="80" y2="128" stroke="#dc2626" stroke-width="1.5" />
+    <polyline points="77,133 80,128 83,133" stroke="#dc2626" stroke-width="1.5" fill="none" />
+    <polyline points="77,183 80,188 83,183" stroke="#dc2626" stroke-width="1.5" fill="none" />
+    
+    <!-- Clearance Tag -->
+    <rect x="25" y="145" width="52" height="14" fill="#dc2626" />
+    <text x="51" y="155" class="mono" font-size="6.5" font-weight="800" fill="#ffffff" text-anchor="middle">CLEAR 2.4M</text>
+
+    <!-- Back-Right Wall with High Ceiling Beam -->
+    <polygon points="200,135 330,195 330,115 200,55" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+
+    <!-- Floor Slab -->
+    <polygon points="70,195 200,255 330,195 200,135" fill="#fafafa" stroke="#18181b" stroke-width="1.75" />
+  </g>
+
+  <!-- INDUSTRIAL HEAVY DUTY PALLET RACK -->
+  <g id="pallet-rack" transform="translate(195, 60)">
+    <rect x="0" y="30" width="5" height="105" fill="#18181b" />
+    <polygon points="75,62 80,60 80,165 75,167" fill="#18181b" />
+
+    <!-- Beams in Safety Orange/Red -->
+    <polygon points="2,100 78,65 78,71 2,106" fill="#dc2626" stroke="#18181b" stroke-width="1.2" />
+    <polygon points="2,65 78,30 78,36 2,71" fill="#dc2626" stroke="#18181b" stroke-width="1.2" />
+
+    <!-- Upper Cargo with Red Straps -->
+    <polygon points="12,60 45,45 70,56 37,71" fill="#ffffff" stroke="#dc2626" stroke-width="1.2" />
+    <polygon points="20,56 42,46 42,28 20,38" fill="#ffffff" stroke="#dc2626" stroke-width="1.2" />
+    <polygon points="42,46 62,55 62,37 42,28" fill="#ffffff" stroke="#dc2626" stroke-width="1.2" />
+    <polygon points="20,38 42,28 62,37 40,47" fill="#ffffff" stroke="#18181b" stroke-width="1.2" />
+  </g>
+
+  <!-- GROUND WOODEN PALLET WITH BULK CARGO (ELEVATED / LIFTED 12px) -->
+  <g id="ground-pallet" transform="translate(145, 133)">
+    <!-- Wooden Pallet Base (Suspended in Air) -->
+    <polygon points="15,62 70,38 105,53 50,77" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <!-- Pallet Fork Openings -->
+    <polygon points="20,65 32,60 32,68 20,73" fill="#dc2626" />
+    <polygon points="38,57 50,52 50,60 38,65" fill="#dc2626" />
+
+    <!-- Heavy Commercial Cargo Crate -->
+    <polygon points="22,58 60,41 60,10 22,27" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="60,41 95,56 95,25 60,10" fill="#f4f4f5" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="22,27 60,10 95,25 57,42" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    
+    <!-- Commercial Shipping Label Stencil (Active Red) -->
+    <rect x="30" y="32" width="26" height="13" fill="#dc2626" />
+    <text x="43" y="41" class="mono" font-size="6" font-weight="800" fill="#ffffff" text-anchor="middle">1000 KG</text>
+
+    <!-- Upward Hydraulic Lift Indicator Arrows -->
+    <line x1="30" y1="88" x2="30" y2="76" stroke="#dc2626" stroke-width="2" />
+    <polygon points="30,73 27,78 33,78" fill="#dc2626" />
+    <line x1="80" y1="65" x2="80" y2="53" stroke="#dc2626" stroke-width="2" />
+    <polygon points="80,50 77,55 83,55" fill="#dc2626" />
+  </g>
+
+  <!-- HYDRAULIC HAND PALLET JACK (ENGAGED & LIFTING) -->
+  <g id="pallet-jack" transform="translate(100, 173)">
+    <!-- Twin Forks Raised into Pallet -->
+    <polygon points="40,25 78,8 84,11 46,28" fill="#dc2626" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="30,30 68,13 74,16 36,33" fill="#dc2626" stroke="#18181b" stroke-width="1.5" />
+
+    <!-- Jack Hydraulic Pump Base with Red Housing -->
+    <polygon points="18,34 32,28 32,46 18,52" fill="#dc2626" stroke="#18181b" stroke-width="1.75" />
+    <!-- Steer Wheels Extended -->
+    <ellipse cx="25" cy="54" rx="6" ry="3" fill="#18181b" stroke="#18181b" stroke-width="1.2" />
+
+    <!-- Tiller Handle (Active Pumping Vertical Angle) -->
+    <line x1="25" y1="36" x2="15" y2="4" stroke="#18181b" stroke-width="3" />
+    <!-- Handle Grip Loop in Red -->
+    <ellipse cx="15" cy="4" rx="5" ry="7" fill="none" stroke="#dc2626" stroke-width="2.5" transform="rotate(-10, 15, 4)" />
+  </g>
+
+  <!-- Unit Number Stencil (Active Red) -->
+  <rect x="295" y="70" width="26" height="14" fill="#dc2626" />
+  <text x="308" y="80" class="mono" font-size="8" font-weight="800" fill="#ffffff" text-anchor="middle">L-04</text>
+
+  <!-- Footer Technical Dimensions Bar (Active Red) -->
+  <line x1="24" y1="272" x2="376" y2="272" stroke="#dc2626" stroke-width="1.5" />
+  <text x="24" y="286" class="mono" font-size="8.5" font-weight="700" fill="#dc2626">TẢI TRỌNG SÀN: ĐẠT CHUẨN 1.000 KG/M²</text>
+  <text x="376" y="286" text-anchor="end" class="mono" font-size="8.5" font-weight="800" fill="#16a34a">[ CỬA CUỐN 2.4M · XE TẢI TIẾP CẬN ]</text>
+</svg>
