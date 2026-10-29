@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Check, Square, Eye, EyeClosed } from "@phosphor-icons/react";
+import { Check, Square } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
-import LoginPanel from "../../components/LoginPanel/LoginPanel";
+import { AuthLayout, AuthField, PasswordField, AuthSubmitButton } from "./components";
 import "./RegisterPage.css";
 
 export default function RegisterPage() {
@@ -11,9 +11,7 @@ export default function RegisterPage() {
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [agreeTerms, setAgreeTerms] = useState(true);
 
     const [generalError, setGeneralError] = useState("");
@@ -93,233 +91,146 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="login-page register-page">
-            {/* ── Main: cột trái (info) + cột phải (form) ── */}
-            <main className="login-main">
-                {/* Cột trái dùng chung với LoginPage */}
-                <LoginPanel />
+        <AuthLayout
+            pageClass="login-page register-page"
+            title="Đăng ký"
+            error={generalError}
+            errorId="register-error-banner"
+            footer={
+                <>
+                    <span className="login-card__footer-text">Đã có tài khoản?</span>
+                    <Link to="/login" className="login-link login-link--strong">
+                        Đăng nhập ngay
+                    </Link>
+                </>
+            }
+        >
+            <form
+                className="login-form"
+                onSubmit={handleSubmit}
+                noValidate
+                aria-describedby={generalError ? "register-error-banner" : undefined}
+            >
+                {/* Họ và tên */}
+                <AuthField
+                    id="register-name"
+                    label="Họ và tên"
+                    type="text"
+                    autoComplete="name"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    disabled={submitting}
+                    placeholder="Nguyễn Văn A"
+                />
 
-                {/* Cột phải: form */}
-                <div className="login-form-col">
-                    <div className="login-card">
-                        <div className="login-card__header">
-                            <p className="login-card__eyebrow">StorageHub</p>
-                            <h2 className="login-card__title">Đăng ký</h2>
-                        </div>
-
-                        <div className="login-card__body">
-                            {/* Alert lỗi */}
-                            {generalError && (
-                                <div
-                                    className="login-alert"
-                                    role="alert"
-                                    aria-live="assertive"
-                                    id="register-error-banner"
-                                >
-                                    <span className="login-alert__icon" aria-hidden="true">
-                                        ⚠
-                                    </span>
-                                    <span>{generalError}</span>
-                                </div>
-                            )}
-
-                            <form
-                                className="login-form"
-                                onSubmit={handleSubmit}
-                                noValidate
-                                aria-describedby={generalError ? "register-error-banner" : undefined}
-                            >
-                                {/* Họ và tên */}
-                                <div className={`login-field ${fullName ? "login-field--has-value" : ""}`}>
-                                    <label className="login-field__label" htmlFor="register-name">
-                                        Họ và tên<span aria-hidden="true">*</span>
-                                    </label>
-                                    <input
-                                        id="register-name"
-                                        className="login-field__input"
-                                        type="text"
-                                        autoComplete="name"
-                                        required
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        disabled={submitting}
-                                        placeholder="Nguyễn Văn A"
-                                        aria-required="true"
-                                    />
-                                </div>
-
-                                {/* Số điện thoại */}
-                                <div className={`login-field login-field--phone ${phone ? "login-field--has-value" : ""}`}>
-                                    <label className="login-field__label" htmlFor="register-phone">
-                                        Số điện thoại<span aria-hidden="true">*</span>
-                                    </label>
-                                    <div className="phone-input-group">
-                                        <span className="phone-prefix" aria-hidden="true">+84</span>
-                                        <input
-                                            id="register-phone"
-                                            className="login-field__input phone-input"
-                                            type="tel"
-                                            autoComplete="tel"
-                                            required
-                                            value={phone}
-                                            onChange={handlePhoneChange}
-                                            disabled={submitting}
-                                            placeholder="123 456 789"
-                                            aria-required="true"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Email */}
-                                <div className={`login-field ${email ? "login-field--has-value" : ""}`}>
-                                    <label className="login-field__label" htmlFor="register-email">
-                                        Email<span aria-hidden="true">*</span>
-                                    </label>
-                                    <input
-                                        id="register-email"
-                                        className="login-field__input"
-                                        type="email"
-                                        autoComplete="email"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        disabled={submitting}
-                                        placeholder="ban@example.com"
-                                        aria-required="true"
-                                    />
-                                </div>
-
-                                {/* Mật khẩu */}
-                                <div className={`login-field ${password ? "login-field--has-value" : ""}`}>
-                                    <label className="login-field__label" htmlFor="register-password">
-                                        Mật khẩu<span aria-hidden="true">*</span>
-                                    </label>
-                                    <div className="login-field__input-wrapper">
-                                        <input
-                                            id="register-password"
-                                            className="login-field__input login-field__input--has-toggle"
-                                            type={showPassword ? "text" : "password"}
-                                            autoComplete="new-password"
-                                            required
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            disabled={submitting}
-                                            placeholder="••••••••"
-                                            aria-required="true"
-                                        />
-                                        <button
-                                            type="button"
-                                            className="login-field__toggle-btn"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                                            tabIndex={-1}
-                                        >
-                                            {showPassword ? (
-                                                <EyeClosed size={18} weight="bold" />
-                                            ) : (
-                                                <Eye size={18} weight="bold" />
-                                            )}
-                                        </button>
-                                    </div>
-
-                                    {/* Danh sách tiêu chí mật khẩu trực quan */}
-                                    <ul className="pwd-requirements" aria-label="Tiêu chí mật khẩu">
-                                        {passwordCriteria.map((item) => (
-                                            <li
-                                                key={item.id}
-                                                className={`pwd-requirement-item ${item.met ? "pwd-requirement-item--met" : ""}`}
-                                            >
-                                                {item.met ? (
-                                                    <Check size={13} weight="bold" className="pwd-rule-icon pwd-rule-icon--met" />
-                                                ) : (
-                                                    <Square size={6} weight="fill" className="pwd-rule-icon pwd-rule-icon--unmet" />
-                                                )}
-                                                <span>{item.label}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                {/* Xác nhận mật khẩu */}
-                                <div className={`login-field ${confirmPassword ? "login-field--has-value" : ""}`}>
-                                    <label className="login-field__label" htmlFor="register-confirm-password">
-                                        Xác nhận mật khẩu<span aria-hidden="true">*</span>
-                                    </label>
-                                    <div className="login-field__input-wrapper">
-                                        <input
-                                            id="register-confirm-password"
-                                            className="login-field__input login-field__input--has-toggle"
-                                            type={showConfirmPassword ? "text" : "password"}
-                                            autoComplete="new-password"
-                                            required
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            disabled={submitting}
-                                            placeholder="Nhập lại mật khẩu"
-                                            aria-required="true"
-                                        />
-                                        <button
-                                            type="button"
-                                            className="login-field__toggle-btn"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                                            tabIndex={-1}
-                                        >
-                                            {showConfirmPassword ? (
-                                                <EyeClosed size={18} weight="bold" />
-                                            ) : (
-                                                <Eye size={18} weight="bold" />
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Checkbox điều khoản */}
-                                <label className="register-terms">
-                                    <input
-                                        type="checkbox"
-                                        checked={agreeTerms}
-                                        onChange={(e) => setAgreeTerms(e.target.checked)}
-                                        disabled={submitting}
-                                    />
-                                    <span>
-                                        Tôi đồng ý với{" "}
-                                        <a href="#terms" onClick={(e) => e.preventDefault()}>
-                                            Điều khoản dịch vụ
-                                        </a>{" "}
-                                        và{" "}
-                                        <a href="#privacy" onClick={(e) => e.preventDefault()}>
-                                            Chính sách bảo mật
-                                        </a>{" "}
-                                        của StorageHub
-                                    </span>
-                                </label>
-
-                                <button
-                                    id="register-submit"
-                                    className="login-submit"
-                                    type="submit"
-                                    disabled={submitting}
-                                >
-                                    <span>
-                                        {submitting ? "Đang tạo tài khoản..." : "Đăng ký tài khoản"}
-                                    </span>
-                                    <span className="login-submit__arrow" aria-hidden="true">
-                                        →
-                                    </span>
-                                </button>
-                            </form>
-                        </div>
-
-                        <div className="login-card__footer">
-                            <span className="login-card__footer-text">Đã có tài khoản?</span>
-                            <Link to="/login" className="login-link login-link--strong">
-                                Đăng nhập ngay
-                            </Link>
-                        </div>
+                {/* Số điện thoại */}
+                <AuthField
+                    id="register-phone"
+                    label="Số điện thoại"
+                    required
+                    className="login-field--phone"
+                >
+                    <div className="phone-input-group">
+                        <span className="phone-prefix" aria-hidden="true">+84</span>
+                        <input
+                            id="register-phone"
+                            className="login-field__input phone-input"
+                            type="tel"
+                            autoComplete="tel"
+                            required
+                            value={phone}
+                            onChange={handlePhoneChange}
+                            disabled={submitting}
+                            placeholder="123 456 789"
+                            aria-required="true"
+                        />
                     </div>
-                </div>
-            </main>
-        </div>
+                </AuthField>
+
+                {/* Email */}
+                <AuthField
+                    id="register-email"
+                    label="Email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={submitting}
+                    placeholder="ban@example.com"
+                />
+
+                {/* Mật khẩu */}
+                <PasswordField
+                    id="register-password"
+                    label="Mật khẩu"
+                    autoComplete="new-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={submitting}
+                    placeholder="••••••••"
+                >
+                    {/* Danh sách tiêu chí mật khẩu trực quan */}
+                    <ul className="pwd-requirements" aria-label="Tiêu chí mật khẩu">
+                        {passwordCriteria.map((item) => (
+                            <li
+                                key={item.id}
+                                className={`pwd-requirement-item ${item.met ? "pwd-requirement-item--met" : ""}`}
+                            >
+                                {item.met ? (
+                                    <Check size={13} weight="bold" className="pwd-rule-icon pwd-rule-icon--met" />
+                                ) : (
+                                    <Square size={6} weight="fill" className="pwd-rule-icon pwd-rule-icon--unmet" />
+                                )}
+                                <span>{item.label}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </PasswordField>
+
+                {/* Xác nhận mật khẩu */}
+                <PasswordField
+                    id="register-confirm-password"
+                    label="Xác nhận mật khẩu"
+                    autoComplete="new-password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={submitting}
+                    placeholder="Nhập lại mật khẩu"
+                />
+
+                {/* Checkbox điều khoản */}
+                <label className="register-terms">
+                    <input
+                        type="checkbox"
+                        checked={agreeTerms}
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        disabled={submitting}
+                    />
+                    <span>
+                        Tôi đồng ý với{" "}
+                        <Link to="/terms" target="_blank" rel="noopener noreferrer">
+                            Điều khoản dịch vụ
+                        </Link>{" "}
+                        và{" "}
+                        <Link to="/privacy" target="_blank" rel="noopener noreferrer">
+                            Chính sách bảo mật
+                        </Link>{" "}
+                        của StorageHub
+                    </span>
+                </label>
+
+                {/* Submit button */}
+                <AuthSubmitButton
+                    id="register-submit"
+                    submitting={submitting}
+                    text="Đăng ký tài khoản"
+                    loadingText="Đang khởi tạo tài khoản..."
+                />
+            </form>
+        </AuthLayout>
     );
 }

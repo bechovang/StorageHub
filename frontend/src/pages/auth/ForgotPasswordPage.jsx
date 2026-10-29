@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { CheckCircle, ArrowLeft, PaperPlaneTilt } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
-import LoginPanel from "../../components/LoginPanel/LoginPanel";
+import { AuthLayout, AuthField, AuthSubmitButton } from "./components";
 import "./ForgotPasswordPage.css";
 
 export default function ForgotPasswordPage() {
@@ -49,140 +49,101 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="login-page forgot-password-page">
-            {/* ── Main: cột trái (info) + cột phải (form) ── */}
-            <main className="login-main">
-                {/* Cột trái: đồng bộ với LoginPage và RegisterPage */}
-                <LoginPanel />
-
-                {/* Cột phải: thẻ form khôi phục mật khẩu */}
-                <div className="login-form-col">
-                    <div className="login-card">
-                        <div className="login-card__header">
-                            <p className="login-card__eyebrow">StorageHub</p>
-                            <h2 className="login-card__title">Quên mật khẩu</h2>
+        <AuthLayout
+            pageClass="login-page forgot-password-page"
+            title="Quên mật khẩu"
+            error={generalError}
+            errorId="forgot-error-banner"
+            footer={
+                !success && (
+                    <>
+                        <span className="login-card__footer-text">Đã nhớ mật khẩu?</span>
+                        <Link to="/login" className="login-link login-link--strong">
+                            Quay lại Đăng nhập
+                        </Link>
+                    </>
+                )
+            }
+        >
+            {success ? (
+                /* ── Màn hình thông báo thành công (FR-3 Generic Message) ── */
+                <div className="forgot-success">
+                    <div className="forgot-success__header" role="status">
+                        <CheckCircle
+                            size={26}
+                            weight="fill"
+                            className="forgot-success__icon"
+                            aria-hidden="true"
+                        />
+                        <div>
+                            <h3 className="forgot-success__title">Kiểm tra email của bạn</h3>
+                            <p className="forgot-success__text">
+                                {successMessage}
+                            </p>
                         </div>
+                    </div>
 
-                        <div className="login-card__body">
-                            {success ? (
-                                /* ── Màn hình thông báo thành công (FR-3 Generic Message) ── */
-                                <div className="forgot-success">
-                                    <div className="forgot-success__header" role="status">
-                                        <CheckCircle
-                                            size={26}
-                                            weight="fill"
-                                            className="forgot-success__icon"
-                                            aria-hidden="true"
-                                        />
-                                        <div>
-                                            <h3 className="forgot-success__title">Kiểm tra email của bạn</h3>
-                                            <p className="forgot-success__text">
-                                                {successMessage}
-                                            </p>
-                                        </div>
-                                    </div>
+                    <div className="forgot-tip-card">
+                        <p style={{ margin: "0 0 6px 0" }}>
+                            Địa chỉ nhận tin: <span className="forgot-success__email">{email}</span>
+                        </p>
 
-                                    <div className="forgot-tip-card">
-                                        <p style={{ margin: "0 0 6px 0" }}>
-                                            Địa chỉ nhận tin: <span className="forgot-success__email">{email}</span>
-                                        </p>
+                        <p style={{ margin: 0 }}>
+                            Đường link đặt lại mật khẩu có hiệu lực trong <strong>15 phút</strong>.
+                        </p>
+                    </div>
 
-                                        <p style={{ margin: 0 }}>
-                                            Đường link đặt lại mật khẩu có hiệu lực trong <strong>15 phút</strong>.
-                                        </p>
-                                    </div>
-
-                                    <div className="forgot-actions">
-                                        <Link to="/login" className="forgot-btn-primary">
-                                            <ArrowLeft size={16} weight="bold" aria-hidden="true" />
-                                            <span>Quay lại Đăng nhập</span>
-                                        </Link>
-                                        <button
-                                            type="button"
-                                            onClick={handleRetry}
-                                            className="forgot-btn-secondary"
-                                        >
-                                            <PaperPlaneTilt size={16} aria-hidden="true" />
-                                            <span>Gửi lại với email khác</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* ── Form nhập email khôi phục ── */
-                                <>
-                                    <p className="forgot-desc">
-                                        Nhập địa chỉ email của bạn để nhận liên kết đặt lại mật khẩu.
-                                    </p>
-
-                                    {/* Alert lỗi validation hoặc server */}
-                                    {generalError && (
-                                        <div
-                                            className="login-alert"
-                                            role="alert"
-                                            aria-live="assertive"
-                                            id="forgot-error-banner"
-                                        >
-                                            <span className="login-alert__icon" aria-hidden="true">
-                                                ⚠
-                                            </span>
-                                            <span>{generalError}</span>
-                                        </div>
-                                    )}
-
-                                    <form
-                                        className="login-form"
-                                        onSubmit={handleSubmit}
-                                        noValidate
-                                        aria-describedby={generalError ? "forgot-error-banner" : undefined}
-                                    >
-                                        {/* Email */}
-                                        <div className={`login-field ${email ? "login-field--has-value" : ""}`}>
-                                            <label className="login-field__label" htmlFor="forgot-email">
-                                                Email đăng nhập
-                                            </label>
-                                            <input
-                                                id="forgot-email"
-                                                className="login-field__input"
-                                                type="email"
-                                                autoComplete="email"
-                                                required
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                disabled={submitting}
-                                                placeholder="ban@example.com"
-                                                aria-required="true"
-                                            />
-                                        </div>
-
-                                        <button
-                                            id="forgot-submit"
-                                            className="login-submit"
-                                            type="submit"
-                                            disabled={submitting}
-                                        >
-                                            <span>
-                                                {submitting ? "Đang gửi liên kết..." : "Gửi liên kết khôi phục"}
-                                            </span>
-                                            <span className="login-submit__arrow" aria-hidden="true">
-                                                →
-                                            </span>
-                                        </button>
-                                    </form>
-                                </>
-                            )}
-                        </div>
-
-                        {!success && (
-                            <div className="login-card__footer">
-                                <span className="login-card__footer-text">Đã nhớ mật khẩu?</span>
-                                <Link to="/login" className="login-link login-link--strong">
-                                    Quay lại Đăng nhập
-                                </Link>
-                            </div>
-                        )}
+                    <div className="forgot-actions">
+                        <Link to="/login" className="forgot-btn-primary">
+                            <ArrowLeft size={16} weight="bold" aria-hidden="true" />
+                            <span>Quay lại Đăng nhập</span>
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={handleRetry}
+                            className="forgot-btn-secondary"
+                        >
+                            <PaperPlaneTilt size={16} aria-hidden="true" />
+                            <span>Gửi lại với email khác</span>
+                        </button>
                     </div>
                 </div>
-            </main>
-        </div>
+            ) : (
+                /* ── Form nhập email khôi phục ── */
+                <>
+                    <p className="forgot-desc">
+                        Nhập địa chỉ email của bạn để nhận liên kết đặt lại mật khẩu.
+                    </p>
+
+                    <form
+                        className="login-form"
+                        onSubmit={handleSubmit}
+                        noValidate
+                        aria-describedby={generalError ? "forgot-error-banner" : undefined}
+                    >
+                        {/* Email */}
+                        <AuthField
+                            id="forgot-email"
+                            label="Email đăng nhập"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={submitting}
+                            placeholder="ban@example.com"
+                        />
+
+                        {/* Submit button */}
+                        <AuthSubmitButton
+                            id="forgot-submit"
+                            submitting={submitting}
+                            text="Gửi liên kết khôi phục"
+                            loadingText="Đang gửi liên kết..."
+                        />
+                    </form>
+                </>
+            )}
+        </AuthLayout>
     );
 }
