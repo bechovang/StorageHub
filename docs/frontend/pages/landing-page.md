@@ -32,19 +32,10 @@ Mục tiêu chính:
 - **Bố cục 2 Cột Co Giãn Thoải Mái (Flexible 2-Column Grid)**:
   - **Cột Trái**: Tiêu đề H1 Kinetic Text Reveal (*"Lưu Trữ Thông Minh · Tự Quản Tuyệt Đối · Bảo Mật 24/7"*), đoạn mô tả định vị dịch vụ và 2 nút CTA chính, với không gian căn lề thoải mái, tự nhiên.
   - **Cột Phải**: Khung sườn vị trí chờ dành cho Slider hình ảnh tương lai (`.landing-hero__slider-placeholder`):
-    - Khung viền nét đứt thanh lịch (`2px dashed var(--color-line)`), nền trong suốt đón ánh sáng từ sa bàn background phía sau.
+    - Khung viền nét đứt thanh lịch (`2px dashed var(--color-line)`), nền tối giản theo phong cách Swiss Neo-Brutalist thanh khiết, sắc nét.
     - Huy hiệu nhận diện kỹ thuật: `SLIDER // VISUAL SHOWCASE - Reserved for Future Image & Facility Slider`.
     - Trả lại trọn vẹn độ co giãn rộng rãi, thoáng đãng cho Hero section mà không bị bó hẹp trong các ô hộp tĩnh.
 - **Quick Stats Ribbon (4 thẻ chỉ số)**: Căn giữa trải dài toàn bộ chiều rộng ngay bên dưới 2 cột, tích hợp bộ đếm số tự động `CounterNumber`.
-
-### 3.1.1. Sa Bàn Bản Đồ Thực Địa TP.HCM Toàn Trang (`FullPageTrafficNetwork.jsx`)
-- Component [`FullPageTrafficNetwork.jsx`](file:///D:/Workspace/StorageHub/frontend/src/pages/public/components/FullPageTrafficNetwork.jsx) được gắn làm lớp lót background chìm cố định bên dưới (`position: fixed; inset: 0; z-index: 0; pointer-events: none;`):
-  - **Bản đồ Thực Địa Kỹ Thuật Số TP.HCM (2560x2304 WebP Siêu Nhẹ 454KB - `hcm_map_blueprint.webp`)**:
-    - **100% Hình thái địa lý thực tế**: Hiển thị trọn vẹn dải uốn lượn đặc trưng của Sông Sài Gòn (ôm trọn bán đảo Thanh Đa, Thảo Điền, bán đảo Thủ Thiêm, Bến Bạch Đằng, Quận 7), Sông Đồng Nai, Kênh Nhiêu Lộc - Thị Nghè, Kênh Tàu Hủ - Bến Nghé và Kênh Đôi - Kênh Tẻ.
-    - **Mạng lưới đô thị & đường phố dày đặc**: Toàn bộ hệ thống đường phố, đại lộ huyết mạch, cầu cống, nút giao và mạng lưới hẻm phố chuẩn bản đồ thực địa TP.HCM.
-    - **Phong cách Architectural Blueprint Watermark Tinh Tế**: Xử lý đơn sắc tông sáng kỹ thuật số với độ mờ tinh tế (~32%) hòa trộn trên nền `var(--color-surface-page)` và lớp phủ radial gradient che chắn nhẹ ở khu vực chữ bên trái, đảm bảo văn bản đọc sắc nét 100%.
-    - **Tinh gọn, không node động, không nhãn chữ**: Giữ giao diện tĩnh lặng, cao cấp, không bị phân tâm bởi các đốm động hay text địa danh, đóng vai trò một watermark kiến trúc chuẩn mực.
-  - **Đảm bảo khả năng đọc 100%**: Tất cả thẻ nội dung (`.size-card`, `.pillar-card`, `.step-card`, `.facility-card`, `.faq-item`, `.landing-cta-banner__inner`) đều có nền đặc `var(--color-surface, #ffffff)` và đổ bóng khối rắn, nền bản đồ chìm sâu bên dưới giúp tăng chiều sâu nhận diện thương hiệu đô thị TP.HCM.
 
 ### 3.2. Hướng dẫn & Đo lường Kích thước Kho (`#storage-sizes`, `.landing-sizes`)
 - **Tiêu đề nổi bật**: *"Chiếc <span style="color:#dc2626">túi xách</span> nhỏ hay cả <span style="color:#dc2626">căn nhà</span> đều được"* với từ khóa nổi bật bằng màu đỏ và kích thước phóng to.
