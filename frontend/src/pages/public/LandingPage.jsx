@@ -18,6 +18,11 @@ import {
   LockSimple,
   Buildings,
   Question as QuestionMarkIcon,
+  Cube,
+  QrCode,
+  Browsers,
+  Camera,
+  ImageSquare,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import Button from "../../components/Button/Button.jsx";
@@ -120,6 +125,11 @@ const STORAGE_SIZES = [
       "Khóa số PIN điện tử riêng biệt 100%",
       "Kiểm soát nhiệt độ & chống ẩm mốc",
     ],
+    visualAsset: {
+      tag: "ASSET // 3D CUTAWAY",
+      spec: "ISO RENDER 4:3 · 800×600",
+      caption: "Mô hình 3D: 8-12 thùng carton, 2 vali du lịch, tài liệu & kệ treo mini",
+    },
   },
   {
     id: "SMALL",
@@ -137,6 +147,11 @@ const STORAGE_SIZES = [
       "25 - 30 thùng đồ, nệm gấp, tủ quần áo",
       "Cảm biến nhiệt khói & PCCC tự động",
     ],
+    visualAsset: {
+      tag: "ASSET // 3D CUTAWAY",
+      spec: "ISO RENDER 4:3 · 800×600",
+      caption: "Mô hình 3D: Đồ 1 phòng ngủ, 1-2 xe máy, nệm gấp & 30 thùng đồ",
+    },
   },
   {
     id: "MEDIUM",
@@ -154,6 +169,11 @@ const STORAGE_SIZES = [
       "50+ thùng carton hàng hóa đóng gói",
       "Sát thang máy hàng tải trọng 2 tấn",
     ],
+    visualAsset: {
+      tag: "ASSET // 3D CUTAWAY",
+      spec: "ISO RENDER 4:3 · 800×600",
+      caption: "Mô hình 3D: Nội thất 2 phòng ngủ, sofa dài, tủ lạnh lớn & 50+ thùng",
+    },
   },
   {
     id: "LARGE",
@@ -171,6 +191,11 @@ const STORAGE_SIZES = [
       "Cửa cuốn rộng 2.4m, sàn tải trọng 1 tấn/m²",
       "Hỗ trợ xe nâng tay & xe kéo hàng tại chỗ",
     ],
+    visualAsset: {
+      tag: "ASSET // 3D CUTAWAY",
+      spec: "ISO RENDER 4:3 · 800×600",
+      caption: "Mô hình 3D: Pallet kiện hàng công nghiệp, xe nâng tay & kệ cao 3m",
+    },
   },
 ];
 
@@ -181,24 +206,36 @@ const PILLARS = [
     title: "Mã PIN cá nhân 100%",
     description:
       "Mở kho tức thì bằng bàn phím số riêng biệt, chủ động 24/7 không cần chờ lễ tân hay bảo vệ. Bạn là người duy nhất sở hữu mã mở cửa",
+    techTag: "SCHEMATIC // 256-BIT PIN",
+    techBadge: "HARDWARE",
+    techSpec: "Bàn phím mã số vật lý độc lập tại từng ô kho · Zero-trust",
   },
   {
     icon: Receipt,
     title: "Cọc chỉ 10% & Minh bạch",
     description:
       "Không phát sinh phụ phí ẩn. Chỉ cọc 10% để xác nhận giữ kho. Hoàn cọc tự động qua tài khoản ngân hàng trong 24h sau khi kiểm tra trả kho",
+    techTag: "FLOW // 10% ESCROW",
+    techBadge: "FINTECH",
+    techSpec: "Ký quỹ giữ chỗ VietQR tức thì · Hoàn cọc tự động qua STK trong 24h",
   },
   {
     icon: ShieldCheck,
     title: "An ninh & PCCC đa lớp",
     description:
       "Hệ thống camera giám sát liên tục 24/7, đầu dò khói nhiệt PCCC tiêu chuẩn và kiểm soát độ ẩm chống ẩm mốc hư hại hàng hóa tuyệt đối",
+    techTag: "IOT // TELEMETRY",
+    techBadge: "SECURITY",
+    techSpec: "CCTV AI 4K hồng ngoại · Đầu dò nhiệt khói & ẩm kế tự động",
   },
   {
     icon: FileText,
     title: "Hợp đồng số & Bàn giao ảnh",
     description:
       "Mọi lịch sử nhận/trả kho đều được chụp ảnh đối soát minh bạch qua Thẻ nhận kho kỹ thuật số và hợp đồng điện tử có giá trị pháp lý",
+    techTag: "AUDIT // DIGITAL PASS",
+    techBadge: "VERIFIED",
+    techSpec: "Biên bản bàn giao số gắn timestamp & đối soát ảnh hiện trạng",
   },
 ];
 
@@ -209,18 +246,36 @@ const STEPS = [
     title: "Chọn kho trực tuyến",
     description:
       "Khám phá sơ đồ kho 3D trực quan, lọc diện tích từ 1.5m² đến 16m² phù hợp chính xác ngân sách và lượng đồ đạc của bạn",
+    visualAsset: {
+      tag: "ASSET // 3D UNIT MAP PICKER",
+      spec: "INTERACTIVE UI [16:9 · GIF / WEBP]",
+      caption: "Sơ đồ mặt bằng 3D trực quan tương tác đa tầng & bộ lọc diện tích theo nhu cầu",
+      icon: Browsers,
+    },
   },
   {
     step: "02",
     title: "Đặt cọc 10% & Nhận PIN",
     description:
       "Thanh toán cọc 10% an toàn trực tuyến. Hệ thống lập tức kích hoạt hợp đồng điện tử và cấp mã PIN mở kho riêng cho bạn",
+    visualAsset: {
+      tag: "ASSET // VIETQR & INSTANT PIN",
+      spec: "CHECKOUT FLOW [16:9 · UI SCREEN]",
+      caption: "Giao diện thanh toán VietQR động tự động khớp lệnh & sinh mã PIN trong 5 giây",
+      icon: QrCode,
+    },
   },
   {
     step: "03",
     title: "Tự do mở kho 24/7",
     description:
       "Đến cơ sở bất kỳ lúc nào ngày hay đêm, nhập mã PIN tại cửa ra vào và ô kho. Quản lý kho hoàn toàn chủ động và riêng tư",
+    visualAsset: {
+      tag: "ASSET // 24/7 SMART KEYPAD",
+      spec: "HARDWARE ACCESS [16:9 · PHOTO]",
+      caption: "Bàn phím số công nghiệp hiện đại, mở cửa ra vào cơ sở & ô kho không cần gặp lễ tân",
+      icon: LockSimple,
+    },
   },
 ];
 
@@ -446,11 +501,17 @@ export default function LandingPage() {
               <div className="landing-hero__visual">
                 <div className="landing-hero__slider-placeholder">
                   <div className="slider-placeholder__content">
+                    <div className="slider-placeholder__icon-wrap">
+                      <ImageSquare size={32} weight="duotone" className="slider-placeholder__icon" />
+                    </div>
                     <span className="slider-placeholder__badge">
-                      SLIDER // VISUAL SHOWCASE
+                      ASSET // HERO SHOWCASE SLIDER
+                    </span>
+                    <span className="slider-placeholder__spec">
+                      16:10 INTERACTIVE CAROUSEL [1920×1200]
                     </span>
                     <span className="slider-placeholder__hint">
-                      Reserved for Future Image & Facility Slider
+                      Chuỗi slide ảnh cơ sở thực tế, hành lang kho sạch sẽ & thao tác mở kho 24/7
                     </span>
                   </div>
                 </div>
@@ -545,6 +606,22 @@ export default function LandingPage() {
                     <div className="size-card__area">{unit.sizeM2}</div>
                   </div>
 
+                  {/* 3D Isometric Cutaway Visual Slot */}
+                  <div className="size-card__visual-slot" aria-label={`Bản vẽ 3D minh họa ${unit.name}`}>
+                    <div className="visual-placeholder visual-placeholder--size">
+                      <div className="visual-placeholder__inner">
+                        <div className="visual-placeholder__icon-wrap">
+                          <Cube size={26} weight="duotone" className="visual-placeholder__icon" />
+                        </div>
+                        <div className="visual-placeholder__meta">
+                          <span className="visual-placeholder__tag">{unit.visualAsset.tag}</span>
+                          <span className="visual-placeholder__spec">{unit.visualAsset.spec}</span>
+                        </div>
+                        <p className="visual-placeholder__caption">{unit.visualAsset.caption}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="size-card__pricing">
                     <span className="size-card__price">{unit.priceText}</span>
                     <span className="size-card__deposit-tag">Cọc online 10%</span>
@@ -633,6 +710,17 @@ export default function LandingPage() {
                     <div className="pillar-card__number">0{idx + 1}</div>
                     <h3 className="pillar-card__title">{p.title}</h3>
                     <p className="pillar-card__desc">{p.description}</p>
+
+                    {/* Micro-Technical Schematic Slot */}
+                    <div className="pillar-card__tech-slot">
+                      <div className="visual-placeholder visual-placeholder--pillar">
+                        <div className="visual-placeholder__pillar-header">
+                          <span className="visual-placeholder__tag">{p.techTag}</span>
+                          <span className="visual-placeholder__badge-mini">{p.techBadge}</span>
+                        </div>
+                        <span className="visual-placeholder__spec">{p.techSpec}</span>
+                      </div>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -683,34 +771,54 @@ export default function LandingPage() {
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.25 }}
               >
-                {STEPS.map((s, idx) => (
-                  <motion.div
-                    key={idx}
-                    className="step-card"
-                    variants={{
-                      hidden: { opacity: 0, y: 30 },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        transition: { duration: 0.5, ease: SOFT_EASE },
-                      },
-                    }}
-                    whileHover={{
-                      y: -4,
-                      boxShadow: "6px 6px 0px var(--color-ink)",
-                      transition: { duration: 0.15, ease: SOFT_EASE },
-                    }}
-                  >
-                    <div className="step-card__badge">BƯỚC {s.step}</div>
-                    <h3 className="step-card__title">{s.title}</h3>
-                    <p className="step-card__desc">{s.description}</p>
-                    <div className="step-card__footer">
-                      {idx === 0 && <span className="step-sub">3D Catalog trực tuyến</span>}
-                      {idx === 1 && <span className="step-sub">VietQR & Hợp đồng số</span>}
-                      {idx === 2 && <span className="step-sub">Bàn giao số qua Check-in Pass</span>}
-                    </div>
-                  </motion.div>
-                ))}
+                {STEPS.map((s, idx) => {
+                  const StepIcon = s.visualAsset.icon;
+                  return (
+                    <motion.div
+                      key={idx}
+                      className="step-card"
+                      variants={{
+                        hidden: { opacity: 0, y: 30 },
+                        visible: {
+                          opacity: 1,
+                          y: 0,
+                          transition: { duration: 0.5, ease: SOFT_EASE },
+                        },
+                      }}
+                      whileHover={{
+                        y: -4,
+                        boxShadow: "6px 6px 0px var(--color-ink)",
+                        transition: { duration: 0.15, ease: SOFT_EASE },
+                      }}
+                    >
+                      <div className="step-card__badge">BƯỚC {s.step}</div>
+                      <h3 className="step-card__title">{s.title}</h3>
+                      <p className="step-card__desc">{s.description}</p>
+
+                      {/* Step Media Preview Placeholder */}
+                      <div className="step-card__visual-slot" aria-label={`Minh họa bước ${s.step}: ${s.title}`}>
+                        <div className="visual-placeholder visual-placeholder--step">
+                          <div className="visual-placeholder__inner">
+                            <div className="visual-placeholder__icon-wrap">
+                              <StepIcon size={26} weight="duotone" className="visual-placeholder__icon" />
+                            </div>
+                            <div className="visual-placeholder__meta">
+                              <span className="visual-placeholder__tag">{s.visualAsset.tag}</span>
+                              <span className="visual-placeholder__spec">{s.visualAsset.spec}</span>
+                            </div>
+                            <p className="visual-placeholder__caption">{s.visualAsset.caption}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="step-card__footer">
+                        {idx === 0 && <span className="step-sub">3D Catalog trực tuyến</span>}
+                        {idx === 1 && <span className="step-sub">VietQR & Hợp đồng số</span>}
+                        {idx === 2 && <span className="step-sub">Bàn giao số qua Check-in Pass</span>}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </motion.div>
             </div>
           </div>
@@ -764,7 +872,27 @@ export default function LandingPage() {
                     <span className="status-dot-pulse-mini" aria-hidden="true" />
                     Đang hoạt động
                   </span>
+                  <span className="facility-card__code">SGN-TB01</span>
                 </div>
+
+                {/* High-Impact Visual Slot: Tân Bình Facade & Loading Bay */}
+                <div className="facility-card__visual-slot" aria-label="Hình ảnh cơ sở Tân Bình">
+                  <div className="visual-placeholder visual-placeholder--facility">
+                    <div className="visual-placeholder__inner">
+                      <div className="visual-placeholder__icon-wrap">
+                        <Camera size={30} weight="duotone" className="visual-placeholder__icon" />
+                      </div>
+                      <div className="visual-placeholder__meta">
+                        <span className="visual-placeholder__tag">ASSET // FACILITY PHOTOGRAPHY</span>
+                        <span className="visual-placeholder__spec">FACADE & 5T LOADING BAY [16:9 · 1920×1080]</span>
+                      </div>
+                      <p className="visual-placeholder__caption">
+                        Ảnh chụp thực tế mặt tiền 123 Hoàng Văn Thụ, sảnh đỗ xe tải 5 tấn & hệ thống cửa cuốn tự động 24/7
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <h3 className="facility-card__name">Cơ sở Tân Bình</h3>
                 <div className="facility-card__address">
                   <MapPin size={18} weight="bold" className="icon-red" />
@@ -823,7 +951,27 @@ export default function LandingPage() {
                   <span className="facility-badge facility-badge--upcoming">
                     ▲ Sắp khai trương
                   </span>
+                  <span className="facility-card__code">SGN-Q702</span>
                 </div>
+
+                {/* High-Impact Visual Slot: Quận 7 Concept Render */}
+                <div className="facility-card__visual-slot" aria-label="Phối cảnh cơ sở Quận 7">
+                  <div className="visual-placeholder visual-placeholder--facility">
+                    <div className="visual-placeholder__inner">
+                      <div className="visual-placeholder__icon-wrap">
+                        <Buildings size={30} weight="duotone" className="visual-placeholder__icon" />
+                      </div>
+                      <div className="visual-placeholder__meta">
+                        <span className="visual-placeholder__tag">ASSET // ARCHITECTURAL CGI</span>
+                        <span className="visual-placeholder__spec">CONCEPT RENDERING [16:9 · 1920×1080]</span>
+                      </div>
+                      <p className="visual-placeholder__caption">
+                        Bản vẽ phối cảnh 3D kiến trúc cơ sở thông minh Nam Sài Gòn, hệ thống kho vi khí hậu nhiệt-ẩm tiêu chuẩn cao
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <h3 className="facility-card__name">Cơ sở Quận 7</h3>
                 <div className="facility-card__address">
                   <MapPin size={18} weight="bold" className="icon-muted" />
