@@ -378,14 +378,12 @@ export default function LandingPage() {
                   <motion.span className="hero-title-line" variants={titleLineVariants}>
                     Lưu Trữ Thông Minh
                   </motion.span>
-                  <br />
                   <motion.span
                     className="hero-title-line landing-hero__title-accent"
                     variants={titleLineVariants}
                   >
                     Tự Quản Tuyệt Đối
                   </motion.span>
-                  <br />
                   <motion.span className="hero-title-line" variants={titleLineVariants}>
                     Bảo Mật 24/7
                   </motion.span>
