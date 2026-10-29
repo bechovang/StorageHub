@@ -445,10 +445,33 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.facility-card:hover .facility-asset-img {
+.facility-asset-img--idle {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.facility-asset-img--hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.facility-card:hover .facility-asset-img--idle {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.facility-card:hover .facility-asset-img--hover {
+  opacity: 1;
   transform: scale(1.04);
 }
 

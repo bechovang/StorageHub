@@ -161,10 +161,10 @@ const STORAGE_SIZES = [
       "Kiểm soát nhiệt độ & chống ẩm mốc",
     ],
     visualAsset: {
-      idleSrc: "/assets/landing/size-locker-idle.svg",
-      hoverSrc: "/assets/landing/size-locker-hover.svg",
-      tag: "ISO 3D // LOCKER 1.5 M²",
-      caption: "Cửa tủ mở ajar, dải LED đỏ bật sáng & thùng trượt hiển thị kích thước",
+      idleSrc: "/assets/landing/size-locker.png",
+      hoverSrc: "/assets/landing/size-locker-hover.png",
+      tag: "SKETCH // LOCKER 1.5 M²",
+      caption: "Cửa tủ hé mở, dải LED và khoang chứa tài liệu tối ưu",
     },
   },
   {
@@ -184,10 +184,10 @@ const STORAGE_SIZES = [
       "Cảm biến nhiệt khói & PCCC tự động",
     ],
     visualAsset: {
-      idleSrc: "/assets/landing/size-mini-s-idle.svg",
-      hoverSrc: "/assets/landing/size-mini-s-hover.svg",
-      tag: "ISO 3D // MINI S 4.0 M²",
-      caption: "Đèn pha xe máy quét sáng mặt sàn, thùng hàng kích hoạt đai đỏ bảo mật",
+      idleSrc: "/assets/landing/size-s.png",
+      hoverSrc: "/assets/landing/size-s-hover.png",
+      tag: "SKETCH // MINI S 4.0 M²",
+      caption: "Cửa cuốn mở nửa khoang, thùng carton phác thảo sẵn sàng bốc dỡ",
     },
   },
   {
@@ -207,10 +207,10 @@ const STORAGE_SIZES = [
       "Sát thang máy hàng tải trọng 2 tấn",
     ],
     visualAsset: {
-      idleSrc: "/assets/landing/size-family-m-idle.svg",
-      hoverSrc: "/assets/landing/size-family-m-hover.svg",
-      tag: "ISO 3D // FAMILY M 8.0 M²",
-      caption: "Tủ lạnh hé luồng khí mát, nhãn đỏ 8.0m² Full tải & sofa kích hoạt",
+      idleSrc: "/assets/landing/size-m.png",
+      hoverSrc: "/assets/landing/size-m-hover.png",
+      tag: "SKETCH // FAMILY M 8.0 M²",
+      caption: "Cửa đôi mở rộng, phác thảo nội thất gia đình & sofa tiện nghi",
     },
   },
   {
@@ -230,10 +230,10 @@ const STORAGE_SIZES = [
       "Hỗ trợ xe nâng tay & xe kéo hàng tại chỗ",
     ],
     visualAsset: {
-      idleSrc: "/assets/landing/size-business-l-idle.svg",
-      hoverSrc: "/assets/landing/size-business-l-hover.svg",
-      tag: "ISO 3D // WAREHOUSE L 16.0 M²",
-      caption: "Xe nâng tay kích hoạt nâng pallet kiện hàng, cửa cuốn nâng cao 2.4m",
+      idleSrc: "/assets/landing/size-l.png",
+      hoverSrc: "/assets/landing/size-l-hover.png",
+      tag: "SKETCH // WAREHOUSE L 16.0 M²",
+      caption: "Cửa kho hàng mở rộng, phác thảo kiện pallet & xe nâng tay",
     },
   },
 ];
@@ -286,10 +286,10 @@ const STEPS = [
     description:
       "Khám phá sơ đồ kho 3D trực quan, lọc diện tích từ 1.5m² đến 16m² phù hợp chính xác ngân sách và lượng đồ đạc của bạn",
     visualAsset: {
-      idleSrc: "/assets/landing/step-01-picker-idle.svg",
-      hoverSrc: "/assets/landing/step-01-picker-hover.svg",
-      tag: "STEP 01 // 3D MAP PICKER",
-      caption: "Mặt bằng 3D kiến trúc đa tầng: Rê chuột để kho 204 chuyển đỏ & hiện thông số",
+      idleSrc: "/assets/landing/step-select.png",
+      hoverSrc: "/assets/landing/step-select-hover.png",
+      tag: "STEP 01 // FLOORPLAN SKETCH",
+      caption: "Phác thảo sơ đồ kho: Khoang chọn nảy lên cùng kim ghim đỏ định vị",
     },
   },
   {
@@ -298,10 +298,10 @@ const STEPS = [
     description:
       "Thanh toán cọc 10% an toàn trực tuyến. Hệ thống lập tức kích hoạt hợp đồng điện tử và cấp mã PIN mở kho riêng cho bạn",
     visualAsset: {
-      idleSrc: "/assets/landing/step-02-vietqr-idle.svg",
-      hoverSrc: "/assets/landing/step-02-vietqr-hover.svg",
-      tag: "STEP 02 // VIETQR & PIN CODE",
-      caption: "Tia laser quét mã VietQR tự động khớp lệnh cọc & sinh mã PIN số 6 chữ số trong 2.4s",
+      idleSrc: "/assets/landing/step-payment.png",
+      hoverSrc: "/assets/landing/step-payment-hover.png",
+      tag: "STEP 02 // VIETQR & PIN SKETCH",
+      caption: "Màn hình thanh toán sáng bừng huy hiệu xác nhận cọc thành công",
     },
   },
   {
@@ -310,10 +310,10 @@ const STEPS = [
     description:
       "Đến cơ sở bất kỳ lúc nào ngày hay đêm, nhập mã PIN tại cửa ra vào và ô kho. Quản lý kho hoàn toàn chủ động và riêng tư",
     visualAsset: {
-      idleSrc: "/assets/landing/step-03-keypad-idle.svg",
-      hoverSrc: "/assets/landing/step-03-keypad-hover.svg",
-      tag: "STEP 03 // 24/7 SMART KEYPAD",
-      caption: "Chạm phím số kích hoạt sóng xác thực không dây, chốt từ mở kho tức thì với đèn LED xanh",
+      idleSrc: "/assets/landing/step-access.png",
+      hoverSrc: "/assets/landing/step-access-hover.png",
+      tag: "STEP 03 // SMART KEYPAD SKETCH",
+      caption: "Bàn phím mở chốt thông minh với sóng xung xác thực tự động",
     },
   },
 ];
@@ -905,13 +905,20 @@ export default function LandingPage() {
                 <div className="facility-card__visual-slot" aria-label="Hình ảnh cơ sở Tân Bình">
                   <div className="facility-asset-frame">
                     <img
-                      src="/assets/landing/facility-tanbinh.webp"
-                      alt="Ảnh chụp thực tế mặt tiền 123 Hoàng Văn Thụ, sảnh đỗ xe tải 5 tấn & hệ thống cửa cuốn tự động 24/7"
-                      className="facility-asset-img"
+                      src="/assets/landing/facility-tanbinh.png"
+                      alt="Bản vẽ phác thảo kiến trúc cơ sở Tân Bình, sảnh đỗ xe tải 5 tấn & hệ thống cửa cuốn tự động 24/7"
+                      className="facility-asset-img facility-asset-img--idle"
                       loading="lazy"
                     />
+                    <img
+                      src="/assets/landing/facility-tanbinh-hover.png"
+                      alt="Bản vẽ phác thảo cơ sở Tân Bình ban đêm với ánh sáng hoạt động 24/7"
+                      className="facility-asset-img facility-asset-img--hover"
+                      loading="lazy"
+                      aria-hidden="true"
+                    />
                     <div className="facility-asset-overlay">
-                      <span className="facility-asset-tag">MẶT TIỀN 123 HOÀNG VĂN THỤ · SẢNH XE TẢI 5T</span>
+                      <span className="facility-asset-tag">BẢN VẼ PHÁC THẢO · 123 HOÀNG VĂN THỤ</span>
                       <span className="facility-asset-indicator">HOẠT ĐỘNG 24/7</span>
                     </div>
                   </div>
@@ -982,13 +989,20 @@ export default function LandingPage() {
                 <div className="facility-card__visual-slot" aria-label="Phối cảnh cơ sở Quận 7">
                   <div className="facility-asset-frame">
                     <img
-                      src="/assets/landing/facility-quan7.webp"
-                      alt="Bản vẽ phối cảnh 3D kiến trúc cơ sở thông minh Nam Sài Gòn, hệ thống kho vi khí hậu nhiệt-ẩm tiêu chuẩn cao"
-                      className="facility-asset-img"
+                      src="/assets/landing/facility-quan7.png"
+                      alt="Bản vẽ phác thảo kiến trúc cơ sở thông minh Nam Sài Gòn, hệ thống kho vi khí hậu nhiệt-ẩm tiêu chuẩn cao"
+                      className="facility-asset-img facility-asset-img--idle"
                       loading="lazy"
                     />
+                    <img
+                      src="/assets/landing/facility-quan7-hover.png"
+                      alt="Bản vẽ phác thảo kiến trúc cơ sở Quận 7 hoàng hôn lung linh"
+                      className="facility-asset-img facility-asset-img--hover"
+                      loading="lazy"
+                      aria-hidden="true"
+                    />
                     <div className="facility-asset-overlay">
-                      <span className="facility-asset-tag">PHỐI CẢNH 3D · NAM SÀI GÒN PHÚ MỸ HƯNG</span>
+                      <span className="facility-asset-tag">BẢN VẼ PHÁC THẢO · NAM SÀI GÒN PHÚ MỸ HƯNG</span>
                       <span className="facility-asset-indicator facility-asset-indicator--upcoming">DỰ KIẾN Q4/2026</span>
                     </div>
                   </div>
