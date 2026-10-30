@@ -34,7 +34,11 @@ export default function BookingReview({
 }) {
   const [showContractModal, setShowContractModal] = useState(false);
   const unit = reservation?.unit || {};
-  const totalRent = (unit.monthlyPrice || 345000) * (reservation?.durationMonths || 3);
+  const durationDays = reservation?.durationDays || (reservation?.durationMonths ? reservation.durationMonths * 30 : 30);
+  const monthlyPrice = unit.monthlyPrice || 345000;
+  const dailyPrice = reservation?.dailyRent || Math.max(1, Math.round(monthlyPrice / 30));
+  const totalRent = reservation?.totalRent ||
+    ((durationDays % 30 === 0) ? monthlyPrice * (durationDays / 30) : dailyPrice * durationDays);
   const initials = user?.fullName
     ? user.fullName
       .split(" ")
@@ -113,8 +117,10 @@ export default function BookingReview({
             <div className="unit-params-grid">
               <div className="param-cell">
                 <span className="param-cell__label">Thời hạn thuê</span>
-                <p className="param-cell__value">{reservation?.durationMonths || 3} Tháng</p>
-                <span className="param-cell__sub">Hợp đồng linh hoạt</span>
+                <p className="param-cell__value">{durationDays} Ngày</p>
+                <span className="param-cell__sub">
+                  {durationDays % 30 === 0 ? `(~${durationDays / 30} tháng)` : "Linh hoạt theo ngày"}
+                </span>
               </div>
 
               <div className="param-cell">
@@ -198,7 +204,7 @@ export default function BookingReview({
             <div className="ledger-lines">
               <div className="ledger-item">
                 <span className="ledger-item__label">
-                  Tiền thuê cơ sở ({reservation?.durationMonths || 3} tháng)
+                  Tiền thuê kho ({durationDays} ngày{durationDays % 30 === 0 ? ` · ~${durationDays / 30} tháng` : ""})
                 </span>
                 <span className="ledger-item__val">{formatVND(totalRent)}</span>
               </div>
@@ -214,7 +220,7 @@ export default function BookingReview({
               </div>
 
               <div className="ledger-item ledger-item--total">
-                <span className="ledger-item__label">Tổng giá trị hợp đồng ({reservation?.durationMonths || 3} tháng)</span>
+                <span className="ledger-item__label">Tổng giá trị hợp đồng ({durationDays} ngày)</span>
                 <span className="ledger-item__val">{formatVND(totalRent)}</span>
               </div>
             </div>

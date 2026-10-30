@@ -22,8 +22,11 @@ export default function UnitDetailPage() {
     unit,
     loading,
     copiedLink,
+    durationDays,
+    setDurationDays,
     durationMonths,
     setDurationMonths,
+    dailyRent,
     startDate,
     setStartDate,
     quoteLoading,
@@ -202,8 +205,11 @@ export default function UnitDetailPage() {
           {/* ═══════════ CỘT PHẢI: BẢNG GIÁ MINH BẠCH & DỰ TOÁN THUÊ (5 COLS) ═══════════ */}
           <aside className="unit-detail-right-col">
             <UnitPricingCalculator
+              durationDays={durationDays}
+              setDurationDays={setDurationDays}
               durationMonths={durationMonths}
               setDurationMonths={setDurationMonths}
+              dailyRent={dailyRent}
               startDate={startDate}
               setStartDate={setStartDate}
               endDate={endDate}

@@ -179,18 +179,21 @@ export function usePayment() {
         if (paramUnitId) {
           try {
             const u = await getUnitDetail(paramUnitId);
-            const duration = parseInt(
-              searchParams.get("durationMonths") || searchParams.get("duration") || 3,
-              10
-            );
+            const durationDaysParam = searchParams.get("durationDays") || searchParams.get("duration-days");
+            const durationMonthsParam = searchParams.get("durationMonths") || searchParams.get("duration");
+            const durationDays = durationDaysParam
+              ? Math.max(1, parseInt(durationDaysParam, 10))
+              : (durationMonthsParam ? Math.max(1, parseInt(durationMonthsParam, 10)) * 30 : 30);
+            const durationMonths = Math.max(1, Math.round(durationDays / 30));
             const start = searchParams.get("startDate") || "2026-10-03";
-            const monthly = u.baseMonthlyRent || 345000;
-            const deposit = Math.round((monthly * duration * 10) / 100);
+            const monthly = u.baseMonthlyRent || u.monthlyPrice || 345000;
+            const daily = Math.max(1, Math.round(monthly / 30));
+            const totalRent = (durationDays % 30 === 0) ? (monthly * (durationDays / 30)) : (daily * durationDays);
+            const deposit = Math.round(totalRent * 0.1);
 
             const sDate = new Date(start);
             const eDate = new Date(sDate);
-            eDate.setMonth(eDate.getMonth() + duration);
-            eDate.setDate(eDate.getDate() - 1);
+            eDate.setDate(eDate.getDate() + durationDays - 1);
 
             if (isMounted) {
               setReservation({
@@ -200,7 +203,10 @@ export function usePayment() {
                 status: "PENDING_PAYMENT",
                 depositAmount: deposit,
                 depositStatus: "UNPAID",
-                durationMonths: duration,
+                durationDays: durationDays,
+                durationMonths: durationMonths,
+                dailyRent: daily,
+                totalRent: totalRent,
                 startDate: start,
                 endDate: eDate.toISOString().split("T")[0],
                 unit: {
@@ -208,6 +214,7 @@ export function usePayment() {
                   sizeM2: u.sizeM2 || 5,
                   typeName: u.typeName || "Kho tiêu chuẩn",
                   monthlyPrice: monthly,
+                  dailyPrice: daily,
                   depot: u.facilityName || "Tân Bình Gateway",
                   building: `Tòa nhà B · Tầng ${u.floor || 1}`,
                   dimensions: u.dimensions || `${u.sizeM2} m²`,
@@ -498,6 +505,7 @@ export function usePayment() {
           const created = await paymentService.createReservation({
             unitId: reservation.draftUnitId,
             startDate: reservation.startDate,
+            durationDays: reservation.durationDays,
             durationMonths: reservation.durationMonths || 3,
           });
           reservationId = created.id;
@@ -507,6 +515,7 @@ export function usePayment() {
             code: created.code,
             status: created.status,
             depositAmount: created.depositAmount,
+            durationDays: created.durationDays || prev.durationDays,
             draftUnitId: undefined,
           }));
           loadPaymentHistory(created.id);

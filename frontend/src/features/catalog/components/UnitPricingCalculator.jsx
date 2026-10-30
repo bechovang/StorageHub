@@ -3,26 +3,65 @@ import {
   ShieldCheck,
   Lock,
   Clock,
+  Plus,
+  Minus,
 } from "@phosphor-icons/react";
 import { formatVND, formatDate, getTomorrowDate } from "../../../utils/formatters.js";
 import UnitAvailabilityCalendar from "./UnitAvailabilityCalendar.jsx";
 
+const PRESET_DAY_OPTIONS = [
+  { days: 7, label: "7 ngày", hint: "1 tuần" },
+  { days: 15, label: "15 ngày", hint: "Nửa tháng" },
+  { days: 30, label: "30 ngày", hint: "1 tháng" },
+  { days: 60, label: "60 ngày", hint: "2 tháng" },
+  { days: 90, label: "90 ngày", hint: "3 tháng" },
+  { days: 180, label: "180 ngày", hint: "6 tháng" },
+];
+
 export default function UnitPricingCalculator({
-  durationMonths,
-  setDurationMonths,
-  startDate,
-  setStartDate,
-  endDate,
+  durationDays = 30,
+  setDurationDays,
+  dailyRent,
   monthlyRent,
   totalRent,
   depositAmount,
   dueNow,
-  policyVersion,
+  startDate,
+  setStartDate,
+  endDate,
+  policyVersion = "v3",
   quoteLoading,
   isSoon,
   availableDate,
   onBookNow,
 }) {
+  const effectiveDailyRent = dailyRent || Math.max(1, Math.round(monthlyRent / 30));
+
+  const handleStepDays = (delta) => {
+    setDurationDays((prev) => {
+      const next = (prev || 30) + delta;
+      return Math.min(1095, Math.max(1, next));
+    });
+  };
+
+  const handleCustomDaysChange = (e) => {
+    const rawVal = e.target.value;
+    if (rawVal === "") {
+      setDurationDays("");
+      return;
+    }
+    const parsed = parseInt(rawVal, 10);
+    if (!isNaN(parsed)) {
+      setDurationDays(Math.min(1095, Math.max(1, parsed)));
+    }
+  };
+
+  const handleCustomDaysBlur = () => {
+    if (!durationDays || durationDays < 1) {
+      setDurationDays(30);
+    }
+  };
+
   return (
     <div className="unit-detail-pricing-panel">
       {/* Header bảng giá */}
@@ -30,28 +69,25 @@ export default function UnitPricingCalculator({
         <div>
           <h2 className="pricing-panel-title">DỰ TOÁN CHI PHÍ THUÊ</h2>
           <p className="pricing-panel-sub">
-            Giá thuê rõ ràng, không phụ phí ẩn
+            Thuê linh hoạt theo ngày · Không phụ phí ẩn
           </p>
         </div>
       </div>
 
-      {/* Bộ chọn thời gian thuê (Lease Duration Selector) */}
+      {/* ── Bộ chọn thời hạn thuê theo ngày ── */}
       <div className="pricing-selector-group">
-        <label htmlFor="duration-select" className="pricing-selector-label">
-          THỜI HẠN THUÊ CAM KẾT
+        <label htmlFor="custom-days-input" className="pricing-selector-label">
+          THỜI HẠN THUÊ THEO NGÀY
         </label>
-        <div className="pricing-duration-buttons">
-          {[
-            { months: 1, label: "1 tháng", hint: "Linh hoạt" },
-            { months: 3, label: "3 tháng", hint: "Phổ biến" },
-            { months: 6, label: "6 tháng", hint: "Tiết kiệm 5%" },
-            { months: 12, label: "12 tháng", hint: "Ưu đãi 10%" },
-          ].map((item) => (
+
+        {/* Các mốc ngày phổ biến */}
+        <div className="pricing-duration-buttons pricing-duration-buttons--days">
+          {PRESET_DAY_OPTIONS.map((item) => (
             <button
-              key={item.months}
+              key={item.days}
               type="button"
-              className={`pricing-duration-btn ${durationMonths === item.months ? "is-selected" : ""}`}
-              onClick={() => setDurationMonths(item.months)}
+              className={`pricing-duration-btn ${Number(durationDays) === item.days ? "is-selected" : ""}`}
+              onClick={() => setDurationDays(item.days)}
             >
               <span className="pricing-duration-btn__months">
                 {item.label}
@@ -61,6 +97,44 @@ export default function UnitPricingCalculator({
               </span>
             </button>
           ))}
+        </div>
+
+        {/* Bộ đếm và nhập số ngày tùy chỉnh */}
+        <div className="pricing-custom-stepper-box">
+          <span className="pricing-stepper-label">Hoặc nhập số ngày cụ thể (1 – 1.095 ngày):</span>
+          <div className="pricing-stepper-control">
+            <button
+              type="button"
+              className="pricing-stepper-btn"
+              onClick={() => handleStepDays(-1)}
+              aria-label="Giảm 1 ngày"
+            >
+              <Minus size={14} weight="bold" />
+            </button>
+
+            <div className="pricing-stepper-field">
+              <input
+                id="custom-days-input"
+                type="number"
+                min="1"
+                max="1095"
+                value={durationDays}
+                onChange={handleCustomDaysChange}
+                onBlur={handleCustomDaysBlur}
+                className="pricing-stepper-input"
+              />
+              <span className="pricing-stepper-unit">ngày</span>
+            </div>
+
+            <button
+              type="button"
+              className="pricing-stepper-btn"
+              onClick={() => handleStepDays(1)}
+              aria-label="Tăng 1 ngày"
+            >
+              <Plus size={14} weight="bold" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -83,8 +157,8 @@ export default function UnitPricingCalculator({
             <CalendarCheck size={14} weight="bold" />
             <span>
               Chu kỳ thuê: <strong>{formatDate(startDate)}</strong> →{" "}
-              <strong>{formatDate(endDate)}</strong> ({durationMonths}{" "}
-              tháng)
+              <strong>{formatDate(endDate)}</strong> ({durationDays} ngày
+              {durationDays % 30 === 0 ? ` · ~${durationDays / 30} tháng` : ""})
             </span>
           </p>
         )}
@@ -96,12 +170,14 @@ export default function UnitPricingCalculator({
       <div className="pricing-breakdown-list">
         <span className="pricing-breakdown-heading">CHI TIẾT CHI PHÍ</span>
 
-        {/* 1. Dòng tiền thuê cơ bản: Rent × Duration */}
+        {/* 1. Dòng tiền thuê cơ bản: Daily/Monthly Rent × Duration */}
         <div className="pricing-breakdown-row">
           <div className="pricing-row-left">
             <span className="pricing-row-label">Tiền thuê kho</span>
             <span className="pricing-row-hint">
-              {formatVND(monthlyRent)} × {durationMonths} tháng
+              {durationDays % 30 === 0
+                ? `${formatVND(monthlyRent)} / tháng × ${durationDays / 30} tháng (${durationDays} ngày)`
+                : `${formatVND(effectiveDailyRent)} / ngày × ${durationDays} ngày`}
             </span>
           </div>
           <strong className="pricing-row-val">{formatVND(totalRent)}</strong>
@@ -121,9 +197,9 @@ export default function UnitPricingCalculator({
         {/* 3. Phí dịch vụ bảo dưỡng & hạ tầng */}
         <div className="pricing-breakdown-row">
           <div className="pricing-row-left">
-            <span className="pricing-row-label">Phí bảo trì & Quản lý cơ sở</span>
+            <span className="pricing-row-label">Phí bảo trì &amp; Quản lý cơ sở</span>
             <span className="pricing-row-hint">
-              Bao gồm camera CCTV 24/7 & vệ sinh hành lang định kỳ
+              Bao gồm camera CCTV 24/7 &amp; vệ sinh hành lang định kỳ
             </span>
           </div>
           <strong className="pricing-row-val pricing-free">MIỄN PHÍ</strong>
@@ -162,7 +238,7 @@ export default function UnitPricingCalculator({
         onClick={onBookNow}
         disabled={quoteLoading}
       >
-        <span>Đặt kho & Thanh toán cọc giữ chỗ</span>
+        <span>Đặt kho &amp; Thanh toán cọc giữ chỗ</span>
         <span className="pricing-submit-btn__arrow">→</span>
       </button>
 

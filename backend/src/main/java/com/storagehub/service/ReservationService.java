@@ -243,7 +243,19 @@ public class ReservationService {
 
         Long unitId = request.unitId();
         LocalDate startDate = request.startDate();
+        Integer durationDays = request.durationDays();
         Integer durationMonths = request.durationMonths();
+
+        if ((durationDays == null || durationDays < 1) && (durationMonths == null || durationMonths < 1)) {
+            throw new IllegalArgumentException("Vui lòng chọn thời hạn thuê kho.");
+        }
+
+        if (durationDays == null || durationDays < 1) {
+            durationDays = durationMonths * 30;
+        }
+        if (durationMonths == null || durationMonths < 1) {
+            durationMonths = Math.max(1, (int) Math.round((double) durationDays / 30.0));
+        }
 
         // 1. Kiểm tra tồn tại của unit
         Unit unit = unitRepository.findWithDetailsById(unitId)
@@ -285,7 +297,9 @@ public class ReservationService {
         }
 
         // C. Kiểm tra Anti-Overlap với các reservations đã xác nhận / đang thuê (RESERVED, CHECKED_IN, CHECKOUT_REQUESTED)
-        LocalDate endDate = startDate.plusMonths(durationMonths).minusDays(1);
+        LocalDate endDate = (durationDays != null && (durationMonths == null || durationDays != durationMonths * 30))
+                ? startDate.plusDays(durationDays - 1)
+                : startDate.plusMonths(durationMonths).minusDays(1);
         if (!isTaken) {
             List<Reservation> activeReservations = reservationRepository.findActiveReservationsForUnit(
                     unit.getUnitId(),
@@ -304,7 +318,7 @@ public class ReservationService {
 
         // 3. Nếu bị chiếm giữa chừng: đếm unit tương tự và ném 409
         if (isTaken) {
-            int similarCount = countSimilarAvailableUnits(unit, startDate, durationMonths, bufferDays, today);
+            int similarCount = countSimilarAvailableUnits(unit, startDate, endDate, bufferDays, today);
             String message = similarCount > 0
                     ? String.format("%s vừa được đặt. %d unit tương tự còn trống.", unit.getCode(), similarCount)
                     : String.format("%s vừa được đặt. Không còn unit tương tự trống trong thời gian này.", unit.getCode());
@@ -312,7 +326,9 @@ public class ReservationService {
         }
 
         // 4. Tính toán bảng giá minh bạch snapshot theo AD-11
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, durationMonths);
+        QuoteResponse quote = (durationDays != null && (durationMonths == null || durationDays != durationMonths * 30))
+                ? pricingEngine.calculateQuoteByDays(unit, startDate, durationDays, durationMonths)
+                : pricingEngine.calculateQuote(unit, startDate, durationMonths);
 
         // 5. Sinh mã đặt chỗ duy nhất BK-YYYY-NNNN
         String code = generateReservationCode();
@@ -346,6 +362,7 @@ public class ReservationService {
                 savedReservation.getDepositAmount().longValue(),
                 null,
                 durationMonths,
+                durationDays,
                 quote,
                 savedReservation.getStartDate(),
                 null,
@@ -519,7 +536,7 @@ public class ReservationService {
                 "Gia hạn áp dụng — cọc giữ mới " + newDepositHeld + " ₫");
     }
 
-    private int countSimilarAvailableUnits(Unit currentUnit, LocalDate startDate, int durationMonths, int bufferDays, LocalDate today) {
+    private int countSimilarAvailableUnits(Unit currentUnit, LocalDate startDate, LocalDate endDate, int bufferDays, LocalDate today) {
         List<Unit> similarCandidates = unitRepository.findSimilarCandidateUnits(
                 currentUnit.getType().getTypeId(),
                 currentUnit.getUnitId(),
@@ -538,8 +555,6 @@ public class ReservationService {
 
         Map<Long, List<Reservation>> reservationsByUnit = activeReservations.stream()
                 .collect(Collectors.groupingBy(r -> r.getUnit().getUnitId()));
-
-        LocalDate endDate = startDate.plusMonths(durationMonths).minusDays(1);
         LocalDate reqOccupiedEnd = endDate.plusDays(bufferDays);
 
         int count = 0;

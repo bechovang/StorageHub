@@ -300,10 +300,18 @@ public class UnitService {
      * Bảng giá minh bạch (FR-6) tính toán từ PricingEngine (AD-11).
      */
     public QuoteResponse getUnitQuote(Long unitId, LocalDate startDate, Integer durationMonths) {
+        return getUnitQuote(unitId, startDate, null, durationMonths);
+    }
+
+    public QuoteResponse getUnitQuote(Long unitId, LocalDate startDate, Integer durationDays, Integer durationMonths) {
         Unit unit = unitRepository.findById(unitId)
                 .orElseThrow(() -> new UnitNotFoundException("Unit này không tồn tại."));
 
-        return pricingEngine.calculateQuote(unit, startDate, durationMonths);
+        if (durationDays != null && durationDays > 0) {
+            return pricingEngine.calculateQuoteByDays(unit, startDate, durationDays, durationMonths);
+        }
+        int months = (durationMonths != null && durationMonths > 0) ? durationMonths : 1;
+        return pricingEngine.calculateQuote(unit, startDate, months);
     }
 
     /**

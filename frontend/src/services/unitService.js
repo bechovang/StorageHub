@@ -228,43 +228,54 @@ export async function getUnitDetail(unitId) {
  * Tổng tiền thuê = giá thuê tháng × số tháng
  * Tiền cọc giữ chỗ = 10% × tổng tiền thuê
  */
-export async function getUnitQuote(unitId, { startDate, durationMonths = 3 } = {}) {
-  const duration = Math.max(1, parseInt(durationMonths, 10) || 1);
+export async function getUnitQuote(unitId, { startDate, durationDays = 30, durationMonths } = {}) {
+  const effectiveDays = durationDays
+    ? Math.max(1, parseInt(durationDays, 10))
+    : (durationMonths ? Math.max(1, parseInt(durationMonths, 10)) * 30 : 30);
   const effectiveStart = startDate || getTomorrowDate();
   const queryParams = new URLSearchParams();
   queryParams.set("start-date", effectiveStart);
-  queryParams.set("duration-months", duration);
+  queryParams.set("duration-days", effectiveDays);
+  if (durationMonths) {
+    queryParams.set("duration-months", durationMonths);
+  }
 
   try {
     const res = await apiClient(`/api/v1/units/${unitId}/quote?${queryParams.toString()}`);
     if (res.status === 401 || res.status === 403) {
-      return buildFallbackQuote(unitId, effectiveStart, duration);
+      return buildFallbackQuote(unitId, effectiveStart, effectiveDays);
     }
     const data = await safeParseJson(res);
     if (!res.ok) {
-      return buildFallbackQuote(unitId, effectiveStart, duration);
+      return buildFallbackQuote(unitId, effectiveStart, effectiveDays);
     }
     return data;
   } catch {
-    return buildFallbackQuote(unitId, effectiveStart, duration);
+    return buildFallbackQuote(unitId, effectiveStart, effectiveDays);
   }
 }
 
-function buildFallbackQuote(unitId, startDate, durationMonths) {
+function buildFallbackQuote(unitId, startDate, durationDays = 30) {
   const unit = getFacilityUnits().find((u) => Number(u.id) === Number(unitId)) || INITIAL_FACILITY_UNITS[0];
   const monthlyRent = Number(unit.baseRentPrice || 345000);
-  const totalRent = monthlyRent * durationMonths;
+  const dailyRent = Math.max(1, Math.round(monthlyRent / 30));
+  const days = Math.max(1, parseInt(durationDays, 10) || 30);
+  const totalRent = (days % 30 === 0) ? monthlyRent * (days / 30) : dailyRent * days;
   const depositAmount = Math.round(totalRent * 0.1);
   return {
     unitId: unit.id,
     unitCode: unit.code,
     startDate,
-    endDate: addDaysToDateStr(startDate, durationMonths * 30),
-    durationMonths,
+    endDate: addDaysToDateStr(startDate, days - 1),
+    durationDays: days,
+    durationMonths: Math.max(1, Math.round(days / 30)),
+    dailyRent,
     monthlyRent,
     totalRent,
     depositPercent: 10,
     depositAmount,
+    dueNow: depositAmount,
+    policyVersion: "v3",
   };
 }
 

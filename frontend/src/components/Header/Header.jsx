@@ -123,7 +123,7 @@ export default function Header({
     navLinks ||
     (isAuthenticated
       ? roleConfig.links
-      : [{ label: "Khám phá kho", href: "/browse" }]);
+      : []);
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);

@@ -163,14 +163,21 @@ export const paymentService = {
    * @param {Object} payload { unitId, startDate, durationMonths }
    * @returns {Promise<Object>} ReservationDetailResponse
    */
-  async createReservation({ unitId = 1, startDate, durationMonths = 3 }) {
+  async createReservation({ unitId = 1, startDate, durationDays, durationMonths = 3 }) {
+    const body = {
+      unitId,
+      startDate,
+    };
+    if (durationDays) {
+      body.durationDays = Number(durationDays);
+    }
+    if (durationMonths) {
+      body.durationMonths = Number(durationMonths);
+    }
+
     const res = await apiClient("/api/v1/reservations", {
       method: "POST",
-      body: JSON.stringify({
-        unitId,
-        startDate,
-        durationMonths,
-      }),
+      body: JSON.stringify(body),
     });
 
     return handleResponse(res, "RESERVATION_CREATE_FAILED", "Không thể tạo đơn đặt chỗ.");
