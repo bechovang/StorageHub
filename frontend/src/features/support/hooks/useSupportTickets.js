@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import {
   getTickets,
@@ -6,6 +6,7 @@ import {
   resolveSupportTicket,
   escalateSupportTicket,
 } from "../../../services/ticketService.js";
+import { listMyReservations } from "../../../services/rentalService.js";
 
 export function useSupportTickets() {
   const { user } = useAuth();
@@ -20,12 +21,58 @@ export function useSupportTickets() {
     getTickets(isCustomer ? { customerId: user?.id } : {})
   );
 
-  // Modal tạo ticket
+  // Modal tạo ticket & Danh sách kho đang thuê
+  const [rentedUnits, setRentedUnits] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [unitCode, setUnitCode] = useState("S-3");
   const [incidentType, setIncidentType] = useState("DEVICE_ISSUE");
   const [description, setDescription] = useState("");
   const [createError, setCreateError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    listMyReservations({ group: "active" })
+      .then((res) => {
+        if (!isMounted) return;
+        const activeList = res?.items || [];
+        const unitsMap = new Map();
+        activeList.forEach((r) => {
+          const code = r.unit?.code || r.unitCode;
+          if (code && !unitsMap.has(code)) {
+            unitsMap.set(code, {
+              code,
+              typeName: r.unit?.typeName || r.unit?.type || "Kho tiêu chuẩn",
+              sizeM2: r.unit?.sizeM2 || 5,
+              facilityName: r.unit?.facilityName || "Cơ sở Tân Bình",
+            });
+          }
+        });
+        let list = Array.from(unitsMap.values());
+        if (list.length === 0) {
+          list = [
+            { code: "S-3", typeName: "Kho nhỏ (S)", sizeM2: 5, facilityName: "Cơ sở Tân Bình" },
+            { code: "M-2", typeName: "Kho vừa (M)", sizeM2: 8, facilityName: "Cơ sở Tân Bình" },
+          ];
+        }
+        setRentedUnits(list);
+        if (list.length > 0) {
+          setUnitCode(list[0].code);
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        const fallbackList = [
+          { code: "S-3", typeName: "Kho nhỏ (S)", sizeM2: 5, facilityName: "Cơ sở Tân Bình" },
+          { code: "M-2", typeName: "Kho vừa (M)", sizeM2: 8, facilityName: "Cơ sở Tân Bình" },
+        ];
+        setRentedUnits(fallbackList);
+        setUnitCode("S-3");
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Modal xử lý (RESOLVE)
   const [resolveTargetTicket, setResolveTargetTicket] = useState(null);
@@ -117,6 +164,7 @@ export function useSupportTickets() {
     setStatusFilter,
     tickets,
     filteredTickets,
+    rentedUnits,
     showCreateModal,
     setShowCreateModal,
     unitCode,

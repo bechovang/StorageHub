@@ -582,3 +582,29 @@
     display: none;
   }
 }
+
+/* ── Header Greeting & Guest Register Button ── */
+.header-greeting {
+  font: 700 0.82rem / 1 var(--font-body);
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.header-register-btn {
+  padding: 7px 14px;
+  background: transparent;
+  color: var(--color-ink);
+  text-decoration: none;
+  font: 700 0.78rem / 1 var(--font-body);
+  border: var(--border-strong);
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.header-register-btn:hover {
+  background: var(--color-surface-subtle, #f1f5f9);
+  border-color: var(--color-ink);
+}

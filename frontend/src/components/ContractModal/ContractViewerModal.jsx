@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Printer, X, ShieldCheck, CheckCircle } from "@phosphor-icons/react";
 import Button from "../Button/Button.jsx";
 import "./ContractViewerModal.css";
@@ -11,13 +13,33 @@ export default function ContractViewerModal({
   unit,
   user,
 }) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && onClose) {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const res = reservation || {};
   const u = unit || res.unit || {};
   const usr = user || {};
 
-  const contractCode = contract?.code || res.code ? `HĐ-${res.code}` : "HĐ-2026-0047";
+  const contractCode = contract?.code || (res.code ? `HĐ-${res.code}` : "HĐ-2026-0047");
   const customerName = usr.fullName || res.customerName || "Nguyễn Thị Lan";
   const customerPhone = usr.phone || res.customerPhone || "0901234567";
   const customerEmail = usr.email || "lan@demo.storagehub.vn";
@@ -26,8 +48,10 @@ export default function ContractViewerModal({
   const sizeM2 = u.sizeM2 || 5;
   const volumeM3 = (sizeM2 * 2.8).toFixed(1);
   const monthlyRent = u.baseMonthlyRent || u.monthlyPrice || 345000;
-  const durationMonths = res.durationMonths || 3;
-  const totalRent = res.totalEstimatedPrice || monthlyRent * durationMonths;
+  const durationDays = res.durationDays || (res.durationMonths ? res.durationMonths * 30 : 30);
+  const dailyRent = res.dailyRent || Math.max(1, Math.round(monthlyRent / 30));
+  const totalRent = res.totalRent || res.totalEstimatedPrice ||
+    ((durationDays % 30 === 0) ? monthlyRent * (durationDays / 30) : dailyRent * durationDays);
   const depositPaid = res.depositAmount || Math.round(totalRent * 0.1);
 
   const startDate = res.startDate || "2026-11-01";
@@ -37,8 +61,13 @@ export default function ContractViewerModal({
     window.print();
   };
 
-  return (
-    <div className="contract-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+  return createPortal(
+    <div
+      className="contract-modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div
         className="contract-modal-card"
         onClick={(e) => e.stopPropagation()}
@@ -158,10 +187,10 @@ export default function ContractViewerModal({
             <div className="contract-clause-item">
               <h3 className="clause-title">ĐIỀU 2: THỜI HẠN THUÊ VÀ ĐIỀU KHOẢN TÀI CHÍNH</h3>
               <p>
-                2.1. <strong>Thời hạn thuê cam kết:</strong> {durationMonths} tháng, bắt đầu từ ngày <strong>{formatDate(startDate)}</strong> đến hết ngày <strong>{formatDate(endDate)}</strong>.
+                2.1. <strong>Thời hạn thuê cam kết:</strong> {durationDays} ngày{durationDays % 30 === 0 ? ` (~${durationDays / 30} tháng)` : ""}, bắt đầu từ ngày <strong>{formatDate(startDate)}</strong> đến hết ngày <strong>{formatDate(endDate)}</strong>.
               </p>
               <p>
-                2.2. <strong>Giá thuê hàng tháng:</strong> <strong>{formatVND(monthlyRent)} / tháng</strong> (đã bao gồm phí chiếu sáng hành lang, camera an ninh 24/7 và dịch vụ bảo trì định kỳ).
+                2.2. <strong>Giá thuê:</strong> <strong>{durationDays % 30 === 0 ? `${formatVND(monthlyRent)} / tháng` : `${formatVND(dailyRent)} / ngày (${formatVND(monthlyRent)} / tháng)`}</strong> (đã bao gồm phí chiếu sáng hành lang, camera an ninh 24/7 và dịch vụ bảo trì định kỳ).
               </p>
               <p>
                 2.3. <strong>Tổng tiền thuê kỳ cam kết:</strong> <strong>{formatVND(totalRent)}</strong>.
@@ -222,6 +251,7 @@ export default function ContractViewerModal({
           </footer>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

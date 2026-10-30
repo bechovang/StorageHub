@@ -260,11 +260,11 @@ export default function Header({
         )}
 
         <div className="account-tools">
-          {resolvedRoleLabel && (
-            <span className="role-label role-label--adaptive">
-              {resolvedRoleLabel}
+          {isAuthenticated ? (
+            <span className="header-greeting">
+              Xin chào, {user?.fullName || "Quý khách"}
             </span>
-          )}
+          ) : null}
           {rightContent ? (
             rightContent
           ) : (
@@ -428,6 +428,9 @@ export default function Header({
                 </div>
               ) : (
                 <div className="header-guest-actions">
+                  <Link to="/register" className="header-register-btn">
+                    Đăng ký
+                  </Link>
                   <Link to="/login" className="header-login-btn">
                     Đăng nhập
                   </Link>

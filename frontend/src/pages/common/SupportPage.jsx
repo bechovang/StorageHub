@@ -18,6 +18,7 @@ export default function SupportPage() {
     setStatusFilter,
     tickets,
     filteredTickets,
+    rentedUnits,
     showCreateModal,
     setShowCreateModal,
     unitCode,
@@ -172,6 +173,7 @@ export default function SupportPage() {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateSubmit}
+          rentedUnits={rentedUnits}
           unitCode={unitCode}
           setUnitCode={setUnitCode}
           incidentType={incidentType}

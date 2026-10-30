@@ -5,6 +5,7 @@ export default function CreateTicketModal({
   isOpen,
   onClose,
   onSubmit,
+  rentedUnits = [],
   unitCode,
   setUnitCode,
   incidentType,
@@ -29,17 +30,36 @@ export default function CreateTicketModal({
         )}
 
         <div className="form-field">
-          <label className="form-field__label">Kho gặp sự cố *</label>
-          <input
-            type="text"
-            required
-            className="form-field__input"
-            placeholder="Ví dụ: S-3, M-2..."
-            value={unitCode}
-            onChange={(e) => setUnitCode(e.target.value)}
-          />
+          <label htmlFor="ticket-unit-select" className="form-field__label">
+            Kho đang thuê gặp sự cố *
+          </label>
+          {rentedUnits.length > 0 ? (
+            <select
+              id="ticket-unit-select"
+              required
+              className="form-field__select"
+              value={unitCode}
+              onChange={(e) => setUnitCode(e.target.value)}
+            >
+              <option value="" disabled>-- Chọn kho bạn đang thuê --</option>
+              {rentedUnits.map((u) => (
+                <option key={u.code} value={u.code}>
+                  Kho {u.code} · {u.typeName || "Tiêu chuẩn"} ({u.sizeM2 || 5} m²) · {u.facilityName || "Cơ sở Tân Bình"}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              required
+              className="form-field__input"
+              placeholder="Ví dụ: S-3, M-2..."
+              value={unitCode}
+              onChange={(e) => setUnitCode(e.target.value)}
+            />
+          )}
           <span style={{ fontSize: "0.72rem", color: "var(--color-muted)" }}>
-            Yêu cầu hỗ trợ bắt buộc phải gắn với kho hợp lệ bạn đang thuê.
+            Chọn trực tiếp từ danh sách các kho đang hoạt động của bạn.
           </span>
         </div>
 

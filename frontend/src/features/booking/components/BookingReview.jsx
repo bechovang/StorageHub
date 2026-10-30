@@ -98,20 +98,7 @@ export default function BookingReview({
               </div>
             </div>
 
-            {!isAlreadyPaid && (
-              <div style={{
-                margin: "12px 0 16px",
-                padding: "10px 14px",
-                background: "#fffbeb",
-                border: "1px solid #fef3c7",
-                borderLeft: "3px solid #d97706",
-                fontSize: "0.82rem",
-                color: "#92400e",
-                lineHeight: "1.45",
-              }}>
-                <strong>Lưu ý quan trọng về giữ chỗ:</strong> Kho chỉ chính thức được chuyển sang trạng thái <strong>RESERVED</strong> và khóa giữ chỗ sau khi bạn hoàn tất thanh toán cọc. Trong thời gian này, kho vẫn khả dụng cho khách hàng khác.
-              </div>
-            )}
+
 
             {/* Parameters Grid (3 cols) */}
             <div className="unit-params-grid">
