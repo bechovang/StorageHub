@@ -89,7 +89,7 @@ export default function UnitDetailPage() {
               </Link>
               <span className="unit-detail-sep">/</span>
               <span className="unit-detail-crumb-current">
-                Ô kho {typeLabel} ({unit.sizeM2} m²)
+                Kho {typeLabel} ({unit.sizeM2} m²)
               </span>
             </div>
 
@@ -118,7 +118,7 @@ export default function UnitDetailPage() {
                   Kho {typeLabel} · {unit.sizeM2} m²
                 </h1>
                 <Badge tone={isSoon ? "warning" : "success"}>
-                  {isSoon ? "Sắp khả dụng" : "Đang trống · Nhận kho ngay"}
+                  {isSoon ? "Sắp khả dụng" : "Đang trống · Cọc để giữ chỗ"}
                 </Badge>
               </div>
               <p className="unit-detail-meta">
@@ -149,7 +149,7 @@ export default function UnitDetailPage() {
             <article className="unit-detail-card">
               <div className="unit-detail-card__header">
                 <h2 className="unit-detail-card__title">
-                  THÔNG SỐ KỸ THUẬT Ô KHO
+                  THÔNG SỐ KỸ THUẬT KHO
                 </h2>
                 <span className="unit-detail-badge-mono">TIÊU CHUẨN ISO</span>
               </div>

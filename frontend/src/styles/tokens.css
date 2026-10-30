@@ -133,7 +133,7 @@
   --content-max-width: var(--page-width);
   --page-min-width: 320px;
 
-  /* Controls */
+  /* Controls & Button Tokens (Swiss Neo-Brutalist Shadow & Motion) */
   --control-height-sm: 36px;
   --control-height-md: 40px;
   --control-height-lg: 44px;
@@ -141,6 +141,21 @@
 
   --button-font-size: 0.78rem;
   --button-font-weight: 700;
+
+  --btn-shadow: 2px 2px 0px rgba(0, 0, 0, 0.25);
+  --btn-shadow-hover: 3px 3px 0px rgba(0, 0, 0, 0.4);
+  --btn-shadow-active: 1px 1px 0px rgba(0, 0, 0, 0.2);
+  --btn-shadow-ink: 2px 2px 0px var(--color-ink);
+  --btn-shadow-ink-hover: 3px 3px 0px var(--color-ink);
+  --btn-shadow-subtle: 1px 1px 0px rgba(0, 0, 0, 0.15);
+  --btn-shadow-subtle-hover: 2px 2px 0px rgba(0, 0, 0, 0.3);
+  --btn-transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+
+  /* Interactive Cards (UnitCard, etc. inheriting Button Neo-Brutalist Shadow & Motion) */
+  --card-shadow: var(--btn-shadow);
+  --card-shadow-hover: var(--btn-shadow-hover);
+  --card-shadow-active: var(--btn-shadow-active);
+  --card-transition: border-color var(--duration-fast) var(--ease-standard), box-shadow 0.15s ease, transform 0.15s ease;
 
   /* Motion */
   --duration-fast: 120ms;

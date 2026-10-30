@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+    <filter id="fridge-chill-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Technical Wireframe Grid Floor (Active Hover Accent) -->
+  <g stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="50" y1="205" x2="200" y2="280" stroke="#fca5a5" />
+    <line x1="200" y1="280" x2="350" y2="205" stroke="#fca5a5" />
+    <line x1="350" y1="205" x2="200" y2="130" />
+    <line x1="200" y1="130" x2="50" y2="205" />
+    <line x1="125" y1="167" x2="275" y2="242" stroke="#dc2626" stroke-dasharray="2 0" />
+    <line x1="125" y1="242" x2="275" y2="167" />
+  </g>
+
+  <!-- Header Tech Stamp (Active Red) -->
+  <text x="24" y="28" class="mono" font-size="9" font-weight="700" fill="#dc2626" letter-spacing="1">TYPE // FAMILY STORAGE M · 8.0 M² · [ACTIVE]</text>
+  <rect x="226" y="18" width="150" height="15" fill="#dc2626" />
+  <text x="301" y="29" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" fill="#ffffff" letter-spacing="0.5">8.0 M² FULL CAPACITY</text>
+
+  <!-- 3D ROOM CUTAWAY SHELL -->
+  <g id="room-shell">
+    <!-- Back-Left Wall with Climate Sensor Callout -->
+    <polygon points="70,195 200,130 200,55 70,120" fill="#f4f4f5" stroke="#18181b" stroke-width="1.75" />
+    <line x1="110" y1="175" x2="110" y2="100" stroke="#e4e4e7" stroke-width="1.5" />
+    <line x1="155" y1="152" x2="155" y2="77" stroke="#e4e4e7" stroke-width="1.5" />
+    
+    <!-- Humidity / Climate Sensor on Wall -->
+    <rect x="145" y="90" width="16" height="10" fill="#18181b" stroke="#dc2626" stroke-width="1" />
+    <text x="153" y="97" class="mono" font-size="5" font-weight="800" fill="#22c55e" text-anchor="middle">55%RH</text>
+
+    <!-- Back-Right Wall -->
+    <polygon points="200,130 330,195 330,120 200,55" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    <line x1="245" y1="152" x2="245" y2="77" stroke="#e4e4e7" stroke-width="1.5" />
+    <line x1="290" y1="175" x2="290" y2="100" stroke="#e4e4e7" stroke-width="1.5" />
+
+    <!-- Ceiling Structural Ridge -->
+    <line x1="70" y1="120" x2="200" y2="55" stroke="#18181b" stroke-width="2" />
+    <line x1="200" y1="55" x2="330" y2="120" stroke="#18181b" stroke-width="2" />
+
+    <!-- Room Concrete Floor with Red Highlight Boundary -->
+    <polygon points="70,195 200,260 330,195 200,130" fill="#fafafa" stroke="#18181b" stroke-width="1.75" />
+    <polygon points="85,190 195,245 315,190 205,135" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 2" />
+  </g>
+
+  <!-- TALL REFRIGERATOR (DOOR OPEN AJAR & COOL BREEZE) -->
+  <g id="refrigerator" transform="translate(90, 85)">
+    <!-- Right side depth -->
+    <polygon points="35,45 55,35 55,115 35,125" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <!-- Top roof -->
+    <polygon points="12,56 32,46 55,35 35,45" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <!-- Interior cavity (exposed by open door) -->
+    <polygon points="12,56 35,45 35,79 12,90" fill="#18181b" stroke="#18181b" stroke-width="1.5" />
+    <!-- Interior cold LED light -->
+    <rect x="15" y="60" width="16" height="3" fill="#38bdf8" filter="url(#fridge-chill-glow)" />
+    <!-- Lower closed door -->
+    <polygon points="12,90 35,79 35,125 12,136" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+
+    <!-- Swung Open Upper Door (Ajar to the left) -->
+    <polygon points="12,56 -8,66 -8,100 12,90" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <line x1="-5" y1="72" x2="-5" y2="92" stroke="#dc2626" stroke-width="1.5" />
+
+    <!-- Cool Air Breeze Dashed Waves -->
+    <path d="M-12 75 Q-20 72 -28 76" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" fill="none" />
+    <path d="M-10 82 Q-18 80 -25 84" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" fill="none" />
+    <path d="M-8 89 Q-15 87 -22 91" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" fill="none" />
+
+    <!-- Callout Tag -->
+    <rect x="-42" y="50" width="36" height="13" fill="#18181b" stroke="#38bdf8" stroke-width="1" />
+    <text x="-24" y="59" class="mono" font-size="6.5" font-weight="700" fill="#38bdf8" text-anchor="middle">FRIDGE</text>
+  </g>
+
+  <!-- WASHING MACHINE -->
+  <g id="washer" transform="translate(135, 120)">
+    <polygon points="26,38 42,30 42,75 26,83" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="6,48 22,40 42,30 26,38" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="6,48 26,38 26,83 6,93" fill="#ffffff" stroke="#dc2626" stroke-width="1.5" />
+    <ellipse cx="16" cy="68" rx="7" ry="12" fill="#f4f4f5" stroke="#dc2626" stroke-width="1.5" transform="rotate(-15, 16, 68)" />
+    <circle cx="16" cy="68" r="4" fill="#dc2626" />
+    <line x1="8" y1="53" x2="24" y2="45" stroke="#dc2626" stroke-width="1" />
+  </g>
+
+  <!-- 3-SEATER MODERN SOFA (HIGHLIGHTED IN ACCENT RED) -->
+  <g id="sofa" transform="translate(180, 140)">
+    <polygon points="25,55 95,20 120,32 50,67" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+    <polygon points="25,55 95,20 95,5 25,40" fill="#f4f4f5" stroke="#dc2626" stroke-width="2" />
+    <polygon points="95,20 102,23 102,8 95,5" fill="#e4e4e7" stroke="#dc2626" stroke-width="2" />
+    
+    <!-- Armrests with red accent outline -->
+    <polygon points="18,48 28,43 28,66 18,71" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+    <polygon points="18,48 40,60 50,55 28,43" fill="#f4f4f5" stroke="#dc2626" stroke-width="2" />
+    <polygon points="40,60 50,55 50,78 40,83" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+
+    <polygon points="92,12 102,7 122,17 112,22" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+    <polygon points="112,22 122,17 122,40 112,45" fill="#f4f4f5" stroke="#dc2626" stroke-width="2" />
+
+    <line x1="48" y1="43" x2="73" y2="55" stroke="#dc2626" stroke-width="1.5" />
+    <line x1="72" y1="31" x2="97" y2="43" stroke="#dc2626" stroke-width="1.5" />
+
+    <!-- Sofa Callout Tag -->
+    <rect x="55" y="80" width="55" height="14" fill="#18181b" stroke="#dc2626" stroke-width="1.5" />
+    <text x="82" y="90" class="mono" font-size="7" font-weight="800" fill="#ffffff" text-anchor="middle">SOFA · 3-SEAT</text>
+    <line x1="82" y1="80" x2="82" y2="60" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="2 2" />
+  </g>
+
+  <!-- STACKED CARTON BOXES (HIGHLIGHTED) -->
+  <g id="boxes" transform="translate(265, 115)">
+    <polygon points="20,55 45,42 45,75 20,88" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="-5,67 20,55 20,88 -5,100" fill="#f4f4f5" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="-5,67 20,54 45,42 20,55" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    <line x1="20" y1="55" x2="20" y2="88" stroke="#dc2626" stroke-width="2" />
+
+    <polygon points="15,30 38,18 38,45 15,57" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="-5,40 15,30 15,57 -5,67" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="-5,40 18,28 38,18 15,30" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    
+    <!-- Count Badge -->
+    <rect x="18" y="24" width="34" height="12" fill="#dc2626" />
+    <text x="35" y="33" class="mono" font-size="6.5" font-weight="800" fill="#ffffff" text-anchor="middle">50+ THÙNG</text>
+  </g>
+
+  <!-- Unit Badge (Active Red) -->
+  <rect x="295" y="70" width="24" height="13" fill="#dc2626" />
+  <text x="307" y="80" class="mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">M-16</text>
+
+  <!-- Technical Footer Bar (Active Red) -->
+  <line x1="24" y1="272" x2="376" y2="272" stroke="#dc2626" stroke-width="1.5" />
+  <text x="24" y="286" class="mono" font-size="8.5" font-weight="700" fill="#dc2626">KHÍ HẬU: 24°C / 55%RH · PCCC TỰ ĐỘNG</text>
+  <text x="376" y="286" text-anchor="end" class="mono" font-size="8.5" font-weight="800" fill="#16a34a">[ 8.0 M² FULL · SỨC CHỨA TỐI ĐA ]</text>
+</svg>

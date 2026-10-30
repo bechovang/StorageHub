@@ -27,7 +27,7 @@ export function RentalHeroBanner({
         <div className="rd-hero__left">
           <div className="rd-hero__badges">
             <span className="rd-hero__unit-code font-mono">
-              Ô KHO {reservation.unit?.code || "—"}
+              KHO {reservation.unit?.code || "—"}
             </span>
 
             <span className={`rd-badge rd-badge--${statusColor}`}>

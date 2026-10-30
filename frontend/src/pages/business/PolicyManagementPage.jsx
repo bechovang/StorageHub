@@ -157,7 +157,7 @@ export default function PolicyManagementPage() {
                   <div>
                     <h2 className="policy-card__title">Chính sách vận hành & Bảng giá thuê</h2>
                     <p className="policy-card__subtitle">
-                      Thiết lập đơn giá cơ sở theo từng phân loại ô kho, tỷ lệ phụ thu trả trễ và tham số vận hành vệ sinh kho.
+                      Thiết lập đơn giá cơ sở theo từng phân loại kho, tỷ lệ phụ thu trả trễ và tham số vận hành vệ sinh kho.
                     </p>
                   </div>
                   <div className="policy-card__tags">

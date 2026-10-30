@@ -5,6 +5,7 @@ import {
   Clock,
 } from "@phosphor-icons/react";
 import { formatVND, formatDate, getTomorrowDate } from "../../../utils/formatters.js";
+import UnitAvailabilityCalendar from "./UnitAvailabilityCalendar.jsx";
 
 export default function UnitPricingCalculator({
   durationMonths,
@@ -63,21 +64,22 @@ export default function UnitPricingCalculator({
         </div>
       </div>
 
-      {/* Bộ chọn ngày nhận kho (Start Date) */}
+      {/* Bộ chọn ngày nhận kho kèm Lịch tô đỏ những ngày đã bị đặt */}
       <div className="pricing-selector-group">
         <label htmlFor="start-date-input" className="pricing-selector-label">
-          NGÀY BẮT ĐẦU THUÊ DỰ KIẾN
+          LỊCH CHỌN NGÀY NHẬN KHO (TÔ ĐỎ NGÀY ĐÃ ĐẶT)
         </label>
-        <input
-          id="start-date-input"
-          type="date"
-          className="pricing-date-input"
-          value={startDate}
-          min={isSoon && availableDate ? availableDate : getTomorrowDate()}
-          onChange={(e) => setStartDate(e.target.value)}
+
+        <UnitAvailabilityCalendar
+          selectedDate={startDate}
+          onSelectDate={setStartDate}
+          availableFromDate={availableDate}
+          isSoon={isSoon}
+          minDate={isSoon && availableDate ? availableDate : getTomorrowDate()}
         />
+
         {endDate && (
-          <p className="pricing-cycle-hint">
+          <p className="pricing-cycle-hint" style={{ marginTop: "12px" }}>
             <CalendarCheck size={14} weight="bold" />
             <span>
               Chu kỳ thuê: <strong>{formatDate(startDate)}</strong> →{" "}
@@ -98,100 +100,53 @@ export default function UnitPricingCalculator({
         <div className="pricing-breakdown-row">
           <div className="pricing-row-left">
             <span className="pricing-row-label">Tiền thuê kho</span>
-            <span className="pricing-row-sub">
-              {formatVND(monthlyRent)}/tháng × {durationMonths} tháng
+            <span className="pricing-row-hint">
+              {formatVND(monthlyRent)} × {durationMonths} tháng
             </span>
           </div>
-          <strong className="pricing-row-amount">
-            {formatVND(totalRent)}
-          </strong>
+          <strong className="pricing-row-val">{formatVND(totalRent)}</strong>
         </div>
 
-        {/* 2. Dòng phụ thu: Phí quản lý cơ sở & bảo trì */}
+        {/* 2. Tiền đặt cọc giữ chỗ: 10% theo Rental Policy */}
         <div className="pricing-breakdown-row">
           <div className="pricing-row-left">
-            <span className="pricing-row-label">
-              Phí dịch vụ & giám sát an ninh 24/7
-            </span>
-            <span className="pricing-row-sub">
-              Rental Policy {policyVersion}
+            <span className="pricing-row-label">Tiền đặt cọc giữ chỗ</span>
+            <span className="pricing-row-hint">
+              10% tổng tiền thuê · Hoàn lại 100% khi trả kho
             </span>
           </div>
-          <span className="pricing-row-status is-included">
-            Bao gồm (0 ₫)
-          </span>
+          <strong className="pricing-row-val">{formatVND(depositAmount)}</strong>
         </div>
 
-        {/* 3. Dòng phụ thu: Bảo hiểm tài sản lưu trữ */}
+        {/* 3. Phí dịch vụ bảo dưỡng & hạ tầng */}
         <div className="pricing-breakdown-row">
           <div className="pricing-row-left">
-            <span className="pricing-row-label">
-              Bảo hiểm tài sản tiêu chuẩn
-            </span>
-            <span className="pricing-row-sub">
-              Gói bảo vệ hàng hóa cơ bản
+            <span className="pricing-row-label">Phí bảo trì & Quản lý cơ sở</span>
+            <span className="pricing-row-hint">
+              Bao gồm camera CCTV 24/7 & vệ sinh hành lang định kỳ
             </span>
           </div>
-          <span className="pricing-row-status is-included">
-            Bao gồm (0 ₫)
-          </span>
-        </div>
-
-        {/* 4. Dòng phụ thu: Cấp mã số PIN khoá điện tử */}
-        <div className="pricing-breakdown-row">
-          <div className="pricing-row-left">
-            <span className="pricing-row-label">
-              Khởi tạo mã PIN vào kho
-            </span>
-            <span className="pricing-row-sub">Cấp mã PIN miễn phí</span>
-          </div>
-          <div className="pricing-row-waived">
-            <del>50.000 ₫</del>
-            <span className="pricing-row-status is-included">
-              Miễn phí (0 ₫)
-            </span>
-          </div>
-        </div>
-
-        {/* 5. Tổng giá trị hợp đồng thuê */}
-        <div className="pricing-total-contract-row">
-          <span>Tổng giá trị tiền thuê ({durationMonths} tháng):</span>
-          <strong>{formatVND(totalRent)}</strong>
+          <strong className="pricing-row-val pricing-free">MIỄN PHÍ</strong>
         </div>
       </div>
 
-      {/* ── HỘP TẬP TRUNG TIỀN CỌC KÈM NHÃN REFUNDABLE (HOÀN LẠI) ── */}
-      <div className="pricing-deposit-box">
-        <div className="deposit-box-header">
-          <div className="deposit-box-title-wrap">
-            <ShieldCheck size={20} color="#16a34a" weight="bold" />
-            <div>
-              <span className="deposit-box-title">
-                Tiền đặt cọc giữ kho (10%)
-              </span>
-              <span className="deposit-box-badge-refundable">
-                HOÀN TRẢ KHI TRẢ KHO
-              </span>
-            </div>
-          </div>
-          <strong className="deposit-box-amount">
-            {formatVND(depositAmount)}
-          </strong>
+      {/* Báo hiệu chính sách cọc minh bạch */}
+      <div className="pricing-policy-badge">
+        <ShieldCheck size={16} weight="bold" />
+        <div>
+          <span>Áp dụng Quy chế thuê: <strong>{policyVersion}</strong></span>
+          <p style={{ margin: "2px 0 0 0", fontSize: "0.72rem", color: "#64748b" }}>
+            Cọc 10% được lưu trữ an toàn và hoàn trả ngay khi kết thúc thuê kho.
+          </p>
         </div>
-
-        <p className="deposit-box-explanation">
-          ✓ Tiền cọc giúp giữ chỗ kho cho bạn và được{" "}
-          <strong>hoàn trả 100%</strong> vào tài khoản của bạn ngay khi kết
-          thúc hợp đồng.
-        </p>
       </div>
 
-      {/* ── SỐ TIỀN PHẢI THANH TOÁN NGAY HÔM NAY (DUE NOW) ── */}
+      {/* ── TỔNG CỘNG THANH TOÁN HÔM NAY (TIỀN CỌC GIỮ CHỖ) ── */}
       <div className="pricing-due-now-box">
         <div className="due-now-row">
           <div>
             <span className="due-now-label">THANH TOÁN HÔM NAY:</span>
-            <span className="due-now-sub">Tiền cọc giữ chỗ kho</span>
+            <span className="due-now-sub">Tiền cọc để khóa giữ chỗ kho (10%)</span>
           </div>
           <strong className="due-now-amount">{formatVND(dueNow)}</strong>
         </div>
@@ -207,7 +162,7 @@ export default function UnitPricingCalculator({
         onClick={onBookNow}
         disabled={quoteLoading}
       >
-        <span>Đặt kho & Thanh toán cọc</span>
+        <span>Đặt kho & Thanh toán cọc giữ chỗ</span>
         <span className="pricing-submit-btn__arrow">→</span>
       </button>
 
@@ -216,7 +171,7 @@ export default function UnitPricingCalculator({
         <div className="guarantee-item">
           <Lock size={15} weight="bold" />
           <span>
-            Cổng thanh toán mã hóa an toàn · Hỗ trợ Thẻ / MoMo / VNPay
+            Cổng thanh toán mã hóa an toàn · Hỗ trợ PayOS / Thẻ / MoMo
           </span>
         </div>
         <div className="guarantee-item">

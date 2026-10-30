@@ -1,6 +1,8 @@
 .card {
   background: var(--color-surface);
   border: var(--border-strong);
+  border-radius: var(--radius-none, 0px);
+  box-shadow: var(--card-shadow, var(--btn-shadow));
 }
 
 .card__header {

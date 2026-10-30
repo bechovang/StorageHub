@@ -30,7 +30,7 @@ npm run dev
 ```
 
 - Ứng dụng chạy tại: **`http://localhost:5173`**
-- Mọi request API `/api/*` và file `/storage/*` được Vite tự động chuyển tiếp sang Backend `http://localhost:8080`.
+- Mọi request API `/api/*` và file `/storage/*` được Vite tự động chuyển tiếp sang Backend `http://127.0.0.1:8080`.
 
 ---
 

@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Technical Wireframe Grid Floor -->
+  <g stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="50" y1="205" x2="200" y2="280" />
+    <line x1="200" y1="280" x2="350" y2="205" />
+    <line x1="350" y1="205" x2="200" y2="130" />
+    <line x1="200" y1="130" x2="50" y2="205" />
+    <line x1="125" y1="167" x2="275" y2="242" />
+    <line x1="125" y1="242" x2="275" y2="167" />
+  </g>
+
+  <!-- Header Tech Stamp -->
+  <text x="24" y="28" class="mono" font-size="9" font-weight="700" fill="#71717a" letter-spacing="1">TYPE // FAMILY STORAGE M · 8.0 M²</text>
+  <text x="376" y="28" text-anchor="end" class="mono" font-size="9" font-weight="700" fill="#a1a1aa" letter-spacing="0.5">SCALE 1:50 · ISO 30°</text>
+
+  <!-- 3D ROOM CUTAWAY SHELL -->
+  <g id="room-shell">
+    <!-- Back-Left Wall -->
+    <polygon points="70,195 200,130 200,55 70,120" fill="#f4f4f5" stroke="#18181b" stroke-width="1.75" />
+    <line x1="110" y1="175" x2="110" y2="100" stroke="#e4e4e7" stroke-width="1.5" />
+    <line x1="155" y1="152" x2="155" y2="77" stroke="#e4e4e7" stroke-width="1.5" />
+
+    <!-- Back-Right Wall -->
+    <polygon points="200,130 330,195 330,120 200,55" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    <line x1="245" y1="152" x2="245" y2="77" stroke="#e4e4e7" stroke-width="1.5" />
+    <line x1="290" y1="175" x2="290" y2="100" stroke="#e4e4e7" stroke-width="1.5" />
+
+    <!-- Ceiling Structural Ridge -->
+    <line x1="70" y1="120" x2="200" y2="55" stroke="#18181b" stroke-width="2" />
+    <line x1="200" y1="55" x2="330" y2="120" stroke="#18181b" stroke-width="2" />
+
+    <!-- Room Concrete Floor -->
+    <polygon points="70,195 200,260 330,195 200,130" fill="#fafafa" stroke="#18181b" stroke-width="1.75" />
+  </g>
+
+  <!-- TALL REFRIGERATOR (CLOSED / IDLE) -->
+  <g id="refrigerator" transform="translate(90, 85)">
+    <!-- Right side depth -->
+    <polygon points="35,45 55,35 55,115 35,125" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <!-- Top roof -->
+    <polygon points="12,56 32,46 55,35 35,45" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <!-- Front doors -->
+    <polygon points="12,56 35,45 35,125 12,136" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <!-- Freezer / Fridge separation seam -->
+    <line x1="12" y1="90" x2="35" y2="79" stroke="#18181b" stroke-width="1.5" />
+    <!-- Handles -->
+    <line x1="31" y1="62" x2="31" y2="76" stroke="#18181b" stroke-width="2" />
+    <line x1="31" y1="94" x2="31" y2="114" stroke="#18181b" stroke-width="2" />
+  </g>
+
+  <!-- WASHING MACHINE (NEXT TO FRIDGE) -->
+  <g id="washer" transform="translate(135, 120)">
+    <!-- Washer Right Side -->
+    <polygon points="26,38 42,30 42,75 26,83" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <!-- Top panel -->
+    <polygon points="6,48 22,40 42,30 26,38" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <!-- Front Face -->
+    <polygon points="6,48 26,38 26,83 6,93" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <!-- Front Drum Circle -->
+    <ellipse cx="16" cy="68" rx="7" ry="12" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" transform="rotate(-15, 16, 68)" />
+    <circle cx="16" cy="68" r="4" fill="#27272a" />
+    <!-- Control strip -->
+    <line x1="8" y1="53" x2="24" y2="45" stroke="#71717a" stroke-width="1" />
+  </g>
+
+  <!-- 3-SEATER MODERN SOFA (SPACIOUS FAMILY UNIT) -->
+  <g id="sofa" transform="translate(180, 140)">
+    <!-- Sofa Base & Cushions -->
+    <polygon points="25,55 95,20 120,32 50,67" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    
+    <!-- Sofa Backrest -->
+    <polygon points="25,55 95,20 95,5 25,40" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="95,20 102,23 102,8 95,5" fill="#d4d4d8" stroke="#18181b" stroke-width="1.5" />
+    
+    <!-- Left Armrest -->
+    <polygon points="18,48 28,43 28,66 18,71" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="18,48 40,60 50,55 28,43" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="40,60 50,55 50,78 40,83" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+
+    <!-- Right Armrest -->
+    <polygon points="92,12 102,7 122,17 112,22" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="112,22 122,17 122,40 112,45" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+
+    <!-- Seat Separation Seams (3 Cushions) -->
+    <line x1="48" y1="43" x2="73" y2="55" stroke="#a1a1aa" stroke-width="1.2" />
+    <line x1="72" y1="31" x2="97" y2="43" stroke="#a1a1aa" stroke-width="1.2" />
+  </g>
+
+  <!-- STACKED CARTON BOXES (CORNER) -->
+  <g id="boxes" transform="translate(265, 115)">
+    <!-- Box Bottom -->
+    <polygon points="20,55 45,42 45,75 20,88" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="-5,67 20,55 20,88 -5,100" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="-5,67 20,54 45,42 20,55" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <line x1="20" y1="55" x2="20" y2="88" stroke="#71717a" stroke-width="1.5" />
+
+    <!-- Box Top -->
+    <polygon points="15,30 38,18 38,45 15,57" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="-5,40 15,30 15,57 -5,67" fill="#e4e4e7" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="-5,40 18,28 38,18 15,30" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <text x="17" y="47" class="mono" font-size="6" font-weight="700" fill="#71717a">#50+</text>
+  </g>
+
+  <!-- Unit Badge -->
+  <rect x="295" y="70" width="24" height="13" fill="#18181b" />
+  <text x="307" y="80" class="mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">M-16</text>
+
+  <!-- Technical Footer Bar -->
+  <line x1="24" y1="272" x2="376" y2="272" stroke="#e4e4e7" stroke-width="1" />
+  <text x="24" y="286" class="mono" font-size="8.5" font-weight="600" fill="#71717a">DIM: 2.5M × 3.2M × 2.7M</text>
+  <text x="376" y="286" text-anchor="end" class="mono" font-size="8.5" font-weight="700" fill="#18181b">[ NGUYÊN CĂN HỘ 1-2PN · STANDBY ]</text>
+</svg>

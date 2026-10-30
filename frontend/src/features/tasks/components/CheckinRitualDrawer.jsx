@@ -1,31 +1,112 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   ShieldCheck,
   Receipt,
   FileText,
   UploadSimple,
   Key,
+  QrCode,
+  IdentificationCard,
+  CheckCircle,
+  Eye,
+  Camera,
+  Image as ImageIcon,
 } from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import Button from "../../../components/Button/Button.jsx";
+import ContractViewerModal from "../../../components/ContractModal/ContractViewerModal.jsx";
 import { completeCheckinRitual } from "../../../services/taskService.js";
 import { formatVND as formatVnd, PLACEHOLDER_UNIT_IMAGE } from "../../../utils/formatters.js";
 
 export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [paymentMethod, setPaymentMethod] = useState("CASH");
-  const [photoUploaded, setPhotoUploaded] = useState(Boolean(task.ritual?.contractPhotoUrl));
+  const [idVerified, setIdVerified] = useState(true);
+  const [showFullPassModal, setShowFullPassModal] = useState(false);
+  const [showContractModal, setShowContractModal] = useState(false);
+
+  // Lưu ảnh thực tế (Base64 URL)
+  const [paymentPhotoUrl, setPaymentPhotoUrl] = useState(() => {
+    return task?.ritual?.paymentProofPhoto || localStorage.getItem(`storagehub_payment_photo_${task?.taskId}`) || "";
+  });
+  const [contractPhotoUrl, setContractPhotoUrl] = useState(() => {
+    return task?.ritual?.contractPhotoUrl || localStorage.getItem(`storagehub_contract_photo_${task?.taskId}`) || "";
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSimulateUpload = () => {
-    setPhotoUploaded(true);
+  const paymentFileInputRef = useRef(null);
+  const contractFileInputRef = useRef(null);
+
+  // Xử lý đọc file ảnh thật
+  const handlePaymentFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const b64 = reader.result;
+      setPaymentPhotoUrl(b64);
+      try {
+        localStorage.setItem(`storagehub_payment_photo_${task.taskId}`, b64);
+      } catch {
+        // Quota exceed ignore
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleContractFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const b64 = reader.result;
+      setContractPhotoUrl(b64);
+      try {
+        localStorage.setItem(`storagehub_contract_photo_${task.taskId}`, b64);
+      } catch {
+        // Quota exceed ignore
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Nút giả lập chụp ảnh nhanh bằng camera quầy
+  const handleSimulatePaymentPhoto = () => {
+    const demoSample = "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80";
+    setPaymentPhotoUrl(demoSample);
+    try {
+      localStorage.setItem(`storagehub_payment_photo_${task.taskId}`, demoSample);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleSimulateContractPhoto = () => {
+    const demoSample = "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=80";
+    setContractPhotoUrl(demoSample);
+    try {
+      localStorage.setItem(`storagehub_contract_photo_${task.taskId}`, demoSample);
+    } catch {
+      // ignore
+    }
   };
 
   const handleSubmit = async () => {
+    if (!paymentPhotoUrl) {
+      showToast?.("Bắt buộc: Vui lòng đính kèm ảnh chụp biên lai thu tiền mặt hoặc chuyển khoản ngân hàng!", "warning");
+      return;
+    }
+    if (!contractPhotoUrl) {
+      showToast?.("Bắt buộc: Vui lòng đính kèm ảnh chụp bản hợp đồng có chữ ký 2 bên!", "warning");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await completeCheckinRitual(task.taskId, {
         paymentMethod,
-        contractPhotoUrl: PLACEHOLDER_UNIT_IMAGE,
+        paymentProofPhoto: paymentPhotoUrl,
+        contractPhotoUrl,
         accessPin: task.accessPin || "8842-Active",
       });
       showToast?.(`Hoàn tất nhận kho ${task.refCode} thành công! Mã PIN đã được kích hoạt.`, "success");
@@ -38,152 +119,357 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   return (
-    <Drawer
-      open={Boolean(task)}
-      headerLabel={`QUY TRÌNH NHẬN KHO · ${task.refCode}`}
-      onClose={onClose}
-    >
-      <div className="ritual-flow">
-        {/* Bước 1: Xác thực đơn cọc */}
-        <div className="ritual-step-card is-completed">
-          <div className="ritual-step-header">
-            <span className="ritual-step-title">
-              <ShieldCheck size={18} color="#16a34a" weight="bold" />
-              1. Xác nhận đơn & Tiền cọc đã trả
-            </span>
-            <span style={{ fontSize: "0.75rem", color: "#16a34a", fontWeight: 700 }}>
-              ✓ ĐÃ THANH TOÁN
-            </span>
-          </div>
-          <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--color-secondary)" }}>
-            Khách hàng: <strong>{task.customerName}</strong> ({task.customerPhone}) · Kho: <strong>{task.unitCode}</strong>
-          </p>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", paddingTop: "4px" }}>
-            <span>Tiền cọc giữ chỗ (10%):</span>
-            <strong>{formatVnd(task.depositPaid || 180000)}</strong>
-          </div>
-        </div>
+    <>
+      <Drawer
+        open={Boolean(task)}
+        headerLabel={`QUY TRÌNH NHẬN KHO · ${task.refCode}`}
+        onClose={onClose}
+      >
+        <div className="ritual-flow">
+          {/* ── BƯỚC 1: THẺ NHẬN KHO CHO STAFF ĐỐI CHIẾU ── */}
+          <div className="ritual-step-card is-completed">
+            <div className="ritual-step-header">
+              <span className="ritual-step-title">
+                <ShieldCheck size={18} color="#16a34a" weight="bold" />
+                1. Thẻ nhận kho đối chiếu (Check-in Pass)
+              </span>
+              <span style={{ fontSize: "0.75rem", color: "#16a34a", fontWeight: 700 }}>
+                ✓ ĐÃ CỌC 10% ONLINE
+              </span>
+            </div>
 
-        {/* Bước 2: Thu 100% tiền thuê tại quầy */}
-        <div className="ritual-step-card">
-          <div className="ritual-step-header">
-            <span className="ritual-step-title">
-              <Receipt size={18} weight="bold" />
-              2. Thu tiền thuê kỳ đầu tại quầy
-            </span>
-            <strong style={{ color: "var(--color-accent)", fontSize: "0.92rem" }}>
-              {formatVnd(task.rentAmount || 1800000)}
-            </strong>
-          </div>
-          <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--color-secondary)" }}>
-            Quy định: Thu đủ tiền thuê kỳ đầu trước khi bàn giao kho cho khách.
-          </p>
-          <div>
-            <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "6px" }}>
-              PHƯƠNG THỨC THU TIỀN:
-            </label>
-            <div style={{ display: "flex", gap: "12px", fontSize: "0.8rem" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="CASH"
-                  checked={paymentMethod === "CASH"}
-                  onChange={() => setPaymentMethod("CASH")}
-                />
-                Tiền mặt
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="QR"
-                  checked={paymentMethod === "QR"}
-                  onChange={() => setPaymentMethod("QR")}
-                />
-                Quét mã QR PayOS
-              </label>
-              <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="POS"
-                  checked={paymentMethod === "POS"}
-                  onChange={() => setPaymentMethod("POS")}
-                />
-                Quẹt thẻ POS
-              </label>
+            {/* Khối Thẻ Nhận Kho mini đối chiếu tại quầy */}
+            <div style={{
+              background: "#f8fafc",
+              border: "1px solid #cbd5e1",
+              padding: "12px",
+              marginTop: "8px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <span style={{ fontSize: "0.72rem", color: "#64748b", textTransform: "uppercase" }}>Mã đơn đặt chỗ:</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, fontFamily: "var(--font-mono)" }}>
+                    {task.refCode}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <span style={{ fontSize: "0.72rem", color: "#64748b", textTransform: "uppercase" }}>Vị trí kho:</span>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--color-primary)" }}>
+                    Kho {task.unitCode}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: "0.8rem", color: "#334155", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", borderTop: "1px dashed #cbd5e1", paddingTop: "8px" }}>
+                <div>Khách hàng: <strong>{task.customerName}</strong></div>
+                <div>Điện thoại: <strong>{task.customerPhone || "0901 234 567"}</strong></div>
+                <div>CCCD đối chiếu: <strong>079198002345</strong></div>
+                <div>Tiền cọc đã trả: <strong>{formatVnd(task.depositPaid || 180000)}</strong></div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "6px", borderTop: "1px solid #e2e8f0" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", cursor: "pointer", fontWeight: 600 }}>
+                  <input
+                    type="checkbox"
+                    checked={idVerified}
+                    onChange={(e) => setIdVerified(e.target.checked)}
+                  />
+                  <span>Đã đối chiếu đúng CCCD & Thẻ nhận kho</span>
+                </label>
+
+                <button
+                  type="button"
+                  style={{ background: "none", border: "none", color: "#0284c7", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
+                  onClick={() => setShowFullPassModal(true)}
+                >
+                  <QrCode size={14} />
+                  <span>Xem mã QR thẻ</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Bước 3: Đính kèm ảnh hợp đồng đã ký */}
-        <div className="ritual-step-card">
-          <div className="ritual-step-header">
-            <span className="ritual-step-title">
-              <FileText size={18} weight="bold" />
-              3. Chụp / Đính kèm ảnh hợp đồng đã ký
-            </span>
+          {/* ── BƯỚC 2: THU ĐỦ TIỀN THUÊ KỲ ĐẦU KÈM ẢNH MINH CHỨNG ── */}
+          <div className="ritual-step-card">
+            <div className="ritual-step-header">
+              <span className="ritual-step-title">
+                <Receipt size={18} weight="bold" />
+                2. Thu đủ tiền thuê kỳ đầu tại quầy (Kèm ảnh)
+              </span>
+              <strong style={{ color: "var(--color-accent)", fontSize: "0.95rem", fontFamily: "var(--font-mono)" }}>
+                {formatVnd(task.rentAmount || 1800000)}
+              </strong>
+            </div>
+            <p style={{ margin: "2px 0 8px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
+              Quy định bắt buộc: Thu đủ 100% tiền thuê kỳ đầu và chụp ảnh biên nhận/giao dịch trước khi bàn giao.
+            </p>
+
+            {/* Chọn hình thức thu tiền */}
+            <div style={{ marginBottom: "10px" }}>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "6px" }}>
+                PHƯƠNG THỨC THU TIỀN:
+              </label>
+              <div style={{ display: "flex", gap: "16px", fontSize: "0.8rem" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="CASH"
+                    checked={paymentMethod === "CASH"}
+                    onChange={() => setPaymentMethod("CASH")}
+                  />
+                  <span>Tiền mặt (Cash)</span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="QR"
+                    checked={paymentMethod === "QR"}
+                    onChange={() => setPaymentMethod("QR")}
+                  />
+                  <span>Chuyển khoản (VietQR / Banking)</span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="POS"
+                    checked={paymentMethod === "POS"}
+                    onChange={() => setPaymentMethod("POS")}
+                  />
+                  <span>Quẹt thẻ POS</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Upload ảnh thu tiền */}
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>
+                ẢNH CHỨNG TỪ THU TIỀN (BIÊN LAI / ẢNH GIAO DỊCH CHUYỂN KHOẢN): <span style={{ color: "#dc2626" }}>*</span>
+              </label>
+
+              <input
+                ref={paymentFileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handlePaymentFileSelect}
+              />
+
+              {paymentPhotoUrl ? (
+                <div style={{
+                  padding: "8px",
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <img
+                      src={paymentPhotoUrl}
+                      alt="Minh chứng thu tiền"
+                      style={{ width: "48px", height: "48px", objectFit: "cover", border: "1px solid #86efac" }}
+                    />
+                    <div>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#166534", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <CheckCircle size={14} weight="fill" /> Đã đính kèm ảnh thu tiền
+                      </span>
+                      <small style={{ fontSize: "0.7rem", color: "#64748b" }}>Phương thức: {paymentMethod === "CASH" ? "Tiền mặt" : paymentMethod === "QR" ? "Chuyển khoản VietQR" : "Thẻ POS"}</small>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <Button size="small" variant="secondary" onClick={() => paymentFileInputRef.current?.click()}>
+                      Đổi ảnh
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  padding: "14px",
+                  background: "#fffbeb",
+                  border: "1px dashed #f59e0b",
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "6px",
+                }}>
+                  <UploadSimple size={24} color="#d97706" />
+                  <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#b45309" }}>
+                    Chưa có ảnh chứng từ thu tiền
+                  </span>
+                  <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                    <Button size="small" variant="secondary" onClick={() => paymentFileInputRef.current?.click()}>
+                      <UploadSimple size={14} /> Chọn ảnh từ máy
+                    </Button>
+                    <Button size="small" variant="secondary" onClick={handleSimulatePaymentPhoto}>
+                      <Camera size={14} /> Chụp nhanh biên lai
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--color-secondary)" }}>
-            In bản hợp đồng mẫu cho khách ký, sau đó chụp ảnh trang có chữ ký 2 bên để lưu vào nhật ký hợp đồng (ActivityLog CONTRACT_SIGNED).
-          </p>
-          <div
-            className="ritual-photo-preview"
-            onClick={handleSimulateUpload}
-            title="Bấm để tải ảnh mẫu"
-          >
-            {photoUploaded ? (
-              <div style={{ textAlign: "center", color: "#16a34a" }}>
-                <ShieldCheck size={32} weight="bold" />
-                <p style={{ margin: "4px 0 0 0", fontWeight: 700 }}>Đã tải lên ảnh hợp đồng có chữ ký</p>
-                <span style={{ fontSize: "0.7rem", color: "#64748b" }}>(Bấm để thay đổi ảnh)</span>
+
+          {/* ── BƯỚC 3: ĐÍNH KÈM ẢNH HỢP ĐỒNG ĐÃ KÝ ── */}
+          <div className="ritual-step-card">
+            <div className="ritual-step-header">
+              <span className="ritual-step-title">
+                <FileText size={18} weight="bold" />
+                3. Chụp / Đính kèm ảnh hợp đồng đã ký
+              </span>
+              <button
+                type="button"
+                style={{ background: "none", border: "none", color: "var(--color-primary)", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
+                onClick={() => setShowContractModal(true)}
+              >
+                Xem mẫu HĐ
+              </button>
+            </div>
+            <p style={{ margin: "2px 0 8px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
+              In bản hợp đồng cho khách ký, sau đó chụp ảnh trang có chữ ký 2 bên để lưu vào hồ sơ lưu trữ điện tử.
+            </p>
+
+            <input
+              ref={contractFileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleContractFileSelect}
+            />
+
+            {contractPhotoUrl ? (
+              <div style={{
+                padding: "8px",
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <img
+                    src={contractPhotoUrl}
+                    alt="Hợp đồng đã ký"
+                    style={{ width: "48px", height: "48px", objectFit: "cover", border: "1px solid #86efac" }}
+                  />
+                  <div>
+                    <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#166534", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <CheckCircle size={14} weight="fill" /> Đã lưu ảnh hợp đồng có chữ ký
+                    </span>
+                    <small style={{ fontSize: "0.7rem", color: "#64748b" }}>Lưu trữ vĩnh viễn trên Activity Log</small>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <Button size="small" variant="secondary" onClick={() => contractFileInputRef.current?.click()}>
+                    Đổi ảnh
+                  </Button>
+                </div>
               </div>
             ) : (
-              <>
-                <UploadSimple size={24} />
-                <span>Bấm vào đây để tải ảnh hoặc mở camera chụp hợp đồng</span>
-              </>
+              <div style={{
+                padding: "14px",
+                background: "#f8fafc",
+                border: "1px dashed #cbd5e1",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "6px",
+              }}>
+                <UploadSimple size={24} color="#64748b" />
+                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#475569" }}>
+                  Chưa có ảnh chụp bản hợp đồng có chữ ký
+                </span>
+                <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                  <Button size="small" variant="secondary" onClick={() => contractFileInputRef.current?.click()}>
+                    <UploadSimple size={14} /> Chọn ảnh từ máy
+                  </Button>
+                  <Button size="small" variant="secondary" onClick={handleSimulateContractPhoto}>
+                    <Camera size={14} /> Chụp nhanh hợp đồng
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Bước 4: Mở khóa Access Code PIN */}
-        <div className="ritual-step-card">
-          <div className="ritual-step-header">
-            <span className="ritual-step-title">
-              <Key size={18} weight="bold" />
-              4. Cấp mã PIN khóa điện tử cho khách
-            </span>
+          {/* ── BƯỚC 4: MỞ KHÓA MÃ PIN ACCESS CODE ── */}
+          <div className="ritual-step-card">
+            <div className="ritual-step-header">
+              <span className="ritual-step-title">
+                <Key size={18} weight="bold" />
+                4. Cấp mã PIN khóa điện tử cho khách
+              </span>
+            </div>
+            {paymentPhotoUrl && contractPhotoUrl ? (
+              <div className="access-pin-reveal-box">
+                <p style={{ margin: 0, fontSize: "0.76rem", color: "#94a3b8" }}>MÃ SỐ BÀN GIAO CHO KHÁCH:</p>
+                <div className="access-pin-number">{task.accessPin || "8842-Active"}</div>
+                <p style={{ margin: 0, fontSize: "0.72rem", color: "#34d399" }}>
+                  ✓ Mã PIN đã được kích hoạt trên hệ thống khóa tự quản Cơ sở Tân Bình
+                </p>
+              </div>
+            ) : (
+              <div style={{ backgroundColor: "#f1f5f9", padding: "12px", fontSize: "0.78rem", color: "#64748b", textAlign: "center" }}>
+                🔒 Mã PIN sẽ hiển thị sau khi hoàn tất thu đủ tiền (kèm ảnh) và lưu ảnh hợp đồng ở Bước 2 &amp; 3.
+              </div>
+            )}
           </div>
-          {photoUploaded ? (
-            <div className="access-pin-reveal-box">
-              <p style={{ margin: 0, fontSize: "0.76rem", color: "#94a3b8" }}>MÃ SỐ BÀN GIAO CHO KHÁCH:</p>
-              <div className="access-pin-number">{task.accessPin || "8842-Active"}</div>
-              <p style={{ margin: 0, fontSize: "0.72rem", color: "#34d399" }}>
-                ✓ Mã đã được kích hoạt trên hệ thống khóa tự quản Cơ sở Tân Bình
-              </p>
-            </div>
-          ) : (
-            <div style={{ backgroundColor: "#f1f5f9", padding: "12px", fontSize: "0.78rem", color: "#64748b", textAlign: "center" }}>
-              🔒 Mã PIN sẽ hiển thị sau khi tải lên ảnh hợp đồng đã ký ở Bước 3.
-            </div>
-          )}
-        </div>
 
-        {/* Nút hành động chốt */}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
-          <Button variant="secondary" onClick={onClose}>
-            Hủy / Đóng
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!photoUploaded || isSubmitting}
-          >
-            {isSubmitting ? "Đang xử lý..." : "Hoàn tất nhận kho & Bàn giao"}
-          </Button>
+          {/* Nút hành động chốt */}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
+            <Button variant="secondary" onClick={onClose}>
+              Hủy / Đóng
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!paymentPhotoUrl || !contractPhotoUrl || !idVerified || isSubmitting}
+            >
+              {isSubmitting ? "Đang xử lý..." : "Hoàn tất nhận kho & Bàn giao"}
+            </Button>
+          </div>
         </div>
-      </div>
-    </Drawer>
+      </Drawer>
+
+      {/* Modal xem toàn văn hợp đồng */}
+      <ContractViewerModal
+        isOpen={showContractModal}
+        onClose={() => setShowContractModal(false)}
+        contract={{ code: `HĐ-${task.refCode}` }}
+        reservation={{ code: task.refCode, customerName: task.customerName, customerPhone: task.customerPhone, unitCode: task.unitCode }}
+      />
+
+      {/* Modal xem Thẻ nhận kho đầy đủ có QR */}
+      {showFullPassModal && (
+        <div className="contract-modal-backdrop" onClick={() => setShowFullPassModal(false)}>
+          <div className="contract-modal-card" style={{ maxWidth: "420px", padding: "24px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 4px", fontSize: "1.1rem" }}>THẺ NHẬN KHO (CHECK-IN PASS)</h3>
+            <p style={{ margin: "0 0 16px", fontSize: "0.8rem", color: "#64748b" }}>Đối chiếu với màn hình điện thoại của khách hàng</p>
+            <div style={{ display: "inline-block", padding: "16px", background: "#ffffff", border: "2px solid #0f172a", marginBottom: "16px" }}>
+              <QrCode size={140} weight="bold" />
+              <div style={{ fontSize: "1.1rem", fontWeight: 800, fontFamily: "var(--font-mono)", marginTop: "8px" }}>
+                {task.refCode}
+              </div>
+            </div>
+            <div style={{ textAlign: "left", fontSize: "0.82rem", background: "#f8fafc", padding: "12px", border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div>Khách hàng: <strong>{task.customerName}</strong></div>
+              <div>Số điện thoại: <strong>{task.customerPhone}</strong></div>
+              <div>Kho được cấp: <strong>{task.unitCode}</strong></div>
+              <div>Mã PIN truy cập: <strong style={{ color: "#16a34a" }}>{task.accessPin || "8842-Active"}</strong></div>
+            </div>
+            <Button style={{ marginTop: "16px" }} fullWidth onClick={() => setShowFullPassModal(false)}>
+              Đóng đối chiếu
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

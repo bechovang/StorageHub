@@ -150,7 +150,8 @@
 .cip__pass-card {
   background: var(--color-surface);
   border: var(--border-strong);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-none, 0px);
+  box-shadow: var(--card-shadow, var(--btn-shadow));
 }
 
 /* Header Band */

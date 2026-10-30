@@ -23,7 +23,7 @@ export default function ResolveTicketModal({
           </div>
         )}
         <p style={{ margin: 0, fontSize: "0.85rem" }}>
-          Ghi nhận kết quả xử lý cho yêu cầu <strong>{ticket.code}</strong> (Ô kho {ticket.unitCode} - {ticket.customerName}):
+          Ghi nhận kết quả xử lý cho yêu cầu <strong>{ticket.code}</strong> (Kho {ticket.unitCode} - {ticket.customerName}):
         </p>
 
         <div className="form-field">

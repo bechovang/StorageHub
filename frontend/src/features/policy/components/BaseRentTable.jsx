@@ -18,7 +18,7 @@ export function BaseRentTable({
           <thead>
             <tr>
               <th className="w-20">Mã cỡ</th>
-              <th>Loại ô kho</th>
+              <th>Loại kho</th>
               <th className="text-right">Đơn giá niêm yết</th>
               <th className="text-center w-28">Chu kỳ</th>
               <th className="text-right w-36">Trạng thái</th>

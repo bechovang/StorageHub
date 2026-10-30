@@ -247,7 +247,7 @@ export function SurchargesTable({
             <tr>
               <td>
                 <div className="policy-cell-content">
-                  <span className="policy-cell-title">Bồi thường hư hại ô kho</span>
+                  <span className="policy-cell-title">Bồi thường hư hại kho</span>
                   <span className="policy-cell-sub">
                     Đánh giá hao mòn & thiệt hại
                   </span>

@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+    <!-- Interior LED Linear Red Glow -->
+    <filter id="red-led-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- ISO Floor Grid (Active Accent Red Pulses) -->
+  <g stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="80" y1="210" x2="200" y2="270" stroke="#fca5a5" />
+    <line x1="200" y1="270" x2="320" y2="210" stroke="#fca5a5" />
+    <line x1="320" y1="210" x2="200" y2="150" />
+    <line x1="200" y1="150" x2="80" y2="210" />
+    <line x1="140" y1="180" x2="260" y2="240" stroke="#f87171" stroke-dasharray="1 0" />
+    <line x1="140" y1="240" x2="260" y2="180" />
+  </g>
+
+  <!-- Tech Metadata Stamp (Hover State) -->
+  <text x="24" y="28" class="mono" font-size="9" font-weight="700" fill="#dc2626" letter-spacing="1">TYPE // LOCKER 1.5 M² · [ACTIVE]</text>
+  <rect x="238" y="18" width="138" height="15" fill="#dc2626" />
+  <text x="307" y="29" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" fill="#ffffff" letter-spacing="0.5">OPENED · ILLUMINATED</text>
+
+  <!-- LOCKER UNIT - HOVER (DOOR OPEN AJAR & LED ACTIVE) -->
+  <g id="locker-chassis">
+    <!-- Locker Shadow -->
+    <polygon points="120,245 200,285 270,248 190,210" fill="#000000" opacity="0.08" />
+
+    <!-- Locker Left Side Wall -->
+    <polygon points="130,110 190,140 190,245 130,215" fill="#f4f4f5" stroke="#18181b" stroke-width="1.75" stroke-linejoin="round" />
+    <line x1="150" y1="120" x2="150" y2="225" stroke="#d4d4d8" stroke-width="1" />
+    <line x1="170" y1="130" x2="170" y2="235" stroke="#d4d4d8" stroke-width="1" />
+
+    <!-- Locker Top Roof Panel -->
+    <polygon points="130,110 200,75 260,105 190,140" fill="#ffffff" stroke="#18181b" stroke-width="1.75" stroke-linejoin="round" />
+    <polygon points="138,106 146,102 152,105 144,109" fill="#dc2626" />
+
+    <!-- Locker Back Interior Wall (Exposed) -->
+    <polygon points="190,140 260,105 260,210 190,245" fill="#27272a" stroke="#18181b" stroke-width="1.75" />
+
+    <!-- Interior Storage Shelves -->
+    <!-- Middle Shelf -->
+    <polygon points="190,180 260,145 255,142 185,177" fill="#3f3f46" stroke="#52525b" stroke-width="1" />
+    <!-- Lower Shelf -->
+    <polygon points="190,215 260,180 255,177 185,212" fill="#3f3f46" stroke="#52525b" stroke-width="1" />
+
+    <!-- ACTIVE RED LED STRIP LIGHT AT TOP CEILING -->
+    <polygon points="192,142 258,108 258,112 192,146" fill="#dc2626" filter="url(#red-led-glow)" />
+    <!-- Downward Light Beam Flare -->
+    <polygon points="192,146 258,112 258,170 192,205" fill="#dc2626" opacity="0.12" />
+
+    <!-- Box Stored on Middle Shelf -->
+    <polygon points="208,160 230,149 230,165 208,176" fill="#f4f4f5" stroke="#18181b" stroke-width="1" />
+    <polygon points="198,165 208,160 208,176 198,181" fill="#e4e4e7" stroke="#18181b" stroke-width="1" />
+    <polygon points="198,165 220,154 230,149 208,160" fill="#ffffff" stroke="#18181b" stroke-width="1" />
+
+    <!-- SWUNG OPEN LOCKER DOOR (AJAR AT ~45 DEGREES) -->
+    <!-- Door edge pinned at hinge (260,105) down to (260,210), swinging out to (290,122) -->
+    <polygon points="260,105 292,122 292,227 260,210" fill="#ffffff" stroke="#dc2626" stroke-width="2" stroke-linejoin="round" />
+    <!-- Inner Door Reinforcement Stiffener -->
+    <line x1="268" y1="113" x2="268" y2="214" stroke="#e4e4e7" stroke-width="1.5" />
+    <line x1="284" y1="120" x2="284" y2="223" stroke="#e4e4e7" stroke-width="1.5" />
+
+    <!-- Unlocked Padlock (Hanging Open) -->
+    <rect x="290" y="174" width="6" height="7" fill="#18181b" />
+    <!-- Unlatched Shackle -->
+    <path d="M291 174 V169 A2 2 0 0 1 295 169 V167" stroke="#16a34a" stroke-width="1.5" fill="none" />
+    <circle cx="293" cy="177" r="1" fill="#16a34a" />
+
+    <!-- Red Swing Arc Line -->
+    <path d="M210 235 A55 35 0 0 1 285 225" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3 3" fill="none" />
+    <polygon points="288,225 282,222 284,227" fill="#dc2626" />
+  </g>
+
+  <!-- Standard Suitcase (Highlighted Active) -->
+  <g id="suitcase" transform="translate(60, 20)">
+    <polygon points="215,190 240,178 240,218 215,230" fill="#18181b" stroke="#dc2626" stroke-width="1.5" stroke-linejoin="round" />
+    <polygon points="202,196 215,190 215,230 202,236" fill="#27272a" stroke="#dc2626" stroke-width="1.5" stroke-linejoin="round" />
+    <polygon points="202,196 227,184 240,178 215,190" fill="#3f3f46" stroke="#18181b" stroke-width="1.5" stroke-linejoin="round" />
+    <line x1="223" y1="185" x2="223" y2="168" stroke="#ffffff" stroke-width="1.5" />
+    <line x1="230" y1="182" x2="230" y2="165" stroke="#ffffff" stroke-width="1.5" />
+    <line x1="222" y1="168" x2="231" y2="164" stroke="#dc2626" stroke-width="2" />
+    <line x1="227" y1="184" x2="227" y2="224" stroke="#dc2626" stroke-width="2.5" />
+  </g>
+
+  <!-- Front Storage Boxes (Slid Forward with Dimension Callout Tag) -->
+  <g id="boxes" transform="translate(-32, 28)">
+    <polygon points="120,205 150,190 150,215 120,230" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="95,217 120,205 120,230 95,242" fill="#f4f4f5" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="95,217 125,202 150,190 120,205" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    
+    <!-- Red Packing Cross Straps -->
+    <line x1="120" y1="205" x2="120" y2="230" stroke="#dc2626" stroke-width="2" />
+    <line x1="95" y1="229" x2="149" y2="202" stroke="#dc2626" stroke-width="1.5" />
+
+    <!-- Slide Motion Arrow -->
+    <path d="M75 240 L90 248" stroke="#dc2626" stroke-width="2" />
+    <polygon points="93,249 85,246 88,252" fill="#dc2626" />
+
+    <!-- Dimension Callout Tag -->
+    <rect x="25" y="180" width="82" height="18" fill="#18181b" stroke="#dc2626" stroke-width="1.5" />
+    <text x="66" y="192" class="mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">1.0 × 1.5 × 2.4M</text>
+    <polyline points="107,189 120,189 120,205" stroke="#dc2626" stroke-width="1.2" fill="none" />
+  </g>
+
+  <!-- Footer Technical Dimensions Bar (Active Red) -->
+  <line x1="24" y1="272" x2="376" y2="272" stroke="#dc2626" stroke-width="1.5" />
+  <text x="24" y="286" class="mono" font-size="8.5" font-weight="700" fill="#dc2626">LED STRIP: ACTIVE (6500K)</text>
+  <text x="376" y="286" text-anchor="end" class="mono" font-size="8.5" font-weight="800" fill="#16a34a">[ UNLOCKED · SẴN SÀNG SỬ DỤNG ]</text>
+</svg>

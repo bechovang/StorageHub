@@ -1,6 +1,6 @@
 import { X, Funnel } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
-import { UnitCard } from "../../components";
+import { UnitCard, Pagination } from "../../components/index.jsx";
 import { useAuth } from "../../context/AuthContext";
 import {
   useBrowseUnits,
@@ -25,11 +25,17 @@ export default function BrowsePage() {
     sortOrder,
     units,
     loading,
+    page,
+    pageSize,
+    total,
+    totalPages,
+    handlePageChange,
     selectedUnitForDrawer,
     setSelectedUnitForDrawer,
     handleSearchSubmit,
     handleSortChange,
     handleRemoveFilter,
+    handleResetFilters,
     handleOpenDrawer,
     handleViewDetails,
     handleBook,
@@ -83,7 +89,7 @@ export default function BrowsePage() {
                 }}
                 aria-hidden="true"
               />
-              <span>{units.length} kho đang sẵn sàng</span>
+              <span>{total || units.length} kho đang sẵn sàng</span>
             </div>
 
             {/* Active filter chips */}
@@ -158,22 +164,41 @@ export default function BrowsePage() {
             <Funnel size={36} color="var(--color-muted)" aria-hidden="true" />
             <h2 className="browse-empty__title">Không tìm thấy kho phù hợp</h2>
             <p className="browse-empty__desc">
-              Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử
-              thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê.
+              {activeFilters.facilityId && Number(activeFilters.facilityId) === 2
+                ? "Cơ sở Quận 7 hiện đang chuẩn bị khai trương nên chưa có kho khả dụng. Vui lòng chọn cơ sở Tân Bình hoặc bấm nút bên dưới để xem tất cả kho."
+                : "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê."}
             </p>
+            <button
+              type="button"
+              className="browse-empty__btn"
+              onClick={handleResetFilters}
+            >
+              Xóa bộ lọc & Xem tất cả kho
+            </button>
           </section>
         ) : (
-          <div className="browse-grid">
-            {units.map((unit) => (
-              <UnitCard
-                key={unit.id}
-                unit={unit}
-                onOpenDrawer={handleOpenDrawer}
-                onViewDetails={handleViewDetails}
-                onBook={handleBook}
-              />
-            ))}
-          </div>
+          <>
+            <div className="browse-grid">
+              {units.map((unit) => (
+                <UnitCard
+                  key={unit.id}
+                  unit={unit}
+                  onOpenDrawer={handleOpenDrawer}
+                  onViewDetails={handleViewDetails}
+                  onBook={handleBook}
+                />
+              ))}
+            </div>
+
+            {/* Phân trang danh sách kho (US-6, FR-4) */}
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+            />
+          </>
         )}
       </main>
       </div>

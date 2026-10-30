@@ -45,7 +45,7 @@ export default function RentalFilters({
         <input
           type="text"
           className="rental-filters__search-input"
-          placeholder="Tìm mã đơn hoặc mã ô kho..."
+          placeholder="Tìm mã đơn hoặc mã kho..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Tìm kiếm đơn thuê"

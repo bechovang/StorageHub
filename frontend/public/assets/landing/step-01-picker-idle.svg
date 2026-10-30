@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Architectural Floor Grid Lines (Subtle) -->
+  <g stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="40" y1="135" x2="240" y2="245" />
+    <line x1="240" y1="245" x2="440" y2="135" />
+    <line x1="440" y1="135" x2="240" y2="25" />
+    <line x1="240" y1="25" x2="40" y2="135" />
+    <line x1="140" y1="80" x2="340" y2="190" />
+    <line x1="140" y1="190" x2="340" y2="80" />
+  </g>
+
+  <!-- Header Metadata -->
+  <text x="24" y="24" class="mono" font-size="9" font-weight="700" fill="#71717a" letter-spacing="1">STEP 01 // 3D MAP PICKER · LEVEL 02 · ZONE A</text>
+  <text x="456" y="24" text-anchor="end" class="mono" font-size="9" font-weight="700" fill="#a1a1aa" letter-spacing="0.5">FILTER: ALL SIZES</text>
+
+  <!-- Central Corridor & Storage Units Floorplan (Axonometric) -->
+  <g id="floorplan" transform="translate(0, 10)">
+    <!-- Central Corridor Path -->
+    <polygon points="120,135 240,200 360,135 240,70" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <!-- Corridor Navigation Direction Line -->
+    <line x1="160" y1="135" x2="320" y2="135" stroke="#d4d4d8" stroke-width="1.5" stroke-dasharray="4 4" />
+    <text x="240" y="132" class="mono" font-size="7" font-weight="700" fill="#a1a1aa" text-anchor="middle" letter-spacing="1.5">HÀNH LANG TRUNG TÂM · 1.8M</text>
+
+    <!-- Unit 201 (Small Left) -->
+    <polygon points="80,112 140,80 140,40 80,72" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="140,80 160,91 160,51 140,40" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <text x="110" y="80" class="mono" font-size="8" font-weight="800" fill="#71717a" text-anchor="middle">KHO 201</text>
+    <text x="110" y="92" class="mono" font-size="6.5" font-weight="600" fill="#a1a1aa" text-anchor="middle">4.0 m²</text>
+
+    <!-- Unit 202 (Locker Cluster Left) -->
+    <polygon points="145,150 205,118 205,78 145,110" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="205,118 225,129 225,89 205,78" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <text x="175" y="118" class="mono" font-size="8" font-weight="800" fill="#71717a" text-anchor="middle">KHO 202</text>
+    <text x="175" y="130" class="mono" font-size="6.5" font-weight="600" fill="#a1a1aa" text-anchor="middle">1.5 m²</text>
+
+    <!-- Unit 203 (Medium Right) -->
+    <polygon points="275,129 295,118 295,78 275,89" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="295,118 355,150 355,110 295,78" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <text x="325" y="118" class="mono" font-size="8" font-weight="800" fill="#71717a" text-anchor="middle">KHO 203</text>
+    <text x="325" y="130" class="mono" font-size="6.5" font-weight="600" fill="#a1a1aa" text-anchor="middle">8.0 m²</text>
+
+    <!-- Unit 204 (Target Unit - Idle State: Neutral White) -->
+    <polygon points="215,91 235,80 235,40 215,51" fill="#f4f4f5" stroke="#18181b" stroke-width="1.5" />
+    <polygon points="235,80 295,112 295,72 235,40" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    <polygon points="215,51 235,40 295,72 275,83" fill="#fafafa" stroke="#18181b" stroke-width="1.5" />
+    <text x="265" y="79" class="mono" font-size="8.5" font-weight="800" fill="#18181b" text-anchor="middle">KHO 204</text>
+    <text x="265" y="92" class="mono" font-size="7" font-weight="700" fill="#71717a" text-anchor="middle">8.0 m² · TRỐNG</text>
+
+    <!-- Unit 205 (Large Rear) -->
+    <polygon points="340,78 400,110 400,70 340,38" fill="#ffffff" stroke="#18181b" stroke-width="1.5" />
+    <text x="370" y="78" class="mono" font-size="8" font-weight="800" fill="#71717a" text-anchor="middle">KHO 205</text>
+    <text x="370" y="90" class="mono" font-size="6.5" font-weight="600" fill="#a1a1aa" text-anchor="middle">16.0 m²</text>
+  </g>
+
+  <!-- Technical Axis Markers -->
+  <line x1="24" y1="235" x2="456" y2="235" stroke="#e4e4e7" stroke-width="1" />
+  <text x="24" y="252" class="mono" font-size="8.5" font-weight="600" fill="#71717a">GRID: 1.0M RESOLUTION · VIEW: 3D INTERACTIVE</text>
+  <text x="456" y="252" text-anchor="end" class="mono" font-size="8.5" font-weight="700" fill="#18181b">[ RÊ CHUỘT ĐỂ CHỌN KHO ]</text>
+</svg>

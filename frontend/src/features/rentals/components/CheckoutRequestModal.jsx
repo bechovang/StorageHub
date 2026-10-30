@@ -84,7 +84,7 @@ export default function CheckoutRequestModal({
                         <div>
                             <h3 className="rd-modal-title">Gửi yêu cầu trả kho</h3>
                             <p className="rd-modal-subtitle">
-                                Đơn {reservation.code} · Ô kho {reservation.unit?.code} (Hạn thuê: {fmtDate(reservation.endDate)})
+                                Đơn {reservation.code} · Kho {reservation.unit?.code} (Hạn thuê: {fmtDate(reservation.endDate)})
                             </p>
                         </div>
                     </div>

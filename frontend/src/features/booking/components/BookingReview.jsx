@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   CaretRight,
   ShieldCheck,
@@ -8,10 +9,12 @@ import {
   CornersOut,
   IdentificationCard,
   CreditCard,
+  FileText,
 } from "@phosphor-icons/react";
 import { Link } from "react-router";
 import Badge from "../../../components/Badge/Badge.jsx";
 import Button from "../../../components/Button/Button.jsx";
+import ContractViewerModal from "../../../components/ContractModal/ContractViewerModal.jsx";
 import { formatDateTime } from "../../../utils/formatters.js";
 
 export default function BookingReview({
@@ -29,6 +32,7 @@ export default function BookingReview({
   showHistory,
   setShowHistory,
 }) {
+  const [showContractModal, setShowContractModal] = useState(false);
   const unit = reservation?.unit || {};
   const totalRent = (unit.monthlyPrice || 345000) * (reservation?.durationMonths || 3);
   const initials = user?.fullName
@@ -50,7 +54,7 @@ export default function BookingReview({
           <span>{unit.depot || "Cơ sở Tân Bình"}</span>
           <CaretRight size={13} weight="bold" />
           <span className="booking-breadcrumb__current">
-            {unit.code ? `Ô kho ${unit.code}` : "Ô kho"} · Đặt chỗ
+            {unit.code ? `Kho ${unit.code}` : "Kho"} · Đặt chỗ
           </span>
         </nav>
 
@@ -71,9 +75,9 @@ export default function BookingReview({
             <div className="unit-spec-card__header">
               <div className="unit-spec-card__title-row">
                 <div className="unit-badges-row">
-                  <span className="code-pill">Ô KHO {unit.code || "S-3"}</span>
+                  <span className="code-pill">KHO {unit.code || "S-3"}</span>
                   <Badge tone={isAlreadyPaid ? "success" : "warning"}>
-                    {isAlreadyPaid ? "Đã giữ kho" : "Chờ thanh toán cọc"}
+                    {isAlreadyPaid ? "Đã giữ kho (RESERVED)" : "Chưa giữ kho · Cần thanh toán cọc"}
                   </Badge>
                 </div>
                 <h1 className="unit-title">
@@ -89,6 +93,21 @@ export default function BookingReview({
                 <span className="unit-price-sub">mỗi tháng</span>
               </div>
             </div>
+
+            {!isAlreadyPaid && (
+              <div style={{
+                margin: "12px 0 16px",
+                padding: "10px 14px",
+                background: "#fffbeb",
+                border: "1px solid #fef3c7",
+                borderLeft: "3px solid #d97706",
+                fontSize: "0.82rem",
+                color: "#92400e",
+                lineHeight: "1.45",
+              }}>
+                <strong>Lưu ý quan trọng về giữ chỗ:</strong> Kho chỉ chính thức được chuyển sang trạng thái <strong>RESERVED</strong> và khóa giữ chỗ sau khi bạn hoàn tất thanh toán cọc. Trong thời gian này, kho vẫn khả dụng cho khách hàng khác.
+              </div>
+            )}
 
             {/* Parameters Grid (3 cols) */}
             <div className="unit-params-grid">
@@ -204,7 +223,7 @@ export default function BookingReview({
             <div className={`deposit-highlight ${isAlreadyPaid ? "deposit-highlight--paid" : ""}`}>
               <div className="deposit-highlight__top">
                 <span className="deposit-highlight__title">
-                  {isAlreadyPaid ? "Tiền cọc đã thanh toán (10%)" : "Tiền cọc thanh toán ngay (10%)"}
+                  {isAlreadyPaid ? "Tiền cọc đã thanh toán (10%)" : "Tiền cọc để khóa giữ chỗ (10%)"}
                 </span>
                 <span className="deposit-highlight__amount">
                   {formatVND(reservation?.depositAmount || Math.round(totalRent * 0.1))}
@@ -212,18 +231,41 @@ export default function BookingReview({
               </div>
               <p className="deposit-highlight__note">
                 {isAlreadyPaid
-                  ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống để đảm bảo hiệu lực đơn đặt chỗ."
-                  : "Hoàn trả 100% khi kết thúc hợp đồng hoặc cấn trừ vào kỳ thanh toán đầu tiên theo nhu cầu của bạn."}
+                  ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống. Kho đã chính thức được khóa giữ chỗ (RESERVED)."
+                  : "Hoàn tất thanh toán cọc để chính thức giữ chỗ kho (RESERVED). Tiền cọc được hoàn trả 100% khi kết thúc hợp đồng."}
               </p>
             </div>
 
             {/* Nút Thanh toán cọc / Mở Modal & Điều hướng kế tiếp */}
             <div className="financial-card__actions">
+              <button
+                type="button"
+                className="btn-view-contract-link"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--color-primary, #0f172a)",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  marginBottom: "12px",
+                  textDecoration: "underline",
+                  padding: "4px 0",
+                }}
+                onClick={() => setShowContractModal(true)}
+              >
+                <FileText size={16} />
+                <span>Xem văn bản Hợp đồng thuê kho điện tử mẫu</span>
+              </button>
+
               {isAlreadyPaid ? (
                 <>
                   <div className="paid-status-box">
                     <CheckCircle size={20} weight="fill" />
-                    <span>Đơn đặt chỗ đã thanh toán cọc thành công</span>
+                    <span>Đơn đặt chỗ đã thanh toán cọc thành công (RESERVED)</span>
                   </div>
                   <div style={{ display: "flex", gap: "10px", marginTop: "12px", width: "100%" }}>
                     <Link
@@ -245,7 +287,7 @@ export default function BookingReview({
               ) : (
                 <Button variant="primary" fullWidth size="large" onClick={onOpenModal}>
                   <Lock size={18} weight="bold" />
-                  <span>Tiến hành thanh toán cọc</span>
+                  <span>Thanh toán cọc để giữ chỗ ngay</span>
                 </Button>
               )}
 
@@ -313,6 +355,14 @@ export default function BookingReview({
           )}
         </div>
       </div>
+
+      <ContractViewerModal
+        isOpen={showContractModal}
+        onClose={() => setShowContractModal(false)}
+        reservation={reservation}
+        unit={unit}
+        user={user}
+      />
     </div>
   );
 }

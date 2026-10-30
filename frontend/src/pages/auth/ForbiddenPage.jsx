@@ -5,7 +5,7 @@ import AppShell from "../../components/AppShell/AppShell.jsx";
 import "./ForbiddenPage.css";
 
 const ROLE_LANDINGS = {
-  CUSTOMER: { path: "/browse", name: "Khám phá ô kho" },
+  CUSTOMER: { path: "/browse", name: "Khám phá kho" },
   STAFF: { path: "/tasks", name: "Bảng công việc" },
   FACILITY_MANAGER: { path: "/facility", name: "Tổng quan cơ sở" },
   BUSINESS_OPS: { path: "/overview", name: "Tổng quan kinh doanh" },

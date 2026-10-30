@@ -7,6 +7,8 @@ export { default as Footer } from "./Footer/Footer.jsx";
 export { default as Header } from "./Header/Header.jsx";
 export { default as Modal } from "./Modal/Modal.jsx";
 export { default as UnitCard } from "./UnitCard/UnitCard.jsx";
+export { default as Pagination } from "./Pagination/Pagination.jsx";
+export { default as ContractViewerModal } from "./ContractModal/ContractViewerModal.jsx";
 
 export {
   Input,

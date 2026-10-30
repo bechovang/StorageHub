@@ -10,11 +10,11 @@ Frontend đọc biến môi trường qua chuẩn `import.meta.env` của Vite:
 
 | Biến | Giá trị mặc định | Giải thích |
 |---|---|---|
-| `VITE_BACKEND_URL` | `http://localhost:8080` | URL của máy chủ Backend Spring Boot |
+| `VITE_BACKEND_URL` | `http://127.0.0.1:8080` | URL máy chủ Backend Spring Boot (dùng IPv4 để tránh lỗi phân giải `::1` IPv6 trên Windows) |
 
 Nếu Backend chạy ở địa chỉ khác (ví dụ VPS dev), tạo file `frontend/.env`:
 ```env
-VITE_BACKEND_URL=http://localhost:8080
+VITE_BACKEND_URL=http://127.0.0.1:8080
 ```
 
 ---
@@ -32,12 +32,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:8080',
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8080',
         changeOrigin: true,
         secure: false,
       },
       '/storage': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:8080',
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8080',
         changeOrigin: true,
         secure: false,
       },
@@ -54,7 +54,7 @@ export default defineConfig({
 Trình duyệt (Port 5173) 
   ──> Gửi request: GET /api/v1/units
   ──> Vite Dev Server (Port 5173) nhận request
-  ──> Vite âm thầm chuyển tiếp tới: http://localhost:8080/api/v1/units
+  ──> Vite âm thầm chuyển tiếp tới: http://127.0.0.1:8080/api/v1/units
   ──> Spring Boot xử lý và trả kết quả về cho Vite
   ──> Vite trả kết quả về cho Trình duyệt
 ```

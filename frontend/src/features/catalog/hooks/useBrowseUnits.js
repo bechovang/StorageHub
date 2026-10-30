@@ -33,6 +33,11 @@ export function useBrowseUnits() {
   // Thứ tự sắp xếp
   const [sortOrder, setSortOrder] = useState("price-asc");
 
+  // Phân trang danh sách kho (40 kho chia đều 12 kho / trang)
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
+  const [total, setTotal] = useState(0);
+
   // Kết quả tìm kiếm kho
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,8 +58,8 @@ export function useBrowseUnits() {
     loadOptions();
   }, []);
 
-  // Hàm thực thi tìm kiếm
-  const fetchUnits = async (filters, sort) => {
+  // Hàm thực thi tìm kiếm kèm phân trang
+  const fetchUnits = async (filters, sort, targetPage = 1) => {
     setLoading(true);
     try {
       const data = await searchUnits({
@@ -63,11 +68,16 @@ export function useBrowseUnits() {
         startDate: filters.startDate,
         facilityId: filters.facilityId,
         sort,
+        page: targetPage,
+        pageSize,
       });
       const sorted = sortUnitsWithAvailableFirst(data.items || [], sort);
       setUnits(sorted);
+      setPage(data.page || targetPage);
+      setTotal(Number(data.total ?? sorted.length));
     } catch {
       setUnits([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -84,14 +94,19 @@ export function useBrowseUnits() {
           startDate: activeFilters.startDate,
           facilityId: activeFilters.facilityId,
           sort: sortOrder,
+          page: 1,
+          pageSize,
         });
         if (!ignore) {
           const sorted = sortUnitsWithAvailableFirst(data.items || [], sortOrder);
           setUnits(sorted);
+          setPage(data.page || 1);
+          setTotal(Number(data.total ?? sorted.length));
         }
       } catch {
         if (!ignore) {
           setUnits([]);
+          setTotal(0);
         }
       } finally {
         if (!ignore) {
@@ -106,7 +121,17 @@ export function useBrowseUnits() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Xử lý submit form tìm kiếm
+  // Xử lý chuyển trang
+  const handlePageChange = (newPage) => {
+    if (newPage < 1) return;
+    const maxPage = Math.max(1, Math.ceil(total / pageSize));
+    if (newPage > maxPage) return;
+    setPage(newPage);
+    fetchUnits(activeFilters, sortOrder, newPage);
+    window.scrollTo({ top: 380, behavior: "smooth" });
+  };
+
+  // Xử lý submit form tìm kiếm (reset về trang 1)
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const newFilters = {
@@ -116,15 +141,31 @@ export function useBrowseUnits() {
       facilityId: selectedFacility,
     };
     setActiveFilters(newFilters);
-    fetchUnits(newFilters, sortOrder);
+    setPage(1);
+    fetchUnits(newFilters, sortOrder, 1);
   };
 
-  // Xử lý đổi thứ tự sắp xếp: Giữ nguyên kho trống ở đầu và áp dụng thứ tự giá
+  // Xử lý đổi thứ tự sắp xếp
   const handleSortChange = (e) => {
     const newSort = e.target.value;
     setSortOrder(newSort);
-    setUnits((prev) => sortUnitsWithAvailableFirst(prev, newSort));
-    fetchUnits(activeFilters, newSort);
+    fetchUnits(activeFilters, newSort, 1);
+  };
+
+  // Đặt lại toàn bộ bộ lọc
+  const handleResetFilters = () => {
+    setSelectedType("");
+    setSelectedSize("");
+    setSelectedFacility("");
+    const reset = {
+      typeId: "",
+      sizeM2: "",
+      startDate,
+      facilityId: "",
+    };
+    setActiveFilters(reset);
+    setPage(1);
+    fetchUnits(reset, sortOrder, 1);
   };
 
   // Xóa từng bộ lọc riêng lẻ từ chip
@@ -141,7 +182,8 @@ export function useBrowseUnits() {
       setSelectedFacility("");
     }
     setActiveFilters(updated);
-    fetchUnits(updated, sortOrder);
+    setPage(1);
+    fetchUnits(updated, sortOrder, 1);
   };
 
   // Mở Drawer xem nhanh tóm tắt gói kho
@@ -155,7 +197,7 @@ export function useBrowseUnits() {
   };
 
   const handleBook = (unit) => {
-    navigate(`/units/${unit.id}/book`);
+    navigate(`/units/${unit.id}`);
   };
 
   // Lấy tên loại kho đang được lọc để hiển thị trên chip
@@ -167,6 +209,8 @@ export function useBrowseUnits() {
   const activeFacilityName = filterOptions.facilities?.find(
     (f) => String(f.id) === String(activeFilters.facilityId),
   )?.name;
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return {
     navigate,
@@ -183,11 +227,17 @@ export function useBrowseUnits() {
     sortOrder,
     units,
     loading,
+    page,
+    pageSize,
+    total,
+    totalPages,
+    handlePageChange,
     selectedUnitForDrawer,
     setSelectedUnitForDrawer,
     handleSearchSubmit,
     handleSortChange,
     handleRemoveFilter,
+    handleResetFilters,
     handleOpenDrawer,
     handleViewDetails,
     handleBook,

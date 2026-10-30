@@ -3,7 +3,7 @@
  * Quản trị chính sách thuê kho, biểu phí cơ bản, phụ thu và trần quy định (Hard Caps)
  *
  * Nghiệp vụ:
- * 1. Giá thuê cơ bản (Base rent per month) theo từng loại ô kho (S Indoor, S Outdoor, M Climate, L Climate, Locker)
+ * 1. Giá thuê cơ bản (Base rent per month) theo từng loại kho (S Indoor, S Outdoor, M Climate, L Climate, Locker)
  * 2. Phụ thu (Surcharges):
  *    - Phí trả kho trễ (Late checkout fee): Tối đa 10% (Hard cap #CAP-04). Nhập > 10% (ví dụ 15%) => Chặn lưu, cắm cờ.
  *    - Tỷ lệ tiền cọc tối thiểu (Security deposit %): Tối thiểu 10% (#CAP-08).

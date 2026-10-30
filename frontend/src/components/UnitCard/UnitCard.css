@@ -5,12 +5,29 @@
   flex-direction: column;
   background: var(--color-surface);
   border: var(--border-strong);
-  transition: border-color var(--duration-fast) var(--ease-standard);
+  border-radius: var(--radius-none, 0px);
+  box-shadow: var(--card-shadow, var(--btn-shadow));
+  transition: border-color var(--duration-fast) var(--ease-standard),
+              box-shadow 0.15s ease,
+              transform 0.15s ease;
   cursor: pointer;
 }
 
 .unit-card:hover {
   border-color: var(--color-accent);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--card-shadow-hover, var(--btn-shadow-hover));
+}
+
+.unit-card:active {
+  transform: translate(1px, 1px);
+  box-shadow: var(--card-shadow-active, var(--btn-shadow-active));
+}
+
+.unit-card:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: var(--focus), var(--card-shadow, var(--btn-shadow));
 }
 
 .unit-card__visual {

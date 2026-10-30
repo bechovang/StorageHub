@@ -17,6 +17,7 @@ Dành cho người mới cần cài đặt và chạy thử hệ thống ngay:
 ### 2. 🏗️ Kiến Trúc Hệ Thống (Architecture)
 Dành cho Tech Lead, Backend và Frontend Architect:
 - [**Tổng quan Công nghệ & Cấu trúc Mã nguồn**](./architecture/overview-and-techstack.md): Tech stack (React 19, Vite 8, Recharts), cấu trúc cây thư mục `src/` và nguyên tắc thiết kế.
+- [**Hệ Thống Design Tokens & Quy Chuẩn Giao Diện**](./architecture/design-tokens.md): Toàn bộ đặc tả Design Tokens (Bảng màu, Typography, Spacing, Shadows, Buttons, Motion, Z-Index, Contrast Rules) theo chuẩn Swiss Neo-Brutalism.
 - [**Luồng Dữ Liệu & HTTP Client (`apiClient.js`)**](./architecture/data-flow-and-client.md): Sơ đồ vòng đời request/response, tự động gắn JWT token, thu hồi phiên 401 và cơ chế Hybrid Fallback.
 - [**Quản lý Trạng thái Ứng dụng**](./architecture/state-and-caching.md): Phạm vi của `AuthContext`, `NotificationContext` và kỹ thuật Cập nhật lạc quan (Optimistic UI) cho Kanban và ca trực.
 - [**Xử lý Lỗi & Bản địa hóa Tiếng Việt**](./architecture/error-handling-and-i18n.md): Chuẩn cấu trúc lỗi Envelope AD-8 và từ điển thông điệp lỗi tiếng Việt thân thiện.
@@ -27,7 +28,7 @@ Dành cho Tech Lead, Backend và Frontend Architect:
 Mỗi tài liệu tương ứng một Domain nghiệp vụ riêng biệt, đầy đủ Method, URL, Request/Response JSON mẫu:
 - [**Xác thực & Phiên làm việc (Auth & Session)**](./api-reference/auth-and-session.md): Đăng nhập, đăng ký, lấy hồ sơ cá nhân.
 - [**Danh mục kho & Báo giá tự động (Units & Catalog)**](./api-reference/units-and-catalog.md): Bộ lọc, tìm kiếm kho và công cụ báo giá thuê.
-- [**Đơn đặt chỗ, Hợp đồng & Check-in Pass**](./api-reference/reservations-and-rentals.md): Đặt giữ chỗ, mã QR nhận kho, tự gia hạn và yêu cầu trả kho.
+- [**Đơn đặt chỗ, Hợp đồng & Check-in Pass**](./api-reference/reservations-and-rentals.md): Tạo đơn đặt chỗ, thanh toán cọc để giữ chỗ, mã QR nhận kho, tự gia hạn và yêu cầu trả kho.
 - [**Thanh toán & Cổng thanh toán (Payments)**](./api-reference/payments-and-gateways.md): Cổng PayOS thật (VietQR), ví MoMo (OTP giả lập), thẻ ngân hàng (CARD demo).
 - [**Bảng công việc & 4 Nghi thức (Staff Tasks & Rituals)**](./api-reference/staff-tasks-and-rituals.md): Kanban nhân viên, nghi thức check-in, checkout, vệ sinh và ràng buộc Snap-Back.
 - [**Quản lý Cơ sở & Phân ca trực (Facility & Shifts)**](./api-reference/facility-and-shifts.md): Bảng điều khiển tỷ lệ lấp đầy kho và xếp lịch trực tuần tránh trùng giờ.

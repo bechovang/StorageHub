@@ -39,7 +39,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__tags">
             {/* Unit Mono Badge */}
             <span className="rental-card__unit-code font-mono">
-              Ô KHO {item.unit?.code || "—"}
+              KHO {item.unit?.code || "—"}
             </span>
 
             {/* Swiss Status Badge */}
@@ -135,7 +135,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__prompt rental-card__prompt--warning">
             <WarningCircle size={16} weight="fill" />
             <span>
-              <strong>Cần thanh toán:</strong> Vui lòng hoàn tất thanh toán tiền cọc để giữ chỗ kho này nhé.
+              <strong>Chưa giữ chỗ:</strong> Vui lòng hoàn tất thanh toán tiền cọc để khóa giữ chỗ kho (RESERVED) trước khi có khách khác đặt nhé.
             </span>
           </div>
         )}
@@ -144,7 +144,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__prompt rental-card__prompt--info">
             <CheckCircle size={16} weight="fill" />
             <span>
-              <strong>Đã giữ chỗ:</strong> Bạn chỉ cần mang theo CCCD và mở thẻ nhận kho khi đến quầy.
+              <strong>Đã giữ chỗ (RESERVED):</strong> Bạn chỉ cần mang theo CCCD và mở thẻ nhận kho khi đến quầy.
             </span>
           </div>
         )}

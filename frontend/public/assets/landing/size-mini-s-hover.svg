@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%" fill="none">
+  <defs>
+    <style>
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+      .sans { font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
+    <!-- Light Beam Radial / Linear Gradient -->
+    <linearGradient id="headlight-beam" x1="0%" y1="0%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="40%" stop-color="#fef08a" stop-opacity="0.5" />
+      <stop offset="85%" stop-color="#dc2626" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+    </linearGradient>
+    <filter id="headlight-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Technical Wireframe Grid (Hover Accent) -->
+  <g stroke="#e4e4e7" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="60" y1="210" x2="200" y2="280" stroke="#fca5a5" />
+    <line x1="200" y1="280" x2="340" y2="210" stroke="#fca5a5" />
+    <line x1="340" y1="210" x2="200" y2="140" />
+    <line x1="200" y1="140" x2="60" y2="210" />
+    <line x1="130" y1="175" x2="270" y2="245" />
+    <line x1="130" y1="245" x2="270" y2="175" />
+  </g>
+
+  <!-- Tech Metadata Header (Active Red) -->
+  <text x="24" y="28" class="mono" font-size="9" font-weight="700" fill="#dc2626" letter-spacing="1">TYPE // MINI STORAGE S · 4.0 M² · [ACTIVE]</text>
+  <rect x="230" y="18" width="146" height="15" fill="#dc2626" />
+  <text x="303" y="29" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" fill="#ffffff" letter-spacing="0.5">4.0 M² · MOTO FIT · SECURED</text>
+
+  <!-- ROOM SHELL (ISOMETRIC 3D CUTAWAY) -->
+  <g id="room-cutaway">
+    <!-- Back-Left Wall -->
+    <polygon points="80,195 200,135 200,65 80,125" fill="#f4f4f5" stroke="#18181b" stroke-width="1.75" />
+    <line x1="120" y1="175" x2="120" y2="105" stroke="#e4e4e7" stroke-width="1.5" />
+    <line x1="160" y1="155" x2="160" y2="85" stroke="#e4e4e7" stroke-width="1.5" />
+
+    <!-- Back-Right Wall -->
+    <polygon points="200,135 320,195 320,125 200,65" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    <line x1="240" y1="155" x2="240" y2="85" stroke="#e4e4e7" stroke-width="1.5" />
+    <line x1="280" y1="175" x2="280" y2="105" stroke="#e4e4e7" stroke-width="1.5" />
+
+    <!-- Ceiling Structural I-Beam with Red PCCC Sensor Light -->
+    <polygon points="80,125 200,65 205,67 85,127" fill="#18181b" />
+    <polygon points="200,65 320,125 315,127 195,67" fill="#18181b" />
+    <circle cx="200" cy="72" r="3" fill="#dc2626" />
+    <circle cx="200" cy="72" r="6" stroke="#dc2626" stroke-width="0.8" opacity="0.6" />
+
+    <!-- Concrete Floor Base with Red Parking Bay Border -->
+    <polygon points="80,195 200,255 320,195 200,135" fill="#fafafa" stroke="#18181b" stroke-width="1.75" />
+    <polygon points="120,195 190,230 250,200 180,165" fill="none" stroke="#dc2626" stroke-width="2" />
+  </g>
+
+  <!-- HEADLIGHT PROJECTION BEAM (ACROSS FLOOR) -->
+  <polygon points="218,177 345,218 275,268 215,183" fill="url(#headlight-beam)" />
+  <line x1="218" y1="177" x2="345" y2="218" stroke="#fef08a" stroke-width="1.5" opacity="0.8" />
+  <line x1="215" y1="183" x2="275" y2="268" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 2" />
+
+  <!-- MOTORBIKE / SCOOTER (HEADLIGHT GLOWING) -->
+  <g id="scooter" transform="translate(145, 130)">
+    <!-- Rear Wheel -->
+    <ellipse cx="20" cy="70" rx="9" ry="16" fill="#18181b" stroke="#dc2626" stroke-width="1.5" transform="rotate(-15, 20, 70)" />
+    <ellipse cx="20" cy="70" rx="4" ry="7" fill="#ffffff" stroke="#18181b" stroke-width="1" transform="rotate(-15, 20, 70)" />
+
+    <!-- Exhaust Pipe -->
+    <rect x="18" y="72" width="22" height="5" transform="rotate(-10, 18, 72)" fill="#52525b" stroke="#18181b" stroke-width="1" />
+
+    <!-- Main Chassis & Engine -->
+    <polygon points="22,66 42,54 58,68 35,76" fill="#18181b" stroke="#18181b" stroke-width="1.5" />
+    
+    <!-- Scooter Seat & Tail Fairing -->
+    <polygon points="12,50 48,36 54,44 18,58" fill="#27272a" stroke="#18181b" stroke-width="1.5" />
+    <!-- Bright Red Tail Reflector Glow -->
+    <polygon points="10,50 14,48 15,53 11,55" fill="#ef4444" filter="url(#headlight-glow)" />
+
+    <!-- Step-through Floorboard -->
+    <polygon points="40,58 58,68 68,62 50,52" fill="#52525b" stroke="#18181b" stroke-width="1.2" />
+
+    <!-- Front Cowl & Handlebars -->
+    <polygon points="56,38 72,46 68,66 52,58" fill="#18181b" stroke="#18181b" stroke-width="1.5" />
+    <!-- Handlebar & Mirrors -->
+    <line x1="56" y1="36" x2="68" y2="30" stroke="#18181b" stroke-width="2.5" />
+    <circle cx="55" cy="33" r="2.5" fill="#dc2626" stroke="#18181b" stroke-width="1" />
+
+    <!-- FRONT HEADLIGHT GLOWING (ACTIVE) -->
+    <polygon points="70,45 75,47 74,54 69,52" fill="#ffffff" filter="url(#headlight-glow)" stroke="#fef08a" stroke-width="1.5" />
+    <circle cx="73" cy="49" r="4" fill="#ffffff" />
+
+    <!-- Front Fork & Wheel -->
+    <line x1="66" y1="52" x2="78" y2="76" stroke="#dc2626" stroke-width="2" />
+    <ellipse cx="78" cy="78" rx="9" ry="16" fill="#18181b" stroke="#dc2626" stroke-width="1.5" transform="rotate(-15, 78, 78)" />
+    <ellipse cx="78" cy="78" rx="4" ry="7" fill="#ffffff" stroke="#18181b" stroke-width="1" transform="rotate(-15, 78, 78)" />
+  </g>
+
+  <!-- STACKED STORAGE GOODS (HIGHLIGHTED WITH RED STRAPS) -->
+  <g id="storage-goods">
+    <!-- Leaning Mattress -->
+    <polygon points="95,145 110,137 115,202 100,210" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="90,148 95,145 100,210 95,213" fill="#f4f4f5" stroke="#dc2626" stroke-width="1.75" />
+    <line x1="105" y1="140" x2="110" y2="205" stroke="#dc2626" stroke-width="1.5" />
+
+    <!-- Carton Box 1 (Corner) with Red Packing Straps -->
+    <polygon points="260,165 290,150 290,185 260,200" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    <polygon points="235,177 260,165 260,200 235,212" fill="#f4f4f5" stroke="#18181b" stroke-width="1.75" />
+    <polygon points="235,177 265,162 290,150 260,165" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    <!-- Vibrant Red Security Straps -->
+    <line x1="260" y1="165" x2="260" y2="200" stroke="#dc2626" stroke-width="2.5" />
+    <line x1="235" y1="195" x2="289" y2="168" stroke="#dc2626" stroke-width="1.5" />
+
+    <!-- Carton Box 2 (Top Stack) -->
+    <polygon points="255,138 280,125 280,152 255,165" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="235,148 255,138 255,165 235,175" fill="#ffffff" stroke="#dc2626" stroke-width="1.75" />
+    <polygon points="235,148 260,135 280,125 255,138" fill="#ffffff" stroke="#18181b" stroke-width="1.75" />
+    <line x1="255" y1="138" x2="255" y2="165" stroke="#dc2626" stroke-width="2" />
+    <text x="257" y="153" class="mono" font-size="6.5" font-weight="800" fill="#dc2626">SECURED</text>
+  </g>
+
+  <!-- Unit Number Signage (Active Red) -->
+  <rect x="290" y="80" width="22" height="12" fill="#dc2626" />
+  <text x="301" y="89" class="mono" font-size="7.5" font-weight="800" fill="#ffffff" text-anchor="middle">S-08</text>
+
+  <!-- Technical Footer Bar (Active) -->
+  <line x1="24" y1="272" x2="376" y2="272" stroke="#dc2626" stroke-width="1.5" />
+  <text x="24" y="286" class="mono" font-size="8.5" font-weight="700" fill="#dc2626">BEAM: 1200 LUMENS · PCCC SENSOR: OK</text>
+  <text x="376" y="286" text-anchor="end" class="mono" font-size="8.5" font-weight="800" fill="#16a34a">[ ĐÃ KHÓA AN TOÀN · STANDBY ]</text>
+</svg>

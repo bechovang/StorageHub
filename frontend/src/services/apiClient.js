@@ -12,6 +12,7 @@ export const tokenStorage = {
 
 function isPublicPathname(pathname = "") {
   return (
+    pathname === "/" ||
     pathname === "/browse" ||
     pathname.startsWith("/units/") && !pathname.endsWith("/book") ||
     pathname === "/login" ||

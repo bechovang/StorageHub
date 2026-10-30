@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
 
 // Auth & Public Pages
+import LandingPage from "../pages/public/LandingPage.jsx";
 import LoginPage from "../pages/auth/LoginPage.jsx";
 import RegisterPage from "../pages/auth/RegisterPage.jsx";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage.jsx";
@@ -37,7 +38,7 @@ import ActivityLogPage from "../pages/common/ActivityLogPage.jsx";
 import SupportPage from "../pages/common/SupportPage.jsx";
 
 export const ROLE_LANDINGS = {
-  CUSTOMER: "/browse",
+  CUSTOMER: "/",
   STAFF: "/tasks",
   FACILITY_MANAGER: "/facility",
   BUSINESS_OPS: "/overview",
@@ -47,8 +48,8 @@ export const ROLE_LANDINGS = {
 function RootRedirect() {
   const { user, isAuthenticated, loading } = useAuth();
   if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/browse" replace />;
-  const target = ROLE_LANDINGS[user?.role] || "/browse";
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  const target = ROLE_LANDINGS[user?.role] || "/";
   return <Navigate to={target} replace />;
 }
 
@@ -61,7 +62,7 @@ export default function AppRouter() {
   return (
     <Routes>
       {/* ── 1. Public & Root Routes ── */}
-      <Route path="/" element={<RootRedirect />} />
+      <Route path="/" element={<LandingPage />} />
 
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
