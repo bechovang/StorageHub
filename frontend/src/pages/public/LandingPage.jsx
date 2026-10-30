@@ -109,34 +109,122 @@ function CounterNumber({ value, suffix = "", prefix = "", duration = 1.2 }) {
 
 /**
  * InteractiveVisualAsset Component — Tự động hoán đổi mượt mà giữa Idle & Hover state
- * Chuẩn đồ hoạ tối giản Swiss Neo-Brutalist, trong suốt (transparent background)
+ * Có cơ chế tự động Fallback sang Bản vẽ Schematics / Placeholder kiến trúc nếu file ảnh chưa có hoặc bị lỗi.
  */
 function InteractiveVisualAsset({
   idleSrc,
   hoverSrc,
   alt,
+  tag,
   aspectRatio = "4/3",
   caption,
+  icon: IconComponent = Cube,
 }) {
+  const [hasError, setHasError] = useState(false);
+  const [hoverError, setHoverError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+    setHoverError(false);
+  }, [idleSrc, hoverSrc]);
+
   return (
     <div className="interactive-asset-wrapper">
       <div className="interactive-asset" style={{ aspectRatio }}>
-        <img
-          src={idleSrc}
-          alt={alt}
-          className="interactive-asset__img interactive-asset__img--idle"
-          loading="lazy"
-        />
-        <img
-          src={hoverSrc}
-          alt={`${alt} (hover)`}
-          className="interactive-asset__img interactive-asset__img--hover"
-          loading="lazy"
-          aria-hidden="true"
-        />
+        {!hasError ? (
+          <>
+            <img
+              src={idleSrc}
+              alt={alt}
+              className="interactive-asset__img interactive-asset__img--idle"
+              loading="lazy"
+              onError={() => setHasError(true)}
+            />
+            {hoverSrc && !hoverError && (
+              <img
+                src={hoverSrc}
+                alt={`${alt} (hover)`}
+                className="interactive-asset__img interactive-asset__img--hover"
+                loading="lazy"
+                aria-hidden="true"
+                onError={() => setHoverError(true)}
+              />
+            )}
+          </>
+        ) : (
+          <div className="visual-placeholder visual-placeholder--fallback" style={{ width: "100%", height: "100%" }}>
+            <div className="visual-placeholder__inner">
+              <div className="visual-placeholder__icon-wrap">
+                <IconComponent size={26} weight="duotone" />
+              </div>
+              <div className="visual-placeholder__meta">
+                <span className="visual-placeholder__tag">{tag || "BẢN VẼ SƠ ĐỒ KHO"}</span>
+                <span className="visual-placeholder__spec">SCHEMATIC PLACEHOLDER</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {caption && (
         <p className="interactive-asset__caption">{caption}</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * FacilityVisualAsset Component — Ảnh 2 trạng thái cơ sở kèm Fallback kiến trúc nếu file ảnh bị lỗi
+ */
+function FacilityVisualAsset({
+  idleSrc,
+  hoverSrc,
+  alt,
+  tag,
+  spec,
+  icon: IconComponent = Buildings,
+}) {
+  const [hasError, setHasError] = useState(false);
+  const [hoverError, setHoverError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+    setHoverError(false);
+  }, [idleSrc, hoverSrc]);
+
+  return (
+    <div className="facility-asset-frame">
+      {!hasError ? (
+        <>
+          <img
+            src={idleSrc}
+            alt={alt}
+            className="facility-asset-img facility-asset-img--idle"
+            loading="lazy"
+            onError={() => setHasError(true)}
+          />
+          {hoverSrc && !hoverError && (
+            <img
+              src={hoverSrc}
+              alt={`${alt} (hover)`}
+              className="facility-asset-img facility-asset-img--hover"
+              loading="lazy"
+              aria-hidden="true"
+              onError={() => setHoverError(true)}
+            />
+          )}
+        </>
+      ) : (
+        <div className="visual-placeholder visual-placeholder--facility" style={{ width: "100%", height: "100%", minHeight: "180px" }}>
+          <div className="visual-placeholder__inner">
+            <div className="visual-placeholder__icon-wrap">
+              <IconComponent size={30} weight="duotone" />
+            </div>
+            <div className="visual-placeholder__meta">
+              <span className="visual-placeholder__tag">{tag || "PHỐI CẢNH KIẾN TRÚC"}</span>
+              <span className="visual-placeholder__spec">{spec || "ARCHITECTURAL RENDERING · ĐANG CẬP NHẬT"}</span>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -651,8 +739,10 @@ export default function LandingPage() {
                       idleSrc={unit.visualAsset.idleSrc}
                       hoverSrc={unit.visualAsset.hoverSrc}
                       alt={`Mô hình 3D kho ${unit.name}`}
+                      tag={unit.visualAsset.tag}
                       aspectRatio="4/3"
                       caption={unit.visualAsset.caption}
+                      icon={unit.typeKey === "LOCKER" ? LockSimple : Warehouse}
                     />
                   </div>
 
@@ -833,8 +923,10 @@ export default function LandingPage() {
                           idleSrc={s.visualAsset.idleSrc}
                           hoverSrc={s.visualAsset.hoverSrc}
                           alt={`Minh họa bước ${s.step}: ${s.title}`}
+                          tag={s.visualAsset.tag}
                           aspectRatio="16/9"
                           caption={s.visualAsset.caption}
+                          icon={idx === 0 ? Browsers : idx === 1 ? QrCode : Key}
                         />
                       </div>
 
@@ -903,21 +995,14 @@ export default function LandingPage() {
 
                 {/* High-Impact Visual Slot: Tân Bình Facade & Loading Bay */}
                 <div className="facility-card__visual-slot" aria-label="Hình ảnh cơ sở Tân Bình">
-                  <div className="facility-asset-frame">
-                    <img
-                      src="/assets/landing/facility-tanbinh.png"
-                      alt="Bản vẽ phác thảo kiến trúc cơ sở Tân Bình, sảnh đỗ xe tải 5 tấn & hệ thống cửa cuốn tự động 24/7"
-                      className="facility-asset-img facility-asset-img--idle"
-                      loading="lazy"
-                    />
-                    <img
-                      src="/assets/landing/facility-tanbinh-hover.png"
-                      alt="Bản vẽ phác thảo cơ sở Tân Bình ban đêm với ánh sáng hoạt động 24/7"
-                      className="facility-asset-img facility-asset-img--hover"
-                      loading="lazy"
-                      aria-hidden="true"
-                    />
-                  </div>
+                  <FacilityVisualAsset
+                    idleSrc="/assets/landing/facility-tanbinh.png"
+                    hoverSrc="/assets/landing/facility-tanbinh-hover.png"
+                    alt="Bản vẽ phác thảo kiến trúc cơ sở Tân Bình, sảnh đỗ xe tải 5 tấn & hệ thống cửa cuốn tự động 24/7"
+                    tag="CƠ SỞ TÂN BÌNH // LOGISTICS HUB"
+                    spec="SẢNH XE TẢI 5T · HOẠT ĐỘNG 24/7"
+                    icon={Warehouse}
+                  />
                 </div>
 
                 <h3 className="facility-card__name">Cơ sở Tân Bình</h3>
@@ -983,21 +1068,14 @@ export default function LandingPage() {
 
                 {/* High-Impact Visual Slot: Quận 7 Concept Render */}
                 <div className="facility-card__visual-slot" aria-label="Phối cảnh cơ sở Quận 7">
-                  <div className="facility-asset-frame">
-                    <img
-                      src="/assets/landing/facility-quan7.png"
-                      alt="Bản vẽ phác thảo kiến trúc cơ sở thông minh Nam Sài Gòn, hệ thống kho vi khí hậu nhiệt-ẩm tiêu chuẩn cao"
-                      className="facility-asset-img facility-asset-img--idle"
-                      loading="lazy"
-                    />
-                    <img
-                      src="/assets/landing/facility-quan7-hover.png"
-                      alt="Bản vẽ phác thảo kiến trúc cơ sở Quận 7 hoàng hôn lung linh"
-                      className="facility-asset-img facility-asset-img--hover"
-                      loading="lazy"
-                      aria-hidden="true"
-                    />
-                  </div>
+                  <FacilityVisualAsset
+                    idleSrc="/assets/landing/facility-quan7.png"
+                    hoverSrc="/assets/landing/facility-quan7-hover.png"
+                    alt="Bản vẽ phác thảo kiến trúc cơ sở thông minh Nam Sài Gòn, hệ thống kho vi khí hậu nhiệt-ẩm tiêu chuẩn cao"
+                    tag="CƠ SỞ QUẬN 7 // PHÚ MỸ HƯNG"
+                    spec="TIÊU CHUẨN VI KHÍ HẬU · DỰ KIẾN Q4/2026"
+                    icon={Buildings}
+                  />
                 </div>
 
                 <h3 className="facility-card__name">Cơ sở Quận 7</h3>
