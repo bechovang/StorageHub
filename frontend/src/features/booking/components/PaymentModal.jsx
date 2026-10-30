@@ -49,17 +49,6 @@ function PaymentInvoiceSummary({ unit, reservation, formatVND }) {
           <span className="payment-invoice-summary__label">Tiền cọc cần thanh toán (10%):</span>
           <span className="payment-invoice-summary__total">{formatVND(deposit)}</span>
         </div>
-        <div style={{
-          marginTop: "10px",
-          padding: "8px 10px",
-          background: "#fffbeb",
-          borderLeft: "3px solid #d97706",
-          fontSize: "0.78rem",
-          color: "#92400e",
-          lineHeight: "1.4"
-        }}>
-          <strong>Quy tắc giữ chỗ:</strong> Kho chỉ được chuyển sang trạng thái <strong>RESERVED (Đã giữ chỗ)</strong> sau khi bạn hoàn tất thanh toán cọc.
-        </div>
       </div>
     </div>
   );

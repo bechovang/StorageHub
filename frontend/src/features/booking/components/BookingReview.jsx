@@ -216,7 +216,7 @@ export default function BookingReview({
             <div className={`deposit-highlight ${isAlreadyPaid ? "deposit-highlight--paid" : ""}`}>
               <div className="deposit-highlight__top">
                 <span className="deposit-highlight__title">
-                  {isAlreadyPaid ? "Tiền cọc đã thanh toán (10%)" : "Tiền cọc để khóa giữ chỗ (10%)"}
+                  {isAlreadyPaid ? "Tiền cọc đã thanh toán (10%)" : "Tiền cọc giữ chỗ (10%)"}
                 </span>
                 <span className="deposit-highlight__amount">
                   {formatVND(reservation?.depositAmount || Math.round(totalRent * 0.1))}
@@ -224,8 +224,8 @@ export default function BookingReview({
               </div>
               <p className="deposit-highlight__note">
                 {isAlreadyPaid
-                  ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống. Kho đã chính thức được khóa giữ chỗ (RESERVED)."
-                  : "Hoàn tất thanh toán cọc để chính thức giữ chỗ kho (RESERVED). Tiền cọc được hoàn trả 100% khi kết thúc hợp đồng."}
+                  ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống."
+                  : "Tiền cọc được lưu giữ an toàn và hoàn trả 100% khi kết thúc hợp đồng."}
               </p>
             </div>
 
