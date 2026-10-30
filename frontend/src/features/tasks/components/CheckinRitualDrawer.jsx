@@ -124,6 +124,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
         open={Boolean(task)}
         headerLabel={`QUY TRÌNH NHẬN KHO · ${task.refCode}`}
         onClose={onClose}
+        size="lg"
       >
         <div className="ritual-flow">
           {/* ── BƯỚC 1: THẺ NHẬN KHO CHO STAFF ĐỐI CHIẾU ── */}

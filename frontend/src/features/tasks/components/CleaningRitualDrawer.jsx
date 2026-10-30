@@ -24,7 +24,12 @@ export function CleaningRitualDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   return (
-    <Drawer open={Boolean(task)} headerLabel={`VỆ SINH KHO · ${task.unitCode}`} onClose={onClose}>
+    <Drawer
+      open={Boolean(task)}
+      headerLabel={`VỆ SINH KHO · ${task.unitCode}`}
+      onClose={onClose}
+      size="md"
+    >
       <div className="ritual-flow">
         <div className="ritual-step-card">
           <span className="ritual-step-title">

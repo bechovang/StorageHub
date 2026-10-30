@@ -668,7 +668,8 @@
 
 .drilldown-table-wrap {
   overflow-x: auto;
-  max-height: 480px;
+  max-height: calc(100vh - 240px);
+  min-height: 380px;
   border: var(--border);
   border-radius: var(--radius-none, 0px);
 }

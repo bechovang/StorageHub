@@ -21,6 +21,7 @@ export function DrilldownDrawer({
       open={Boolean(activeDrilldownKey)}
       headerLabel={drilldownData?.title || "CHI TIẾT CHỈ SỐ"}
       onClose={onClose}
+      size="xl"
     >
       {drilldownData && (
         <div className="drilldown-drawer-content">

@@ -24,7 +24,12 @@ export function SupportTicketDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   return (
-    <Drawer open={Boolean(task)} headerLabel={`XỬ LÝ SỰ CỐ · ${task.refCode}`} onClose={onClose}>
+    <Drawer
+      open={Boolean(task)}
+      headerLabel={`XỬ LÝ SỰ CỐ · ${task.refCode}`}
+      onClose={onClose}
+      size="lg"
+    >
       <div className="ritual-flow">
         <div className="ritual-step-card">
           <span className="ritual-step-title">

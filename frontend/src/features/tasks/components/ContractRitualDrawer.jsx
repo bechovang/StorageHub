@@ -33,7 +33,12 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   return (
-    <Drawer open={Boolean(task)} headerLabel={`KÝ HỢP ĐỒNG / PHỤ LỤC · ${task.refCode}`} onClose={onClose}>
+    <Drawer
+      open={Boolean(task)}
+      headerLabel={`KÝ HỢP ĐỒNG / PHỤ LỤC · ${task.refCode}`}
+      onClose={onClose}
+      size="lg"
+    >
       <div className="ritual-flow">
         {/* Thông tin hợp đồng / phụ lục */}
         <div className="ritual-step-card">

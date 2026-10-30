@@ -186,6 +186,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
         open={Boolean(task)}
         headerLabel={`THỦ TỤC TRẢ KHO · ${task?.refCode || ""}`}
         onClose={onClose}
+        size="lg"
       >
         <div className="ritual-flow">
           {/* ── BƯỚC 1: KIỂM TRA HIỆN TRẠNG & THU HỒI TÀI SẢN ── */}

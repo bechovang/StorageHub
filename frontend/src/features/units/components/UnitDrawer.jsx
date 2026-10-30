@@ -103,33 +103,35 @@ export function UnitDrawer({
 
             <div className="form-section-title mt-4">CHỈNH SỬA THÔNG SỐ CƠ BẢN</div>
 
-            <div className="form-group">
-              <label htmlFor="edit-price" className="form-label">
-                Giá thuê niêm yết (VND / tháng):
-              </label>
-              <input
-                id="edit-price"
-                type="number"
-                className="form-input font-mono"
-                value={editPrice}
-                onChange={(e) => setEditPrice(e.target.value)}
-                required
-              />
-            </div>
+            <div className="drawer-form-row">
+              <div className="form-group">
+                <label htmlFor="edit-price" className="form-label">
+                  Giá thuê niêm yết (VND / tháng):
+                </label>
+                <input
+                  id="edit-price"
+                  type="number"
+                  className="form-input font-mono"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  required
+                />
+              </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-size" className="form-label">
-                Diện tích sử dụng (m²):
-              </label>
-              <input
-                id="edit-size"
-                type="number"
-                step="0.5"
-                className="form-input font-mono"
-                value={editSizeM2}
-                onChange={(e) => setEditSizeM2(e.target.value)}
-                required
-              />
+              <div className="form-group">
+                <label htmlFor="edit-size" className="form-label">
+                  Diện tích sử dụng (m²):
+                </label>
+                <input
+                  id="edit-size"
+                  type="number"
+                  step="0.5"
+                  className="form-input font-mono"
+                  value={editSizeM2}
+                  onChange={(e) => setEditSizeM2(e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
             <div className="form-group">

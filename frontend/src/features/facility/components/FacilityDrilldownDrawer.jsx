@@ -15,7 +15,7 @@ export default function FacilityDrilldownDrawer({
       isOpen={Boolean(drilldownStatus)}
       onClose={onClose}
       title={`Chi tiết danh sách kho — ${statusConfigs[drilldownStatus]?.label || "Toàn bộ kho"}`}
-      size="lg"
+      size="xl"
     >
       <div className="drilldown-drawer">
         <div className="drilldown-search-bar">
