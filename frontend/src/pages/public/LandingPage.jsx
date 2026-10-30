@@ -898,7 +898,7 @@ export default function LandingPage() {
                     <span className="status-dot-pulse-mini" aria-hidden="true" />
                     Đang hoạt động
                   </span>
-                  <span className="facility-card__code">SGN-TB01</span>
+                  <span className="facility-card__code">HOẠT ĐỘNG 24/7</span>
                 </div>
 
                 {/* High-Impact Visual Slot: Tân Bình Facade & Loading Bay */}
@@ -917,10 +917,6 @@ export default function LandingPage() {
                       loading="lazy"
                       aria-hidden="true"
                     />
-                    <div className="facility-asset-overlay">
-                      <span className="facility-asset-tag">BẢN VẼ PHÁC THẢO · 123 HOÀNG VĂN THỤ</span>
-                      <span className="facility-asset-indicator">HOẠT ĐỘNG 24/7</span>
-                    </div>
                   </div>
                 </div>
 
@@ -982,7 +978,7 @@ export default function LandingPage() {
                   <span className="facility-badge facility-badge--upcoming">
                     ▲ Sắp khai trương
                   </span>
-                  <span className="facility-card__code">SGN-Q702</span>
+                  <span className="facility-card__code">DỰ KIẾN Q4/2026</span>
                 </div>
 
                 {/* High-Impact Visual Slot: Quận 7 Concept Render */}
@@ -1001,10 +997,6 @@ export default function LandingPage() {
                       loading="lazy"
                       aria-hidden="true"
                     />
-                    <div className="facility-asset-overlay">
-                      <span className="facility-asset-tag">BẢN VẼ PHÁC THẢO · NAM SÀI GÒN PHÚ MỸ HƯNG</span>
-                      <span className="facility-asset-indicator facility-asset-indicator--upcoming">DỰ KIẾN Q4/2026</span>
-                    </div>
                   </div>
                 </div>
 
