@@ -516,42 +516,49 @@
 }
 
 /* ==========================================================================
-   ARCHITECTURAL VISUAL PLACEHOLDER SYSTEM (BRUTALIST SLOTS)
-   Standardized 2px dashed borders, monospace metadata badges, responsive
+   UNIFIED ASSET PLACEHOLDER (STANDARD ERROR/MISSING FALLBACK)
+   1 mẫu placeholder chuẩn duy nhất cho toàn bộ hệ thống hình ảnh khi chưa có ảnh hoặc ảnh bị lỗi
    ========================================================================== */
 
-.visual-placeholder {
+.unified-asset-placeholder {
   position: relative;
   width: 100%;
-  border: 2px dashed var(--color-line);
-  background: rgba(255, 255, 255, 0.45);
+  height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  background-color: var(--color-surface-subtle);
+  border: 1.5px dashed var(--color-line);
   border-radius: var(--radius-none);
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
   transition: border-color var(--duration-fast) var(--ease-standard),
               background-color var(--duration-fast) var(--ease-standard);
-  overflow: hidden;
 }
 
-.visual-placeholder:hover {
-  border-color: var(--color-secondary);
-  background: rgba(255, 255, 255, 0.75);
+.unified-asset-placeholder:hover {
+  border-color: var(--color-line-strong);
+  background-color: var(--color-surface);
 }
 
-.visual-placeholder__inner {
+.interactive-asset .unified-asset-placeholder,
+.facility-asset-frame .unified-asset-placeholder {
+  border: none;
+  background: var(--color-surface-subtle);
+}
+
+.unified-asset-placeholder__inner {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-4);
   gap: var(--space-2);
-  width: 100%;
+  padding: var(--space-4);
+  text-align: center;
 }
 
-.visual-placeholder__icon-wrap {
+.unified-asset-placeholder__icon-box {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -559,64 +566,53 @@
   height: 42px;
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  color: var(--color-ink);
+  color: var(--color-muted);
   border-radius: var(--radius-none);
   margin-bottom: 2px;
+  transition: color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard);
 }
 
-.visual-placeholder__meta {
+.size-card:hover .unified-asset-placeholder__icon-box,
+.step-card:hover .unified-asset-placeholder__icon-box,
+.facility-card:hover .unified-asset-placeholder__icon-box {
+  color: var(--color-ink);
+  border-color: var(--color-line-strong);
+}
+
+.size-card--featured:hover .unified-asset-placeholder__icon-box {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.unified-asset-placeholder__text-group {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
 }
 
-.visual-placeholder__tag {
+.unified-asset-placeholder__status {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: var(--font-weight-black);
-  letter-spacing: 0.07em;
+  font-size: 0.64rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.05em;
   color: var(--color-ink);
-  padding: 3px 8px;
+  text-transform: uppercase;
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  text-transform: uppercase;
+  padding: 3px 8px;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
-.visual-placeholder__spec {
+.unified-asset-placeholder__brand {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: var(--font-weight-bold);
+  font-size: 0.62rem;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.06em;
   color: var(--color-muted);
-  letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-
-.visual-placeholder__caption {
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: var(--color-text-secondary);
-  margin: 0;
-  max-width: 250px;
-}
-
-/* Fallback Blueprint Grid when Image is missing or loading/erroring */
-.interactive-asset .visual-placeholder--fallback,
-.facility-asset-frame .visual-placeholder--facility {
-  border: none;
-  background-color: var(--color-surface);
-  background-image: radial-gradient(var(--color-line) 1.2px, transparent 1.2px);
-  background-size: 14px 14px;
-  width: 100%;
-  height: 100%;
-}
-
-.visual-placeholder--fallback .visual-placeholder__inner,
-.visual-placeholder--facility .visual-placeholder__inner {
-  padding: var(--space-3);
-  gap: 6px;
 }
 
 /* ==========================================================================
@@ -724,57 +720,6 @@
   background: var(--color-surface);
 }
 
-.visual-placeholder--size {
-  min-height: 168px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.visual-placeholder--size .visual-placeholder__inner {
-  padding: var(--space-3) var(--space-2);
-  gap: 5px;
-}
-
-.visual-placeholder--size .visual-placeholder__icon-wrap {
-  width: 36px;
-  height: 36px;
-  margin-bottom: 0;
-}
-
-.visual-placeholder--size .visual-placeholder__tag {
-  font-size: 0.68rem;
-  padding: 2px 7px;
-}
-
-.visual-placeholder--size .visual-placeholder__spec {
-  font-size: 0.64rem;
-}
-
-.visual-placeholder--size .visual-placeholder__caption {
-  font-size: 0.74rem;
-  line-height: 1.32;
-  max-width: 230px;
-}
-
-.size-card--featured .visual-placeholder--size {
-  border-color: rgba(220, 38, 38, 0.4);
-  background: rgba(220, 38, 38, 0.02);
-}
-
-.size-card--featured .visual-placeholder--size:hover {
-  border-color: var(--color-accent);
-}
-
-.size-card--featured .visual-placeholder--size .visual-placeholder__tag {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
-.size-card--featured .visual-placeholder--size .visual-placeholder__icon-wrap {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
 
 .size-card__pricing {
   padding: var(--space-4) var(--space-5);
@@ -954,50 +899,6 @@
   border-top: 1px dashed var(--color-line);
 }
 
-.visual-placeholder--pillar {
-  border: 1px dashed var(--color-line);
-  padding: 8px 10px;
-  background: var(--color-surface-subtle);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 4px;
-}
-
-.visual-placeholder__pillar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 6px;
-}
-
-.visual-placeholder--pillar .visual-placeholder__tag {
-  padding: 2px 6px;
-  font-size: 0.64rem;
-  letter-spacing: 0.05em;
-  background: var(--color-surface);
-}
-
-.visual-placeholder__badge-mini {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-accent);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.visual-placeholder--pillar .visual-placeholder__spec {
-  font-size: 0.74rem;
-  line-height: 1.35;
-  color: var(--color-text-secondary);
-  font-family: var(--font-body);
-  text-transform: none;
-  font-weight: var(--font-weight-normal);
-  letter-spacing: 0;
-}
 
 /* ==========================================================================
    4. 3-STEP PROCESS (.landing-steps)
@@ -1098,14 +999,6 @@
   width: 100%;
 }
 
-.visual-placeholder--step {
-  aspect-ratio: 16 / 9;
-  min-height: 160px;
-}
-
-.visual-placeholder--step .visual-placeholder__caption {
-  max-width: 290px;
-}
 
 .step-card__footer {
   border-top: var(--border);
@@ -1219,20 +1112,6 @@
   width: 100%;
 }
 
-.visual-placeholder--facility {
-  aspect-ratio: 16 / 9;
-  min-height: 200px;
-}
-
-.visual-placeholder--facility .visual-placeholder__inner {
-  padding: var(--space-5);
-  gap: var(--space-2);
-}
-
-.visual-placeholder--facility .visual-placeholder__caption {
-  max-width: 440px;
-  font-size: 0.82rem;
-}
 
 .facility-card__name {
   font-family: var(--font-display);
