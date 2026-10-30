@@ -28,7 +28,7 @@ import "./Header.css";
 const ROLE_CONFIGS = {
   CUSTOMER: {
     label: ROLE_BADGE_UPPER.CUSTOMER,
-    landing: "/browse",
+    landing: "/",
     links: [
       { label: "Khám phá kho", href: "/browse" },
       { label: "Kho của tôi", href: "/rentals" },

@@ -38,7 +38,7 @@ import ActivityLogPage from "../pages/common/ActivityLogPage.jsx";
 import SupportPage from "../pages/common/SupportPage.jsx";
 
 export const ROLE_LANDINGS = {
-  CUSTOMER: "/browse",
+  CUSTOMER: "/",
   STAFF: "/tasks",
   FACILITY_MANAGER: "/facility",
   BUSINESS_OPS: "/overview",
@@ -48,8 +48,8 @@ export const ROLE_LANDINGS = {
 function RootRedirect() {
   const { user, isAuthenticated, loading } = useAuth();
   if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/browse" replace />;
-  const target = ROLE_LANDINGS[user?.role] || "/browse";
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  const target = ROLE_LANDINGS[user?.role] || "/";
   return <Navigate to={target} replace />;
 }
 

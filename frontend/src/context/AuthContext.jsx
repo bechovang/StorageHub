@@ -24,7 +24,7 @@ function parseJwt(token) {
 }
 
 const ROLE_LANDINGS = {
-  CUSTOMER: "/browse",
+  CUSTOMER: "/",
   STAFF: "/tasks",
   FACILITY_MANAGER: "/facility",
   BUSINESS_OPS: "/overview",
@@ -112,7 +112,7 @@ export function AuthProvider({ children }) {
           fullName: "Nguyễn Thị Lan",
           email: "lan@demo.storagehub.vn",
           role: "CUSTOMER",
-          landing: "/browse",
+          landing: "/",
         },
       };
 
@@ -155,7 +155,7 @@ export function AuthProvider({ children }) {
             }
           : null);
 
-      const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/browse";
+      const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/";
 
       tokenStorage.set(data.token);
       if (userObj) {
@@ -220,7 +220,7 @@ export function AuthProvider({ children }) {
             }
           : null);
 
-      const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/browse";
+      const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/";
 
       tokenStorage.set(data.token);
       if (userObj) {
@@ -294,7 +294,7 @@ export function AuthProvider({ children }) {
     tokenStorage.clear();
     setToken(null);
     setUser(null);
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   return (

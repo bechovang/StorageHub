@@ -29,7 +29,7 @@ export default function LoginPage() {
         try {
             const session = await login(email, password);
             const destination =
-                location.state?.from?.pathname || session.landingRoute || "/browse";
+                location.state?.from?.pathname || session.landingRoute || "/";
             navigate(destination, { replace: true });
         } catch (err) {
             // Không tiết lộ field nào sai — chỉ thông báo chung (FR-1)

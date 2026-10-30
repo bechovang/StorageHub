@@ -75,7 +75,7 @@ export default function RegisterPage() {
                 password,
                 agreeTerms,
             });
-            const destination = session.landingRoute || "/browse";
+            const destination = session.landingRoute || "/";
             navigate(destination, { replace: true });
         } catch (err) {
             if (err.status === 409 || err.code === "AUTH_EMAIL_EXISTS") {
