@@ -349,10 +349,81 @@
   font-weight: 800;
   color: var(--color-ink);
   letter-spacing: -0.01em;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-1, 4px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Smart KPI Trend Comparison Line (So sánh với kỳ trước) ── */
+.biz-kpi-trend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin-bottom: var(--space-3, 12px);
+  font-size: var(--font-size-xs, 0.75rem);
+  line-height: 1.35;
+  min-height: 22px;
+}
+
+.biz-kpi-trend__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-bold, 700);
+  padding: 1px 6px;
+  border-radius: var(--radius-none, 0px);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+/* Trạng thái Tăng trưởng (Positive) */
+.biz-kpi-trend--positive .biz-kpi-trend__badge {
+  background-color: var(--color-status-success-tint, #f0fdf4);
+  color: var(--color-status-success, #16a34a);
+  border: 1px solid var(--color-status-success-border, #bbf7d0);
+}
+
+.biz-kpi-trend--positive .biz-kpi-trend__diff {
+  color: var(--color-status-success, #16a34a);
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-bold, 700);
+  font-size: 0.73rem;
+}
+
+/* Trạng thái Giảm sút (Negative) */
+.biz-kpi-trend--negative .biz-kpi-trend__badge {
+  background-color: var(--color-status-danger-tint, #fef2f2);
+  color: var(--color-status-danger, #dc2626);
+  border: 1px solid var(--color-status-danger-border, #fecaca);
+}
+
+.biz-kpi-trend--negative .biz-kpi-trend__diff {
+  color: var(--color-status-danger, #dc2626);
+  font-family: var(--font-mono);
+  font-weight: var(--font-weight-bold, 700);
+  font-size: 0.73rem;
+}
+
+/* Trạng thái Trung tính (Neutral) */
+.biz-kpi-trend--neutral .biz-kpi-trend__badge {
+  background-color: var(--color-neutral, #f5f5f5);
+  color: var(--color-muted, #767676);
+  border: 1px solid var(--color-line, #d7d7d7);
+}
+
+.biz-kpi-trend--neutral .biz-kpi-trend__diff {
+  color: var(--color-muted, #767676);
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+}
+
+.biz-kpi-trend__context {
+  color: var(--color-muted, #767676);
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .biz-kpi-footer {
