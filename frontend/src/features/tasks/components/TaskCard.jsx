@@ -48,7 +48,7 @@ export function TaskCard({
           {typeConfig.label}
         </span>
         <span className="task-card__ref">
-          {task.refCode ? `${task.refCode} · ` : ""}
+          {task.refCode ? `${task.refCode} Â· ` : ""}
           <strong>{task.unitCode}</strong>
         </span>
       </div>
@@ -59,7 +59,7 @@ export function TaskCard({
           {typeConfig.label}: {task.unitCode}
         </h3>
         <p className="task-card__meta">
-          {task.customerName} {task.dueTime ? `· Hẹn ${task.dueTime}` : ""}
+          {task.customerName} {task.dueTime ? `Â· Háº¹n ${task.dueTime}` : ""}
         </p>
 
         {/* Extra Badges */}
@@ -75,7 +75,7 @@ export function TaskCard({
         )}
         {task.priority && (
           <span className="task-card__extra-badge task-card__extra-badge--priority">
-            Ưu tiên: {task.priority}
+            Æ¯u tiÃªn: {task.priority}
           </span>
         )}
         {task.ritual?.paymentProofPhoto && (
@@ -83,7 +83,7 @@ export function TaskCard({
             className="task-card__extra-badge"
             style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" }}
           >
-            ✓ Đã lưu ảnh thu tiền
+            âœ“ ÄÃ£ lÆ°u áº£nh thu tiá»n
           </span>
         )}
         {task.ritual?.contractPhotoUrl && (
@@ -91,7 +91,7 @@ export function TaskCard({
             className="task-card__extra-badge"
             style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" }}
           >
-            ✓ Đã lưu ảnh HĐ
+            âœ“ ÄÃ£ lÆ°u áº£nh HÄ
           </span>
         )}
         {task.ritual?.settlementPhotoUrl && (
@@ -99,7 +99,7 @@ export function TaskCard({
             className="task-card__extra-badge"
             style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" }}
           >
-            ✓ Đã lưu ảnh đối soát
+            âœ“ ÄÃ£ lÆ°u áº£nh Ä‘á»‘i soÃ¡t
           </span>
         )}
       </div>
@@ -117,7 +117,7 @@ export function TaskCard({
             <button
               type="button"
               className="card-nav-btn"
-              title="Chuyển về To do"
+              title="Chuyá»ƒn vá» To do"
               onClick={() => onMoveStatus(task, "TODO")}
             >
               <CaretLeft size={13} weight="bold" />
@@ -132,7 +132,7 @@ export function TaskCard({
               className="card-ritual-btn"
               onClick={() => onOpenCheckin(task)}
             >
-              <span>Làm Check-in</span>
+              <span>LÃ m Check-in</span>
               <ArrowRight size={12} weight="bold" />
             </button>
           )}
@@ -143,7 +143,7 @@ export function TaskCard({
               className="card-ritual-btn"
               onClick={() => onOpenCheckout(task)}
             >
-              <span>Làm Checkout</span>
+              <span>LÃ m Checkout</span>
               <ArrowRight size={12} weight="bold" />
             </button>
           )}
@@ -154,7 +154,7 @@ export function TaskCard({
               className="card-ritual-btn"
               onClick={() => onOpenCleaning(task)}
             >
-              <span>Dọn kho</span>
+              <span>Dá»n kho</span>
               <ArrowRight size={12} weight="bold" />
             </button>
           )}
@@ -165,7 +165,7 @@ export function TaskCard({
               className="card-ritual-btn"
               onClick={() => onOpenSupport(task)}
             >
-              <span>Xử lý</span>
+              <span>Xá»­ lÃ½</span>
               <ArrowRight size={12} weight="bold" />
             </button>
           )}
@@ -176,7 +176,7 @@ export function TaskCard({
               className="card-ritual-btn"
               onClick={() => onOpenContract(task)}
             >
-              <span>Ký phụ lục</span>
+              <span>KÃ½ phá»¥ lá»¥c</span>
               <ArrowRight size={12} weight="bold" />
             </button>
           )}
@@ -186,10 +186,10 @@ export function TaskCard({
             <button
               type="button"
               className="card-nav-btn"
-              title="Bắt đầu thực hiện"
+              title="Báº¯t Ä‘áº§u thá»±c hiá»‡n"
               onClick={() => onMoveStatus(task, "IN_PROGRESS")}
             >
-              <span>Nhận việc</span>
+              <span>Nháº­n viá»‡c</span>
               <CaretRight size={13} weight="bold" />
             </button>
           )}
@@ -198,7 +198,7 @@ export function TaskCard({
             <button
               type="button"
               className="card-nav-btn"
-              title="Hoàn tất nhiệm vụ"
+              title="HoÃ n táº¥t nhiá»‡m vá»¥"
               onClick={() => onMoveStatus(task, "DONE")}
             >
               <span>Xong</span>

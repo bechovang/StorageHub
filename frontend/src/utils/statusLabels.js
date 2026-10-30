@@ -26,13 +26,16 @@ export const ROLE_BADGE_UPPER = {
 };
 
 export const UNIT_STATUS_LABELS = {
-  AVAILABLE: "Còn trống",
+  AVAILABLE: "Trống (Sẵn sàng)",
   AVAILABLE_SOON: "Sắp trống",
   RENTED: "Đang thuê",
-  RESERVED: "Đã giữ chỗ",
-  PREPARING: "Đang chuẩn bị",
+  OCCUPIED: "Đang thuê",
+  RESERVED: "Đã đặt cọc / Giữ chỗ",
+  PREPARING: "Đang dọn dẹp",
+  CLEANING: "Đang dọn dẹp",
   MAINTENANCE: "Đang bảo trì",
   RETIRED: "Ngừng khai thác",
+  OVERDUE: "Quá hạn thanh toán",
 };
 
 export const RESERVATION_STATUS_LABELS = {
@@ -105,12 +108,17 @@ export const TICKET_STATUS_LABELS = {
 };
 
 export const AUDIT_ACTION_LABELS = {
-  STATUS_CHANGE: "Đổi trạng thái",
+  STATUS_CHANGE: "Chuyển trạng thái",
+  STATUS_OVERRIDE: "Điều chỉnh trạng thái",
   MANUAL_STATUS_FIX: "Điều chỉnh trạng thái",
   FIX_STATUS: "Điều chỉnh trạng thái",
-  SET_MAINTENANCE: "Chuyển bảo trì",
+  SPEC_UPDATE: "Cập nhật thông số kho",
+  SET_MAINTENANCE: "Đưa vào bảo trì",
   FINISH_MAINTENANCE: "Hoàn tất bảo trì",
   RETIRE_UNIT: "Ngừng khai thác",
+  EXTEND_LEASE: "Gia hạn hợp đồng thuê",
+  CHECKIN_COMPLETE: "Hoàn tất nhận kho",
+  CHECKOUT_COMPLETE: "Hoàn tất trả kho & tất toán",
   CREATE_UNIT: "Tạo kho mới",
   DELETE_UNIT: "Xóa kho",
   MERGE_UNITS: "Gộp kho",

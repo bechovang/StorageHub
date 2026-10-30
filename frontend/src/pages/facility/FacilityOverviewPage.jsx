@@ -147,6 +147,7 @@ export default function FacilityOverviewPage() {
           setSearchUnitTerm={setSearchUnitTerm}
           drilldownUnits={drilldownUnits}
           statusConfigs={statusConfigs}
+          onExportCSV={handleExportCSV}
           onNavigateUnits={() => {
             const targetStatus = drilldownStatus && drilldownStatus !== "ALL" ? drilldownStatus : "";
             navigate(targetStatus ? `/facility/units?status=${targetStatus}` : "/facility/units");

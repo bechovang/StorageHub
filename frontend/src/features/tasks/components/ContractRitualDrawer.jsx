@@ -36,16 +36,27 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
     <Drawer
       open={Boolean(task)}
       headerLabel={`KÝ HỢP ĐỒNG / PHỤ LỤC · ${task.refCode}`}
+      subtitle={`Kho ${task.unitCode} · Khách hàng: ${task.customerName}`}
+      badge={
+        <span className="ritual-step-badge ritual-step-badge--active font-mono">
+          HỒ SƠ PHÁP LÝ
+        </span>
+      }
       onClose={onClose}
       size="lg"
     >
       <div className="ritual-flow">
         {/* Thông tin hợp đồng / phụ lục */}
-        <div className="ritual-step-card">
-          <span className="ritual-step-title">
-            <FileText size={18} weight="bold" />
-            Hồ sơ pháp lý cần đối chiếu chữ ký
-          </span>
+        <div className="ritual-step-card is-completed">
+          <div className="ritual-step-header">
+            <span className="ritual-step-title">
+              <FileText size={18} weight="bold" />
+              1. Hồ sơ pháp lý cần đối chiếu chữ ký
+            </span>
+            <span className="ritual-step-badge ritual-step-badge--completed">
+              ✓ ĐÃ ĐỐI CHIẾU
+            </span>
+          </div>
           <div style={{ fontSize: "0.82rem" }}>
             <p style={{ margin: "4px 0" }}>Khách hàng: <strong>{task.customerName}</strong> ({task.customerPhone || "Khách tại quầy"})</p>
             <p style={{ margin: "4px 0" }}>Vị trí kho: <strong>{task.unitCode}</strong> · Mã hồ sơ: <strong>{task.refCode}</strong></p>
@@ -58,12 +69,17 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
         </div>
 
         {/* Chụp / Tải ảnh bản hợp đồng giấy có chữ ký */}
-        <div className="ritual-step-card">
-          <span className="ritual-step-title">
-            <UploadSimple size={18} weight="bold" />
-            Đính kèm ảnh chụp hợp đồng đã ký
-          </span>
-          <p style={{ margin: "4px 0 10px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
+        <div className={`ritual-step-card ${photoUrl ? "is-completed" : "needs-attention"}`}>
+          <div className="ritual-step-header">
+            <span className="ritual-step-title">
+              <UploadSimple size={18} weight="bold" />
+              2. Đính kèm ảnh chụp hợp đồng đã ký
+            </span>
+            <span className={`ritual-step-badge ${photoUrl ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+              {photoUrl ? "✓ ĐÃ LƯU ẢNH BẢN KÝ" : "⚠ CẦN CHỤP ẢNH BẢN KÝ"}
+            </span>
+          </div>
+          <p style={{ margin: "2px 0 10px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
             Nhân viên đối chiếu chữ ký của khách hàng trên bản in giấy và chụp lại trang có chữ ký để lưu vào hệ thống.
           </p>
 

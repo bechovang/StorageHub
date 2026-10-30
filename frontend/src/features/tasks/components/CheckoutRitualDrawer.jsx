@@ -11,6 +11,7 @@ import {
   Bank,
   FileText,
   QrCode,
+  ShieldCheck,
 } from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import Button from "../../../components/Button/Button.jsx";
@@ -58,6 +59,8 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const totalCharges = charges.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
   const refundAmount = Math.max(0, depositHeld - totalCharges);
   const extraDue = Math.max(0, totalCharges - depositHeld);
+
+  const isChecklistAllOk = Object.values(checklist).every((val) => val === "OK");
 
   // Xử lý đọc file ảnh thật từ máy/thiết bị
   const handleSettlementFileSelect = (e) => {
@@ -185,23 +188,32 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
       <Drawer
         open={Boolean(task)}
         headerLabel={`THỦ TỤC TRẢ KHO · ${task?.refCode || ""}`}
+        subtitle={`Kho ${task?.unitCode} · Khách hàng: ${task?.customerName || "Khách thuê"}`}
+        badge={
+          <span className="ritual-step-badge ritual-step-badge--active font-mono">
+            TẤT TOÁN HỢP ĐỒNG
+          </span>
+        }
         onClose={onClose}
         size="lg"
       >
         <div className="ritual-flow">
           {/* ── BƯỚC 1: KIỂM TRA HIỆN TRẠNG & THU HỒI TÀI SẢN ── */}
-          <div className="ritual-step-card">
+          <div className={`ritual-step-card ${isChecklistAllOk ? "is-completed" : "needs-attention"}`}>
             <div className="ritual-step-header">
               <span className="ritual-step-title">
                 <ListChecks size={18} weight="bold" />
-                1. Kiểm tra hiện trạng & Thu hồi tài sản
+                1. Kiểm tra hiện trạng &amp; Thu hồi tài sản
+              </span>
+              <span className={`ritual-step-badge ${isChecklistAllOk ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+                {isChecklistAllOk ? "✓ HIỆN TRẠNG TỐT" : "⚠ CÓ HƯ HẠI CẦN BỒI THƯỜNG"}
               </span>
             </div>
             <table className="inspection-table">
               <thead>
                 <tr>
-                  <th>Hạng mục</th>
-                  <th>Tình trạng</th>
+                  <th>Hạng mục nghiệm thu</th>
+                  <th>Tình trạng thực tế</th>
                 </tr>
               </thead>
               <tbody>
@@ -223,7 +235,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                             checked={checklist[item.key] === "OK"}
                             onChange={() => setChecklist({ ...checklist, [item.key]: "OK" })}
                           />
-                          OK
+                          <span>OK</span>
                         </label>
                         <label className="inspection-radio-label">
                           <input
@@ -233,7 +245,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                             checked={checklist[item.key] === "MINOR"}
                             onChange={() => setChecklist({ ...checklist, [item.key]: "MINOR" })}
                           />
-                          Hư hại nhẹ
+                          <span>Hư hại nhẹ</span>
                         </label>
                         <label className="inspection-radio-label">
                           <input
@@ -243,7 +255,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                             checked={checklist[item.key] === "MAJOR"}
                             onChange={() => setChecklist({ ...checklist, [item.key]: "MAJOR" })}
                           />
-                          Nghiêm trọng
+                          <span>Nghiêm trọng</span>
                         </label>
                       </div>
                     </td>
@@ -254,15 +266,18 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
           </div>
 
           {/* ── BƯỚC 2: KÊ KHAI PHỤ PHÍ HƯ HẠI (BẮT BUỘC LÝ DO) ── */}
-          <div className="ritual-step-card">
+          <div className={`ritual-step-card ${charges.length === 0 ? "is-completed" : "needs-attention"}`}>
             <div className="ritual-step-header">
               <span className="ritual-step-title">
-                <WarningCircle size={18} weight="bold" color="var(--color-accent)" />
+                <WarningCircle size={18} weight="bold" color="var(--color-accent, #dc2626)" />
                 2. Kê khai phụ phí hư hại (Bắt buộc lý do)
+              </span>
+              <span className={`ritual-step-badge ${charges.length === 0 ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+                {charges.length === 0 ? "✓ KHÔNG PHÁT SINH PHẠT" : `⚠ CÓ ${charges.length} KHOẢN PHẠT`}
               </span>
             </div>
             {charges.length === 0 ? (
-              <p style={{ margin: 0, fontSize: "0.78rem", color: "#16a34a" }}>
+              <p style={{ margin: 0, fontSize: "0.8rem", color: "#16a34a", fontWeight: 600 }}>
                 ✓ Không ghi nhận hư hại tài sản. Toàn bộ tiền cọc sẽ được hoàn trả cho khách.
               </p>
             ) : (
@@ -271,18 +286,18 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                   <div
                     key={c.id}
                     className="damage-charge-item"
-                    style={{ padding: "8px", background: "#fef2f2", border: "1px solid #fecaca" }}
+                    style={{ padding: "8px 12px", background: "#fef2f2", border: "1px solid #fecaca" }}
                   >
                     <div>
-                      <strong style={{ fontSize: "0.8rem", color: "#991b1b" }}>{c.item}</strong>
+                      <strong style={{ fontSize: "0.82rem", color: "#991b1b" }}>{c.item}</strong>
                       <div style={{ fontSize: "0.74rem", color: "#7f1d1d" }}>Lý do: {c.reason}</div>
                     </div>
-                    <strong style={{ textAlign: "right", fontSize: "0.85rem", color: "#991b1b" }}>
+                    <strong style={{ textAlign: "right", fontSize: "0.88rem", color: "#991b1b", fontFamily: "var(--font-mono)" }}>
                       {formatVnd(c.amount)}
                     </strong>
                     <button
                       type="button"
-                      style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}
+                      style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", display: "grid", placeItems: "center" }}
                       onClick={() => handleRemoveCharge(c.id)}
                       title="Xóa phụ phí"
                     >
@@ -298,7 +313,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
               <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--color-secondary)" }}>
                 + THÊM KHOẢN PHẠT / PHỤ PHÍ MỚI:
               </span>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: "6px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "6px" }}>
                 <input
                   type="text"
                   placeholder="Tên hạng mục (vd: Mất chìa khóa, vách trầy xước)"
@@ -327,62 +342,84 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
             </div>
           </div>
 
-          {/* ── BƯỚC 3: BẢNG ĐỐI SOÁT TẤT TOÁN CỌC (SETTLEMENT) ── */}
+          {/* ── BƯỚC 3: BẢNG NGHIỆM THU HOÀN TRẢ CỌC (SETTLEMENT LEDGER) ── */}
           <div className="ritual-step-card is-completed">
             <div className="ritual-step-header">
               <span className="ritual-step-title">
                 <Receipt size={18} weight="bold" />
-                3. Bảng đối soát tất toán cọc (Settlement)
+                3. Bảng đối soát tất toán cọc (Settlement Ledger)
+              </span>
+              <span className="ritual-step-badge ritual-step-badge--completed">
+                ✓ ĐÃ TÍNH TOÁN
               </span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.82rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Tiền cọc ban đầu đang giữ:</span>
-                <strong>{formatVnd(depositHeld)}</strong>
+
+            {/* Bảng kê đối soát tài chính minh bạch */}
+            <div className="settlement-ledger-card">
+              <div className="settlement-ledger-table">
+                <div className="settlement-ledger-row">
+                  <div className="settlement-ledger-label">
+                    <span>1. Tiền cọc ban đầu đang ký quỹ (Escrow Deposit)</span>
+                    <small>Khoản tiền cọc khách đã nộp khi bắt đầu hợp đồng</small>
+                  </div>
+                  <div className="settlement-ledger-value font-mono">
+                    + {formatVnd(depositHeld)}
+                  </div>
+                </div>
+
+                <div className="settlement-ledger-row" style={{ color: "#dc2626" }}>
+                  <div className="settlement-ledger-label">
+                    <span style={{ color: "#dc2626" }}>2. Khấu trừ bồi thường hư hại ({charges.length} hạng mục)</span>
+                    <small>{charges.length > 0 ? "Chi tiết kê khai theo biên bản kiểm tra" : "Hiện trạng nguyên vẹn, không phát sinh bồi thường"}</small>
+                  </div>
+                  <div className="settlement-ledger-value font-mono" style={{ color: "#dc2626" }}>
+                    - {formatVnd(totalCharges)}
+                  </div>
+                </div>
+
+                <div className="settlement-ledger-row text-muted">
+                  <div className="settlement-ledger-label">
+                    <span>3. Khấu trừ phí quá hạn hợp đồng</span>
+                    <small>Thời gian bàn giao đúng hẹn trong kỳ hạn hợp đồng</small>
+                  </div>
+                  <div className="settlement-ledger-value font-mono text-muted">
+                    - 0 ₫
+                  </div>
+                </div>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#dc2626" }}>
-                <span>Tổng phụ phí bồi thường hư hại:</span>
-                <strong>- {formatVnd(totalCharges)}</strong>
-              </div>
-              <div
-                style={{
-                  borderTop: "1px solid #cbd5e1",
-                  paddingTop: "8px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "0.95rem",
-                }}
-              >
-                <span>
-                  {extraDue > 0
-                    ? "KHÁCH PHẢI NỘP THÊM CHÊNH LỆCH:"
-                    : refundAmount > 0
-                    ? "SỐ TIỀN HOÀN TRẢ LẠI CHO KHÁCH:"
-                    : "ĐỐI SOÁT CÂN BẰNG (0₫ CHÊNH LỆCH):"}
-                </span>
-                <strong
-                  style={{
-                    color: extraDue > 0 ? "#dc2626" : refundAmount > 0 ? "#16a34a" : "#0f172a",
-                    fontFamily: "var(--font-mono)",
-                  }}
-                >
+
+              {/* Dòng tổng kết phép tính đối soát */}
+              <div className={`settlement-summary-bar ${extraDue > 0 ? "is-extra-due" : refundAmount > 0 ? "is-refund" : "is-balanced"}`}>
+                <div className="settlement-summary-bar__left">
+                  <span className="settlement-summary-bar__title">
+                    {extraDue > 0
+                      ? "KHÁCH PHẢI NỘP BỔ SUNG (DEFICIT):"
+                      : refundAmount > 0
+                      ? "SỐ TIỀN THỰC HOÀN CHO KHÁCH (REFUND):"
+                      : "ĐỐI SOÁT CÂN BẰNG (0₫ CHÊNH LỆCH):"}
+                  </span>
+                  <span className="settlement-summary-bar__formula font-mono">
+                    (Cọc {formatVnd(depositHeld)} - Hư hại {formatVnd(totalCharges)} - Quá hạn 0₫)
+                  </span>
+                </div>
+                <div className="settlement-summary-bar__amount font-mono">
                   {extraDue > 0
                     ? `+ ${formatVnd(extraDue)}`
                     : refundAmount > 0
-                    ? `- ${formatVnd(refundAmount)}`
+                    ? formatVnd(refundAmount)
                     : "0 ₫"}
-                </strong>
+                </div>
               </div>
             </div>
 
             {/* Thông tin phương thức thanh toán/hoàn trả */}
-            <div style={{ marginTop: "10px", borderTop: "1px dashed #cbd5e1", paddingTop: "10px" }}>
+            <div style={{ marginTop: "4px" }}>
               <div style={{ fontSize: "0.76rem", fontWeight: 700, marginBottom: "6px" }}>
                 {extraDue > 0
                   ? "HÌNH THỨC THU THÊM TIỀN TỪ KHÁCH HÀNG:"
                   : "HÌNH THỨC HOÀN TIỀN CHO KHÁCH HÀNG:"}
               </div>
-              <div style={{ display: "flex", gap: "12px", fontSize: "0.82rem" }}>
+              <div style={{ display: "flex", gap: "16px", fontSize: "0.82rem", flexWrap: "wrap" }}>
                 <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
                   <input
                     type="radio"
@@ -430,11 +467,12 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      flexShrink: 0,
                     }}
                   >
                     <QrCode size={48} color="#0f172a" />
                   </div>
-                  <div style={{ fontSize: "0.76rem", lineHeight: "1.4" }}>
+                  <div style={{ fontSize: "0.76rem", lineHeight: "1.45" }}>
                     {extraDue > 0 ? (
                       <>
                         <div style={{ fontWeight: 700, color: "#dc2626" }}>Khách quét VietQR nộp phụ phí</div>
@@ -457,18 +495,15 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
           </div>
 
           {/* ── BƯỚC 4: LƯU ẢNH MINH CHỨNG ĐỐI SOÁT (BẮT BUỘC) ── */}
-          <div className={`ritual-step-card ${settlementPhotoUrl ? "is-completed" : ""}`}>
+          <div className={`ritual-step-card ${settlementPhotoUrl ? "is-completed" : "needs-attention"}`}>
             <div className="ritual-step-header">
               <span className="ritual-step-title">
                 <UploadSimple size={18} weight="bold" />
                 4. Ảnh chứng từ đối soát (Bắt buộc lưu ảnh)
               </span>
-              {settlementPhotoUrl && (
-                <span className="photo-preview-tag">
-                  <CheckCircle size={14} weight="fill" />
-                  ĐÃ ĐÍNH KÈM ẢNH
-                </span>
-              )}
+              <span className={`ritual-step-badge ${settlementPhotoUrl ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+                {settlementPhotoUrl ? "✓ ĐÃ ĐÍNH KÈM ẢNH" : "⚠ BẮT BUỘC ẢNH ĐỐI SOÁT"}
+              </span>
             </div>
             <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--color-secondary)" }}>
               {refundAmount > 0
@@ -553,7 +588,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                         cursor: "pointer",
                       }}
                     >
-                      <X size={12} /> Xóa & Chọn lại
+                      <X size={12} /> Xóa &amp; Chọn lại
                     </button>
                   </div>
                 </div>
@@ -614,7 +649,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
               }}
             >
               <FileText size={14} />
-              Xem văn bản Hợp đồng gốc & Điều khoản thanh lý
+              Xem văn bản Hợp đồng gốc &amp; Điều khoản thanh lý
             </button>
           </div>
 
