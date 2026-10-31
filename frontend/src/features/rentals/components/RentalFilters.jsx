@@ -4,7 +4,6 @@ const TABS = [
   { key: "ALL", label: "Tất cả", countKey: "all" },
   { key: "ACTIVE", label: "Đang thuê", countKey: "active" },
   { key: "RESERVED", label: "Chờ nhận kho", countKey: "reserved" },
-  { key: "PENDING", label: "Chờ cọc", countKey: "pending" },
   { key: "HISTORY", label: "Lịch sử", countKey: "history" },
 ];
 

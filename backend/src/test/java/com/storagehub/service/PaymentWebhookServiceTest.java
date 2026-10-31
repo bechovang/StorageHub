@@ -4,6 +4,7 @@ import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
 import com.storagehub.exception.PaymentWebhookException;
 import com.storagehub.gateway.PaymentGateway;
+import com.storagehub.repository.BookingDraftRepository;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UserRepository;
@@ -62,6 +63,7 @@ class PaymentWebhookServiceTest {
 
         paymentService = new PaymentServiceImpl(
                 paymentRepository,
+                mock(BookingDraftRepository.class),
                 mock(ReservationRepository.class),
                 mock(UserRepository.class),
                 gateway,

@@ -65,12 +65,9 @@ export function useMyRentals() {
       ["CHECKED_IN", "CHECKOUT_REQUESTED"].includes(i.status)
     ).length;
     const reserved = activeItems.filter((i) => i.status === "RESERVED").length;
-    const pending = activeItems.filter(
-      (i) => i.status === "PENDING_PAYMENT"
-    ).length;
     const history = historyItems.length;
 
-    return { all, active, reserved, pending, history };
+    return { all, active, reserved, history };
   }, [activeItems, historyItems]);
 
   // Filter by selected tab
@@ -82,8 +79,6 @@ export function useMyRentals() {
         );
       case "RESERVED":
         return activeItems.filter((i) => i.status === "RESERVED");
-      case "PENDING":
-        return activeItems.filter((i) => i.status === "PENDING_PAYMENT");
       case "HISTORY":
         return historyItems;
       case "ALL":

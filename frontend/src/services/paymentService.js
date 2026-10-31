@@ -34,16 +34,15 @@ export const paymentService = {
    *
    * @param {Object} params
    * @param {string} [params.purpose="DEPOSIT"] - "DEPOSIT" | "RENT" | "EXTENSION_FEE"
-   * @param {number|string} params.reservationId - ID đơn đặt chỗ
+   * @param {number|string} [params.reservationId] - ID đơn đặt chỗ (RENT/EXTENSION_FEE)
+   * @param {number|string} [params.draftId] - ID booking draft (DEPOSIT)
    * @param {string} params.method - "PAYOS"
    * @returns {Promise<Object>} PaymentSessionResponse
    */
-  async createPayment({ purpose = "DEPOSIT", reservationId, method = "PAYOS" }) {
-    const body = {
-      purpose,
-      reservationId: Number(reservationId),
-      method,
-    };
+  async createPayment({ purpose = "DEPOSIT", reservationId, draftId, method = "PAYOS" }) {
+    const body = { purpose, method };
+    if (draftId != null) body.draftId = Number(draftId);
+    if (reservationId != null) body.reservationId = Number(reservationId);
 
     const res = await apiClient("/api/v1/payments", {
       method: "POST",
@@ -145,23 +144,27 @@ export const paymentService = {
   },
 
   /**
-   * Tạo đơn đặt chỗ mới (POST /api/v1/reservations)
-   * Mô hình thuê theo ngày: endDate là ngày trả kho (inclusive), >= startDate.
+   * Tạo booking draft giữ chỗ tạm 30 phút (POST /api/v1/booking-drafts).
+   * CHƯA phải đơn thuê — reservation chỉ sinh sau khi PayOS SUCCEEDED.
    *
    * @param {Object} payload { unitId, startDate, endDate }
-   * @returns {Promise<Object>} ReservationDetailResponse
+   * @returns {Promise<Object>} BookingDraftResponse
    */
-  async createReservation({ unitId, startDate, endDate }) {
-    const res = await apiClient("/api/v1/reservations", {
+  async createBookingDraft({ unitId, startDate, endDate }) {
+    const res = await apiClient("/api/v1/booking-drafts", {
       method: "POST",
-      body: JSON.stringify({
-        unitId,
-        startDate,
-        endDate,
-      }),
+      body: JSON.stringify({ unitId, startDate, endDate }),
     });
 
-    return handleResponse(res, "RESERVATION_CREATE_FAILED", "Không thể tạo đơn đặt chỗ.");
+    return handleResponse(res, "DRAFT_CREATE_FAILED", "Không thể giữ chỗ — vui lòng thử lại.");
+  },
+
+  async getBookingDraft(draftId) {
+    const res = await apiClient(`/api/v1/booking-drafts/${draftId}`, {
+      method: "GET",
+    });
+
+    return handleResponse(res, "DRAFT_FETCH_FAILED", "Không tìm thấy phiên giữ chỗ.");
   },
 };
 

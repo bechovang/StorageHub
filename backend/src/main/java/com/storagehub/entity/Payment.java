@@ -68,6 +68,11 @@ public class Payment {
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
+    /** Draft đặt chỗ khi cọc chưa được trả — chuyển thành reservation khi SUCCEEDED. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_draft_id")
+    private BookingDraft bookingDraft;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "extension_id")
     private Extension extension;

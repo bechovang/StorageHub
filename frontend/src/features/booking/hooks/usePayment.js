@@ -31,6 +31,29 @@ function addDays(dateStr, days) {
   return d.toISOString().split("T")[0];
 }
 
+/** Map ReservationDetail (API) sang state hiển thị — mô hình thuê theo ngày */
+function mapDetailToReservation(detail) {
+  return {
+    id: detail.id,
+    code: detail.code || `RSV-${detail.id}`,
+    status: detail.status,
+    depositAmount: detail.depositAmount ?? detail.quote?.deposit ?? 0,
+    depositStatus: detail.depositStatus,
+    durationDays: detail.durationDays ?? null,
+    startDate: detail.startDate,
+    endDate: detail.endDate,
+    unit: {
+      code: detail.unit?.code || "",
+      sizeM2: detail.unit?.sizeM2 || 0,
+      typeName: detail.unit?.typeName || "",
+      baseDailyRent: detail.unit?.baseDailyRent || 0,
+      depot: detail.unit?.facilityName || "",
+      building: detail.unit?.zoneCode ? `Khu ${detail.unit.zoneCode}` : "",
+      floor: detail.unit?.floor,
+    },
+  };
+}
+
 export function usePayment() {
   const { reservationId: paramResId, paymentId: paramPayId, unitId: paramUnitId } = useParams();
   const [searchParams] = useSearchParams();
@@ -47,11 +70,6 @@ export function usePayment() {
   const [loadingReservation, setLoadingReservation] = useState(false);
   const [reservationError, setReservationError] = useState("");
   const [myReservations, setMyReservations] = useState([]);
-  const reservationRef = useRef(reservation);
-  useEffect(() => {
-    reservationRef.current = reservation;
-  }, [reservation]);
-
   // Trạng thái Modal (chỉ mở khi người dùng bấm nút tiến hành thanh toán cọc)
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -101,6 +119,21 @@ export function usePayment() {
     }
   }, []);
 
+  // Sau khi PayOS SUCCEEDED, handler BE đã sinh reservation — tải lại state
+  // để trang chuyển từ draft sang đơn thật.
+  const syncReservationFromSession = useCallback(async (session) => {
+    if (!session?.reservationId) return;
+    try {
+      const detail = await paymentService.getReservation(session.reservationId);
+      if (detail) {
+        setReservation(mapDetailToReservation(detail));
+        loadPaymentHistory(session.reservationId);
+      }
+    } catch {
+      // Đơn vừa tạo có thể chưa đọc được ngay — lần poll sau sẽ thử lại.
+    }
+  }, [loadPaymentHistory]);
+
   // Bắt đầu polling khi chờ webhook PayOS xác nhận
   const startPolling = useCallback(
     (paymentId, intervalMs = 5000) => {
@@ -122,11 +155,9 @@ export function usePayment() {
               setNotificationToast({
                 type: "PAYMENT_CONFIRMED",
                 title: "Thanh toán cọc thành công",
-                body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp.`,
+                body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
               });
-              if (reservationRef.current?.id) {
-                loadPaymentHistory(reservationRef.current.id);
-              }
+              syncReservationFromSession(updated);
             }
           }
         } catch (err) {
@@ -135,31 +166,8 @@ export function usePayment() {
         }
       }, intervalMs);
     },
-    [stopPolling, loadPaymentHistory]
+    [stopPolling, loadPaymentHistory, syncReservationFromSession]
   );
-
-  /** Map ReservationDetail (API) sang state hiển thị — mô hình thuê theo ngày */
-  const mapDetailToReservation = useCallback((detail) => {
-    return {
-      id: detail.id,
-      code: detail.code || `RSV-${detail.id}`,
-      status: detail.status,
-      depositAmount: detail.depositAmount ?? detail.quote?.deposit ?? 0,
-      depositStatus: detail.depositStatus,
-      durationDays: detail.durationDays ?? null,
-      startDate: detail.startDate,
-      endDate: detail.endDate,
-      unit: {
-        code: detail.unit?.code || "",
-        sizeM2: detail.unit?.sizeM2 || 0,
-        typeName: detail.unit?.typeName || "",
-        baseDailyRent: detail.unit?.baseDailyRent || 0,
-        depot: detail.unit?.facilityName || "",
-        building: detail.unit?.zoneCode ? `Khu ${detail.unit.zoneCode}` : "",
-        floor: detail.unit?.floor,
-      },
-    };
-  }, []);
 
   // 1. Tải danh sách đơn đặt chỗ & chi tiết ban đầu
   useEffect(() => {
@@ -173,29 +181,36 @@ export function usePayment() {
         setReservationError("");
 
         if (paramUnitId) {
-          // Flow /units/:unitId/book — chưa có đơn đặt chỗ, hiển thị nháp từ UnitDetail
+          // Flow /units/:unitId/book — tạo booking draft (giữ chỗ 30 phút).
+          // CHƯA có reservation; reservation chỉ sinh khi PayOS SUCCEEDED.
           const u = await getUnitDetail(paramUnitId);
           const start =
             searchParams.get("startDate") || new Date().toISOString().split("T")[0];
           const end = searchParams.get("endDate") || addDays(start, 1);
-          const daily = Number(u.baseDailyRent || 0);
+          const draft = await paymentService.createBookingDraft({
+            unitId: Number(paramUnitId),
+            startDate: start,
+            endDate: end,
+          });
 
           if (isMounted) {
             setReservation({
               id: null,
-              draftUnitId: Number(paramUnitId),
-              code: `Đơn mới · ${u.code || u.id}`,
-              status: "PENDING_PAYMENT",
-              depositAmount: 0,
+              draftId: draft.id,
+              draftExpiresAt: draft.expiresAt,
+              code: `DRAFT-${draft.id}`,
+              status: "DRAFT",
+              depositAmount: draft.depositAmount,
               depositStatus: "UNPAID",
-              durationDays: null,
-              startDate: start,
-              endDate: end,
+              durationDays: draft.durationDays,
+              totalRent: draft.quote?.totalRent,
+              startDate: draft.startDate,
+              endDate: draft.endDate,
               unit: {
                 code: u.code || `UNIT-${u.id}`,
                 sizeM2: u.sizeM2 || 0,
                 typeName: u.typeName || "Kho tiêu chuẩn",
-                baseDailyRent: daily,
+                baseDailyRent: u.baseDailyRent || 0,
                 depot: u.facilityName || "",
                 building: u.floor ? `Tầng ${u.floor}` : "",
                 floor: u.floor,
@@ -210,8 +225,7 @@ export function usePayment() {
           setMyReservations(listData.items);
         }
 
-        const pendingItem = listData?.items?.find((r) => r.status === "PENDING_PAYMENT");
-        const resIdToFetch = targetReservationId || pendingItem?.id || listData?.items?.[0]?.id;
+        const resIdToFetch = targetReservationId || listData?.items?.[0]?.id;
 
         if (resIdToFetch) {
           const detail = await paymentService.getReservation(resIdToFetch);
@@ -364,36 +378,17 @@ export function usePayment() {
       const methodToUse = overrideMethod || selectedMethod || "PAYOS";
 
       setSubmitting(true);
-      let reservationId = reservation?.id;
+      const reservationId = reservation?.id;
+      const draftId = reservation?.draftId;
       try {
-        // Flow /units/:unitId/book chưa có reservation — tạo thật trước khi trả
-        // tiền để backend ownership check có id đúng (không dùng unitId).
-        if (!reservationId && reservation?.draftUnitId) {
-          const created = await paymentService.createReservation({
-            unitId: reservation.draftUnitId,
-            startDate: reservation.startDate,
-            endDate: reservation.endDate,
-          });
-          reservationId = created.id;
-          setReservation((prev) => ({
-            ...prev,
-            id: created.id,
-            code: created.code,
-            status: created.status,
-            depositAmount: created.depositAmount,
-            durationDays: created.durationDays,
-            draftUnitId: undefined,
-          }));
-          loadPaymentHistory(created.id);
-        }
-        if (!reservationId) {
-          setApiError("Chưa có đơn đặt chỗ để thanh toán. Hãy tạo đơn trước.");
+        if (!reservationId && !draftId) {
+          setApiError("Chưa có phiên giữ chỗ để thanh toán. Hãy chọn kho và thời gian thuê.");
           return;
         }
 
         const session = await paymentService.createPayment({
           purpose: "DEPOSIT",
-          reservationId,
+          ...(draftId ? { draftId } : { reservationId }),
           method: methodToUse,
         });
 
@@ -502,11 +497,9 @@ export function usePayment() {
         setNotificationToast({
           type: "PAYMENT_CONFIRMED",
           title: "Thanh toán cọc thành công",
-          body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn đặt chỗ đã chuyển sang trạng thái RESERVED.`,
+          body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
         });
-        if (reservationRef.current?.id) {
-          loadPaymentHistory(reservationRef.current.id);
-        }
+        syncReservationFromSession(updated);
       } else if (updated.status === "FAILED") {
         stopPolling();
       } else if (updated.status === "EXPIRED") {
@@ -542,11 +535,9 @@ export function usePayment() {
         setNotificationToast({
           type: "PAYMENT_CONFIRMED",
           title: "Đã bỏ qua thanh toán (Demo)",
-          body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn đặt chỗ đã chuyển sang trạng thái RESERVED.`,
+          body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
         });
-        if (reservationRef.current?.id) {
-          loadPaymentHistory(reservationRef.current.id);
-        }
+        syncReservationFromSession(updated);
       }
     } catch (err) {
       setApiError(err.message || "Không thể bỏ qua thanh toán (demo).");
@@ -567,7 +558,7 @@ export function usePayment() {
 
       for (const uId of candidateUnits) {
         try {
-          created = await paymentService.createReservation({
+          created = await paymentService.createBookingDraft({
             unitId: uId,
             startDate: start,
             endDate: end,
@@ -579,10 +570,34 @@ export function usePayment() {
       }
 
       if (!created?.id) {
-        throw new Error("Không còn kho mẫu nào khả dụng để tạo đơn mới.");
+        throw new Error("Không còn kho mẫu nào khả dụng để giữ chỗ.");
       }
 
-      setReservation(mapDetailToReservation(created));
+      const dailyRent = created.quote?.durationDays
+        ? Math.round((created.quote.totalRent || 0) / created.quote.durationDays)
+        : 0;
+      setReservation({
+        id: null,
+        draftId: created.id,
+        draftExpiresAt: created.expiresAt,
+        code: `DRAFT-${created.id}`,
+        status: "DRAFT",
+        depositAmount: created.depositAmount,
+        depositStatus: "UNPAID",
+        durationDays: created.durationDays,
+        totalRent: created.quote?.totalRent,
+        startDate: created.startDate,
+        endDate: created.endDate,
+        unit: {
+          code: created.unit?.code || "",
+          sizeM2: created.unit?.sizeM2 || 0,
+          typeName: created.unit?.typeName || "",
+          baseDailyRent: dailyRent,
+          depot: created.unit?.facilityName || "",
+          building: created.unit?.zoneCode ? `Khu ${created.unit.zoneCode}` : "",
+          floor: created.unit?.floor,
+        },
+      });
 
       handleResetOrSwitch();
       setPaymentHistory([]);

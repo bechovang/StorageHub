@@ -10,7 +10,8 @@ import jakarta.validation.constraints.NotNull;
  */
 public record CreatePaymentRequest(
         @NotNull Payment.Purpose purpose,
-        @NotNull Long reservationId,
+        Long reservationId,
+        Long draftId,
         @NotNull Payment.Method method,
         @Valid CardDetails card,
         String momoPhone

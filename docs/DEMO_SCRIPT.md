@@ -72,7 +72,7 @@ Có thể mở sơ đồ kiến trúc trong tài liệu hạ tầng của nhóm 
 
 1. Bấm **Đặt kho** → trang booking summary.
 2. Chọn ngày bắt đầu (tương lai, ví dụ tháng sau) + số tháng.
-3. Bấm **Xác nhận đặt** → tạo reservation `PENDING_PAYMENT`, chuyển sang bước thanh toán.
+3. Bấm **Xác nhận đặt** → tạo booking draft giữ chỗ 30 phút (chưa có đơn thuê), chuyển sang bước thanh toán. PayOS SUCCEEDED mới sinh reservation `RESERVED`.
 
 **Điểm nói:** server re-check availability trong transaction; nếu unit vừa bị người khác đặt → **409 BOOKING_UNIT_TAKEN** và gợi ý unit tương tự. (Có thể demo nhanh: profile 2 dùng `trang@` đặt cùng unit/ngày → thấy lỗi 409.)
 

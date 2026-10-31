@@ -7,6 +7,7 @@ import com.storagehub.dto.payment.PaymentRecordResponse;
 import com.storagehub.dto.payment.PaymentResultResponse;
 import com.storagehub.dto.payment.PaymentSessionResponse;
 import com.storagehub.dto.reservation.ReservationDetailResponse;
+import com.storagehub.entity.BookingDraft;
 import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.User;
@@ -18,6 +19,7 @@ import com.storagehub.exception.PaymentInvalidStateException;
 import com.storagehub.exception.PaymentNotFoundException;
 import com.storagehub.exception.PaymentWebhookException;
 import com.storagehub.gateway.PaymentGateway;
+import com.storagehub.repository.BookingDraftRepository;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UserRepository;
@@ -68,6 +70,7 @@ public class PaymentServiceImpl implements PaymentService {
     );
 
     private final PaymentRepository paymentRepository;
+    private final BookingDraftRepository bookingDraftRepository;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final PaymentGateway gateway;
@@ -80,6 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
+            BookingDraftRepository bookingDraftRepository,
             ReservationRepository reservationRepository,
             UserRepository userRepository,
             PaymentGateway gateway,
@@ -89,6 +93,7 @@ public class PaymentServiceImpl implements PaymentService {
             ExtensionService extensionService
     ) {
         this.paymentRepository = paymentRepository;
+        this.bookingDraftRepository = bookingDraftRepository;
         this.reservationRepository = reservationRepository;
         this.userRepository = userRepository;
         this.gateway = gateway;
@@ -106,6 +111,46 @@ public class PaymentServiceImpl implements PaymentService {
         User payer = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(InvalidCredentialsException::new);
 
+        if (request.method() != Payment.Method.PAYOS) {
+            throw new PaymentBadRequestException(
+                    "Chỉ hỗ trợ kênh thanh toán PayOS (QR).");
+        }
+
+        boolean hasDraft = request.draftId() != null;
+        boolean hasReservation = request.reservationId() != null;
+        if (hasDraft == hasReservation) {
+            throw new PaymentBadRequestException(
+                    "Phải truyền đúng một trong reservationId hoặc draftId.");
+        }
+
+        if (request.purpose() == Payment.Purpose.DEPOSIT) {
+            if (!hasDraft) {
+                throw new PaymentBadRequestException(
+                        "Cọc chỉ được tạo từ booking draft — chưa có đơn thuê trước khi trả cọc.");
+            }
+
+            BookingDraft draft = bookingDraftRepository
+                    .findOwnedWithUnit(request.draftId(), email)
+                    .orElseThrow(() -> new AccessDeniedException(
+                            "Booking draft belongs to another customer"));
+
+            if (draft.getStatus() != BookingDraft.Status.PENDING
+                    || !draft.getExpiresAt().isAfter(java.time.LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")))) {
+                throw new PaymentInvalidStateException(
+                        "Đã hết thời gian giữ chỗ — vui lòng đặt lại.");
+            }
+            if (paymentRepository.existsByBookingDraft_DraftIdAndPurposeAndStatusIn(
+                    draft.getDraftId(), Payment.Purpose.DEPOSIT, BLOCKS_DUPLICATE)) {
+                throw new PaymentDuplicateException();
+            }
+            return createWithRetry(payer, null, draft, request);
+        }
+
+        if (hasDraft) {
+            throw new PaymentBadRequestException(
+                    "Chỉ purpose DEPOSIT mới dùng draftId.");
+        }
+
         // Ownership: không phải reservation của mình (hoặc không tồn tại) → 403.
         Reservation reservation = reservationRepository
                 .findByReservationIdAndCustomer_EmailIgnoreCase(
@@ -115,35 +160,18 @@ public class PaymentServiceImpl implements PaymentService {
 
         // Scope theo openapi.yaml: DEPOSIT (booking) + RENT (check-in, US-15)
         // + EXTENSION_FEE (gia hạn, US-18).
-        if (request.purpose() != Payment.Purpose.DEPOSIT
-                && request.purpose() != Payment.Purpose.RENT
+        if (request.purpose() != Payment.Purpose.RENT
                 && request.purpose() != Payment.Purpose.EXTENSION_FEE) {
             throw new PaymentBadRequestException(
                     "Chỉ hỗ trợ purpose DEPOSIT, RENT và EXTENSION_FEE.");
         }
 
-        if (request.method() != Payment.Method.PAYOS) {
-            throw new PaymentBadRequestException(
-                    "Chỉ hỗ trợ kênh thanh toán PayOS (QR).");
-        }
-
-        // Duplicate check TRƯỚC state check: sau khi deposit thành công,
-        // reservation đã flip RESERVED — vẫn phải trả 409 PAYMENT_DUPLICATE
-        // ("Khoản này đã được thanh toán.") thay vì PAYMENT_INVALID_STATE.
-        // EXTENSION_FEE đặc biệt: cho phép chuỗi gia hạn liên tiếp nên SUCCEEDED
-        // không chặn — chỉ chặn payment còn sống (1 extension chờ trả tại 1 thời điểm).
         Set<Payment.Status> duplicateBlock = request.purpose() == Payment.Purpose.EXTENSION_FEE
                 ? Set.of(Payment.Status.PENDING, Payment.Status.PROCESSING)
                 : BLOCKS_DUPLICATE;
         if (paymentRepository.existsByReservation_ReservationIdAndPurposeAndStatusIn(
                 request.reservationId(), request.purpose(), duplicateBlock)) {
             throw new PaymentDuplicateException();
-        }
-
-        if (request.purpose() == Payment.Purpose.DEPOSIT
-                && reservation.getStatus() != Reservation.Status.PENDING_PAYMENT) {
-            throw new PaymentInvalidStateException(
-                    "Đặt chỗ này không ở trạng thái chờ thanh toán.");
         }
 
         // US-15 (FR-15): rent thu 100% tại quầy check-in — chỉ mở khi đặt chỗ
@@ -179,7 +207,7 @@ public class PaymentServiceImpl implements PaymentService {
                             "Chưa có yêu cầu gia hạn nào chờ thanh toán — hãy tạo gia hạn trước."));
         }
 
-        return createWithRetry(payer, reservation, request);
+        return createWithRetry(payer, reservation, null, request);
     }
 
     /**
@@ -190,26 +218,45 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentSessionResponse createWithRetry(
             User payer,
             Reservation reservation,
+            BookingDraft draft,
             CreatePaymentRequest request
     ) {
         for (int attempt = 0; attempt < 3; attempt++) {
             try {
                 return transactionTemplate.execute(tx -> {
-                    // Reservation nạp ngoài tx (createPayment không @Transactional)
-                    // nên proxy Unit là detached — nạp lại trong tx để lazy-load
-                    // được khi tính amount RENT theo quote.
-                    Reservation managed = reservationRepository
-                            .findById(reservation.getReservationId())
-                            .orElseThrow();
+                    Reservation managedRes = null;
+                    BookingDraft managedDraft = null;
+                    if (reservation != null) {
+                        managedRes = reservationRepository
+                                .findById(reservation.getReservationId())
+                                .orElseThrow();
+                    } else {
+                        managedDraft = bookingDraftRepository.findById(draft.getDraftId())
+                                .orElseThrow();
+                    }
 
                     Payment payment = new Payment();
                     payment.setPayer(payer);
-                    payment.setReservation(managed);
+                    if (managedRes != null) {
+                        payment.setReservation(managedRes);
+                    } else {
+                        payment.setBookingDraft(managedDraft);
+                    }
+                    if (managedDraft != null) {
+                        // QR PayOS có thể tới sau hạn draft — gia hạn draft theo
+                        // phiên thanh toán để webhook success không bị chặn oan.
+                        managedDraft.setExpiresAt(java.time.LocalDateTime
+                                .now(ZoneId.of("Asia/Ho_Chi_Minh"))
+                                .plusMinutes(20));
+                        bookingDraftRepository.save(managedDraft);
+                    }
                     payment.setPurpose(request.purpose());
                     payment.setMethod(request.method());
                     // AD-11: server tính từ quote snapshot — FE không gửi được amount.
                     // DEPOSIT = cọc đang giữ; RENT = 100% tổng tiền thuê (FR-15).
-                    payment.setAmount(resolveAmount(managed, request.purpose()));
+                    payment.setAmount(managedDraft != null
+                            ? managedDraft.getDepositAmount()
+                            : resolveAmount(managedRes, request.purpose()));
                     payment.setStatus(Payment.Status.PENDING);
                     // Cấp từ lúc tạo (cột NOT NULL), chỉ hiển thị khi SUCCEEDED.
                     payment.setReceiptCode(allocateReceiptCode());
@@ -227,7 +274,7 @@ public class PaymentServiceImpl implements PaymentService {
                     payment.setStatus(initiation.initialStatus());
                     paymentRepository.save(payment);
 
-                    return toSession(payment, request.reservationId());
+                    return toSession(payment, managedRes == null ? null : managedRes.getReservationId());
                 });
             } catch (DataIntegrityViolationException race) {
                 // create đồng thời cấp trùng receipt_code — thử số kế tiếp
@@ -273,7 +320,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment = requireOwnedPayment(email, paymentId);
         }
 
-        return toSession(payment, payment.getReservation().getReservationId());
+        return toSession(payment, reservationIdOrNull(payment));
     }
 
     @Override
@@ -362,13 +409,12 @@ public class PaymentServiceImpl implements PaymentService {
         }
         Payment payment = requireOwnedPayment(email, paymentId);
         if (TERMINAL.contains(payment.getStatus())) {
-            return toSession(payment, payment.getReservation().getReservationId());
+            return toSession(payment, reservationIdOrNull(payment));
         }
         transactionTemplate.executeWithoutResult(
                 tx -> resolve(paymentId, Payment.Status.SUCCEEDED));
-        return toSession(
-                requireOwnedPayment(email, paymentId),
-                requireOwnedPayment(email, paymentId).getReservation().getReservationId());
+        Payment refreshed = requireOwnedPayment(email, paymentId);
+        return toSession(refreshed, reservationIdOrNull(refreshed));
     }
 
     private record Resolved(
@@ -449,6 +495,12 @@ public class PaymentServiceImpl implements PaymentService {
             throw new AccessDeniedException("Payment belongs to another user");
         }
         return payment;
+    }
+
+    private Long reservationIdOrNull(Payment payment) {
+        return payment.getReservation() == null
+                ? null
+                : payment.getReservation().getReservationId();
     }
 
     private PaymentSessionResponse toSession(Payment payment, Long reservationId) {
