@@ -46,6 +46,20 @@ export default function PolicyManagementPage() {
     handleResetToBaseline,
   } = usePolicyManagement();
 
+  if (policyLoading && !persistedPolicy) {
+    return (
+      <AppShell>
+        <div className="policy-page">
+          <div style={{ padding: "4rem 2rem", textAlign: "center" }}>
+            <p style={{ font: "600 0.95rem var(--font-mono)", color: "var(--color-muted)" }}>
+              ĐANG TẢI DỮ LIỆU CHÍNH SÁCH VÀ BIỂU GIÁ...
+            </p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="policy-page">

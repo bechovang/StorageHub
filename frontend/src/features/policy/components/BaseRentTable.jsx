@@ -26,7 +26,8 @@ export function BaseRentTable({
           </thead>
           <tbody>
             {draftBaseRates.map((rate) => {
-              const orig = persistedPolicy.baseRates.find((r) => r.id === rate.id);
+              const baseRatesList = Array.isArray(persistedPolicy?.baseRates) ? persistedPolicy.baseRates : [];
+              const orig = baseRatesList.find((r) => r.id === rate.id);
               const isModified = orig && Number(orig.rateVnd) !== Number(rate.rateVnd);
 
               return (
