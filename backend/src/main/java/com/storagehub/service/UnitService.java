@@ -7,14 +7,12 @@ import com.storagehub.dto.unit.UnitFilterOptionsResponse;
 import com.storagehub.dto.unit.UnitPageResponse;
 import com.storagehub.dto.unit.UnitSummaryResponse;
 import com.storagehub.dto.unit.UnitTypeOptionDto;
-import com.storagehub.entity.BookingDraft;
 import com.storagehub.entity.PolicyRule;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Unit;
 import com.storagehub.entity.User;
 import com.storagehub.exception.UnitNotFoundException;
-import com.storagehub.repository.BookingDraftRepository;
 import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
@@ -50,7 +48,6 @@ public class UnitService {
     private final RentalPolicyRepository rentalPolicyRepository;
     private final PolicyRuleRepository policyRuleRepository;
     private final ReservationRepository reservationRepository;
-    private final BookingDraftRepository bookingDraftRepository;
     private final PricingEngine pricingEngine;
     private final LogService logService;
 
@@ -138,11 +135,6 @@ public class UnitService {
         Map<Long, List<Reservation>> reservationsByUnit = activeReservations.stream()
                 .collect(Collectors.groupingBy(r -> r.getUnit().getUnitId()));
 
-        List<BookingDraft> activeDrafts = bookingDraftRepository.findActiveDraftsForUnits(
-                unitIds, java.time.LocalDateTime.now(ICT_ZONE));
-        Map<Long, List<BookingDraft>> draftsByUnit = activeDrafts.stream()
-                .collect(Collectors.groupingBy(d -> d.getUnit().getUnitId()));
-
         List<UnitSummaryResponse> resultItems = new ArrayList<>();
 
         for (Unit unit : filteredUnits) {
@@ -180,17 +172,6 @@ public class UnitService {
                 }
             }
 
-            if (!hasOverlap) {
-                for (BookingDraft draft : draftsByUnit.getOrDefault(unit.getUnitId(), List.of())) {
-                    LocalDate draftOccupiedEnd = draft.getEndDate().plusDays(bufferDays);
-                    LocalDate reqOccupiedEnd = effectiveEnd.plusDays(bufferDays);
-                    if (!effectiveStart.isAfter(draftOccupiedEnd)
-                            && !draft.getStartDate().isAfter(reqOccupiedEnd)) {
-                        hasOverlap = true;
-                        break;
-                    }
-                }
-            }
 
             // Nếu bị trùng lịch đặt trong tương lai -> loại khỏi kết quả
             if (hasOverlap) {

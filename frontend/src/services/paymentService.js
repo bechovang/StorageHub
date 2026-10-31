@@ -34,15 +34,19 @@ export const paymentService = {
    *
    * @param {Object} params
    * @param {string} [params.purpose="DEPOSIT"] - "DEPOSIT" | "RENT" | "EXTENSION_FEE"
-   * @param {number|string} [params.reservationId] - ID đơn đặt chỗ (RENT/EXTENSION_FEE)
-   * @param {number|string} [params.draftId] - ID booking draft (DEPOSIT)
+   * @param {number|string} [params.reservationId] - ID đơn (RENT/EXTENSION_FEE)
+   * @param {number|string} [params.unitId] - DEPOSIT: kho cần đặt
+   * @param {string} [params.startDate] - DEPOSIT yyyy-MM-dd
+   * @param {string} [params.endDate] - DEPOSIT yyyy-MM-dd
    * @param {string} params.method - "PAYOS"
    * @returns {Promise<Object>} PaymentSessionResponse
    */
-  async createPayment({ purpose = "DEPOSIT", reservationId, draftId, method = "PAYOS" }) {
+  async createPayment({ purpose = "DEPOSIT", reservationId, unitId, startDate, endDate, method = "PAYOS" }) {
     const body = { purpose, method };
-    if (draftId != null) body.draftId = Number(draftId);
     if (reservationId != null) body.reservationId = Number(reservationId);
+    if (unitId != null) body.unitId = Number(unitId);
+    if (startDate) body.startDate = startDate;
+    if (endDate) body.endDate = endDate;
 
     const res = await apiClient("/api/v1/payments", {
       method: "POST",
@@ -143,29 +147,6 @@ export const paymentService = {
     return handleResponse(res, "RESERVATIONS_FETCH_FAILED", "Không thể tải danh sách đặt chỗ.");
   },
 
-  /**
-   * Tạo booking draft giữ chỗ tạm 30 phút (POST /api/v1/booking-drafts).
-   * CHƯA phải đơn thuê — reservation chỉ sinh sau khi PayOS SUCCEEDED.
-   *
-   * @param {Object} payload { unitId, startDate, endDate }
-   * @returns {Promise<Object>} BookingDraftResponse
-   */
-  async createBookingDraft({ unitId, startDate, endDate }) {
-    const res = await apiClient("/api/v1/booking-drafts", {
-      method: "POST",
-      body: JSON.stringify({ unitId, startDate, endDate }),
-    });
-
-    return handleResponse(res, "DRAFT_CREATE_FAILED", "Không thể giữ chỗ — vui lòng thử lại.");
-  },
-
-  async getBookingDraft(draftId) {
-    const res = await apiClient(`/api/v1/booking-drafts/${draftId}`, {
-      method: "GET",
-    });
-
-    return handleResponse(res, "DRAFT_FETCH_FAILED", "Không tìm thấy phiên giữ chỗ.");
-  },
 };
 
 export default paymentService;

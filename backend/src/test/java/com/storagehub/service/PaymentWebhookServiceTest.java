@@ -4,12 +4,13 @@ import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
 import com.storagehub.exception.PaymentWebhookException;
 import com.storagehub.gateway.PaymentGateway;
-import com.storagehub.repository.BookingDraftRepository;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.ReservationRepository;
+import com.storagehub.repository.UnitRepository;
 import com.storagehub.repository.UserRepository;
 import com.storagehub.service.handler.PaymentSuccessHandler;
 import com.storagehub.service.impl.PaymentServiceImpl;
+import com.storagehub.service.ReservationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,14 +64,15 @@ class PaymentWebhookServiceTest {
 
         paymentService = new PaymentServiceImpl(
                 paymentRepository,
-                mock(BookingDraftRepository.class),
+                mock(UnitRepository.class),
                 mock(ReservationRepository.class),
                 mock(UserRepository.class),
                 gateway,
                 List.of(handler),
                 transactionManager,
                 mock(PricingEngine.class),
-                mock(ExtensionService.class)
+                mock(ExtensionService.class),
+                mock(ReservationService.class)
         );
 
         Reservation reservation = new Reservation();

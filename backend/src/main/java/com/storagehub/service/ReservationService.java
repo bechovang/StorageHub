@@ -3,17 +3,14 @@ package com.storagehub.service;
 import com.storagehub.dto.contract.ContractChainItemResponse;
 import com.storagehub.dto.payment.PaymentRecordResponse;
 import com.storagehub.dto.quote.QuoteResponse;
-import com.storagehub.dto.reservation.BookingDraftResponse;
 import com.storagehub.dto.reservation.CheckInPassResponse;
 import com.storagehub.dto.reservation.CheckInResultResponse;
-import com.storagehub.dto.reservation.CreateReservationRequest;
 import com.storagehub.dto.reservation.ReservationDetailResponse;
 import com.storagehub.dto.reservation.ReservationPageResponse;
 import com.storagehub.dto.reservation.ReservationSummaryResponse;
 import com.storagehub.dto.reservation.ReservationUnitSummaryResponse;
 import com.storagehub.dto.unit.UnitAvailabilityResponse;
 import com.storagehub.dto.unit.UnitSummaryResponse;
-import com.storagehub.entity.BookingDraft;
 import com.storagehub.entity.Contract;
 import com.storagehub.entity.Payment;
 import com.storagehub.entity.PolicyRule;
@@ -29,7 +26,6 @@ import com.storagehub.exception.ReservationInvalidStateException;
 import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.exception.UnitNotFoundException;
 import com.storagehub.repository.ActivityLogRepository;
-import com.storagehub.repository.BookingDraftRepository;
 import com.storagehub.repository.ContractAddendumRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
@@ -51,9 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -66,7 +60,6 @@ import java.util.stream.Collectors;
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
-    private final BookingDraftRepository bookingDraftRepository;
     private final UserRepository userRepository;
     private final PolicyRuleRepository policyRuleRepository;
     private final RentalPolicyRepository rentalPolicyRepository;
@@ -239,141 +232,53 @@ public class ReservationService {
     }
 
     /**
-     * Tạo draft giữ chỗ tạm (30 phút) — CHƯA phải đơn thuê. Chỉ sau khi PayOS
-     * xác nhận cọc hệ thống mới sinh Reservation (RESERVED); hết hạn draft thì
-     * nhả chỗ. Draft không xuất hiện trong danh sách đơn thuê.
+     * Kiểm tra chỗ trống tại thời điểm tạo payment. Không giữ chỗ — có thể
+     * conflict nếu người khác thanh toán trước; webhook sẽ lock unit và
+     * quyết định tạo booking hay refund.
+     */
+    public void assertBookingAvailable(Unit unit, LocalDate startDate, LocalDate endDate) {
+        int bufferDays = turnoverBufferDays(unit);
+        LocalDate today = LocalDate.now(ICT_ZONE);
+        if (!isUnitAvailable(unit, startDate, endDate, bufferDays, today)) {
+            int similarCount = countSimilarAvailableUnits(unit, startDate, endDate, bufferDays, today);
+            String message = similarCount > 0
+                    ? String.format("%s vừa được đặt. %d unit tương tự còn trống.", unit.getCode(), similarCount)
+                    : String.format("%s vừa được đặt. Không còn unit tương tự trống trong thời gian này.", unit.getCode());
+            throw new BookingUnitTakenException(message);
+        }
+    }
+
+    /**
+     * Tạo booking (Reservation RESERVED) từ payment đã SUCCEEDED. Lock unit để
+     * hai webhook chạy song song không cùng tạo booking. Trả null nếu unit vừa
+     * bị người khác đặt — caller ghi nhận refund_required.
      */
     @Transactional
-    public BookingDraftResponse createDraft(String email, CreateReservationRequest request) {
-        User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(InvalidCredentialsException::new);
-
-        LocalDate startDate = request.startDate();
-        LocalDate endDate = request.endDate();
-        if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu");
-        }
-
-        Unit unit = unitRepository.findWithDetailsById(request.unitId())
+    public Reservation createReservedFromBooking(
+            User customer,
+            Long unitId,
+            LocalDate startDate,
+            LocalDate endDate,
+            BigDecimal depositAmount
+    ) {
+        Unit unit = unitRepository.findByIdForUpdate(unitId)
                 .orElseThrow(() -> new UnitNotFoundException("Unit này không tồn tại."));
 
         int bufferDays = turnoverBufferDays(unit);
         LocalDate today = LocalDate.now(ICT_ZONE);
-        assertUnitAvailable(unit, startDate, endDate, bufferDays, today, null);
-
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, endDate);
-
-        BookingDraft draft = new BookingDraft();
-        draft.setCustomer(user);
-        draft.setUnit(unit);
-        draft.setStartDate(startDate);
-        draft.setEndDate(quote.endDate());
-        draft.setDepositAmount(BigDecimal.valueOf(quote.depositAmount()));
-        draft.setStatus(BookingDraft.Status.PENDING);
-        draft.setExpiresAt(LocalDateTime.now(ICT_ZONE).plusMinutes(30));
-
-        BookingDraft saved = bookingDraftRepository.save(draft);
-
-        ReservationUnitSummaryResponse unitSummary = new ReservationUnitSummaryResponse(
-                unit.getUnitId(),
-                unit.getCode(),
-                unit.getType() != null ? unit.getType().getName() : null,
-                unit.getSizeM2(),
-                unit.getFloor(),
-                unit.getZone() != null ? unit.getZone().getCode() : null,
-                (unit.getZone() != null && unit.getZone().getFacility() != null)
-                        ? unit.getZone().getFacility().getName() : null,
-                unit.getAccessType(),
-                null,
-                null,
-                "/units/" + unit.getCode() + ".jpg"
-        );
-
-        return new BookingDraftResponse(
-                saved.getDraftId(),
-                unitSummary,
-                saved.getStartDate(),
-                saved.getEndDate(),
-                saved.getDepositAmount().longValueExact(),
-                quote.durationDays(),
-                quote,
-                saved.getExpiresAt().atZone(ICT_ZONE).toInstant()
-        );
-    }
-
-    @Transactional(readOnly = true)
-    public BookingDraftResponse getDraft(String email, Long draftId) {
-        BookingDraft draft = bookingDraftRepository.findOwnedWithUnit(draftId, email)
-                .orElseThrow(() -> new ReservationNotFoundException("Booking draft not found."));
-
-        Unit unit = draft.getUnit();
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, draft.getStartDate(), draft.getEndDate());
-        ReservationUnitSummaryResponse unitSummary = new ReservationUnitSummaryResponse(
-                unit.getUnitId(),
-                unit.getCode(),
-                unit.getType() != null ? unit.getType().getName() : null,
-                unit.getSizeM2(),
-                unit.getFloor(),
-                unit.getZone() != null ? unit.getZone().getCode() : null,
-                (unit.getZone() != null && unit.getZone().getFacility() != null)
-                        ? unit.getZone().getFacility().getName() : null,
-                unit.getAccessType(),
-                null,
-                null,
-                "/units/" + unit.getCode() + ".jpg"
-        );
-
-        return new BookingDraftResponse(
-                draft.getDraftId(),
-                unitSummary,
-                draft.getStartDate(),
-                draft.getEndDate(),
-                draft.getDepositAmount().longValueExact(),
-                quote.durationDays(),
-                quote,
-                draft.getExpiresAt().atZone(ICT_ZONE).toInstant()
-        );
-    }
-
-    /**
-     * Chuyển draft → Reservation RESERVED trong cùng transaction với payment.
-     * Gọi duy nhất từ DepositPaymentSuccessHandler sau khi PayOS SUCCEEDED.
-     */
-    @Transactional
-    public Reservation convertDraft(Long draftId, String email) {
-        BookingDraft draft = bookingDraftRepository.findByIdForUpdate(draftId)
-                .orElseThrow(() -> new ReservationNotFoundException("Booking draft not found."));
-
-        if (!draft.getCustomer().getEmail().equalsIgnoreCase(email)) {
-            throw new AccessDeniedException("Booking draft belongs to another customer");
+        if (!isUnitAvailable(unit, startDate, endDate, bufferDays, today)) {
+            return null;
         }
-        if (draft.getStatus() != BookingDraft.Status.PENDING) {
-            throw new ReservationInvalidStateException("Booking draft đã được xử lý.");
-        }
-        if (!draft.getExpiresAt().isAfter(LocalDateTime.now(ICT_ZONE))) {
-            draft.setStatus(BookingDraft.Status.EXPIRED);
-            bookingDraftRepository.save(draft);
-            throw new ReservationInvalidStateException(
-                    "Đã hết thời gian giữ chỗ — vui lòng đặt lại.");
-        }
-
-        Unit unit = draft.getUnit();
-        int bufferDays = turnoverBufferDays(unit);
-        LocalDate today = LocalDate.now(ICT_ZONE);
-        assertUnitAvailable(unit, draft.getStartDate(), draft.getEndDate(), bufferDays, today, draftId);
 
         Reservation reservation = new Reservation();
         reservation.setCode(generateReservationCode());
-        reservation.setCustomer(draft.getCustomer());
+        reservation.setCustomer(customer);
         reservation.setUnit(unit);
-        reservation.setStartDate(draft.getStartDate());
-        reservation.setEndDate(draft.getEndDate());
-        reservation.setDepositAmount(draft.getDepositAmount());
+        reservation.setStartDate(startDate);
+        reservation.setEndDate(endDate);
+        reservation.setDepositAmount(depositAmount);
         reservation.setStatus(Reservation.Status.RESERVED);
         Reservation saved = reservationRepository.save(reservation);
-
-        draft.setStatus(BookingDraft.Status.CONVERTED);
-        bookingDraftRepository.save(draft);
 
         taskService.createCheckInTask(saved.getCustomer(), saved);
         return saved;
@@ -392,68 +297,40 @@ public class ReservationService {
         return 1;
     }
 
-    /**
-     * Kiểm tra chỗ trống gồm reservation đang hiệu lực và draft còn sống
-     * (draft khác đang giữ chỗ). excludedDraftId dùng khi convert chính draft đó.
-     */
-    private void assertUnitAvailable(
+    private boolean isUnitAvailable(
             Unit unit,
             LocalDate startDate,
             LocalDate endDate,
             int bufferDays,
-            LocalDate today,
-            Long excludedDraftId
+            LocalDate today
     ) {
-        boolean isTaken = unit.getStatus() != Unit.Status.AVAILABLE
-                && unit.getStatus() != Unit.Status.PREPARING;
+        if (unit.getStatus() != Unit.Status.AVAILABLE && unit.getStatus() != Unit.Status.PREPARING) {
+            return false;
+        }
 
-        if (!isTaken && unit.getStatus() == Unit.Status.PREPARING) {
+        if (unit.getStatus() == Unit.Status.PREPARING) {
             List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
             LocalDate readyDate = !closedList.isEmpty()
                     ? closedList.get(0).getEndDate().plusDays(bufferDays)
                     : today.plusDays(bufferDays);
             if (startDate.isBefore(readyDate)) {
-                isTaken = true;
+                return false;
             }
         }
 
-        if (!isTaken) {
-            List<Reservation> activeReservations = reservationRepository.findActiveReservationsForUnit(
-                    unit.getUnitId(),
-                    List.of(Reservation.Status.RESERVED, Reservation.Status.CHECKED_IN,
-                            Reservation.Status.CHECKOUT_REQUESTED)
-            );
-            LocalDate reqOccupiedEnd = endDate.plusDays(bufferDays);
-            for (Reservation res : activeReservations) {
-                LocalDate resOccupiedEnd = res.getEndDate().plusDays(bufferDays);
-                if (!startDate.isAfter(resOccupiedEnd) && !res.getStartDate().isAfter(reqOccupiedEnd)) {
-                    isTaken = true;
-                    break;
-                }
+        List<Reservation> activeReservations = reservationRepository.findActiveReservationsForUnit(
+                unit.getUnitId(),
+                List.of(Reservation.Status.RESERVED, Reservation.Status.CHECKED_IN,
+                        Reservation.Status.CHECKOUT_REQUESTED)
+        );
+        LocalDate reqOccupiedEnd = endDate.plusDays(bufferDays);
+        for (Reservation res : activeReservations) {
+            LocalDate resOccupiedEnd = res.getEndDate().plusDays(bufferDays);
+            if (!startDate.isAfter(resOccupiedEnd) && !res.getStartDate().isAfter(reqOccupiedEnd)) {
+                return false;
             }
         }
-
-        if (!isTaken) {
-            LocalDate latestStart = endDate.plusDays(bufferDays);
-            LocalDate earliestEnd = startDate.minusDays(bufferDays);
-            List<BookingDraft> drafts = bookingDraftRepository.findActiveDraftsForUnit(
-                    unit.getUnitId(), LocalDateTime.now(ICT_ZONE), latestStart, earliestEnd);
-            for (BookingDraft d : drafts) {
-                if (excludedDraftId != null && excludedDraftId.equals(d.getDraftId())) {
-                    continue;
-                }
-                isTaken = true;
-                break;
-            }
-        }
-
-        if (isTaken) {
-            int similarCount = countSimilarAvailableUnits(unit, startDate, endDate, bufferDays, today);
-            String message = similarCount > 0
-                    ? String.format("%s vừa được đặt. %d unit tương tự còn trống.", unit.getCode(), similarCount)
-                    : String.format("%s vừa được đặt. Không còn unit tương tự trống trong thời gian này.", unit.getCode());
-            throw new BookingUnitTakenException(message);
-        }
+        return true;
     }
 
     /**

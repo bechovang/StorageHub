@@ -15,6 +15,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -68,10 +69,19 @@ public class Payment {
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
-    /** Draft đặt chỗ khi cọc chưa được trả — chuyển thành reservation khi SUCCEEDED. */
+    /** Kho/ngày của booking khi payment cọc chưa thành công (chưa có Reservation). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booking_draft_id")
-    private BookingDraft bookingDraft;
+    @JoinColumn(name = "unit_id")
+    private Unit unit;
+
+    private LocalDate startDate;
+
+    private LocalDate endDate;
+
+    /** PayOS đã thu tiền nhưng không tạo được booking (kho vừa bị đặt) → staff hoàn tiền. */
+    private boolean refundRequired;
+
+    private String refundReason;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "extension_id")
