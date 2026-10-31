@@ -232,25 +232,6 @@ export default function UnitAvailabilityCalendar({
         </button>
       </div>
 
-      {/* ── 2. Dòng thông báo chế độ chọn ô lịch hiện hành ── */}
-      <div className="unit-cal-mode-banner">
-        {activeMode === "START" ? (
-          <div className="unit-cal-mode-banner__inner is-start">
-            <span className="banner-pulse-dot" />
-            <span>
-              Chọn <strong>NGÀY NHẬN KHO</strong> trên các ô lịch bên dưới (ngày đỏ đã kín):
-            </span>
-          </div>
-        ) : (
-          <div className="unit-cal-mode-banner__inner is-end">
-            <span className="banner-pulse-dot is-orange" />
-            <span>
-              Chọn <strong>NGÀY TRẢ KHO</strong> trên ô lịch (từ ngày {formatDate(resolvedStartDate)} trở đi):
-            </span>
-          </div>
-        )}
-      </div>
-
       {/* ── 3. Header Lịch & Điều hướng Tháng ── */}
       <div className="unit-calendar-header">
         <span className="unit-calendar-title">
