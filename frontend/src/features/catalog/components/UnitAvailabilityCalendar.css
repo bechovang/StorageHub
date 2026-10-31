@@ -1,12 +1,180 @@
 .unit-calendar-container {
   margin-top: 10px;
-  padding: 14px;
+  padding: 16px;
   background-color: #ffffff;
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 2px solid var(--color-ink, #0f172a);
   border-radius: var(--radius-none, 0px);
   user-select: none;
+  box-shadow: 3px 3px 0px rgba(15, 23, 42, 0.15);
 }
 
+/* ── 1. Hai ô chọn Ngày Nhận & Ngày Trả Kho (Cinema App Style) ── */
+.unit-cal-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.unit-cal-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background-color: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 0px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.unit-cal-tab:hover {
+  background-color: #f1f5f9;
+  border-color: #0f172a;
+}
+
+.unit-cal-tab.is-active {
+  background-color: #ffffff;
+  border: 2px solid #0f172a;
+  box-shadow: 2px 2px 0px #0f172a;
+}
+
+.unit-cal-tab__tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.unit-cal-tab__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.unit-cal-tab__dot.is-start {
+  background-color: #10b981;
+}
+
+.unit-cal-tab__dot.is-end {
+  background-color: #f59e0b;
+}
+
+.unit-cal-tab__label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.unit-cal-tab.is-active .unit-cal-tab__label {
+  color: #0f172a;
+}
+
+.unit-cal-tab__badge {
+  margin-left: auto;
+  font-size: 0.62rem;
+  font-weight: 700;
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 2px 6px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.unit-cal-tab__date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.unit-cal-tab__sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.unit-cal-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.unit-cal-tab-arrow {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.unit-cal-duration-chip {
+  font-size: 0.65rem;
+  font-weight: 800;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 2px 6px;
+  white-space: nowrap;
+  color: #0f172a;
+}
+
+/* ── 2. Mode Banner ── */
+.unit-cal-mode-banner {
+  margin-bottom: 14px;
+}
+
+.unit-cal-mode-banner__inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.unit-cal-mode-banner__inner.is-start {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.unit-cal-mode-banner__inner.is-end {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.banner-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  animation: pulse-ring 1.5s infinite;
+  flex-shrink: 0;
+}
+
+.banner-pulse-dot.is-orange {
+  background-color: #f59e0b;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+/* ── 3. Calendar Header & Nav ── */
 .unit-calendar-header {
   display: flex;
   align-items: center;
@@ -15,8 +183,8 @@
 }
 
 .unit-calendar-title {
-  font-size: 0.86rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 800;
   color: var(--color-text, #0f172a);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -38,8 +206,8 @@
   border-radius: var(--radius-none, 0px);
   color: #334155;
   cursor: pointer;
-  box-shadow: var(--btn-shadow-subtle);
-  transition: var(--btn-transition);
+  box-shadow: var(--btn-shadow-subtle, 1px 1px 0px rgba(0,0,0,0.1));
+  transition: var(--btn-transition, 0.15s ease);
   user-select: none;
 }
 
@@ -47,7 +215,6 @@
   background-color: #e2e8f0;
   color: #0f172a;
   transform: translate(-1px, -1px);
-  box-shadow: var(--btn-shadow-subtle-hover);
 }
 
 .unit-calendar-nav-btn:active {
@@ -55,21 +222,24 @@
   box-shadow: none;
 }
 
+/* ── 4. Weekdays ── */
 .unit-calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 3px;
   text-align: center;
   margin-bottom: 6px;
 }
 
 .unit-calendar-weekday {
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #64748b;
   padding: 4px 0;
+  text-transform: uppercase;
 }
 
+/* ── 5. Calendar Grid (Lưới ô lịch) ── */
 .unit-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -83,12 +253,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   border: 1px solid transparent;
   background: none;
   cursor: default;
   transition: all 0.15s ease;
+  border-radius: 0px;
 }
 
 .unit-calendar-cell.is-empty {
@@ -98,27 +269,37 @@
 .unit-calendar-day.is-past {
   color: #cbd5e1;
   cursor: not-allowed;
+  opacity: 0.4;
 }
 
-/* ĐẶC TẢ YÊU CẦU: TÔ ĐỎ NHỮNG NGÀY ĐÃ BỊ ĐẶT */
+.unit-calendar-day.is-before-start {
+  color: #cbd5e1;
+  cursor: not-allowed;
+  opacity: 0.45;
+  background-color: #fafafa;
+}
+
+/* Ô đã kín lịch (tô đỏ) */
 .unit-calendar-day.is-booked {
   background-color: #fef2f2 !important;
   border-color: #fca5a5 !important;
   color: #dc2626 !important;
   cursor: not-allowed;
-  font-weight: 700;
+  font-weight: 800;
   text-decoration: line-through;
 }
 
 .unit-calendar-dot.is-red {
   position: absolute;
-  bottom: 2px;
-  width: 4px;
-  height: 4px;
+  top: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
   background-color: #dc2626;
   border-radius: 50%;
 }
 
+/* Ô trống sẵn sàng (clickable) */
 .unit-calendar-day.is-available {
   background-color: #f8fafc;
   border-color: #e2e8f0;
@@ -130,70 +311,166 @@
   background-color: #e0f2fe;
   border-color: #0284c7;
   color: #0369a1;
+  transform: translate(-1px, -1px);
+  box-shadow: 1px 1px 0px #0284c7;
 }
 
+/* Ô ngày trong dải thuê (in-range) */
+.unit-calendar-day.is-in-range {
+  background-color: #e0f2fe !important;
+  border-color: #bae6fd !important;
+  color: #0369a1 !important;
+  font-weight: 700;
+}
+
+/* Ô ngày được chọn (Ngày nhận hoặc Ngày trả) */
 .unit-calendar-day.is-selected {
   background-color: #0f172a !important;
   border-color: #0f172a !important;
   color: #ffffff !important;
-  font-weight: 800;
-  text-decoration: none;
+  font-weight: 900;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.25);
+  transform: translate(-1px, -1px);
 }
 
-/* Chú thích màu sắc (Legend) */
+.unit-calendar-day.is-start-date {
+  border-top: 2px solid #10b981 !important;
+}
+
+.unit-calendar-day.is-end-date {
+  border-top: 2px solid #f59e0b !important;
+}
+
+.unit-cal-badge-pill {
+  position: absolute;
+  bottom: 2px;
+  font-size: 0.52rem;
+  font-weight: 800;
+  padding: 1px 3px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.is-start-pill {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.is-end-pill {
+  background-color: #f59e0b;
+  color: #ffffff;
+}
+
+/* ── 6. Phím tắt chọn nhanh ngày trả ── */
+.unit-cal-shortcuts {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.unit-cal-shortcuts__label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.unit-cal-shortcuts__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.unit-cal-shortcut-btn {
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.unit-cal-shortcut-btn:hover {
+  background-color: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.unit-cal-shortcut-btn.is-active {
+  background-color: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+  box-shadow: 1px 1px 0px #0f172a;
+}
+
+/* ── 7. Legend ── */
 .unit-calendar-legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 8px 12px;
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px solid #f1f5f9;
-  font-size: 0.72rem;
-  color: #64748b;
+  border-top: 1px solid #e2e8f0;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .legend-indicator {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border: 1px solid;
+  width: 10px;
+  height: 10px;
+  border: 1px solid #cbd5e1;
+  flex-shrink: 0;
 }
 
-.is-booked-box {
+.legend-indicator.is-booked-box {
   background-color: #fef2f2;
   border-color: #fca5a5;
 }
 
-.is-available-box {
+.legend-indicator.is-available-box {
   background-color: #f8fafc;
-  border-color: #e2e8f0;
+  border-color: #cbd5e1;
 }
 
-.is-selected-box {
+.legend-indicator.is-start-box {
   background-color: #0f172a;
-  border-color: #0f172a;
+  border-top: 2px solid #10b981;
 }
 
+.legend-indicator.is-end-box {
+  background-color: #0f172a;
+  border-top: 2px solid #f59e0b;
+}
+
+.legend-indicator.is-range-box {
+  background-color: #e0f2fe;
+  border-color: #bae6fd;
+}
+
+/* ── 8. Reassuring Summary ── */
 .unit-calendar-selected-feedback {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 12px;
   padding: 8px 10px;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  font-size: 0.78rem;
-  color: #166534;
-}
-
-.unit-calendar-selected-feedback strong {
-  font-family: var(--font-mono, monospace);
-  font-weight: 700;
+  background-color: #f1f5f9;
+  border-left: 3px solid #0f172a;
+  font-size: 0.74rem;
+  color: #0f172a;
 }
