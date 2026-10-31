@@ -26,13 +26,13 @@ export default function FacilityStatusDistribution({
         <div
           className="status-segment status-segment--available"
           style={{ width: `${(statusStats.AVAILABLE / statusStats.TOTAL) * 100}%` }}
-          title={`Trống: ${statusStats.AVAILABLE} kho`}
+          title={`Kho trống: ${statusStats.AVAILABLE} kho`}
           onClick={() => onOpenDrilldown("AVAILABLE")}
         />
         <div
           className="status-segment status-segment--reserved"
           style={{ width: `${(statusStats.RESERVED / statusStats.TOTAL) * 100}%` }}
-          title={`Đã đặt cọc: ${statusStats.RESERVED} kho`}
+          title={`Chờ nhận kho: ${statusStats.RESERVED} kho`}
           onClick={() => onOpenDrilldown("RESERVED")}
         />
         <div
@@ -44,19 +44,19 @@ export default function FacilityStatusDistribution({
         <div
           className="status-segment status-segment--preparing"
           style={{ width: `${(statusStats.PREPARING / statusStats.TOTAL) * 100}%` }}
-          title={`Đang vệ sinh/bàn giao: ${statusStats.PREPARING} kho`}
+          title={`Đang dọn dẹp: ${statusStats.PREPARING} kho`}
           onClick={() => onOpenDrilldown("PREPARING")}
         />
         <div
           className="status-segment status-segment--maintenance"
           style={{ width: `${(statusStats.MAINTENANCE / statusStats.TOTAL) * 100}%` }}
-          title={`Bảo trì: ${statusStats.MAINTENANCE} kho`}
+          title={`Đang bảo trì: ${statusStats.MAINTENANCE} kho`}
           onClick={() => onOpenDrilldown("MAINTENANCE")}
         />
         <div
           className="status-segment status-segment--retired"
           style={{ width: `${(statusStats.RETIRED / statusStats.TOTAL) * 100}%` }}
-          title={`Ngừng thuê: ${statusStats.RETIRED} kho`}
+          title={`Ngừng khai thác: ${statusStats.RETIRED} kho`}
           onClick={() => onOpenDrilldown("RETIRED")}
         />
       </div>

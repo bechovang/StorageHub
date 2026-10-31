@@ -147,7 +147,7 @@ export default function PaymentModal({
                   unit.depot || "cơ sở"
                 }.`
                 : isTerminalFailed
-                  ? "Giao dịch chưa hoàn tất và tài khoản của bạn chưa bị trừ tiền."
+                  ? "Giao dịch chưa hoàn tất và tài khoản của Quý khách chưa bị trừ tiền."
                   : isTerminalExpired
                     ? "Mã thanh toán đã hết thời gian hiệu lực."
                     : `Thanh toán cọc để khóa giữ chỗ kho ${unit.code || "—"} · REF: ${
@@ -205,7 +205,7 @@ export default function PaymentModal({
                 </h3>
                 <p className="terminal-desc">
                   Khoản đặt cọc đã được xác nhận thành công! Kho <strong>{unit.code || "—"}</strong>{" "}
-                  đã chính thức chuyển sang trạng thái <strong>RESERVED (Đã giữ chỗ)</strong> và được đảm bảo giữ cho bạn đến ngày nhận kho{" "}
+                  đã chính thức chuyển sang trạng thái <strong>Đã giữ chỗ thành công</strong> và được đảm bảo giữ cho Quý khách đến ngày nhận kho{" "}
                   <strong>{reservation?.startDate}</strong>. Mã PIN vào kho sẽ tự động kích
                   hoạt lúc 08:00 sáng ngày nhận kho.
                 </p>
@@ -256,8 +256,8 @@ export default function PaymentModal({
               <div className="terminal-content">
                 <h3 className="terminal-title">Giao dịch chưa thành công</h3>
                 <p className="terminal-desc">
-                  <strong>Tài khoản của bạn chưa bị trừ tiền</strong>. Cổng thanh
-                  toán hoặc ngân hàng chưa thể hoàn tất giao dịch. Bạn vui lòng thử lại nhé.
+                  <strong>Tài khoản của Quý khách chưa bị trừ tiền</strong>. Cổng thanh
+                  toán hoặc ngân hàng chưa thể hoàn tất giao dịch. Quý khách vui lòng thử lại.
                 </p>
               </div>
 
@@ -281,7 +281,7 @@ export default function PaymentModal({
               <div className="terminal-content">
                 <h3 className="terminal-title">Hết thời gian thanh toán</h3>
                 <p className="terminal-desc">
-                  Mã thanh toán đã hết hạn. Bạn vui lòng bấm nút bên dưới để tạo mã mới và hoàn tất giữ chỗ nhé.
+                  Mã thanh toán đã hết hạn. Quý khách vui lòng bấm nút bên dưới để tạo phiên thanh toán mới và hoàn tất giữ chỗ.
                 </p>
               </div>
 
@@ -298,7 +298,7 @@ export default function PaymentModal({
               <CircleNotch size={48} className="spinner-rotate" />
               <h3 className="processing-title">Đang kiểm tra thanh toán...</h3>
               <p className="processing-desc">
-                Hệ thống đang kết nối an toàn với cổng thanh toán. Quá trình này thường mất vài giây, bạn vui lòng đợi trong giây lát nhé.
+                Hệ thống đang kết nối an toàn với cổng thanh toán. Quá trình này thường mất vài giây, Quý khách vui lòng đợi trong giây lát.
               </p>
               <div className="processing-progress-bar">
                 <div className="processing-progress-fill" />

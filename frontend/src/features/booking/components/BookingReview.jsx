@@ -80,7 +80,7 @@ export default function BookingReview({
                 <div className="unit-badges-row">
                   <span className="code-pill">KHO {unit.code || "—"}</span>
                   <Badge tone={isAlreadyPaid ? "success" : "warning"}>
-                    {isAlreadyPaid ? "Đã giữ kho (RESERVED)" : "Chưa giữ kho · Cần thanh toán cọc"}
+                    {isAlreadyPaid ? "Đã giữ chỗ thành công" : "Chưa giữ kho · Cần thanh toán cọc"}
                   </Badge>
                 </div>
                 <h1 className="unit-title">
@@ -257,7 +257,7 @@ export default function BookingReview({
                 <>
                   <div className="paid-status-box">
                     <CheckCircle size={20} weight="fill" />
-                    <span>Đơn đặt chỗ đã thanh toán cọc thành công (RESERVED)</span>
+                    <span>Đơn đặt chỗ đã thanh toán cọc thành công</span>
                   </div>
                   <div style={{ display: "flex", gap: "10px", marginTop: "12px", width: "100%" }}>
                     <Link

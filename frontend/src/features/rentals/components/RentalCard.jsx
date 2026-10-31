@@ -2,7 +2,6 @@ import { Link } from "react-router";
 import {
   ArrowRight,
   CheckCircle,
-  ClockCountdown,
   WarningCircle,
   Key,
   QrCode,
@@ -48,32 +47,11 @@ export default function RentalCard({ item }) {
               {statusText}
             </span>
 
-            {/* Access Status Chip */}
+            {/* Access Status Chip - Chỉ hiển thị khi kho đã nhận và đang hoạt động */}
             {isCheckedIn && (
               <span className="rental-card__access-tag rental-card__access-tag--success">
                 <Key size={13} weight="bold" />
                 Mở khóa điện tử 24/7
-              </span>
-            )}
-
-            {isReserved && (
-              <span className="rental-card__access-tag rental-card__access-tag--info">
-                <CheckCircle size={13} weight="bold" />
-                Sẵn sàng nhận kho
-              </span>
-            )}
-
-            {isPending && (
-              <span className="rental-card__access-tag rental-card__access-tag--warning">
-                <ClockCountdown size={13} weight="bold" />
-                Chờ thanh toán cọc
-              </span>
-            )}
-
-            {item.status === "CLOSED" && (
-              <span className="rental-card__access-tag rental-card__access-tag--success">
-                <CheckCircle size={13} weight="bold" />
-                Đã hoàn tất hợp đồng
               </span>
             )}
           </div>
@@ -135,7 +113,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__prompt rental-card__prompt--warning">
             <WarningCircle size={16} weight="fill" />
             <span>
-              <strong>Chưa giữ chỗ:</strong> Vui lòng hoàn tất thanh toán tiền cọc để khóa giữ chỗ kho (RESERVED) trước khi có khách khác đặt nhé.
+              <strong>Chờ thanh toán cọc:</strong> Quý khách vui lòng hoàn tất đặt cọc trước thời hạn để đảm bảo kho được giữ chỗ.
             </span>
           </div>
         )}
@@ -144,7 +122,7 @@ export default function RentalCard({ item }) {
           <div className="rental-card__prompt rental-card__prompt--info">
             <CheckCircle size={16} weight="fill" />
             <span>
-              <strong>Đã giữ chỗ (RESERVED):</strong> Bạn chỉ cần mang theo CCCD và mở thẻ nhận kho khi đến quầy.
+              <strong>Đã giữ chỗ thành công:</strong> Quý khách vui lòng xuất trình CCCD và thẻ nhận kho khi đến quầy lễ tân để nhận kho.
             </span>
           </div>
         )}

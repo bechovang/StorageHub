@@ -6,7 +6,7 @@ import { formatVND, formatDate, formatDateTime } from "./formatters";
 
 export const STATUS_LABEL = {
   PENDING_PAYMENT: "Chờ thanh toán cọc",
-  RESERVED: "Đã giữ chỗ — Chờ nhận kho",
+  RESERVED: "Chờ nhận kho",
   CHECKED_IN: "Đang thuê",
   CHECKOUT_REQUESTED: "Chờ trả kho",
   PREPARING: "Đang chuẩn bị",

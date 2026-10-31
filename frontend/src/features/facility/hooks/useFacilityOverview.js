@@ -141,8 +141,8 @@ export function useFacilityOverview() {
       toStatus: item.taskType === "CHECKOUT" ? "PREPARING" : "AVAILABLE",
       taskName:
         item.taskType === "CHECKOUT"
-          ? "Nghiệm thu trả kho (Checkout)"
-          : "Dọn dẹp khử ẩm bàn giao (Cleaning)",
+          ? "Nghiệm thu trả kho"
+          : "Dọn dẹp khử ẩm bàn giao",
       refCode: `TSK-${item.taskId}`,
       staffName: item.staffName || "Chưa phân công",
       dueTime: item.workDate ? item.workDate : "Hôm nay",

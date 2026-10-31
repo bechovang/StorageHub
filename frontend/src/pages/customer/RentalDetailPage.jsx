@@ -123,7 +123,7 @@ export default function RentalDetailPage() {
                       reservation.checkoutRequestedDate || reservation.endDate
                     )}
                   </strong>
-                  . Vui lòng mang khóa kho đến quầy để hoàn tất bàn giao và nhận lại tiền cọc.
+                  . Quý khách vui lòng mang khóa kho và xuất trình CCCD tại quầy dịch vụ để hoàn tất thủ tục bàn giao và nhận lại tiền cọc.
                 </p>
               </div>
             </div>
@@ -200,7 +200,7 @@ export default function RentalDetailPage() {
                     Phụ lục gia hạn ({unsignedAddendum.code}) đang chờ ký tại quầy
                   </strong>
                   <p>
-                    Vui lòng đến quầy vận hành Tân Bình Gateway ký phụ lục hợp đồng giấy trước ngày{" "}
+                    Quý khách vui lòng đến quầy dịch vụ Cơ sở Tân Bình ký xác nhận phụ lục hợp đồng giấy trước ngày{" "}
                     <strong>{fmtDate(unsignedAddendum.signatureDueDate)}</strong> để hoàn tất hồ sơ.
                   </p>
                 </div>

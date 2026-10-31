@@ -50,7 +50,7 @@ export default function CheckoutRequestModal({
         }
 
         if (!agreedTerms) {
-            setErrorMsg("Vui lòng xác nhận bạn đã hiểu quy trình kiểm tra và tất toán cọc.");
+            setErrorMsg("Quý khách vui lòng xác nhận đã hiểu rõ quy trình kiểm tra và tất toán cọc.");
             return;
         }
 
@@ -169,7 +169,7 @@ export default function CheckoutRequestModal({
                             </div>
 
                             <p className="rd-settlement-desc">
-                                Khi đến quầy làm thủ tục trả kho, nhân viên kho sẽ cùng bạn kiểm tra kho theo danh mục tiêu chuẩn:
+                                Khi đến quầy làm thủ tục trả kho, nhân viên cơ sở sẽ đồng hành cùng Quý khách kiểm tra kho theo danh mục tiêu chuẩn:
                             </p>
 
                             <ul className="rd-settlement-checklist">
@@ -190,7 +190,7 @@ export default function CheckoutRequestModal({
                                     Tiền hoàn lại = Tiền cọc đang giữ − Phí hư hại phát sinh (nếu có)
                                 </div>
                                 <small>
-                                    Nếu có phát sinh chi phí vệ sinh hay hư hại, nhân viên sẽ gửi kèm ảnh chụp và giải thích rõ ràng trước khi trừ cọc. Biên nhận hoàn cọc sẽ được lưu trên tài khoản để bạn tra cứu bất kỳ lúc nào.
+                                    Nếu phát sinh chi phí vệ sinh hay hư hại, nhân viên sẽ cung cấp hình ảnh minh chứng và giải trình rõ ràng trước khi khấu trừ cọc. Biên nhận hoàn cọc sẽ được lưu trên tài khoản để Quý khách tra cứu bất kỳ lúc nào.
                                 </small>
                             </div>
                         </div>

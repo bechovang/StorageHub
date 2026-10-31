@@ -26,11 +26,11 @@ export const ROLE_BADGE_UPPER = {
 };
 
 export const UNIT_STATUS_LABELS = {
-  AVAILABLE: "Trống (Sẵn sàng)",
+  AVAILABLE: "Kho trống",
   AVAILABLE_SOON: "Sắp trống",
   RENTED: "Đang thuê",
   OCCUPIED: "Đang thuê",
-  RESERVED: "Đã đặt cọc / Giữ chỗ",
+  RESERVED: "Chờ nhận kho",
   PREPARING: "Đang dọn dẹp",
   CLEANING: "Đang dọn dẹp",
   MAINTENANCE: "Đang bảo trì",
@@ -40,7 +40,7 @@ export const UNIT_STATUS_LABELS = {
 
 export const RESERVATION_STATUS_LABELS = {
   PENDING_PAYMENT: "Chờ thanh toán cọc",
-  RESERVED: "Đã giữ chỗ — Chờ nhận kho",
+  RESERVED: "Chờ nhận kho",
   CHECKED_IN: "Đang thuê",
   CHECKOUT_REQUESTED: "Chờ trả kho",
   PREPARING: "Đang dọn kho",

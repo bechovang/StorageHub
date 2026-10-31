@@ -369,10 +369,10 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 <div className="settlement-summary-bar__left">
                   <span className="settlement-summary-bar__title">
                     {extraDue > 0
-                      ? "KHÁCH PHẢI NỘP BỔ SUNG (DEFICIT):"
+                      ? "KHÁCH HÀNG CẦN NỘP BỔ SUNG:"
                       : refundAmount > 0
-                      ? "SỐ TIỀN THỰC HOÀN CHO KHÁCH (REFUND):"
-                      : "ĐỐI SOÁT CÂN BẰNG (0₫ CHÊNH LỆCH):"}
+                      ? "SỐ TIỀN HOÀN TRẢ KHÁCH HÀNG:"
+                      : "ĐỐI SOÁT CÂN BẰNG (KHÔNG PHÁT SINH CHÊNH LỆCH):"}
                   </span>
                   <span className="settlement-summary-bar__formula font-mono">
                     (Cọc {formatVnd(depositHeld)} - Hư hại {formatVnd(totalCharges)} - Quá hạn 0₫)

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router";
 import { matchSearch } from "../../../utils/formatters.js";
+import { getUnitStatusLabel } from "../../../utils/statusLabels.js";
 import {
   fetchFacilityUnits,
   updateUnitSpecs,
@@ -203,7 +204,7 @@ export function useUnitManagement() {
       await retireUnit(retireTargetUnit.id, "Ngừng khai thác kho, tạm rút khỏi danh mục cho thuê");
       const list = await refreshUnits();
       syncSelectedUnit(list, retireTargetUnit.id);
-      showToast(`Kho ${retireTargetUnit.code} đã được chuyển sang trạng thái Ngừng thuê (RETIRED).`);
+      showToast(`Kho ${retireTargetUnit.code} đã được chuyển sang trạng thái Ngừng khai thác.`);
       setRetireTargetUnit(null);
     } catch (err) {
       // Backend từ chối (kho RENTED / có đơn giữ chỗ) — surface message
@@ -252,7 +253,7 @@ export function useUnitManagement() {
       await finishUnitMaintenance(unit.id);
       const list = await refreshUnits();
       syncSelectedUnit(list, unit.id);
-      showToast(`Bảo trì hoàn tất. Kho ${unit.code} đã mở lại cho thuê (AVAILABLE).`);
+      showToast(`Bảo trì hoàn tất. Kho ${unit.code} đã sẵn sàng cho thuê trở lại.`);
     } catch (err) {
       alert(err.message);
     }
@@ -276,7 +277,7 @@ export function useUnitManagement() {
       await fixUnitStatus(fixStatusTargetUnit.id, fixStatusValue, fixStatusReason);
       const list = await refreshUnits();
       syncSelectedUnit(list, fixStatusTargetUnit.id);
-      showToast(`Đã điều chỉnh trạng thái kho ${fixStatusTargetUnit.code} thành ${fixStatusValue}.`);
+      showToast(`Đã điều chỉnh trạng thái kho ${fixStatusTargetUnit.code} thành "${getUnitStatusLabel(fixStatusValue)}".`);
       setFixStatusTargetUnit(null);
     } catch (err) {
       setFixStatusError(err.message);

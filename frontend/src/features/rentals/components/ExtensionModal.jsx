@@ -224,7 +224,7 @@ export default function ExtensionModal({
                                     <strong>{fmtDate(conflictStartDateStr)}</strong>.
                                 </p>
                                 <p className="rd-conflict-alert__boundary">
-                                    Bạn có thể gia hạn tối đa đến ngày: <strong>{fmtDate(latestAllowedCheckoutStr)}</strong>.
+                                    Quý khách có thể gia hạn tối đa đến ngày: <strong>{fmtDate(latestAllowedCheckoutStr)}</strong>.
                                 </p>
                                 <button
                                     type="button"
@@ -273,7 +273,7 @@ export default function ExtensionModal({
                             <div className="rd-notice-box">
                                 <CheckCircle size={16} weight="fill" color="var(--color-status-success, #16a34a)" />
                                 <span>
-                                    Sau khi thanh toán, thời hạn thuê mới sẽ có hiệu lực ngay lập tức. Bạn vui lòng ghé quầy ký phụ lục hợp đồng giấy trong vòng 7 ngày tới nhé.
+                                    Sau khi thanh toán, thời hạn thuê mới sẽ có hiệu lực ngay lập tức. Quý khách vui lòng đến quầy dịch vụ để ký xác nhận phụ lục hợp đồng trong vòng 7 ngày làm việc.
                                 </span>
                             </div>
                         </div>
