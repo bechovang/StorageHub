@@ -7,6 +7,7 @@ import com.storagehub.dto.notification.UnreadCountResponse;
 import com.storagehub.entity.ContractAddendum;
 import com.storagehub.entity.Notification;
 import com.storagehub.entity.Payment;
+import org.springframework.security.access.AccessDeniedException;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.User;
@@ -257,6 +258,26 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(InvalidCredentialsException::new);
 
         notificationRepository.markAllAsReadByUser(user);
+    }
+
+    @Override
+    @Transactional
+    public void markRead(String email, Long notificationId) {
+        if (email == null || email.isBlank()) {
+            throw new InvalidCredentialsException();
+        }
+        Notification row = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
+                        "Thông báo không tồn tại."));
+        // Owner-check: không cho đánh dấu hộ người khác
+        if (!row.getUser().getEmail().equalsIgnoreCase(email)) {
+            throw new AccessDeniedException("Thông báo không thuộc về bạn.");
+        }
+        if (Boolean.TRUE.equals(row.getIsRead())) {
+            return; // idempotent
+        }
+        row.setIsRead(true);
+        notificationRepository.save(row);
     }
 
     @Override

@@ -41,6 +41,7 @@ public class UnitController {
     public ResponseEntity<UnitPageResponse> searchUnits(
             @RequestParam(name = "type-id", required = false) Long typeId,
             @RequestParam(name = "size-m2", required = false) BigDecimal sizeM2,
+            @RequestParam(name = "q", required = false) String q,
             @RequestParam(name = "start-date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "end-date", required = false)
@@ -54,6 +55,7 @@ public class UnitController {
         UnitPageResponse response = unitService.searchUnits(
                 typeId,
                 sizeM2,
+                q,
                 startDate,
                 endDate,
                 sort,

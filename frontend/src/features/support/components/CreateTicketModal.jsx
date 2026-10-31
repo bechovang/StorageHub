@@ -1,4 +1,5 @@
 import Modal from "../../../components/Modal/Modal.jsx";
+import { useAuth } from "../../../context/AuthContext.jsx";
 import { INCIDENT_TYPES } from "../../../services/ticketService.js";
 
 export default function CreateTicketModal({
@@ -7,12 +8,16 @@ export default function CreateTicketModal({
   onSubmit,
   unitCode,
   setUnitCode,
+  rentedUnits = [],
   incidentType,
   setIncidentType,
   description,
   setDescription,
   createError,
 }) {
+  const { user } = useAuth();
+  const isStaff = user?.role && user.role !== "CUSTOMER";
+
   if (!isOpen) return null;
 
   return (
@@ -30,16 +35,38 @@ export default function CreateTicketModal({
 
         <div className="form-field">
           <label className="form-field__label">Kho gặp sự cố *</label>
-          <input
-            type="text"
-            required
-            className="form-field__input"
-            placeholder="Ví dụ: S-3, M-2..."
-            value={unitCode}
-            onChange={(e) => setUnitCode(e.target.value)}
-          />
+          {isStaff ? (
+            /* Staff/manager tạo hộ khách (escalate Flow 7): nhập tay, BE tự
+               gắn ticket với khách đang thuê unit. */
+            <input
+              type="text"
+              required
+              className="form-field__input"
+              placeholder="Ví dụ: S-3, M-2..."
+              value={unitCode}
+              onChange={(e) => setUnitCode(e.target.value.toUpperCase())}
+            />
+          ) : (
+            <select
+              required
+              className="form-field__select"
+              value={unitCode}
+              onChange={(e) => setUnitCode(e.target.value)}
+            >
+              <option value="" disabled>
+                {rentedUnits.length === 0
+                  ? "Bạn không có kho đang thuê"
+                  : "— Chọn kho đang thuê —"}
+              </option>
+              {rentedUnits.map((r) => (
+                <option key={r.id} value={r.unit?.code}>
+                  {r.unit?.code} · {r.unit?.typeName} · Đơn {r.code}
+                </option>
+              ))}
+            </select>
+          )}
           <span style={{ fontSize: "0.72rem", color: "var(--color-muted)" }}>
-            Yêu cầu hỗ trợ bắt buộc phải gắn với kho hợp lệ bạn đang thuê.
+            Yêu cầu hỗ trợ bắt buộc phải gắn với kho bạn đang thuê (FR-23).
           </span>
         </div>
 

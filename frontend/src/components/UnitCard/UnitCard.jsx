@@ -62,7 +62,7 @@ export default function UnitCard({
           }
         }
       }}
-      aria-label={`Xem chi tiết kho ${typeLabel} ${unit.sizeM2} m²`}
+      aria-label={`Xem chi tiết kho ${unit.code} ${unit.sizeM2} m²`}
     >
       <div className="unit-card__visual">
         <img
@@ -98,11 +98,13 @@ export default function UnitCard({
 
       <div className="unit-card__body">
         <div className="unit-card__header">
-          <h3 className="unit-card__title">
-            {unit.sizeM2} m² · {typeLabel}
-          </h3>
+          {/* Phương án A: mã kho (code) là định danh chính khách dùng tại quầy.
+              Không fallback — thiếu code là lỗi dữ liệu, để lộ ra thay vì che. */}
+          <h3 className="unit-card__title">Kho {unit.code}</h3>
           <p className="unit-card__meta">
-            {facilityLabel} · Thể tích ~{volumeM3} m³ · Trần cao 2.8m
+            {facilityLabel}
+            {unit.zoneCode ? ` · ${unit.zoneCode}` : ""}
+            {unit.floor != null ? ` · Tầng ${unit.floor}` : ""} · Thể tích ~{volumeM3} m³ · Trần cao 2.8m
           </p>
         </div>
 

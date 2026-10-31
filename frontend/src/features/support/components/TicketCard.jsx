@@ -10,6 +10,7 @@ export default function TicketCard({
   isStaffOrAdmin,
   onResolve,
   onEscalate,
+  onShowDetail,
 }) {
   const t = ticket;
   const statusInfo = TICKET_STATUSES[t.status] || TICKET_STATUSES.OPEN;
@@ -17,7 +18,17 @@ export default function TicketCard({
   const staffInfo = parseStaffInfo(t);
 
   return (
-    <div className="ticket-card">
+    <div
+      className="ticket-card"
+      role="button"
+      tabIndex={0}
+      style={{ cursor: "pointer" }}
+      onClick={() => onShowDetail?.(t)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onShowDetail?.(t);
+      }}
+      title="Bấm để xem chi tiết phiếu hỗ trợ"
+    >
       <div className="ticket-card__header">
         <div>
           <span className="ticket-card__code">{t.code}</span>
@@ -73,7 +84,7 @@ export default function TicketCard({
 
         {/* Staff actions */}
         {isStaffOrAdmin && t.status !== "RESOLVED" && (
-          <div className="ticket-card__actions">
+          <div className="ticket-card__actions" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               className="btn btn--outline btn--sm"

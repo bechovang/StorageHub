@@ -50,6 +50,20 @@ public class NotificationController {
     }
 
     /**
+     * Đánh dấu MỘT thông báo đã đọc khi user bấm vào nó (FR-33).
+     */
+    @PostMapping("/{notificationId}/read")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> markRead(
+            @PathVariable Long notificationId,
+            Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        notificationService.markRead(email, notificationId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Đánh dấu đã đọc tất cả thông báo (FR-34).
      */
     @PostMapping("/mark-all-read")

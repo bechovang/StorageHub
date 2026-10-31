@@ -16,6 +16,7 @@ import {
   getNotifications,
   getUnreadNotificationCount,
   markAllNotificationsRead,
+  markNotificationRead,
 } from "../../services/notificationService.js";
 import {
   ROLE_BADGE_UPPER,
@@ -184,6 +185,22 @@ export default function Header({
       isMounted = false;
     };
   }, [showNotificationMenu, isAuthenticated]);
+
+  // Bấm vào 1 thông báo → đánh dấu đã đọc ngay (idempotent) + cập nhật badge
+  const handleNotifClick = async (n) => {
+    setShowNotificationMenu(false);
+    if (n.isRead) return;
+    // Optimistic: gỡ trạng thái chưa đọc trên UI trước, gọi API sau
+    setNotifications((prev) =>
+      prev.map((item) => (item.id === n.id ? { ...item, isRead: true } : item))
+    );
+    setUnreadCount((c) => Math.max(0, c - 1));
+    try {
+      await markNotificationRead(n.id);
+    } catch {
+      await getUnreadNotificationCount({ force: true }).catch(() => {});
+    }
+  };
 
   const handleMarkAllRead = async () => {
     try {
@@ -354,12 +371,23 @@ export default function Header({
                                     <Link
                                       to={n.deepLink}
                                       className="header-notif-item__link"
-                                      onClick={() => setShowNotificationMenu(false)}
+                                      onClick={() => handleNotifClick(n)}
                                     >
                                       <p className="header-notif-item__text">{displayTitle}</p>
                                     </Link>
                                   ) : (
-                                    <p className="header-notif-item__text">{displayTitle}</p>
+                                    <p
+                                      className="header-notif-item__text"
+                                      role="button"
+                                      tabIndex={0}
+                                      style={{ cursor: n.isRead ? "default" : "pointer" }}
+                                      onClick={() => handleNotifClick(n)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") handleNotifClick(n);
+                                      }}
+                                    >
+                                      {displayTitle}
+                                    </p>
                                   )}
                                   <span className="header-notif-item__time">
                                     {n.createdAt

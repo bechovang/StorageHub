@@ -71,6 +71,7 @@ public class UnitService {
     public UnitPageResponse searchUnits(
             Long typeId,
             BigDecimal sizeM2,
+            String query,
             LocalDate startDate,
             LocalDate endDate,
             String sort,
@@ -111,9 +112,17 @@ public class UnitService {
         List<Unit> candidates = unitRepository.findCandidateUnits(candidateStatuses);
 
         // Lọc theo typeId và sizeM2 nếu có
+        // Tìm theo mã kho (US-6): "s7", "S-7", "s-7" đều khớp S-7 — bỏ ký tự
+        // không phải chữ/số rồi so sánh contains không phân biệt hoa/thường.
+        String normalizedQuery = (query == null || query.isBlank())
+                ? null
+                : query.replaceAll("[^a-zA-Z0-9]", "").toUpperCase(Locale.ROOT);
+
         List<Unit> filteredUnits = candidates.stream()
                 .filter(u -> typeId == null || u.getType().getTypeId().longValue() == typeId)
                 .filter(u -> sizeM2 == null || u.getSizeM2().compareTo(sizeM2) == 0)
+                .filter(u -> normalizedQuery == null
+                        || normalizeCode(u.getCode()).contains(normalizedQuery))
                 .toList();
 
         if (filteredUnits.isEmpty()) {
@@ -342,6 +351,10 @@ public class UnitService {
                 "STATUS_CHANGED", from.name(), "RENTED",
                 "Check-in — unit handed over");
         return true;
+    }
+
+    private String normalizeCode(String code) {
+        return code == null ? "" : code.replaceAll("[^a-zA-Z0-9]", "").toUpperCase(Locale.ROOT);
     }
 
     private String resolveDimensions(BigDecimal sizeM2) {
