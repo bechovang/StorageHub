@@ -90,12 +90,11 @@ export default function Drawer({
             <button
               type="button"
               className="drawer__close"
-              aria-label="Đóng ngăn chi tiết (Phím ESC)"
-              title="Đóng (ESC)"
+              aria-label="Đóng ngăn chi tiết"
+              title="Đóng"
               onClick={() => onClose?.()}
             >
-              <kbd className="drawer__kbd">ESC</kbd>
-              <X size={16} weight="bold" />
+              <X size={18} weight="bold" />
             </button>
           </div>
         </div>
