@@ -643,9 +643,11 @@ public class ReservationService {
         validateLatestContractSignable(reservation);
 
         // Action tx: lock dòng reservation + re-check — 2 staff bấm cùng lúc thì
-        // bên sau ăn 409 (giống exactly-once pattern của expireNoShowIfDue).
+        // bên sau ăn 409. Dùng PROPAGATION_REQUIRED để khi được gọi từ ritual
+        // (đã có payment RENT trong tx ngoài) không mở connection thứ hai
+        // => tránh deadlock FK payments.reservation_id (S-lock) vs FOR UPDATE.
         TransactionTemplate checkInTx = new TransactionTemplate(transactionManager);
-        checkInTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        checkInTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         return checkInTx.execute(tx -> {
             Reservation locked = reservationRepository.findByIdForUpdate(reservationId)
                     .orElseThrow();
