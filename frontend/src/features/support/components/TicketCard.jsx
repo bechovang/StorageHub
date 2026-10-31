@@ -22,9 +22,11 @@ export default function TicketCard({
         <div>
           <span className="ticket-card__code">{t.code}</span>
           <span className="ticket-card__unit-tag">KHO: {t.unitCode}</span>
-          <span style={{ fontSize: "0.78rem", color: "var(--color-muted)", marginLeft: "10px" }}>
-            ({t.zoneCode})
-          </span>
+          {t.zoneCode && (
+            <span style={{ fontSize: "0.78rem", color: "var(--color-muted)", marginLeft: "10px" }}>
+              ({t.zoneCode})
+            </span>
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span className="incident-badge">{incidentInfo.label}</span>

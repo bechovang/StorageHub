@@ -16,7 +16,7 @@ public record ReservationUnitSummaryResponse(
         String zoneCode,
         String facilityName,
         String accessType,
-        Long baseMonthlyRent,
+        Long baseDailyRent,
         UnitAvailabilityResponse availability,
         String photoUrl
 ) {

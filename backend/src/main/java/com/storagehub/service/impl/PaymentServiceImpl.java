@@ -75,6 +75,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final TransactionTemplate transactionTemplate;
     private final com.storagehub.service.PricingEngine pricingEngine;
     private final ExtensionService extensionService;
+    @org.springframework.beans.factory.annotation.Value("${payment.demo.skip-enabled:false}")
+    private boolean demoSkipEnabled;
 
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -120,14 +122,9 @@ public class PaymentServiceImpl implements PaymentService {
                     "Chỉ hỗ trợ purpose DEPOSIT, RENT và EXTENSION_FEE.");
         }
 
-        if (request.method() == Payment.Method.CARD && request.card() == null) {
+        if (request.method() != Payment.Method.PAYOS) {
             throw new PaymentBadRequestException(
-                    "Card details are required for CARD payments.");
-        }
-        if (request.method() == Payment.Method.MOMO
-                && (request.momoPhone() == null || request.momoPhone().isBlank())) {
-            throw new PaymentBadRequestException(
-                    "momoPhone is required for MOMO payments.");
+                    "Chỉ hỗ trợ kênh thanh toán PayOS (QR).");
         }
 
         // Duplicate check TRƯỚC state check: sau khi deposit thành công,
@@ -258,14 +255,8 @@ public class PaymentServiceImpl implements PaymentService {
         if (purpose != Payment.Purpose.RENT) {
             return reservation.getDepositAmount();
         }
-        int months = (int) java.time.temporal.ChronoUnit.MONTHS.between(
-                reservation.getStartDate().withDayOfMonth(1),
-                reservation.getEndDate().plusDays(1).withDayOfMonth(1));
-        if (months < 1) {
-            months = 1;
-        }
         com.storagehub.dto.quote.QuoteResponse quote = pricingEngine.calculateQuote(
-                reservation.getUnit(), reservation.getStartDate(), months);
+                reservation.getUnit(), reservation.getStartDate(), reservation.getEndDate());
         return java.math.BigDecimal.valueOf(quote.totalRent());
     }
 
@@ -274,8 +265,7 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = requireOwnedPayment(email, paymentId);
 
         if (!TERMINAL.contains(payment.getStatus())) {
-            // Mock resolve terminal ngay lúc poll (CARD/VNPAY auto-complete,
-            // MOMO/VNPAY quá hạn) — transaction + FOR UPDATE bên trong.
+            // Poll để đồng bộ terminal state (webhook có thể chưa tới).
             gateway.poll(paymentId, payment.getMethod()).ifPresent(decision ->
                     transactionTemplate.executeWithoutResult(
                             tx -> resolve(paymentId, decision)));
@@ -316,27 +306,8 @@ public class PaymentServiceImpl implements PaymentService {
             Long paymentId,
             ConfirmPaymentRequest request
     ) {
-        Payment payment = requireOwnedPayment(email, paymentId);
-
-        if (payment.getMethod() != Payment.Method.MOMO) {
-            throw new PaymentInvalidStateException(
-                    "Chỉ thanh toán MoMo cần xác nhận OTP.");
-        }
-        if (TERMINAL.contains(payment.getStatus())) {
-            throw new PaymentInvalidStateException(); // "Giao dịch này đã kết thúc."
-        }
-
-        Payment.Status decision = gateway.confirmOtp(paymentId, request.otp());
-
-        if (decision == Payment.Status.EXPIRED) {
-            // Persist EXPIRED trong tx riêng rồi trả 409 (openapi.yaml confirm).
-            transactionTemplate.executeWithoutResult(
-                    tx -> resolve(paymentId, decision));
-            throw new PaymentExpiredException();
-        }
-
-        return transactionTemplate.execute(tx ->
-                buildResultAfterResolve(paymentId, decision));
+        throw new PaymentInvalidStateException(
+                "Xác nhận OTP không còn được hỗ trợ — thanh toán qua PayOS webhook/polling.");
     }
 
     /**
@@ -382,6 +353,23 @@ public class PaymentServiceImpl implements PaymentService {
     // ------------------------------------------------------------------
     // Resolve terminal — luôn chạy trong transaction
     // ------------------------------------------------------------------
+
+    @Override
+    public PaymentSessionResponse demoCompletePayment(String email, Long paymentId) {
+        if (!demoSkipEnabled) {
+            throw new PaymentBadRequestException(
+                    "Chế độ bỏ qua thanh toán chỉ bật ở môi trường dev.");
+        }
+        Payment payment = requireOwnedPayment(email, paymentId);
+        if (TERMINAL.contains(payment.getStatus())) {
+            return toSession(payment, payment.getReservation().getReservationId());
+        }
+        transactionTemplate.executeWithoutResult(
+                tx -> resolve(paymentId, Payment.Status.SUCCEEDED));
+        return toSession(
+                requireOwnedPayment(email, paymentId),
+                requireOwnedPayment(email, paymentId).getReservation().getReservationId());
+    }
 
     private record Resolved(
             Payment payment,

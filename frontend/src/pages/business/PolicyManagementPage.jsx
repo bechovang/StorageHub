@@ -19,6 +19,8 @@ export default function PolicyManagementPage() {
   const {
     user,
     persistedPolicy,
+    policyError,
+    policyLoading,
     draftBaseRates,
     draftLateFee,
     setDraftLateFee,
@@ -77,6 +79,17 @@ export default function PolicyManagementPage() {
         )}
 
         <div className="policy-canvas">
+          {/* ── Trạng thái tải / lỗi chính sách ── */}
+          {policyLoading && (
+            <p style={{ padding: "24px 0", color: "var(--color-secondary)" }}>
+              Đang tải chính sách thuê kho hiện hành...
+            </p>
+          )}
+          {!policyLoading && policyError && (
+            <div className="policy-validation-banner" role="alert" style={{ marginBottom: "16px" }}>
+              {policyError}
+            </div>
+          )}
           {/* ── 3. Page Header / Title Row ── */}
           <section className="policy-header">
             <div className="policy-header__left">
@@ -97,7 +110,7 @@ export default function PolicyManagementPage() {
                       }`}
                     />
                     <span>
-                      Chính sách cho thuê {persistedPolicy.version} · Hiệu lực từ {persistedPolicy.effectiveDate}
+                      Chính sách cho thuê {persistedPolicy?.version || "—"} · Hiệu lực từ {persistedPolicy?.effectiveDate || "—"}
                     </span>
                   </span>
                   {hasChanges && (
@@ -172,7 +185,7 @@ export default function PolicyManagementPage() {
                   {/* ── SECTION 1: BASE RENT PER MONTH ── */}
                   <BaseRentTable
                     draftBaseRates={draftBaseRates}
-                    persistedPolicy={persistedPolicy}
+                    persistedPolicy={persistedPolicy || {}}
                     onRateChange={handleRateChange}
                   />
 
@@ -207,7 +220,7 @@ export default function PolicyManagementPage() {
 
             {/* ── RIGHT 4-COLUMN: COMPANION PANEL & AUDIT CHECKLIST ── */}
             <PolicyCompliancePanel
-              persistedPolicy={persistedPolicy}
+              persistedPolicy={persistedPolicy || {}}
               draftLateFee={draftLateFee}
               isLateFeeViolated={isLateFeeViolated}
               draftDeposit={draftDeposit}

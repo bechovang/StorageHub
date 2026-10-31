@@ -16,7 +16,7 @@ public record ExtensionQuoteResponse(
         LocalDate oldEndDate,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         LocalDate newEndDate,
-        int addedMonths,
+        int addedDays,
         long addedRent,
         long depositHeldCurrent,
         long depositTopUp,

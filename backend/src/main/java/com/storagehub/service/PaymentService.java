@@ -35,4 +35,10 @@ public interface PaymentService {
 
     /** POST /payments/webhooks/payos — verify ở gateway, state machine ở đây. */
     void handlePayOsWebhook(String rawPayload);
+
+    /**
+     * DEMO ONLY (payment.demo.skip-enabled=true, chỉ profile dev): bỏ qua
+     * PayOS — đánh dấu payment SUCCEEDED và chạy handler như webhook thật.
+     */
+    PaymentSessionResponse demoCompletePayment(String email, Long paymentId);
 }

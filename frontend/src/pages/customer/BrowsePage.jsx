@@ -19,6 +19,9 @@ export default function BrowsePage() {
     setSelectedSize,
     startDate,
     setStartDate,
+    endDate,
+    setEndDate,
+    searchError,
     selectedFacility,
     setSelectedFacility,
     activeFilters,
@@ -70,6 +73,8 @@ export default function BrowsePage() {
           setSelectedSize={setSelectedSize}
           startDate={startDate}
           setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
           selectedFacility={selectedFacility}
           setSelectedFacility={setSelectedFacility}
           onSearchSubmit={handleSearchSubmit}
@@ -159,6 +164,12 @@ export default function BrowsePage() {
               Đang tải danh sách kho lưu trữ...
             </p>
           </div>
+        ) : searchError ? (
+          <section className="browse-empty">
+            <Funnel size={36} color="var(--color-muted)" aria-hidden="true" />
+            <h2 className="browse-empty__title">Không thể tải danh sách kho</h2>
+            <p className="browse-empty__desc">{searchError}</p>
+          </section>
         ) : units.length === 0 ? (
           <section className="browse-empty">
             <Funnel size={36} color="var(--color-muted)" aria-hidden="true" />

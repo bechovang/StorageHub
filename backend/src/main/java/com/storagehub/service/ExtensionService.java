@@ -61,7 +61,7 @@ public class ExtensionService {
 
     /** Số tiền gia hạn tính lại theo policy active — handler dùng khi apply. */
     public record Breakdown(
-            int addedMonths,
+            int addedDays,
             long addedRent,
             long depositHeld,
             long depositTopUp,
@@ -111,13 +111,13 @@ public class ExtensionService {
     public Breakdown breakdownFor(Reservation reservation, LocalDate newEndDate) {
         Unit unit = reservation.getUnit();
 
-        int addedMonths = monthsBetween(reservation.getEndDate(), newEndDate);
+        int addedDays = (int) ChronoUnit.DAYS.between(reservation.getEndDate(), newEndDate);
 
         // Tổng tiền thuê hiện tại + kỳ thêm đều recompute theo policy active (AD-11).
         QuoteResponse originalQuote = pricingEngine.calculateQuote(
-                unit, reservation.getStartDate(), originalMonths(reservation));
+                unit, reservation.getStartDate(), reservation.getEndDate());
         QuoteResponse extensionQuote = pricingEngine.calculateQuote(
-                unit, reservation.getEndDate().plusDays(1), addedMonths);
+                unit, reservation.getEndDate().plusDays(1), newEndDate);
 
         long addedRent = extensionQuote.totalRent();
         long newTotalRent = originalQuote.totalRent() + addedRent;
@@ -128,7 +128,7 @@ public class ExtensionService {
         long depositTopUp = Math.max(0, newDepositHeld - depositHeld);
 
         return new Breakdown(
-                addedMonths,
+                addedDays,
                 addedRent,
                 depositHeld,
                 depositTopUp,
@@ -205,7 +205,7 @@ public class ExtensionService {
                 extension.getExtensionId(),
                 extension.getOldEndDate(),
                 extension.getNewEndDate(),
-                breakdown.addedMonths(),
+                breakdown.addedDays(),
                 breakdown.addedRent(),
                 breakdown.depositHeld(),
                 breakdown.depositTopUp(),
@@ -230,22 +230,6 @@ public class ExtensionService {
                 "PENDING_PAYMENT", "APPLIED",
                 "Phí gia hạn đã trả — checkout mới " + extension.getNewEndDate());
         return extension;
-    }
-
-    /** Số tháng giữa 2 mốc contract-style (end inclusive), tối thiểu 1. */
-    private int monthsBetween(LocalDate oldEnd, LocalDate newEnd) {
-        int months = (int) ChronoUnit.MONTHS.between(
-                oldEnd.plusDays(1).withDayOfMonth(1),
-                newEnd.plusDays(1).withDayOfMonth(1));
-        return Math.max(1, months);
-    }
-
-    /** Thời hạn gốc của rental (mốc tính tổng tiền thuê hiện tại). */
-    private int originalMonths(Reservation reservation) {
-        int months = (int) ChronoUnit.MONTHS.between(
-                reservation.getStartDate().withDayOfMonth(1),
-                reservation.getEndDate().plusDays(1).withDayOfMonth(1));
-        return Math.max(1, months);
     }
 
     /** Deposit% theo unit type từ policy active — cùng logic PricingEngine. */

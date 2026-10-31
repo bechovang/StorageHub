@@ -1,13 +1,9 @@
 import {
-  CreditCard,
-  Wallet,
   QrCode as QrCodeIcon,
-  DeviceMobile,
   CheckCircle,
   XCircle,
   Clock,
   ArrowCounterClockwise,
-  Lock,
   WarningCircle,
   Copy,
   Check,
@@ -23,30 +19,32 @@ import Button from "../../../components/Button/Button.jsx";
  * Thẻ tóm tắt hóa đơn cọc hiển thị trước khi thanh toán để người dùng xác nhận
  */
 function PaymentInvoiceSummary({ unit, reservation, formatVND }) {
-  const deposit = reservation?.depositAmount || 103500;
+  const deposit = reservation?.depositAmount || 0;
   return (
     <div className="payment-invoice-summary">
       <div className="payment-invoice-summary__header">
         <span className="payment-invoice-summary__title">Hóa đơn thanh toán</span>
         <span className="payment-invoice-summary__ref">
-          REF: {reservation?.code || "RSV-2026-S3"}
+          REF: {reservation?.code || "—"}
         </span>
       </div>
       <div className="payment-invoice-summary__body">
         <div className="payment-invoice-summary__row">
           <span className="payment-invoice-summary__label">Kho thuê:</span>
           <span className="payment-invoice-summary__value">
-            {unit.code || "S-3"} · {unit.depot || "Tân Bình Gateway"}
+            {unit.code || "—"}
+            {unit.depot ? ` · ${unit.depot}` : ""}
           </span>
         </div>
         <div className="payment-invoice-summary__row">
           <span className="payment-invoice-summary__label">Thời hạn thuê:</span>
           <span className="payment-invoice-summary__value">
-            {reservation?.durationMonths || 3} tháng ({reservation?.startDate || "03/10/2026"})
+            {reservation?.startDate ? `${reservation.startDate} → ${reservation.endDate || "?"}` : "—"}
+            {reservation?.durationDays ? ` (${reservation.durationDays} ngày)` : ""}
           </span>
         </div>
         <div className="payment-invoice-summary__row payment-invoice-summary__row--total">
-          <span className="payment-invoice-summary__label">Tiền cọc cần thanh toán (10%):</span>
+          <span className="payment-invoice-summary__label">Tiền cọc cần thanh toán:</span>
           <span className="payment-invoice-summary__total">{formatVND(deposit)}</span>
         </div>
         <div style={{
@@ -71,28 +69,19 @@ export default function PaymentModal({
   reservation,
   selectedMethod,
   onSelectMethod,
-  cardForm,
-  onCardNumberChange,
-  onExpiryChange,
-  onCardFormChange,
-  onApplyCardPreset,
-  momoPhone,
-  onMomoPhoneChange,
-  otp,
-  onOtpChange,
   paymentSession,
   paymentResult,
   qrDataUrl,
   countdown,
   formatCountdown,
   submitting,
+  polling,
   checkingStatus,
   onCheckPaymentStatus,
-  formErrors,
+  onDemoCompletePayment,
   apiError,
   notificationToast,
   onInitiatePayment,
-  onConfirmOtp,
   onResetOrSwitch,
   copiedCode,
   onCopyReceipt,
@@ -111,17 +100,22 @@ export default function PaymentModal({
   const isTerminalSuccess = currentStatus === "SUCCEEDED";
   const isTerminalFailed = currentStatus === "FAILED";
   const isTerminalExpired = currentStatus === "EXPIRED";
-  // Polling không che QR: VNPAY/PAYOS vẫn PENDING trong lúc chờ webhook.
+  // Polling không che QR: PAYOS vẫn PENDING trong lúc chờ webhook.
   const isProcessing = currentStatus === "PROCESSING";
-  const isMoMoOtpStage =
-    selectedMethod === "MOMO" && paymentSession?.otpRequired && currentStatus === "PENDING";
 
   // Receipt code
   const finalReceiptCode =
     paymentSession?.receiptCode ||
     paymentResult?.receipt?.receiptCode ||
     paymentResult?.payment?.receiptCode ||
-    "RT-2026-0001";
+    "—";
+
+  // DEMO ONLY: hiện nút "Bỏ qua thanh toán" khi phiên đang chờ (PENDING/PROCESSING).
+  // Backend PaymentSessionResponse không có cờ demoSkipEnabled — luôn hiện khi pending.
+  const canDemoSkip =
+    (currentStatus === "PENDING" || currentStatus === "PROCESSING") &&
+    Boolean(paymentSession?.id) &&
+    typeof onDemoCompletePayment === "function";
 
   // Indicator variant class
   const modalVariantClass = isTerminalSuccess
@@ -160,15 +154,15 @@ export default function PaymentModal({
 
             <p className="payment-modal__subtitle">
               {isTerminalSuccess
-                ? `Đã nhận tiền cọc cho kho ${unit.code || "S-3"} tại ${
-                  unit.depot || "Cơ sở Tân Bình"
+                ? `Đã nhận tiền cọc cho kho ${unit.code || "—"} tại ${
+                  unit.depot || "cơ sở"
                 }.`
                 : isTerminalFailed
                   ? "Giao dịch chưa hoàn tất và tài khoản của bạn chưa bị trừ tiền."
                   : isTerminalExpired
-                    ? "Mã thanh toán đã hết thời gian hiệu lực sau 5 phút."
-                    : `Thanh toán cọc để khóa giữ chỗ kho ${unit.code || "S-3"} · REF: ${
-                      reservation?.code || "RSV-2026-S3"
+                    ? "Mã thanh toán đã hết thời gian hiệu lực."
+                    : `Thanh toán cọc để khóa giữ chỗ kho ${unit.code || "—"} · REF: ${
+                      reservation?.code || "—"
                     }`}
             </p>
           </div>
@@ -221,7 +215,7 @@ export default function PaymentModal({
                   {formatVND(paymentSession?.amount || reservation?.depositAmount)}
                 </h3>
                 <p className="terminal-desc">
-                  Khoản đặt cọc đã được xác nhận thành công! Kho <strong>{unit.code || "S-3"}</strong>{" "}
+                  Khoản đặt cọc đã được xác nhận thành công! Kho <strong>{unit.code || "—"}</strong>{" "}
                   đã chính thức chuyển sang trạng thái <strong>RESERVED (Đã giữ chỗ)</strong> và được đảm bảo giữ cho bạn đến ngày nhận kho{" "}
                   <strong>{reservation?.startDate}</strong>. Mã PIN vào kho sẽ tự động kích
                   hoạt lúc 08:00 sáng ngày nhận kho.
@@ -274,28 +268,14 @@ export default function PaymentModal({
                 <h3 className="terminal-title">Giao dịch chưa thành công</h3>
                 <p className="terminal-desc">
                   <strong>Tài khoản của bạn chưa bị trừ tiền</strong>. Cổng thanh
-                  toán hoặc ngân hàng chưa thể hoàn tất giao dịch. Bạn vui lòng kiểm tra lại số dư thẻ,
-                  mã OTP hoặc đổi phương thức thanh toán khác nhé.
+                  toán hoặc ngân hàng chưa thể hoàn tất giao dịch. Bạn vui lòng thử lại nhé.
                 </p>
-              </div>
-
-              <div className="decline-code-box">
-                <span className="decline-code-box__label">Chi tiết phản hồi:</span>
-                <code className="decline-code-box__code">Thẻ bị từ chối hoặc không đủ hạn mức (Mã 51)</code>
               </div>
 
               <div className="modal-actions-grid">
                 <Button variant="danger" onClick={() => onResetOrSwitch(selectedMethod)}>
                   <ArrowCounterClockwise size={16} weight="bold" />
                   <span>Thử lại thanh toán</span>
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    onResetOrSwitch(selectedMethod === "CARD" ? "MOMO" : "CARD")
-                  }
-                >
-                  <span>Đổi phương thức khác</span>
                 </Button>
               </div>
             </div>
@@ -312,7 +292,7 @@ export default function PaymentModal({
               <div className="terminal-content">
                 <h3 className="terminal-title">Hết thời gian thanh toán</h3>
                 <p className="terminal-desc">
-                  Mã thanh toán đã hết hạn sau 5 phút. Bạn vui lòng bấm nút bên dưới để tạo mã mới và hoàn tất giữ chỗ nhé.
+                  Mã thanh toán đã hết hạn. Bạn vui lòng bấm nút bên dưới để tạo mã mới và hoàn tất giữ chỗ nhé.
                 </p>
               </div>
 
@@ -334,449 +314,151 @@ export default function PaymentModal({
               <div className="processing-progress-bar">
                 <div className="processing-progress-fill" />
               </div>
-            </div>
-          ) : isMoMoOtpStage ? (
-            /* ── 5. BƯỚC 2 MOMO: NHẬP OTP ── */
-            <form onSubmit={onConfirmOtp} className="momo-otp-form">
-              <div className="momo-info-box">
-                <Wallet size={24} weight="fill" />
-                <div>
-                  <strong>Xác thực ví MoMo</strong>
-                  <p>Mã OTP 6 số đã được gửi tới số điện thoại {momoPhone}.</p>
-                </div>
-              </div>
-
-              <div className="otp-field-wrap">
-                <label htmlFor="momo-otp-input" className="swiss-label">
-                  Nhập mã OTP 6 chữ số
-                </label>
-                <input
-                  id="momo-otp-input"
-                  type="text"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => onOtpChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  className={`otp-input ${formErrors?.otp ? "is-invalid" : ""}`}
-                  placeholder="••••••"
-                  autoFocus
-                />
-                {formErrors?.otp && <span className="field-error-text">{formErrors.otp}</span>}
-
-                {countdown !== null && (
-                  <div className="countdown-pill">
-                    <Clock size={13} weight="bold" />
-                    <span>Hiệu lực còn: {formatCountdown(countdown)}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Quick Mock OTP Presets (chỉ hiển thị ở môi trường DEV) */}
-              {import.meta.env.DEV && (
-                <div className="mock-presets-row">
-                  <span className="mock-presets-label">Kiểm thử:</span>
-                  <button
-                    type="button"
-                    className="preset-chip preset-chip--success"
-                    onClick={() => onOtpChange("123456")}
-                  >
-                    OTP hợp lệ (123456)
-                  </button>
-                  <button
-                    type="button"
-                    className="preset-chip preset-chip--danger"
-                    onClick={() => onOtpChange("999999")}
-                  >
-                    OTP sai (999999)
-                  </button>
-                </div>
-              )}
-
-              <div className="modal-actions-grid">
+              {canDemoSkip && (
                 <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={submitting || otp.length !== 6}
+                  type="button"
+                  variant="secondary"
+                  style={{ marginTop: "14px" }}
+                  onClick={onDemoCompletePayment}
+                  disabled={checkingStatus}
+                  title="Chỉ dùng cho môi trường Demo — đánh dấu phiên đã thanh toán mà không cần chuyển khoản"
                 >
-                  {submitting ? (
-                    <>
-                      <CircleNotch size={16} className="spinner-rotate" />
-                      <span>Đang xác nhận...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock size={16} weight="bold" />
-                      <span>Xác nhận thanh toán</span>
-                    </>
-                  )}
+                  <WarningCircle size={16} weight="bold" />
+                  <span>Bỏ qua thanh toán (Demo)</span>
                 </Button>
-                <Button variant="secondary" onClick={() => onResetOrSwitch()} disabled={submitting}>
-                  Hủy &amp; chọn lại
-                </Button>
-              </div>
-            </form>
+              )}
+            </div>
           ) : (
-            /* ── METHOD SELECTION & PAYMENT FLOW (CARD / MOMO / VNPAY) ── */
+            /* ── METHOD: THANH TOÁN QR PAYOS ── */
             <div className="method-selection-flow">
-              {/* Segmented Control Tabs */}
-              <div className="segmented-tabs" role="tablist">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedMethod === "CARD"}
-                  className={`segmented-tab ${selectedMethod === "CARD" ? "is-active" : ""}`}
-                  onClick={() => onSelectMethod("CARD")}
-                >
-                  <CreditCard size={18} weight={selectedMethod === "CARD" ? "bold" : "regular"} />
-                  <span>Thẻ (Card)</span>
-                </button>
+              {/* Hóa đơn xác nhận trước khi thanh toán */}
+              <PaymentInvoiceSummary
+                unit={unit}
+                reservation={reservation}
+                formatVND={formatVND}
+              />
 
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedMethod === "MOMO"}
-                  className={`segmented-tab ${selectedMethod === "MOMO" ? "is-active" : ""}`}
-                  onClick={() => onSelectMethod("MOMO")}
-                >
-                  <Wallet size={18} weight={selectedMethod === "MOMO" ? "bold" : "regular"} />
-                  <span>Ví MoMo</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={selectedMethod === "PAYOS"}
-                  className={`segmented-tab ${selectedMethod === "PAYOS" ? "is-active" : ""}`}
-                  onClick={() => onSelectMethod("PAYOS")}
-                >
-                  <QrCodeIcon size={18} weight={selectedMethod === "PAYOS" ? "bold" : "regular"} />
-                  <span>Thanh toán QR</span>
-                </button>
-              </div>
-
-              {/* CARD FORM */}
-              {selectedMethod === "CARD" && (
-                <form onSubmit={onInitiatePayment} className="method-form">
-                  <div className="form-field">
-                    <div className="field-label-row">
-                      <label htmlFor="card-number-input" className="swiss-label">
-                        Số thẻ thanh toán
-                      </label>
-                      <div className="card-brand-badges">
-                        <span className="brand-tag">VISA</span>
-                        <span className="brand-tag">MASTERCARD</span>
+              {submitting && !paymentSession ? (
+                <div className="gateway-loading-view">
+                  <CircleNotch size={36} className="spinner-rotate" />
+                  <p className="gateway-loading-text">Đang tạo mã thanh toán QR...</p>
+                </div>
+              ) : paymentSession?.method === "PAYOS" && paymentSession?.status === "PENDING" ? (
+                <div className="vnpay-qr-view">
+                  <div className="qr-wrapper">
+                    {qrDataUrl ? (
+                      <img src={qrDataUrl} alt="Mã thanh toán QR" className="qr-image" />
+                    ) : (
+                      <div className="qr-placeholder">
+                        <CircleNotch size={32} className="spinner-rotate" />
                       </div>
-                    </div>
-                    <div className="input-with-icon">
-                      <CreditCard size={18} className="input-with-icon__icon" />
-                      <input
-                        id="card-number-input"
-                        type="text"
-                        value={cardForm.number}
-                        onChange={onCardNumberChange}
-                        placeholder="4242 4242 4242 4242"
-                        className={`swiss-input swiss-input--mono ${
-                          formErrors?.number ? "is-invalid" : ""
-                        }`}
-                      />
-                    </div>
-                    {formErrors?.number && (
-                      <span className="field-error-text">{formErrors.number}</span>
                     )}
-                  </div>
-
-                  <div className="form-grid-2">
-                    <div className="form-field">
-                      <label htmlFor="card-expiry-input" className="swiss-label">
-                        Hết hạn (MM / YY)
-                      </label>
-                      <input
-                        id="card-expiry-input"
-                        type="text"
-                        value={cardForm.expiry}
-                        onChange={onExpiryChange}
-                        placeholder="12 / 28"
-                        className={`swiss-input swiss-input--mono ${
-                          formErrors?.expiry ? "is-invalid" : ""
-                        }`}
-                      />
-                      {formErrors?.expiry && (
-                        <span className="field-error-text">{formErrors.expiry}</span>
-                      )}
-                    </div>
-
-                    <div className="form-field">
-                      <label htmlFor="card-cvc-input" className="swiss-label">
-                        CVC / CVV
-                      </label>
-                      <input
-                        id="card-cvc-input"
-                        type="password"
-                        maxLength={4}
-                        value={cardForm.cvc}
-                        onChange={(e) =>
-                          onCardFormChange("cvc", e.target.value.replace(/\D/g, "").slice(0, 4))
-                        }
-                        placeholder="•••"
-                        className={`swiss-input swiss-input--mono ${
-                          formErrors?.cvc ? "is-invalid" : ""
-                        }`}
-                      />
-                      {formErrors?.cvc && (
-                        <span className="field-error-text">{formErrors.cvc}</span>
-                      )}
+                    <div className="qr-badge">
+                      <QrCodeIcon size={14} weight="bold" />
+                      <span>QR Pay · VietQR</span>
                     </div>
                   </div>
 
-                  <div className="form-field">
-                    <label htmlFor="card-name-input" className="swiss-label">
-                      Tên chủ thẻ
-                    </label>
-                    <input
-                      id="card-name-input"
-                      type="text"
-                      value={cardForm.name}
-                      onChange={(e) => onCardFormChange("name", e.target.value)}
-                      placeholder="NGUYEN THI LAN"
-                      className="swiss-input"
-                    />
-                  </div>
-
-                  {/* Mock Gateway Test Chips (chỉ hiển thị ở môi trường DEV) */}
-                  {import.meta.env.DEV && (
-                    <div className="mock-presets-row">
-                      <span className="mock-presets-label">Thẻ thử nghiệm:</span>
-                      <button
-                        type="button"
-                        className="preset-chip preset-chip--success"
-                        onClick={() => onApplyCardPreset("success")}
-                      >
-                        Thẻ hợp lệ (4242 4242...)
-                      </button>
-                      <button
-                        type="button"
-                        className="preset-chip preset-chip--danger"
-                        onClick={() => onApplyCardPreset("fail")}
-                      >
-                        Thẻ từ chối (5555 5555...)
-                      </button>
+                  {countdown !== null && (
+                    <div className="countdown-pill">
+                      <Clock size={13} weight="bold" />
+                      <span>Mã QR hết hạn sau: {formatCountdown(countdown)}</span>
                     </div>
                   )}
 
-                  {/* Hóa đơn xác nhận trước khi thanh toán */}
-                  <PaymentInvoiceSummary
-                    unit={unit}
-                    reservation={reservation}
-                    formatVND={formatVND}
-                  />
+                  <p className="vnpay-instruction">
+                    Mở ứng dụng ngân hàng bất kỳ, chọn Quét QR để chuyển khoản{" "}
+                    <strong>{formatVND(paymentSession?.amount || reservation?.depositAmount)}</strong>.
+                  </p>
 
-                  <div className="modal-actions-grid">
-                    <Button type="submit" variant="primary" disabled={submitting}>
-                      {submitting ? (
-                        <>
-                          <CircleNotch size={16} className="spinner-rotate" />
-                          <span>Đang khởi tạo...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock size={16} weight="bold" />
-                          <span>Thanh toán</span>
-                        </>
-                      )}
-                    </Button>
-                    <Button variant="secondary" onClick={onClose} disabled={submitting}>
-                      Hủy
-                    </Button>
-                  </div>
-                </form>
-              )}
-
-              {/* MOMO FORM */}
-              {selectedMethod === "MOMO" && (
-                <form onSubmit={onInitiatePayment} className="method-form">
-                  <div className="form-field">
-                    <label htmlFor="momo-phone-input" className="swiss-label">
-                      Số điện thoại ví MoMo
-                    </label>
-                    <div className="input-with-icon">
-                      <DeviceMobile size={18} className="input-with-icon__icon" />
-                      <input
-                        id="momo-phone-input"
-                        type="tel"
-                        value={momoPhone}
-                        onChange={(e) =>
-                          onMomoPhoneChange(e.target.value.replace(/\D/g, "").slice(0, 11))
-                        }
-                        placeholder="0901234567"
-                        className={`swiss-input swiss-input--mono ${
-                          formErrors?.momoPhone ? "is-invalid" : ""
-                        }`}
-                      />
-                    </div>
-                    {formErrors?.momoPhone && (
-                      <span className="field-error-text">{formErrors.momoPhone}</span>
-                    )}
+                  <div className="polling-status-hint">
+                    <CircleNotch size={14} className="spinner-rotate" />
+                    <span>
+                      {polling
+                        ? "Hệ thống tự động xác nhận sau khi quét mã..."
+                        : "Hoàn tất quét mã rồi bấm 'Làm mới' để kiểm tra."}
+                    </span>
                   </div>
 
-                  <div className="momo-flow-note">
-                    Hệ thống sẽ gửi mã OTP 6 chữ số tới số MoMo này để bạn xác thực thanh toán tiền
-                    cọc.
-                  </div>
-
-                  {/* Hóa đơn xác nhận trước khi thanh toán */}
-                  <PaymentInvoiceSummary
-                    unit={unit}
-                    reservation={reservation}
-                    formatVND={formatVND}
-                  />
-
-                  <div className="modal-actions-grid">
-                    <Button type="submit" variant="primary" disabled={submitting}>
-                      {submitting ? (
-                        <>
-                          <CircleNotch size={16} className="spinner-rotate" />
-                          <span>Đang kết nối...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Lock size={16} weight="bold" />
-                          <span>Thanh toán</span>
-                        </>
-                      )}
+                  {paymentSession?.checkoutUrl && (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      fullWidth
+                      onClick={() =>
+                        window.open(paymentSession.checkoutUrl, "_blank", "noopener,noreferrer")
+                      }
+                    >
+                      <QrCodeIcon size={16} weight="bold" />
+                      <span>Mở trang thanh toán QR</span>
                     </Button>
-                    <Button variant="secondary" onClick={onClose} disabled={submitting}>
-                      Hủy
-                    </Button>
-                  </div>
-                </form>
-              )}
-
-              {/* ── THANH TOÁN QR (QR PAY) ── */}
-              {selectedMethod === "PAYOS" && (
-                <>
-                  {submitting && !paymentSession ? (
-                    <div className="gateway-loading-view">
-                      <CircleNotch size={36} className="spinner-rotate" />
-                      <p className="gateway-loading-text">Đang tạo mã thanh toán QR...</p>
-                    </div>
-                  ) : paymentSession?.method === "PAYOS" && paymentSession?.status === "PENDING" ? (
-                    <div className="vnpay-qr-view">
-                      <div className="qr-wrapper">
-                        {qrDataUrl ? (
-                          <img src={qrDataUrl} alt="Mã thanh toán QR" className="qr-image" />
-                        ) : (
-                          <div className="qr-placeholder">
-                            <CircleNotch size={32} className="spinner-rotate" />
-                          </div>
-                        )}
-                        <div className="qr-badge">
-                          <QrCodeIcon size={14} weight="bold" />
-                          <span>QR Pay · VietQR</span>
-                        </div>
-                      </div>
-
-                      {countdown !== null && (
-                        <div className="countdown-pill">
-                          <Clock size={13} weight="bold" />
-                          <span>Mã QR hết hạn sau: {formatCountdown(countdown)}</span>
-                        </div>
-                      )}
-
-                      <p className="vnpay-instruction">
-                        Mở ứng dụng ngân hàng bất kỳ, chọn Quét QR để chuyển khoản{" "}
-                        <strong>{formatVND(paymentSession?.amount || reservation?.depositAmount)}</strong>.
-                      </p>
-
-                      <div className="polling-status-hint">
-                        <CircleNotch size={14} className="spinner-rotate" />
-                        <span>Hệ thống tự động xác nhận sau khi quét mã...</span>
-                      </div>
-
-                      {paymentSession?.checkoutUrl && (
-                        <Button
-                          type="button"
-                          variant="primary"
-                          fullWidth
-                          onClick={() =>
-                            window.open(paymentSession.checkoutUrl, "_blank", "noopener,noreferrer")
-                          }
-                        >
-                          <QrCodeIcon size={16} weight="bold" />
-                          <span>Mở trang thanh toán QR</span>
-                        </Button>
-                      )}
-
-                      <div className="modal-actions-grid">
-                        <Button
-                          type="button"
-                          variant="primary"
-                          onClick={onCheckPaymentStatus}
-                          disabled={checkingStatus || submitting}
-                          title="Kiểm tra xem đã thanh toán chưa"
-                        >
-                          {checkingStatus ? (
-                            <>
-                              <CircleNotch size={16} className="spinner-rotate" />
-                              <span>Đang kiểm tra...</span>
-                            </>
-                          ) : (
-                            <>
-                              <ArrowCounterClockwise size={16} weight="bold" />
-                              <span>Làm mới</span>
-                            </>
-                          )}
-                        </Button>
-                        <Button type="button" variant="secondary" onClick={onClose}>
-                          Hủy
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Trạng thái bảo trì kết nối chuẩn hoá, thân thiện với người dùng */
-                    <div className="gateway-maintenance-card">
-                      <div className="gateway-maintenance-header">
-                        <div className="gateway-maintenance-icon">
-                          <QrCodeIcon size={24} weight="bold" />
-                        </div>
-                        <div className="gateway-maintenance-meta">
-                          <h4 className="gateway-maintenance-title">Kênh thanh toán QR đang tạm bảo trì</h4>
-                          <p className="gateway-maintenance-desc">
-                            Kênh thanh toán qua mã QR đang được nâng cấp hệ thống định kỳ. Quý khách vui lòng chọn phương thức thanh toán bên dưới để hoàn tất đặt cọc nhé:
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="gateway-alt-options">
-                        <button
-                          type="button"
-                          className="gateway-alt-btn gateway-alt-btn--primary"
-                          onClick={() => onSelectMethod("CARD")}
-                        >
-                          <div className="gateway-alt-btn__icon">
-                            <CreditCard size={20} weight="bold" />
-                          </div>
-                          <div className="gateway-alt-btn__content">
-                            <span className="gateway-alt-btn__label">Thanh toán bằng Thẻ</span>
-                          </div>
-                          <span className="gateway-alt-btn__action">Chọn thẻ →</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="gateway-alt-btn"
-                          onClick={() => onSelectMethod("MOMO")}
-                        >
-                          <div className="gateway-alt-btn__icon">
-                            <Wallet size={20} weight="bold" />
-                          </div>
-                          <div className="gateway-alt-btn__content">
-                            <span className="gateway-alt-btn__label">Ví điện tử MoMo</span>
-                          </div>
-                          <span className="gateway-alt-btn__action">Ví MoMo →</span>
-                        </button>
-                      </div>
-                    </div>
                   )}
-                </>
+
+                  <div className="modal-actions-grid">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={onCheckPaymentStatus}
+                      disabled={checkingStatus || submitting}
+                      title="Kiểm tra xem đã thanh toán chưa"
+                    >
+                      {checkingStatus ? (
+                        <>
+                          <CircleNotch size={16} className="spinner-rotate" />
+                          <span>Đang kiểm tra...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ArrowCounterClockwise size={16} weight="bold" />
+                          <span>Làm mới</span>
+                        </>
+                      )}
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={onClose}>
+                      Hủy
+                    </Button>
+                  </div>
+
+                  {canDemoSkip && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      fullWidth
+                      style={{ marginTop: "10px" }}
+                      onClick={onDemoCompletePayment}
+                      disabled={checkingStatus}
+                      title="Chỉ dùng cho môi trường Demo — đánh dấu phiên đã thanh toán mà không cần chuyển khoản"
+                    >
+                      <WarningCircle size={16} weight="bold" />
+                      <span>Bỏ qua thanh toán (Demo)</span>
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                /* Chưa có phiên PENDING — nút khởi tạo thanh toán QR */
+                <div className="modal-actions-grid" style={{ marginTop: "12px" }}>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => (onSelectMethod ? onSelectMethod("PAYOS") : onInitiatePayment(null, "PAYOS"))}
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <>
+                        <CircleNotch size={16} className="spinner-rotate" />
+                        <span>Đang khởi tạo...</span>
+                      </>
+                    ) : (
+                      <>
+                        <QrCodeIcon size={16} weight="bold" />
+                        <span>Thanh toán bằng mã QR</span>
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="secondary" onClick={onClose} disabled={submitting}>
+                    Hủy
+                  </Button>
+                </div>
               )}
             </div>
           )}

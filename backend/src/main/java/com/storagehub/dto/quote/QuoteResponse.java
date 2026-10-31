@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * Bảng giá minh bạch tính từ PricingEngine (AD-11, schema Quote theo contracts/openapi.yaml).
+ * Mô hình thuê theo ngày: durationDays = số ngày thuê (end inclusive).
  */
 public record QuoteResponse(
         Long unitId,
@@ -14,7 +15,7 @@ public record QuoteResponse(
         LocalDate startDate,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         LocalDate endDate,
-        Integer durationMonths,
+        Integer durationDays,
         List<QuoteLineResponse> lines,
         Long totalRent,
         Long depositAmount,

@@ -113,6 +113,22 @@ jobs:
           curl -fsS --max-time 120 -X POST "${auth[@]}" -H "content-type: application/json" \
             -d "{\"composeId\":\"$DOKPLOY_COMPOSE_ID\"}" "$base/compose.deploy"
 
+      - name: Wait for application health
+        run: |
+          set -euo pipefail
+          url="https://storagehub.phucnn.io.vn/actuator/health"
+          for i in $(seq 1 48); do
+            body=$(curl -fsS --max-time 10 -A "gh-actions-health" "$url" || true)
+            echo "attempt $i: ${body:-<no response>}"
+            if printf '%s' "$body" | grep -q '"status":"UP"'; then
+              echo "application is healthy"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Application health check failed after 4 minutes"
+          exit 1
+
   notify:
     needs: [backend-test, frontend-build, build, deploy]
     if: always() && github.event_name != 'pull_request'
@@ -130,7 +146,7 @@ jobs:
           fi
 
           summary=$(printf '%s' "$RESULTS" | jq -r 'to_entries | map("\(.key)=\(.value.result // "unknown")") | join("  ")')
-          failed=$(printf '%s' "$RESULTS" | jq -r '[.[] | select(.result == "failure" or .result == "cancelled")] | length')
+          failed=$(printf '%s' "$RESULTS" | jq -r '[.[] | select(.result == "failure")] | length')
           if [ "$failed" -gt 0 ]; then
             icon=":x:"
             state="FAILED"

@@ -24,13 +24,13 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [showFullPassModal, setShowFullPassModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
 
-  // Lưu ảnh thực tế (Base64 URL)
-  const [paymentPhotoUrl, setPaymentPhotoUrl] = useState(() => {
-    return task?.ritual?.paymentProofPhoto || localStorage.getItem(`storagehub_payment_photo_${task?.taskId}`) || "";
-  });
-  const [contractPhotoUrl, setContractPhotoUrl] = useState(() => {
-    return task?.ritual?.contractPhotoUrl || localStorage.getItem(`storagehub_contract_photo_${task?.taskId}`) || "";
-  });
+  // Ảnh thực tế (Base64 URL) — chỉ giữ trong phiên, không cache localStorage
+  const [paymentPhotoUrl, setPaymentPhotoUrl] = useState(
+    () => task?.ritual?.paymentProofPhoto || ""
+  );
+  const [contractPhotoUrl, setContractPhotoUrl] = useState(
+    () => task?.ritual?.contractPhotoUrl || ""
+  );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,13 +43,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const b64 = reader.result;
-      setPaymentPhotoUrl(b64);
-      try {
-        localStorage.setItem(`storagehub_payment_photo_${task.taskId}`, b64);
-      } catch {
-        // Quota exceed ignore
-      }
+      setPaymentPhotoUrl(reader.result);
     };
     reader.readAsDataURL(file);
   };
@@ -59,36 +53,9 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const b64 = reader.result;
-      setContractPhotoUrl(b64);
-      try {
-        localStorage.setItem(`storagehub_contract_photo_${task.taskId}`, b64);
-      } catch {
-        // Quota exceed ignore
-      }
+      setContractPhotoUrl(reader.result);
     };
     reader.readAsDataURL(file);
-  };
-
-  // Nút giả lập chụp ảnh nhanh bằng camera quầy
-  const handleSimulatePaymentPhoto = () => {
-    const demoSample = "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80";
-    setPaymentPhotoUrl(demoSample);
-    try {
-      localStorage.setItem(`storagehub_payment_photo_${task.taskId}`, demoSample);
-    } catch {
-      // ignore
-    }
-  };
-
-  const handleSimulateContractPhoto = () => {
-    const demoSample = "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=80";
-    setContractPhotoUrl(demoSample);
-    try {
-      localStorage.setItem(`storagehub_contract_photo_${task.taskId}`, demoSample);
-    } catch {
-      // ignore
-    }
   };
 
   const handleSubmit = async () => {
@@ -308,9 +275,6 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
                     <Button size="small" variant="secondary" onClick={() => paymentFileInputRef.current?.click()}>
                       <UploadSimple size={14} /> Chọn ảnh từ máy
                     </Button>
-                    <Button size="small" variant="secondary" onClick={handleSimulatePaymentPhoto}>
-                      <Camera size={14} /> Chụp nhanh biên lai
-                    </Button>
                   </div>
                 </div>
               )}
@@ -391,9 +355,6 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
                   <Button size="small" variant="secondary" onClick={() => contractFileInputRef.current?.click()}>
                     <UploadSimple size={14} /> Chọn ảnh từ máy
-                  </Button>
-                  <Button size="small" variant="secondary" onClick={handleSimulateContractPhoto}>
-                    <Camera size={14} /> Chụp nhanh hợp đồng
                   </Button>
                 </div>
               </div>

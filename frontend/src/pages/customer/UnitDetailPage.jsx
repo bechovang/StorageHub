@@ -22,23 +22,24 @@ export default function UnitDetailPage() {
     unit,
     loading,
     copiedLink,
-    durationMonths,
-    setDurationMonths,
     startDate,
     setStartDate,
+    endDate,
+    setEndDate,
+    durationDays,
     quoteLoading,
+    quoteError,
+    dailyRent,
     handleCopyLink,
     handleBookNow,
     isSoon,
     availableDate,
     typeLabel,
     facilityLabel,
-    monthlyRent,
     volumeM3,
     totalRent,
     depositAmount,
     dueNow,
-    endDate,
     policyVersion,
   } = useUnitDetailView();
 
@@ -122,7 +123,7 @@ export default function UnitDetailPage() {
                 </Badge>
               </div>
               <p className="unit-detail-meta">
-                {facilityLabel} · Thể tích chứa ~{volumeM3} m³ · Bàn giao tự quản
+                {facilityLabel} {volumeM3 ? ` · Thể tích chứa ~${volumeM3} m³` : ""} · Bàn giao tự quản
                 với mã số PIN 24/7
               </p>
             </div>
@@ -202,17 +203,18 @@ export default function UnitDetailPage() {
           {/* ═══════════ CỘT PHẢI: BẢNG GIÁ MINH BẠCH & DỰ TOÁN THUÊ (5 COLS) ═══════════ */}
           <aside className="unit-detail-right-col">
             <UnitPricingCalculator
-              durationMonths={durationMonths}
-              setDurationMonths={setDurationMonths}
               startDate={startDate}
               setStartDate={setStartDate}
               endDate={endDate}
-              monthlyRent={monthlyRent}
+              setEndDate={setEndDate}
+              durationDays={durationDays}
+              dailyRent={dailyRent}
               totalRent={totalRent}
               depositAmount={depositAmount}
               dueNow={dueNow}
               policyVersion={policyVersion}
               quoteLoading={quoteLoading}
+              quoteError={quoteError}
               isSoon={isSoon}
               availableDate={availableDate}
               onBookNow={handleBookNow}

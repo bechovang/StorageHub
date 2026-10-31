@@ -36,7 +36,7 @@ export default function UnitCard({
     ? "Đang chuẩn bị bàn giao cho khách mới"
     : "Thanh toán cọc 10% để khóa giữ chỗ · Ra vào 24/7";
 
-  const price = unit.baseMonthlyRent ?? unit.monthlyPrice ?? 0;
+  const price = unit.baseDailyRent ?? 0;
   const typeLabel = unit.typeName || unit.type || "Tiêu chuẩn";
   const facilityLabel = unit.facilityName || "Cơ sở Tân Bình";
   const volumeM3 = (unit.sizeM2 * 2.8).toFixed(1);
@@ -119,7 +119,7 @@ export default function UnitCard({
         <div className="unit-card__footer">
           <div className="unit-card__price">
             <strong>{formatVnd(price)}</strong>
-            <span>/ tháng · Cọc 1 tháng (hoàn lại)</span>
+            <span>/ ngày · Cọc 10% để giữ chỗ (hoàn lại)</span>
           </div>
 
           <div className="unit-card__actions" onClick={(e) => e.stopPropagation()}>

@@ -47,4 +47,16 @@ public interface NotificationService {
 
     /** US-18 (FR-12): addendum chờ ký tại quầy — bell cho staff. */
     void notifyAddendumAwaitingSignature(Reservation reservation, com.storagehub.entity.ContractAddendum addendum);
+
+    /** US-15: tiền thuê RENT đã trả đủ → bell staff chuẩn bị ritual check-in + hướng dẫn khách. */
+    void notifyRentPaidReadyForCheckIn(Reservation reservation, com.storagehub.entity.Payment payment);
+
+    /** Ticket API: khách tạo yêu cầu hỗ trợ → bell staff tiếp nhận. */
+    void notifyTicketCreated(com.storagehub.entity.SupportTicket ticket);
+
+    /** Ticket API: trạng thái xử lý đổi → báo khách. */
+    void notifyTicketStatusChanged(com.storagehub.entity.SupportTicket ticket, String oldStatus);
+
+    /** Early checkout: manager buộc trả kho sớm (VIOLATION/TRANSFER) → báo khách. */
+    void notifyForcedCheckout(com.storagehub.entity.Reservation reservation, String type, String note);
 }

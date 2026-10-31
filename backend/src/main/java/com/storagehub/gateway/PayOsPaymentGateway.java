@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 /**
  * PayOS thật (AD-9/Task 33) — bean chỉ tạo khi {@code payment.payos.enabled=true}.
  *
@@ -69,7 +70,7 @@ public class PayOsPaymentGateway implements PaymentGateway {
                     "PayOS chỉ hỗ trợ phương thức PAYOS — chọn PayOS QR.");
         }
 
-        long orderCode = orderCodeFor(command.paymentId());
+        long orderCode = newOrderCode(command.paymentId());
         long expiredAt = clock.instant().plus(qrTtl).getEpochSecond();
 
         CreatePaymentLinkRequest request = CreatePaymentLinkRequest.builder()
@@ -88,6 +89,7 @@ public class PayOsPaymentGateway implements PaymentGateway {
                     : Instant.ofEpochSecond(expiredAt);
 
             sessions.put(command.paymentId(), new PayOsSession(
+                    orderCode,
                     response.getCheckoutUrl(),
                     response.getQrCode(),
                     expiresAt
@@ -105,7 +107,7 @@ public class PayOsPaymentGateway implements PaymentGateway {
     @Override
     public Optional<Payment.Status> poll(Long paymentId, Payment.Method method) {
         try {
-            PaymentLink link = payOS.paymentRequests().get(orderCodeFor(paymentId));
+            PaymentLink link = payOS.paymentRequests().get(orderCodeOf(paymentId));
             PaymentLinkStatus status = link.getStatus();
             if (status == null) {
                 return Optional.empty();
@@ -146,12 +148,13 @@ public class PayOsPaymentGateway implements PaymentGateway {
         // Backend restart giữa phiên: cache mất nhưng link PayOS còn sống.
         // Dựng checkoutUrl từ paymentLinkId để FE vẫn mở được cổng.
         try {
-            PaymentLink link = payOS.paymentRequests().get(orderCodeFor(paymentId));
+            long code = orderCodeOf(paymentId);
+            PaymentLink link = payOS.paymentRequests().get(code);
             if (link.getId() == null) {
                 return Optional.empty();
             }
             PayOsSession recovered = new PayOsSession(
-                    CHECKOUT_BASE + link.getId(), null, null);
+                    code, CHECKOUT_BASE + link.getId(), null, null);
             sessions.put(paymentId, recovered);
             return Optional.of(new SessionView(
                     false,
@@ -174,7 +177,11 @@ public class PayOsPaymentGateway implements PaymentGateway {
                 return Optional.empty();
             }
 
-            long paymentId = data.getOrderCode() - orderCodeBase;
+            // orderCode mới = paymentId * 1e9 + random; orderCode cũ = base + paymentId.
+            long paymentId = data.getOrderCode() / 1_000_000_000L;
+            if (paymentId <= 0) {
+                paymentId = data.getOrderCode() - orderCodeBase;
+            }
             if (paymentId <= 0) {
                 // PayOS gửi payload mẫu (orderCode 123) khi xác thực webhook URL.
                 log.info("PayOS probe/foreign orderCode {} — ignored", data.getOrderCode());
@@ -193,8 +200,19 @@ public class PayOsPaymentGateway implements PaymentGateway {
         }
     }
 
-    private long orderCodeFor(Long paymentId) {
-        return orderCodeBase + paymentId;
+    /**
+     * orderCode duy nhất cho mỗi lần tạo link: id thanh toán nằm ở phần cao,
+     * phần thấp là random — tránh trùng với order cũ còn tồn tại trên kênh PayOS
+     * (kênh dùng chung, DB dev bị reset mỗi lần deploy).
+     */
+    private long newOrderCode(Long paymentId) {
+        return paymentId * 1_000_000_000L + ThreadLocalRandom.current().nextLong(1_000_000_000L);
+    }
+
+    /** Session giữ orderCode; fallback legacy cho payment tạo trước khi đổi format. */
+    private long orderCodeOf(Long paymentId) {
+        PayOsSession session = sessions.get(paymentId);
+        return session != null ? session.orderCode() : orderCodeBase + paymentId;
     }
 
     private static String descriptionFor(Long paymentId) {
@@ -208,6 +226,7 @@ public class PayOsPaymentGateway implements PaymentGateway {
     }
 
     private record PayOsSession(
+            long orderCode,
             String checkoutUrl,
             String qrPayload,
             Instant qrExpiresAt

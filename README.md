@@ -52,8 +52,17 @@ Hướng dẫn đầy đủ BE + FE + MySQL + PayOS + ngrok webhook:
 
 ```bash
 # Backend (profile dev, đọc backend/.env)
+# LƯU Ý: profile dev sẽ CLEAN + MIGRATE + SEED LẠI DATABASE mỗi lần chạy
+# (DB luôn reset về seed để dễ test). Thanh toán chỉ có kênh PayOS —
+# đặt PAYOS_ENABLED=true + 3 key PayOS trong backend/.env trước khi chạy.
 cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Frontend
 cd frontend && npm install && npm run dev
 ```
+
+## Mô hình thuê theo ngày
+
+- Đặt kho chọn **Start date → End date** (giá tính **₫/ngày**, End date inclusive, tối thiểu 1 ngày).
+- Giá seed để test PayOS (mọi giao dịch > 2.000 ₫): Locker 3.000 ₫/ngày · S 5.000 ₫ · M 8.000 ₫ · L 15.000 ₫; cọc 10% (sàn 5.000 ₫).
+- Giữa 2 lượt thuê có **TURNOVER_BUFFER** (mặc định 1 ngày dọn dẹp) — booking/extension đều bị chặn nếu đâm qua buffer của đơn kế tiếp.

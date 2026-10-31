@@ -73,94 +73,6 @@ export const EMPTY_FINANCIAL_SUMMARY = {
   occupancyStatus: "",
 };
 
-export const DEMO_FINANCIAL_SUMMARIES = {
-  THIS_MONTH: {
-    periodId: "THIS_MONTH",
-    periodLabel: "Tháng này (10/2026)",
-    grossRevenue: 12870000,
-    baseRentCollected: 12450000,
-    depositsHeld: 680000,
-    surcharges: 420000,
-    occupancyRate: 88.1,
-    occupiedUnits: 37,
-    totalUnits: 42,
-    revenueGrowth: "+8.4% so với tháng 9",
-    surchargeGrowth: "Phí quá hạn & rác thải",
-    occupancyStatus: "+3.2% tăng trưởng lấp đầy",
-    occupancyBreakdown: "37 / 42 kho đang cho thuê",
-  },
-  LAST_MONTH: {
-    periodId: "LAST_MONTH",
-    periodLabel: "Tháng trước (09/2026)",
-    grossRevenue: 10100000,
-    baseRentCollected: 9820000,
-    depositsHeld: 510000,
-    surcharges: 280000,
-    occupancyRate: 83.3,
-    occupiedUnits: 35,
-    totalUnits: 42,
-    revenueGrowth: "+5.1% so với tháng 8",
-    surchargeGrowth: "Phí bảo dưỡng lạnh",
-    occupancyStatus: "+2.1% tăng trưởng lấp đầy",
-    occupancyBreakdown: "35 / 42 kho đang cho thuê",
-  },
-  THIS_QUARTER: {
-    periodId: "THIS_QUARTER",
-    periodLabel: "Quý này (Q4 2026)",
-    grossRevenue: 37450000,
-    baseRentCollected: 36210000,
-    depositsHeld: 4890000,
-    surcharges: 1240000,
-    occupancyRate: 88.1,
-    occupiedUnits: 37,
-    totalUnits: 42,
-    revenueGrowth: "+12.4% so với quý trước",
-    surchargeGrowth: "Phụ thu phát sinh",
-    occupancyStatus: "+5.0% tăng trưởng lấp đầy",
-    occupancyBreakdown: "37 / 42 kho đang cho thuê",
-  },
-  YTD: {
-    periodId: "YTD",
-    periodLabel: "YTD 2026 (01/01 – 31/10/2026)",
-    grossRevenue: 88170000,
-    baseRentCollected: 84350000,
-    depositsHeld: 8420000,
-    surcharges: 3820000,
-    occupancyRate: 88.1,
-    occupiedUnits: 37,
-    totalUnits: 42,
-    revenueGrowth: "+19.8% YoY 2025",
-    surchargeGrowth: "Tổng hợp phụ thu",
-    occupancyStatus: "+15.2% YoY",
-    occupancyBreakdown: "37 / 42 kho đang cho thuê",
-  },
-  CUSTOM: {
-    periodId: "CUSTOM",
-    periodLabel: "Khoảng ngày tùy chọn",
-    grossRevenue: 15400000,
-    baseRentCollected: 14800000,
-    depositsHeld: 1200000,
-    surcharges: 600000,
-    occupancyRate: 88.1,
-    occupiedUnits: 37,
-    totalUnits: 42,
-    revenueGrowth: "Tùy chỉnh khoảng ngày",
-    surchargeGrowth: "Phụ thu theo khoảng chọn",
-    occupancyStatus: "Ổn định",
-    occupancyBreakdown: "37 / 42 kho đang cho thuê",
-  },
-};
-
-const DEMO_FINANCIAL_SUMMARY = DEMO_FINANCIAL_SUMMARIES.THIS_QUARTER;
-
-const DEMO_MONTHLY_DATA = [
-  { month: "T5/2026", rent: 32000000, surcharge: 1200000, total: 33200000, deposits: 4500000, heightPct: 65, isProjected: false },
-  { month: "T6/2026", rent: 35000000, surcharge: 1800000, total: 36800000, deposits: 5100000, heightPct: 72, isProjected: false },
-  { month: "T7/2026", rent: 38000000, surcharge: 2100000, total: 40100000, deposits: 5600000, heightPct: 78, isProjected: false },
-  { month: "T8/2026", rent: 41000000, surcharge: 2400000, total: 43400000, deposits: 5900000, heightPct: 85, isProjected: false },
-  { month: "T9/2026", rent: 43500000, surcharge: 2800000, total: 46300000, deposits: 6100000, heightPct: 90, isProjected: false },
-  { month: "T10/2026", rent: 45200000, surcharge: 3400000, total: 48600000, deposits: 6400000, heightPct: 95, isProjected: true },
-];
 
 /**
  * Lấy số liệu tổng hợp Business Overview & KPIs: GET /api/v1/reports/financial-summary
@@ -198,30 +110,7 @@ export async function getFinancialSummary(periodId = "THIS_QUARTER", customRange
       occupancyBreakdown: data.occupancyBreakdown || "",
     };
   } catch (err) {
-    if (periodId === "CUSTOM" && customRange?.startDate && customRange?.endDate) {
-      const d1 = new Date(customRange.startDate);
-      const d2 = new Date(customRange.endDate);
-      const diffDays = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1);
-      const daily = 400000;
-      const base = daily * diffDays;
-      const sur = Math.round(base * 0.04);
-      return {
-        periodId: "CUSTOM",
-        periodLabel: `Khoảng ngày (${customRange.startDate} → ${customRange.endDate})`,
-        grossRevenue: base + sur,
-        baseRentCollected: base,
-        depositsHeld: Math.round(base * 0.12),
-        surcharges: sur,
-        occupancyRate: 88.1,
-        occupiedUnits: 37,
-        totalUnits: 42,
-        revenueGrowth: `${diffDays} ngày được chọn`,
-        surchargeGrowth: "Phụ thu theo khoảng chọn",
-        occupancyStatus: "+3.2%",
-        occupancyBreakdown: "37 / 42 kho đang cho thuê",
-      };
-    }
-    return DEMO_FINANCIAL_SUMMARIES[periodId] || DEMO_FINANCIAL_SUMMARIES.THIS_QUARTER;
+    throw err;
   }
 }
 
@@ -250,7 +139,7 @@ export async function getMonthlyRevenueChartData(months = 6) {
       };
     });
   } catch (err) {
-    return DEMO_MONTHLY_DATA;
+    throw err;
   }
 }
 

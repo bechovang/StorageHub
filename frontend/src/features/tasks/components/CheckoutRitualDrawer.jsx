@@ -39,14 +39,10 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
     task?.ritual?.settlementMethod || "TRANSFER"
   );
 
-  // Lưu ảnh đối soát thanh toán cọc / phụ phí thực tế (Base64 URL)
-  const [settlementPhotoUrl, setSettlementPhotoUrl] = useState(() => {
-    return (
-      task?.ritual?.settlementPhotoUrl ||
-      localStorage.getItem(`storagehub_settlement_photo_${task?.taskId}`) ||
-      ""
-    );
-  });
+  // Ảnh đối soát thanh toán cọc / phụ phí thực tế (Base64 URL) — không cache localStorage
+  const [settlementPhotoUrl, setSettlementPhotoUrl] = useState(
+    () => task?.ritual?.settlementPhotoUrl || ""
+  );
 
   const [showContractModal, setShowContractModal] = useState(false);
   const [showFullPhotoModal, setShowFullPhotoModal] = useState(false);
@@ -65,29 +61,9 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const b64 = reader.result;
-      setSettlementPhotoUrl(b64);
-      try {
-        localStorage.setItem(`storagehub_settlement_photo_${task.taskId}`, b64);
-      } catch {
-        // LocalStorage quota exceed fallback
-      }
+      setSettlementPhotoUrl(reader.result);
     };
     reader.readAsDataURL(file);
-  };
-
-  // Nút giả lập chụp ảnh nhanh bằng camera quầy
-  const handleSimulateSettlementPhoto = () => {
-    const demoSample =
-      refundAmount > 0
-        ? "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80"
-        : "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=600&auto=format&fit=crop&q=80";
-    setSettlementPhotoUrl(demoSample);
-    try {
-      localStorage.setItem(`storagehub_settlement_photo_${task.taskId}`, demoSample);
-    } catch {
-      // ignore
-    }
   };
 
   const handleAddCharge = () => {
@@ -537,7 +513,6 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                       onClick={() => {
                         setSettlementPhotoUrl("");
                         try {
-                          localStorage.removeItem(`storagehub_settlement_photo_${task?.taskId}`);
                         } catch {
                           // ignore
                         }
@@ -577,15 +552,6 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                   >
                     <UploadSimple size={14} style={{ marginRight: 4 }} />
                     Chọn tệp ảnh
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="secondary"
-                    onClick={handleSimulateSettlementPhoto}
-                    title="Dùng ảnh mẫu quầy phục vụ kiểm thử nhanh"
-                  >
-                    <Camera size={14} style={{ marginRight: 4 }} />
-                    Chụp nhanh từ camera quầy
                   </Button>
                 </div>
               </div>

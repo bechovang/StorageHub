@@ -35,7 +35,7 @@ export function BaseRentTable({
                   className={isModified ? "policy-row--modified" : ""}
                 >
                   <td className="policy-cell--mono font-bold text-ink-secondary">
-                    {rate.code}
+                    {rate.code || rate.typeName}
                   </td>
                   <td>
                     <div className="policy-cell-content">
@@ -64,7 +64,7 @@ export function BaseRentTable({
                     )}
                   </td>
                   <td className="text-center text-muted text-xs">
-                    / {rate.billingInterval}
+                    / {rate.billingInterval || "tháng"}
                   </td>
                   <td className="text-right">
                     {isModified ? (

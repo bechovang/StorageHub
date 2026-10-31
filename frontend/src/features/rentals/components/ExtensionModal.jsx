@@ -30,11 +30,19 @@ export default function ExtensionModal({
     const currentEndDateStr = reservation?.endDate || new Date().toISOString().split("T")[0];
     const currentEndDate = useMemo(() => new Date(currentEndDateStr), [currentEndDateStr]);
 
-    // Giá thuê 1 tháng & tỷ lệ cọc
-    const monthlyRent = reservation?.quote?.monthlyRent || reservation?.unit?.monthlyPrice || 345000;
+    // Giá thuê 1 ngày & tỷ lệ cọc (mô hình thuê theo ngày)
+    const dailyRent = reservation?.quote?.dailyRent || reservation?.unit?.baseDailyRent || 0;
     const depositRate = 0.1; // 10%
-    const currentDepositHeld = reservation?.depositAmount || Math.round(monthlyRent * depositRate);
-    const currentDurationMonths = reservation?.durationMonths || 1;
+    const currentDepositHeld = reservation?.depositAmount || 0;
+    const currentDurationDays = reservation?.durationDays || 0;
+
+    /** Số ngày thuê (inclusive) giữa 2 chuỗi ngày yyyy-MM-dd */
+    const diffDaysInclusive = (start, end) => {
+        if (!start || !end) return 0;
+        const a = new Date(`${start}T00:00:00`);
+        const b = new Date(`${end}T00:00:00`);
+        return Math.floor((b - a) / 86400000) + 1;
+    };
 
     // Giới hạn xung đột (Conflict boundary): Chỉ áp dụng nếu backend báo có đơn tiếp theo
     const conflictStartDateStr = reservation?.nextReservationStartDate || null;
@@ -49,11 +57,11 @@ export default function ExtensionModal({
         return d.toISOString().split("T")[0];
     }, [conflictStartDate]);
 
-    // Ngày checkout mới được chọn (mặc định gợi ý +1 tháng tính từ currentEndDate)
-    const [extensionMonths, setExtensionMonths] = useState(1);
+    // Ngày checkout mới được chọn (mặc định gợi ý +30 ngày tính từ currentEndDate)
+    const [extensionDays, setExtensionDays] = useState(30);
     const [selectedDateStr, setSelectedDateStr] = useState(() => {
         const target = new Date(currentEndDate);
-        target.setMonth(target.getMonth() + 1);
+        target.setDate(target.getDate() + 30);
         return target.toISOString().split("T")[0];
     });
     const [submitting, setSubmitting] = useState(false);
@@ -71,49 +79,41 @@ export default function ExtensionModal({
         return selectedDate <= currentEndDate;
     }, [selectedDate, currentEndDate, selectedDateStr]);
 
-    // Tính toán chi phí gia hạn theo công thức PRD FR-16:
-    // Phí gia hạn = Tiền thuê kỳ thêm + Top-up cọc
+    // Tính toán chi phí gia hạn theo công thức PRD FR-16 (mô hình ngày):
+    // Phí gia hạn = Tiền thuê kỳ thêm (ngày × giá ngày) + Top-up cọc
     const calculation = useMemo(() => {
-        const addedMonths = Math.max(1, extensionMonths);
-        const addedRent = addedMonths * monthlyRent;
-        const newTotalDuration = currentDurationMonths + addedMonths;
-        const newTotalRent = newTotalDuration * monthlyRent;
+        const addedDays = Math.max(1, diffDaysInclusive(currentEndDateStr, selectedDateStr));
+        const addedRent = addedDays * dailyRent;
+        const newTotalDuration = currentDurationDays + addedDays;
+        const newTotalRent = newTotalDuration * dailyRent;
         const targetDeposit = Math.round(newTotalRent * depositRate);
         const topUpDeposit = Math.max(0, targetDeposit - currentDepositHeld);
         const totalPayable = addedRent + topUpDeposit;
 
         return {
-            addedMonths,
+            addedDays,
             addedRent,
             newTotalDuration,
             targetDeposit,
             topUpDeposit,
             totalPayable,
         };
-    }, [extensionMonths, monthlyRent, currentDurationMonths, currentDepositHeld]);
+    }, [selectedDateStr, dailyRent, currentDurationDays, currentDepositHeld, currentEndDateStr]);
 
-    // Chọn nhanh các gói tháng
-    const handleQuickSelectMonths = (months) => {
-        setExtensionMonths(months);
-        // Tính ngày mới = currentEndDate + months
+    // Chọn nhanh các gói ngày
+    const handleQuickSelectDays = (days) => {
+        setExtensionDays(days);
+        // Tính ngày mới = currentEndDate + days
         const target = new Date(currentEndDate);
-        target.setMonth(target.getMonth() + months);
-        const yyyy = target.getFullYear();
-        const mm = String(target.getMonth() + 1).padStart(2, "0");
-        const dd = String(target.getDate()).padStart(2, "0");
-        setSelectedDateStr(`${yyyy}-${mm}-${dd}`);
+        target.setDate(target.getDate() + days);
+        setSelectedDateStr(target.toISOString().split("T")[0]);
     };
 
     const handleDateChange = (e) => {
         const val = e.target.value;
         setSelectedDateStr(val);
         if (val) {
-            const picked = new Date(val);
-            const diffMonths = Math.max(
-                1,
-                Math.round((picked - currentEndDate) / (1000 * 60 * 60 * 24 * 30.4))
-            );
-            setExtensionMonths(diffMonths);
+            setExtensionDays(diffDaysInclusive(currentEndDateStr, val));
         }
     };
 
@@ -125,7 +125,7 @@ export default function ExtensionModal({
         try {
             await onConfirmExtension({
                 newEndDate: selectedDateStr,
-                addedMonths: calculation.addedMonths,
+                addedDays: calculation.addedDays,
                 addedRent: calculation.addedRent,
                 topUpDeposit: calculation.topUpDeposit,
                 totalPayable: calculation.totalPayable,
@@ -172,7 +172,9 @@ export default function ExtensionModal({
                         <label className="rd-form-label">Thời hạn thuê hiện tại</label>
                         <div className="rd-current-date-box">
                             <span>Từ <strong>{fmtDate(reservation.startDate)}</strong> đến <strong>{fmtDate(currentEndDateStr)}</strong></span>
-                            <span className="rd-current-badge">{currentDurationMonths} tháng</span>
+                            <span className="rd-current-badge">
+                                {currentDurationDays ? `${currentDurationDays} ngày` : "—"}
+                            </span>
                         </div>
                     </div>
 
@@ -180,14 +182,14 @@ export default function ExtensionModal({
                     <div className="rd-form-group">
                         <label className="rd-form-label">Chọn nhanh kỳ gia hạn thêm</label>
                         <div className="rd-quick-presets">
-                            {[1, 2, 3].map((m) => (
+                            {[7, 14, 30].map((d) => (
                                 <button
-                                    key={m}
+                                    key={d}
                                     type="button"
-                                    className={`rd-preset-btn ${extensionMonths === m ? "is-selected" : ""}`}
-                                    onClick={() => handleQuickSelectMonths(m)}
+                                    className={`rd-preset-btn ${extensionDays === d ? "is-selected" : ""}`}
+                                    onClick={() => handleQuickSelectDays(d)}
                                 >
-                                    +{m} Tháng
+                                    +{d} Ngày
                                 </button>
                             ))}
                         </div>
@@ -245,7 +247,7 @@ export default function ExtensionModal({
 
                             <div className="rd-price-breakdown__rows">
                                 <div className="rd-price-row">
-                                    <span>Tiền thuê kỳ thêm ({calculation.addedMonths} tháng × {fmtMoney(monthlyRent)})</span>
+                                    <span>Tiền thuê kỳ thêm ({calculation.addedDays} ngày × {fmtMoney(dailyRent)}/ngày)</span>
                                     <strong>{fmtMoney(calculation.addedRent)}</strong>
                                 </div>
                                 <div className="rd-price-row">
