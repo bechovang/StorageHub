@@ -20,13 +20,16 @@ export function useBrowseUnits() {
     const today = new Date();
     return today.toISOString().split("T")[0];
   });
+  const [endDate, setEndDate] = useState("");
   const [selectedFacility, setSelectedFacility] = useState("");
+  const [searchError, setSearchError] = useState("");
 
   // State bộ lọc đang có hiệu lực (active filters) sau khi bấm Tìm kiếm
   const [activeFilters, setActiveFilters] = useState({
     typeId: "",
     sizeM2: "",
     startDate: "",
+    endDate: "",
     facilityId: "",
   });
 
@@ -61,11 +64,13 @@ export function useBrowseUnits() {
   // Hàm thực thi tìm kiếm kèm phân trang
   const fetchUnits = async (filters, sort, targetPage = 1) => {
     setLoading(true);
+    setSearchError("");
     try {
       const data = await searchUnits({
         typeId: filters.typeId,
         sizeM2: filters.sizeM2,
         startDate: filters.startDate,
+        endDate: filters.endDate,
         facilityId: filters.facilityId,
         sort,
         page: targetPage,
@@ -75,7 +80,8 @@ export function useBrowseUnits() {
       setUnits(sorted);
       setPage(data.page || targetPage);
       setTotal(Number(data.total ?? sorted.length));
-    } catch {
+    } catch (err) {
+      setSearchError(err.message || "Không thể tải danh sách kho.");
       setUnits([]);
       setTotal(0);
     } finally {
@@ -92,6 +98,7 @@ export function useBrowseUnits() {
           typeId: activeFilters.typeId,
           sizeM2: activeFilters.sizeM2,
           startDate: activeFilters.startDate,
+          endDate: activeFilters.endDate,
           facilityId: activeFilters.facilityId,
           sort: sortOrder,
           page: 1,
@@ -103,8 +110,9 @@ export function useBrowseUnits() {
           setPage(data.page || 1);
           setTotal(Number(data.total ?? sorted.length));
         }
-      } catch {
+      } catch (err) {
         if (!ignore) {
+          setSearchError(err.message || "Không thể tải danh sách kho.");
           setUnits([]);
           setTotal(0);
         }
@@ -138,6 +146,7 @@ export function useBrowseUnits() {
       typeId: selectedType,
       sizeM2: selectedSize,
       startDate,
+      endDate,
       facilityId: selectedFacility,
     };
     setActiveFilters(newFilters);
@@ -161,6 +170,7 @@ export function useBrowseUnits() {
       typeId: "",
       sizeM2: "",
       startDate,
+      endDate: "",
       facilityId: "",
     };
     setActiveFilters(reset);
@@ -221,6 +231,9 @@ export function useBrowseUnits() {
     setSelectedSize,
     startDate,
     setStartDate,
+    endDate,
+    setEndDate,
+    searchError,
     selectedFacility,
     setSelectedFacility,
     activeFilters,

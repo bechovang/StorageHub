@@ -43,6 +43,9 @@ public class CheckoutRequest {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    /** VIOLATION (đuổi vi phạm) / TRANSFER (đổi kho) — NULL = checkout thường (V20). */
+    private String checkoutType;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

@@ -4,18 +4,16 @@ import QRCode from "qrcode";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { paymentService } from "../../../services/paymentService.js";
 import { getUnitDetail } from "../../../services/unitService.js";
-import { PaymentValidator } from "../../../validation/index.js";
-
 
 /**
  * Chuẩn hoá thông điệp lỗi: bảo vệ người dùng khỏi các lỗi nội bộ, config keys, hoặc stack traces
  */
 function sanitizeErrorMessage(msg) {
   if (!msg || typeof msg !== 'string') {
-    return 'Giao dịch chưa thành công. Quý khách vui lòng thử lại hoặc chọn phương thức khác.';
+    return 'Giao dịch chưa thành công. Quý khách vui lòng thử lại sau.';
   }
   if (msg.includes('PAYOS_') || msg.toLowerCase().includes('payos chưa được cấu hình')) {
-    return 'Cổng thanh toán QR hiện đang tạm bảo trì kết nối. Quý khách vui lòng chọn phương thức thanh toán cọc khác.';
+    return 'Cổng thanh toán QR hiện đang tạm bảo trì kết nối. Quý khách vui lòng thử lại sau ít phút.';
   }
   if (msg.includes('Backend') || msg.includes('fetch') || msg.includes('8080') || msg.includes('NetworkError') || msg.includes('Failed to fetch')) {
     return 'Không thể kết nối đến máy chủ thanh toán. Quý khách vui lòng kiểm tra kết nối mạng và thử lại.';
@@ -26,26 +24,12 @@ function sanitizeErrorMessage(msg) {
   return msg;
 }
 
-const DEFAULT_DEMO_RESERVATION = {
-  id: 1,
-  code: "RSV-2026-S3",
-  status: "PENDING_PAYMENT",
-  depositAmount: 103500,
-  depositStatus: "UNPAID",
-  durationMonths: 3,
-  startDate: "2026-10-03",
-  endDate: "2027-01-03",
-  unit: {
-    code: "S-3",
-    sizeM2: 5,
-    typeName: "Indoor Climate-Controlled Storage",
-    monthlyPrice: 345000,
-    depot: "Tân Bình Gateway",
-    building: "Building B · Level 2",
-    dimensions: "2.0m (W) × 2.5m (L) × 2.8m (H)",
-    volume: "14.0 m³",
-  },
-};
+/** Cộng thêm n ngày vào chuỗi ngày yyyy-MM-dd */
+function addDays(dateStr, days) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
 
 export function usePayment() {
   const { reservationId: paramResId, paymentId: paramPayId, unitId: paramUnitId } = useParams();
@@ -58,9 +42,10 @@ export function usePayment() {
   const targetReservationId = paramResId || queryResId;
   const targetPaymentId = paramPayId || queryPayId;
 
-  // Trạng thái đơn đặt chỗ
-  const [reservation, setReservation] = useState(DEFAULT_DEMO_RESERVATION);
+  // Trạng thái đơn đặt chỗ (không dùng dữ liệu cứng — chỉ theo API)
+  const [reservation, setReservation] = useState(null);
   const [loadingReservation, setLoadingReservation] = useState(false);
+  const [reservationError, setReservationError] = useState("");
   const [myReservations, setMyReservations] = useState([]);
   const reservationRef = useRef(reservation);
   useEffect(() => {
@@ -70,20 +55,8 @@ export function usePayment() {
   // Trạng thái Modal (chỉ mở khi người dùng bấm nút tiến hành thanh toán cọc)
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Phương thức thanh toán ("CARD" | "MOMO" | "VNPAY")
-  const [selectedMethod, setSelectedMethod] = useState("CARD");
-
-  // Form thẻ
-  const [cardForm, setCardForm] = useState({
-    number: "4242 4242 4242 4242",
-    expiry: "12/28",
-    cvc: "123",
-    name: user?.fullName || "Nguyễn Thị Lan",
-  });
-
-  // Form MoMo
-  const [momoPhone, setMomoPhone] = useState(user?.phone || "0901234567");
-  const [otp, setOtp] = useState("");
+  // Phương thức thanh toán — Backend chỉ hỗ trợ PAYOS (QR)
+  const [selectedMethod, setSelectedMethod] = useState("PAYOS");
 
   // Phiên thanh toán & kết quả
   const [paymentSession, setPaymentSession] = useState(null);
@@ -95,7 +68,6 @@ export function usePayment() {
   const [submitting, setSubmitting] = useState(false);
   const [polling, setPolling] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
   const [apiError, setApiError] = useState("");
   const [payOsUnavailable, setPayOsUnavailable] = useState(false);
   const [notificationToast, setNotificationToast] = useState(null);
@@ -125,13 +97,13 @@ export function usePayment() {
         setPaymentHistory(data.items);
       }
     } catch {
-      // Bỏ qua lỗi phụ
+      // Bỏ qua lỗi phụ của lịch sử
     }
   }, []);
 
-  // Bắt đầu polling khi trạng thái cần chờ xác nhận (CARD / VNPAY)
+  // Bắt đầu polling khi chờ webhook PayOS xác nhận
   const startPolling = useCallback(
-    (paymentId, intervalMs = 1500) => {
+    (paymentId, intervalMs = 5000) => {
       stopPolling();
       setPolling(true);
 
@@ -150,7 +122,7 @@ export function usePayment() {
               setNotificationToast({
                 type: "PAYMENT_CONFIRMED",
                 title: "Thanh toán cọc thành công",
-                body: `Biên lai ${updated.receiptCode || "RT-2026-..."} đã được cấp.`,
+                body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp.`,
               });
               if (reservationRef.current?.id) {
                 loadPaymentHistory(reservationRef.current.id);
@@ -166,6 +138,29 @@ export function usePayment() {
     [stopPolling, loadPaymentHistory]
   );
 
+  /** Map ReservationDetail (API) sang state hiển thị — mô hình thuê theo ngày */
+  const mapDetailToReservation = useCallback((detail) => {
+    return {
+      id: detail.id,
+      code: detail.code || `RSV-${detail.id}`,
+      status: detail.status,
+      depositAmount: detail.depositAmount ?? detail.quote?.deposit ?? 0,
+      depositStatus: detail.depositStatus,
+      durationDays: detail.durationDays ?? null,
+      startDate: detail.startDate,
+      endDate: detail.endDate,
+      unit: {
+        code: detail.unit?.code || "",
+        sizeM2: detail.unit?.sizeM2 || 0,
+        typeName: detail.unit?.typeName || "",
+        baseDailyRent: detail.unit?.baseDailyRent || 0,
+        depot: detail.unit?.facilityName || "",
+        building: detail.unit?.zoneCode ? `Khu ${detail.unit.zoneCode}` : "",
+        floor: detail.unit?.floor,
+      },
+    };
+  }, []);
+
   // 1. Tải danh sách đơn đặt chỗ & chi tiết ban đầu
   useEffect(() => {
     let isMounted = true;
@@ -175,58 +170,39 @@ export function usePayment() {
 
       try {
         setLoadingReservation(true);
+        setReservationError("");
 
         if (paramUnitId) {
-          try {
-            const u = await getUnitDetail(paramUnitId);
-            const durationDaysParam = searchParams.get("durationDays") || searchParams.get("duration-days");
-            const durationMonthsParam = searchParams.get("durationMonths") || searchParams.get("duration");
-            const durationDays = durationDaysParam
-              ? Math.max(1, parseInt(durationDaysParam, 10))
-              : (durationMonthsParam ? Math.max(1, parseInt(durationMonthsParam, 10)) * 30 : 30);
-            const durationMonths = Math.max(1, Math.round(durationDays / 30));
-            const start = searchParams.get("startDate") || "2026-10-03";
-            const monthly = u.baseMonthlyRent || u.monthlyPrice || 345000;
-            const daily = Math.max(1, Math.round(monthly / 30));
-            const totalRent = (durationDays % 30 === 0) ? (monthly * (durationDays / 30)) : (daily * durationDays);
-            const deposit = Math.round(totalRent * 0.1);
+          // Flow /units/:unitId/book — chưa có đơn đặt chỗ, hiển thị nháp từ UnitDetail
+          const u = await getUnitDetail(paramUnitId);
+          const start =
+            searchParams.get("startDate") || new Date().toISOString().split("T")[0];
+          const end = searchParams.get("endDate") || addDays(start, 1);
+          const daily = Number(u.baseDailyRent || 0);
 
-            const sDate = new Date(start);
-            const eDate = new Date(sDate);
-            eDate.setDate(eDate.getDate() + durationDays - 1);
-
-            if (isMounted) {
-              setReservation({
-                id: null,
-                draftUnitId: Number(paramUnitId),
-                code: `Đơn mới · ${u.code || u.id}`,
-                status: "PENDING_PAYMENT",
-                depositAmount: deposit,
-                depositStatus: "UNPAID",
-                durationDays: durationDays,
-                durationMonths: durationMonths,
-                dailyRent: daily,
-                totalRent: totalRent,
-                startDate: start,
-                endDate: eDate.toISOString().split("T")[0],
-                unit: {
-                  code: u.code || `UNIT-${u.id}`,
-                  sizeM2: u.sizeM2 || 5,
-                  typeName: u.typeName || "Kho tiêu chuẩn",
-                  monthlyPrice: monthly,
-                  dailyPrice: daily,
-                  depot: u.facilityName || "Tân Bình Gateway",
-                  building: `Tòa nhà B · Tầng ${u.floor || 1}`,
-                  dimensions: u.dimensions || `${u.sizeM2} m²`,
-                  volume: `${(u.sizeM2 * 2.8).toFixed(1)} m³`,
-                },
-              });
-              setLoadingReservation(false);
-            }
-            return;
-          } catch {
-            // fallback
+          if (isMounted) {
+            setReservation({
+              id: null,
+              draftUnitId: Number(paramUnitId),
+              code: `Đơn mới · ${u.code || u.id}`,
+              status: "PENDING_PAYMENT",
+              depositAmount: 0,
+              depositStatus: "UNPAID",
+              durationDays: null,
+              startDate: start,
+              endDate: end,
+              unit: {
+                code: u.code || `UNIT-${u.id}`,
+                sizeM2: u.sizeM2 || 0,
+                typeName: u.typeName || "Kho tiêu chuẩn",
+                baseDailyRent: daily,
+                depot: u.facilityName || "",
+                building: u.floor ? `Tầng ${u.floor}` : "",
+                floor: u.floor,
+              },
+            });
           }
+          return;
         }
 
         const listData = await paymentService.listMyReservations({ group: "active" });
@@ -238,65 +214,40 @@ export function usePayment() {
         const resIdToFetch = targetReservationId || pendingItem?.id || listData?.items?.[0]?.id;
 
         if (resIdToFetch) {
-          try {
-            const detail = await paymentService.getReservation(resIdToFetch);
-            if (isMounted && detail) {
-              const isPaid =
-                detail.status === "RESERVED" ||
-                detail.depositStatus === "HELD" ||
-                detail.depositStatus === "PAID";
+          const detail = await paymentService.getReservation(resIdToFetch);
+          if (isMounted && detail) {
+            setReservation(mapDetailToReservation(detail));
+            loadPaymentHistory(resIdToFetch);
 
-              setReservation({
-                id: detail.id,
-                code: detail.code || `RSV-${detail.id}`,
-                status: detail.status,
-                depositAmount: detail.depositAmount || 103500,
-                depositStatus: detail.depositStatus || (isPaid ? "HELD" : "UNPAID"),
-                durationMonths: detail.durationMonths || 3,
-                startDate: detail.startDate || "2026-10-03",
-                endDate: detail.endDate || "2027-01-03",
-                unit: {
-                  code: detail.unit?.code || "S-3",
-                  sizeM2: detail.unit?.sizeM2 || 5,
-                  typeName: detail.unit?.typeName || "Indoor Climate-Controlled Storage",
-                  monthlyPrice: Math.round(
-                    ((detail.depositAmount || 103500) * 10) / (detail.durationMonths || 3)
-                  ),
-                  depot: "Tân Bình Gateway",
-                  building: "Building B · Level 2",
-                  dimensions: "2.0m (W) × 2.5m (L) × 2.8m (H)",
-                  volume: "14.0 m³",
-                },
-              });
-
-              loadPaymentHistory(resIdToFetch);
-
-              if (isPaid) {
-                try {
-                  const history = await paymentService.listPayments({ reservationId: resIdToFetch });
-                  const successPayment = history?.items?.find(
-                    (p) => p.purpose === "DEPOSIT" && p.status === "SUCCEEDED"
-                  );
-                  if (isMounted && successPayment) {
-                    setPaymentSession({
-                      id: successPayment.id,
-                      status: "SUCCEEDED",
-                      receiptCode: successPayment.receiptCode,
-                      amount: successPayment.amount,
-                      method: successPayment.method,
-                    });
-                  }
-                } catch {
-                  // ignore
+            const isPaid =
+              detail.status === "RESERVED" ||
+              detail.depositStatus === "HELD" ||
+              detail.depositStatus === "PAID";
+            if (isPaid) {
+              try {
+                const history = await paymentService.listPayments({ reservationId: resIdToFetch });
+                const successPayment = history?.items?.find(
+                  (p) => p.purpose === "DEPOSIT" && p.status === "SUCCEEDED"
+                );
+                if (isMounted && successPayment) {
+                  setPaymentSession({
+                    id: successPayment.id,
+                    status: "SUCCEEDED",
+                    receiptCode: successPayment.receiptCode,
+                    amount: successPayment.amount,
+                    method: successPayment.method,
+                  });
                 }
+              } catch {
+                // Bỏ qua lỗi phụ tải biên lai cũ
               }
             }
-          } catch {
-            // Giữ demo fallback nếu không gọi được API
           }
         }
-      } catch {
-        // Dự phòng fallback
+      } catch (err) {
+        if (isMounted) {
+          setReservationError(err.message || "Không thể tải thông tin đơn đặt chỗ.");
+        }
       } finally {
         if (isMounted) setLoadingReservation(false);
       }
@@ -312,6 +263,7 @@ export function usePayment() {
     searchParams,
     targetReservationId,
     loadPaymentHistory,
+    mapDetailToReservation,
   ]);
 
   // 2. Tải phiên thanh toán nếu có paymentId trong param
@@ -328,53 +280,23 @@ export function usePayment() {
             try {
               const detail = await paymentService.getReservation(session.reservationId);
               if (detail) {
-                const isPaid =
-                  detail.status === "RESERVED" || detail.depositStatus === "HELD";
-                setReservation({
-                  id: detail.id,
-                  code: detail.code || `RSV-${detail.id}`,
-                  status: detail.status,
-                  depositAmount: detail.depositAmount || 0,
-                  depositStatus: detail.depositStatus || (isPaid ? "HELD" : "UNPAID"),
-                  durationMonths: detail.durationMonths || 3,
-                  startDate: detail.startDate,
-                  endDate: detail.endDate,
-                  unit: {
-                    code: detail.unit?.code || "",
-                    sizeM2: detail.unit?.sizeM2 || 5,
-                    typeName: detail.unit?.typeName || "Kho tiêu chuẩn",
-                    monthlyPrice: Math.round(
-                      ((detail.depositAmount || 0) * 10) / (detail.durationMonths || 3)
-                    ),
-                    depot: "Tân Bình Gateway",
-                    building: "Building B · Level 2",
-                    dimensions: "",
-                    volume: "",
-                  },
-                });
+                setReservation(mapDetailToReservation(detail));
                 loadPaymentHistory(session.reservationId);
               }
             } catch {
-              // vẫn giữ phiên thanh toán; reservation chỉ để hiển thị
+              // Vẫn giữ phiên thanh toán; reservation chỉ để hiển thị
             }
           }
 
-          if (
-            session.status === "PROCESSING" ||
-            (session.status === "PENDING" &&
-              (session.method === "PAYOS"))
-          ) {
-            startPolling(
-              session.id,
-              session.method === "PAYOS" ? 5000 : 1500
-            );
+          if (session.status === "PENDING" && session.method === "PAYOS") {
+            startPolling(session.id, 5000);
           }
         })
         .catch((err) => {
           setApiError(err.message || "Không thể tải phiên thanh toán.");
         });
     }
-  }, [targetPaymentId, isAuthenticated, startPolling, loadPaymentHistory]);
+  }, [targetPaymentId, isAuthenticated, startPolling, loadPaymentHistory, mapDetailToReservation]);
 
   // 3. Render mã QR khi có qrPayload
   useEffect(() => {
@@ -399,7 +321,7 @@ export function usePayment() {
 
   // 4. Đồng hồ đếm ngược 1s tick
   useEffect(() => {
-    const expiresAt = paymentSession?.otpExpiresAt || paymentSession?.qrExpiresAt;
+    const expiresAt = paymentSession?.qrExpiresAt;
     if (
       !expiresAt ||
       paymentSession?.status === "SUCCEEDED" ||
@@ -413,7 +335,7 @@ export function usePayment() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [paymentSession?.otpExpiresAt, paymentSession?.qrExpiresAt, paymentSession?.status]);
+  }, [paymentSession?.qrExpiresAt, paymentSession?.status]);
 
   // Dọn dẹp polling khi unmount
   useEffect(() => {
@@ -421,7 +343,7 @@ export function usePayment() {
   }, [stopPolling]);
 
   // Tính countdown (giây)
-  const expiresAt = paymentSession?.otpExpiresAt || paymentSession?.qrExpiresAt;
+  const expiresAt = paymentSession?.qrExpiresAt;
   const countdown =
     expiresAt && paymentSession?.status === "PENDING"
       ? Math.max(0, Math.floor((new Date(expiresAt).getTime() - now) / 1000))
@@ -434,79 +356,23 @@ export function usePayment() {
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const handleCardNumberChange = (e) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 19);
-    const formatted = raw.replace(/(\d{4})(?=\d)/g, "$1 ");
-    setCardForm((prev) => ({ ...prev, number: formatted }));
-    if (formErrors.number) setFormErrors((prev) => ({ ...prev, number: null }));
-  };
-
-  const handleExpiryChange = (e) => {
-    let raw = e.target.value.replace(/\D/g, "").slice(0, 4);
-    if (raw.length >= 3) {
-      raw = raw.slice(0, 2) + " / " + raw.slice(2);
-    }
-    setCardForm((prev) => ({ ...prev, expiry: raw }));
-    if (formErrors.expiry) setFormErrors((prev) => ({ ...prev, expiry: null }));
-  };
-
-  const handleCardFormChange = (field, val) => {
-    setCardForm((prev) => ({ ...prev, [field]: val }));
-    if (formErrors[field]) setFormErrors((prev) => ({ ...prev, [field]: null }));
-  };
-
-  const handleApplyCardPreset = (type) => {
-    if (type === "success") {
-      setCardForm({
-        number: "4242 4242 4242 4242",
-        expiry: "12/28",
-        cvc: "123",
-        name: "Nguyễn Thị Lan",
-      });
-    } else {
-      setCardForm({
-        number: "5555 5555 5555 5555",
-        expiry: "09/27",
-        cvc: "888",
-        name: "Nguyễn Thị Lan",
-      });
-    }
-    setFormErrors({});
-  };
-
   const handleInitiatePayment = useCallback(
     async (e, overrideMethod) => {
       if (e && e.preventDefault) e.preventDefault();
       setApiError("");
-      setFormErrors({});
 
-      const methodToUse = overrideMethod || selectedMethod;
-
-      if (methodToUse === "CARD") {
-        const val = PaymentValidator.validateCardForm(cardForm);
-        if (!val.isValid) {
-          setFormErrors(val.errors);
-          return;
-        }
-      } else if (methodToUse === "MOMO") {
-        const val = PaymentValidator.validateMomoForm({ momoPhone });
-        if (!val.isValid) {
-          setFormErrors(val.errors);
-          return;
-        }
-      }
+      const methodToUse = overrideMethod || selectedMethod || "PAYOS";
 
       setSubmitting(true);
-      let reservationId = reservation.id;
+      let reservationId = reservation?.id;
       try {
         // Flow /units/:unitId/book chưa có reservation — tạo thật trước khi trả
         // tiền để backend ownership check có id đúng (không dùng unitId).
-        if (!reservationId && reservation.draftUnitId) {
+        if (!reservationId && reservation?.draftUnitId) {
           const created = await paymentService.createReservation({
             unitId: reservation.draftUnitId,
             startDate: reservation.startDate,
-            durationDays: reservation.durationDays,
-            durationMonths: reservation.durationMonths || 3,
+            endDate: reservation.endDate,
           });
           reservationId = created.id;
           setReservation((prev) => ({
@@ -515,7 +381,7 @@ export function usePayment() {
             code: created.code,
             status: created.status,
             depositAmount: created.depositAmount,
-            durationDays: created.durationDays || prev.durationDays,
+            durationDays: created.durationDays,
             draftUnitId: undefined,
           }));
           loadPaymentHistory(created.id);
@@ -529,14 +395,12 @@ export function usePayment() {
           purpose: "DEPOSIT",
           reservationId,
           method: methodToUse,
-          card: methodToUse === "CARD" ? cardForm : undefined,
-          momoPhone: methodToUse === "MOMO" ? momoPhone : undefined,
         });
 
         setPaymentSession(session);
 
-        // Demo CARD/MOMO/VNPAY auto-complete ~1 nhịp poll; PayOS chờ webhook.
-        startPolling(session.id, methodToUse === "PAYOS" ? 5000 : 800);
+        // PayOS chờ webhook — poll định kỳ
+        startPolling(session.id, 5000);
       } catch (err) {
         if (err.code === "PAYMENT_DUPLICATE") {
           setApiError(null);
@@ -569,14 +433,14 @@ export function usePayment() {
                 return;
               }
             } catch {
-              // fallback
+              // Lỗi phụ khi đối soát lại đơn đã thanh toán
             }
           }
           setApiError("Khoản cọc này đã được thanh toán hoặc đang trong phiên xử lý.");
         } else {
           if (methodToUse === "PAYOS") {
             setPayOsUnavailable(true);
-            setApiError("");
+            setApiError(sanitizeErrorMessage(err.message));
           } else {
             setApiError(sanitizeErrorMessage(err.message));
           }
@@ -585,59 +449,15 @@ export function usePayment() {
         setSubmitting(false);
       }
     },
-    [cardForm, momoPhone, reservation, selectedMethod, startPolling, loadPaymentHistory]
+    [reservation, selectedMethod, startPolling, loadPaymentHistory]
   );
-
-  const handleConfirmOtp = async (e) => {
-    if (e) e.preventDefault();
-    setApiError("");
-
-    const otpValidation = PaymentValidator.validateOtp(otp);
-    if (otpValidation) {
-      setFormErrors({ otp: otpValidation });
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const result = await paymentService.confirmPayment(paymentSession.id, { otp });
-      setPaymentResult(result);
-
-      if (result.payment?.status === "SUCCEEDED") {
-        setPaymentSession((prev) => ({
-          ...prev,
-          status: "SUCCEEDED",
-          receiptCode: result.receipt?.receiptCode || result.payment?.receiptCode,
-        }));
-        if (result.notification) {
-          setNotificationToast(result.notification);
-        }
-        if (reservationRef.current?.id) {
-          loadPaymentHistory(reservationRef.current.id);
-        }
-      } else {
-        setPaymentSession((prev) => ({ ...prev, status: "FAILED" }));
-      }
-    } catch (err) {
-      if (err.code === "PAYMENT_EXPIRED") {
-        setPaymentSession((prev) => ({ ...prev, status: "EXPIRED" }));
-        setApiError("Phiên thanh toán OTP đã hết hạn (quá 5 phút).");
-      } else {
-        setApiError(err.message || "Xác thực OTP không thành công.");
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleResetOrSwitch = (newMethod) => {
     stopPolling();
     setPaymentSession(null);
     setPaymentResult(null);
     setQrDataUrl("");
-    setOtp("");
     setApiError("");
-    setFormErrors({});
     setPayOsUnavailable(false);
     if (newMethod) {
       setSelectedMethod(newMethod);
@@ -650,7 +470,6 @@ export function usePayment() {
   const handleSelectMethod = useCallback(
     (m) => {
       setSelectedMethod(m);
-      setFormErrors({});
       setApiError("");
       if (m === "PAYOS") {
         if (
@@ -675,16 +494,6 @@ export function usePayment() {
     setApiError("");
 
     try {
-      if (String(paymentSession.id).startsWith("vnpay-mock") || !isAuthenticated) {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        setNotificationToast({
-          type: "PAYMENT_PENDING",
-          title: "Chưa nhận được thanh toán",
-          body: "Hệ thống chưa ghi nhận tiền cọc từ ứng dụng ngân hàng. Vui lòng quét mã QR hoặc bấm 'Giả lập quét thành công' để kiểm thử.",
-        });
-        return;
-      }
-
       const updated = await paymentService.getPayment(paymentSession.id);
       setPaymentSession(updated);
 
@@ -693,7 +502,7 @@ export function usePayment() {
         setNotificationToast({
           type: "PAYMENT_CONFIRMED",
           title: "Thanh toán cọc thành công",
-          body: `Biên lai ${updated.receiptCode || "RT-2026-..."} đã được cấp. Đơn đặt chỗ đã chuyển sang trạng thái RESERVED.`,
+          body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn đặt chỗ đã chuyển sang trạng thái RESERVED.`,
         });
         if (reservationRef.current?.id) {
           loadPaymentHistory(reservationRef.current.id);
@@ -710,34 +519,39 @@ export function usePayment() {
           body: "Hệ thống chưa nhận được tiền từ ngân hàng. Vui lòng hoàn tất quét mã và bấm 'Làm mới' lại sau ít giây.",
         });
       }
-    } catch {
-      setNotificationToast({
-        type: "PAYMENT_PENDING",
-        title: "Đang kiểm tra...",
-        body: "Chưa ghi nhận giao dịch thành công. Vui lòng thử lại sau.",
-      });
+    } catch (err) {
+      setApiError(err.message || "Không thể kiểm tra trạng thái thanh toán.");
     } finally {
       setCheckingStatus(false);
     }
   };
 
-  const handleSimulateVNPaySuccess = () => {
-    stopPolling();
-    const mockReceipt = `REC-VNPAY-${Date.now().toString().slice(-6)}`;
-    setPaymentSession((prev) => ({
-      ...(prev || {}),
-      status: "SUCCEEDED",
-      receiptCode: mockReceipt,
-      amount: reservation?.depositAmount || 103500,
-      method: "VNPAY",
-    }));
-    setNotificationToast({
-      type: "PAYMENT_CONFIRMED",
-      title: "Thanh toán cọc thành công",
-      body: `Biên lai ${mockReceipt} đã được cấp. Đơn đặt chỗ đã chuyển sang trạng thái RESERVED.`,
-    });
-    if (reservationRef.current?.id) {
-      loadPaymentHistory(reservationRef.current.id);
+  /**
+   * DEMO ONLY: Bỏ qua thanh toán — gọi /payments/{id}/demo-complete rồi refresh
+   * phiên như luồng poll bình thường. Lỗi 400 (demo bị tắt) hiển thị message.
+   */
+  const handleDemoCompletePayment = async () => {
+    if (!paymentSession?.id) return;
+    setCheckingStatus(true);
+    setApiError("");
+    try {
+      const updated = await paymentService.demoCompletePayment(paymentSession.id);
+      setPaymentSession(updated);
+      stopPolling();
+      if (updated.status === "SUCCEEDED") {
+        setNotificationToast({
+          type: "PAYMENT_CONFIRMED",
+          title: "Đã bỏ qua thanh toán (Demo)",
+          body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn đặt chỗ đã chuyển sang trạng thái RESERVED.`,
+        });
+        if (reservationRef.current?.id) {
+          loadPaymentHistory(reservationRef.current.id);
+        }
+      }
+    } catch (err) {
+      setApiError(err.message || "Không thể bỏ qua thanh toán (demo).");
+    } finally {
+      setCheckingStatus(false);
     }
   };
 
@@ -746,6 +560,8 @@ export function usePayment() {
       setLoadingReservation(true);
       setApiError("");
       const today = new Date().toISOString().split("T")[0];
+      const start = today;
+      const end = addDays(today, 30);
       const candidateUnits = [4, 5, 7, 8, 9, 10, 12, 13, 14, 2];
       let created = null;
 
@@ -753,12 +569,12 @@ export function usePayment() {
         try {
           created = await paymentService.createReservation({
             unitId: uId,
-            startDate: today,
-            durationMonths: 3,
+            startDate: start,
+            endDate: end,
           });
           if (created?.id) break;
         } catch {
-          // ignore
+          // Kho đã bận — thử kho kế tiếp
         }
       }
 
@@ -766,26 +582,7 @@ export function usePayment() {
         throw new Error("Không còn kho mẫu nào khả dụng để tạo đơn mới.");
       }
 
-      setReservation({
-        id: created.id,
-        code: created.code || `BK-${created.id}`,
-        status: created.status || "PENDING_PAYMENT",
-        depositAmount: created.depositAmount || 103500,
-        depositStatus: "UNPAID",
-        durationMonths: created.durationMonths || 3,
-        startDate: created.startDate || today,
-        endDate: created.endDate,
-        unit: {
-          code: created.unit?.code || "S-4",
-          sizeM2: created.unit?.sizeM2 || 5,
-          typeName: created.unit?.typeName || "Standard Storage",
-          monthlyPrice: Math.round(((created.depositAmount || 103500) * 10) / 3),
-          depot: "Tân Bình Gateway",
-          building: "Building B · Level 2",
-          dimensions: "2.0m × 2.5m × 2.8m",
-          volume: "14.0 m³",
-        },
-      });
+      setReservation(mapDetailToReservation(created));
 
       handleResetOrSwitch();
       setPaymentHistory([]);
@@ -795,7 +592,7 @@ export function usePayment() {
         const listData = await paymentService.listMyReservations({ group: "active" });
         if (listData?.items) setMyReservations(listData.items);
       } catch {
-        // ignore
+        // Bỏ qua lỗi phụ tải danh sách
       }
     } catch (err) {
       setApiError(err.message || "Không thể tạo đơn đặt chỗ thử nghiệm.");
@@ -810,34 +607,7 @@ export function usePayment() {
       setApiError("");
       const detail = await paymentService.getReservation(resId);
       if (detail) {
-        const isPaid =
-          detail.status === "RESERVED" ||
-          detail.depositStatus === "HELD" ||
-          detail.depositStatus === "PAID";
-
-        setReservation({
-          id: detail.id,
-          code: detail.code || `RSV-${detail.id}`,
-          status: detail.status,
-          depositAmount: detail.depositAmount || 103500,
-          depositStatus: detail.depositStatus || (isPaid ? "HELD" : "UNPAID"),
-          durationMonths: detail.durationMonths || 3,
-          startDate: detail.startDate || "2026-10-03",
-          endDate: detail.endDate || "2027-01-03",
-          unit: {
-            code: detail.unit?.code || "S-3",
-            sizeM2: detail.unit?.sizeM2 || 5,
-            typeName: detail.unit?.typeName || "Indoor Climate-Controlled Storage",
-            monthlyPrice: Math.round(
-              ((detail.depositAmount || 103500) * 10) / (detail.durationMonths || 3)
-            ),
-            depot: "Tân Bình Gateway",
-            building: "Building B · Level 2",
-            dimensions: "2.0m (W) × 2.5m (L) × 2.8m (H)",
-            volume: "14.0 m³",
-          },
-        });
-
+        setReservation(mapDetailToReservation(detail));
         handleResetOrSwitch();
         loadPaymentHistory(resId);
       }
@@ -866,15 +636,11 @@ export function usePayment() {
     navigate,
     reservation,
     loadingReservation,
+    reservationError,
     myReservations,
     isModalOpen,
     setIsModalOpen,
     selectedMethod,
-    cardForm,
-    momoPhone,
-    setMomoPhone,
-    otp,
-    setOtp,
     paymentSession,
     paymentResult,
     qrDataUrl,
@@ -883,8 +649,6 @@ export function usePayment() {
     submitting,
     polling,
     checkingStatus,
-    formErrors,
-    setFormErrors,
     apiError,
     notificationToast,
     paymentHistory,
@@ -893,16 +657,11 @@ export function usePayment() {
     copiedCode,
     isAlreadyPaid,
     payOsUnavailable,
-    handleCardNumberChange,
-    handleExpiryChange,
-    handleCardFormChange,
-    handleApplyCardPreset,
     handleInitiatePayment,
-    handleConfirmOtp,
     handleResetOrSwitch,
     handleSelectMethod,
     handleCheckPaymentStatus,
-    handleSimulateVNPaySuccess,
+    handleDemoCompletePayment,
     handleCreateTestReservation,
     handleSelectReservation,
     handleCopyReceipt,

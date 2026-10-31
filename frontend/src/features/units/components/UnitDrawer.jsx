@@ -22,10 +22,10 @@ export function UnitDrawer({
   selectedUnit,
   drawerTab,
   setDrawerTab,
-  editPrice,
-  setEditPrice,
   editSizeM2,
   setEditSizeM2,
+  editFloor,
+  setEditFloor,
   editNotes,
   setEditNotes,
   unitLogs,
@@ -216,29 +216,38 @@ export function UnitDrawer({
               </div>
             </div>
 
-            <div className="form-section-header mt-4">
-              <span className="form-section-title">CHỈNH SỬA THÔNG SỐ CƠ BẢN</span>
-              <span className="form-section-sub">Cập nhật giá niêm yết và diện tích đo đạc thực tế</span>
+            <div className="drawer-kv-grid mt-4">
+              <div className="drawer-kv-item">
+                <span className="drawer-kv-label">Khu vực:</span>
+                <span className="drawer-kv-value font-semibold">{selectedUnit.zone || "—"}</span>
+              </div>
+              <div className="drawer-kv-item">
+                <span className="drawer-kv-label">Loại kho:</span>
+                <span className="drawer-kv-value font-mono">{selectedUnit.typeName || "—"}</span>
+              </div>
+              <div className="drawer-kv-item">
+                <span className="drawer-kv-label">Kiểu ra vào:</span>
+                <span className="drawer-kv-value text-muted">
+                  {selectedUnit.accessType || "—"}
+                </span>
+              </div>
+              <div className="drawer-kv-item">
+                <span className="drawer-kv-label">Trạng thái:</span>
+                <span className="drawer-kv-value text-success font-semibold">
+                  {getUnitStatusLabel(selectedUnit.status) || STATUS_LABELS[selectedUnit.status]?.text || selectedUnit.status}
+                </span>
+              </div>
             </div>
 
-            <div className="drawer-form-row">
-              <div className="form-group">
-                <label htmlFor="edit-price" className="form-label">
-                  Giá thuê niêm yết (VND / tháng):
-                </label>
-                <div className="input-group-addon">
-                  <input
-                    id="edit-price"
-                    type="number"
-                    className="form-input font-mono"
-                    value={editPrice}
-                    onChange={(e) => setEditPrice(e.target.value)}
-                    required
-                  />
-                  <span className="input-addon font-mono">₫ / tháng</span>
-                </div>
-              </div>
+            <div className="form-section-header mt-4">
+              <span className="form-section-title">CHỈNH SỬA THÔNG SỐ CƠ BẢN</span>
+              <span className="form-section-sub">Cập nhật diện tích và thông tin vị trí</span>
+            </div>
+            <p className="text-muted text-xs mb-3">
+              Lưu ý: Đơn giá thuê kho được quản lý tập trung tại trang Chính sách thuê (Policy) — không chỉnh tại đây.
+            </p>
 
+            <div className="drawer-form-row">
               <div className="form-group">
                 <label htmlFor="edit-size" className="form-label">
                   Diện tích sử dụng (m²):
@@ -256,9 +265,22 @@ export function UnitDrawer({
                   <span className="input-addon font-mono">m²</span>
                 </div>
               </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-floor" className="form-label">
+                  Tầng:
+                </label>
+                <input
+                  id="edit-floor"
+                  type="number"
+                  className="form-input font-mono"
+                  value={editFloor}
+                  onChange={(e) => setEditFloor(e.target.value)}
+                />
+              </div>
             </div>
 
-            <div className="form-group">
+<div className="form-group">
               <label htmlFor="edit-notes" className="form-label">
                 Ghi chú vận hành cơ sở:
               </label>

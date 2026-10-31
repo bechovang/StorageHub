@@ -53,10 +53,7 @@ export default function BrowseUnitDrawer({
     "Tiêu chuẩn";
   const facilityName =
     selectedUnit.facilityName || "Cơ sở Tân Bình (TP.HCM)";
-  const price =
-    selectedUnit.baseMonthlyRent ||
-    selectedUnit.monthlyPrice ||
-    0;
+  const price = selectedUnit.baseDailyRent || 0;
   const capacity = getCapacityHint(selectedUnit.sizeM2);
   const isSoon =
     (typeof selectedUnit.availability === "object"
@@ -78,7 +75,7 @@ export default function BrowseUnitDrawer({
           <div className="browse-drawer-footer__price">
             <div className="browse-drawer-footer__price-val">
               <strong>{formatVND(price)}</strong>
-              <span className="browse-drawer-footer__price-period">/ tháng</span>
+              <span className="browse-drawer-footer__price-period">/ ngày</span>
             </div>
           </div>
           <div className="browse-drawer-footer__actions">
@@ -116,7 +113,7 @@ export default function BrowseUnitDrawer({
               {isSoon ? "Sắp khả dụng" : "Còn trống · Cọc để giữ chỗ"}
             </Badge>
             <span className="browse-drawer-rent-pill">
-              {formatVND(price)} / tháng
+              {formatVND(price)} / ngày
             </span>
           </div>
         </div>
@@ -181,12 +178,12 @@ export default function BrowseUnitDrawer({
             <div className="spec-row">
               <dt>Giá thuê niêm yết</dt>
               <dd style={{ color: "var(--color-ink)", fontWeight: 700 }}>
-                {formatVND(price)} / tháng
+                {formatVND(price)} / ngày
               </dd>
             </div>
             <div className="spec-row">
               <dt>Tiền đặt cọc (hoàn lại khi trả kho)</dt>
-              <dd>{formatVND(price)} (1 tháng)</dd>
+              <dd>10% tổng tiền thuê (tối thiểu 5.000 ₫)</dd>
             </div>
             <div className="spec-row">
               <dt>Thời gian bàn giao</dt>
@@ -198,7 +195,7 @@ export default function BrowseUnitDrawer({
             </div>
             <div className="spec-row">
               <dt>Thời hạn thuê</dt>
-              <dd>Thuê theo tháng · Gia hạn linh hoạt khi có nhu cầu</dd>
+              <dd>Thuê theo ngày · Gia hạn linh hoạt khi có nhu cầu</dd>
             </div>
           </dl>
         </div>

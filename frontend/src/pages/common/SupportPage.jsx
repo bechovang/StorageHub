@@ -17,6 +17,8 @@ export default function SupportPage() {
     statusFilter,
     setStatusFilter,
     tickets,
+    ticketsLoading,
+    ticketsError,
     filteredTickets,
     rentedUnits,
     showCreateModal,
@@ -140,7 +142,19 @@ export default function SupportPage() {
 
           {/* Ticket Cards List */}
           <div className="ticket-list">
-            {filteredTickets.length === 0 ? (
+            {ticketsError ? (
+              <div style={{ background: "#ffffff", border: "1px solid #d7d7d7", padding: "48px 24px", textAlign: "center" }}>
+                <p style={{ margin: 0, color: "var(--color-danger, #dc2626)", fontSize: "0.9rem" }}>
+                  {ticketsError}
+                </p>
+              </div>
+            ) : ticketsLoading ? (
+              <div style={{ background: "#ffffff", border: "1px solid #d7d7d7", padding: "48px 24px", textAlign: "center" }}>
+                <p style={{ margin: 0, color: "var(--color-muted)", fontSize: "0.9rem" }}>
+                  Đang tải danh sách yêu cầu hỗ trợ...
+                </p>
+              </div>
+            ) : filteredTickets.length === 0 ? (
               <div style={{ background: "#ffffff", border: "1px solid #d7d7d7", padding: "48px 24px", textAlign: "center" }}>
                 <p style={{ margin: 0, color: "var(--color-muted)", fontSize: "0.9rem" }}>
                   Không có yêu cầu hỗ trợ nào trong danh mục này.

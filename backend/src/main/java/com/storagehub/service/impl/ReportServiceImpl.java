@@ -4,8 +4,11 @@ import com.storagehub.dto.report.DrilldownColumn;
 import com.storagehub.dto.report.DrilldownResponse;
 import com.storagehub.dto.report.FinancialSummaryResponse;
 import com.storagehub.dto.report.MonthlyRevenueItemResponse;
+import com.storagehub.entity.Contract;
 import com.storagehub.entity.Payment;
+import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Unit;
+import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.UnitRepository;
 import com.storagehub.service.ReportService;
@@ -15,167 +18,190 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
+/**
+ * Báo cáo tài chính đọc TRỰC TIẾP từ bảng payments/units/contracts — không số liệu giả.
+ * Doanh thu = payment SUCCEEDED (RENT + EXTENSION_FEE); phụ thu = DAMAGE_FEE +
+ * EXTRA_FEE; cọc Escrow = DEPOSIT (không tính vào doanh thu).
+ */
 @Service
 public class ReportServiceImpl implements ReportService {
 
+    private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final DateTimeFormatter VN_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private final PaymentRepository paymentRepository;
     private final UnitRepository unitRepository;
+    private final ContractRepository contractRepository;
+    private final com.storagehub.repository.ReservationRepository reservationRepository;
 
     public ReportServiceImpl(
             PaymentRepository paymentRepository,
-            UnitRepository unitRepository
+            UnitRepository unitRepository,
+            ContractRepository contractRepository,
+            com.storagehub.repository.ReservationRepository reservationRepository
     ) {
         this.paymentRepository = paymentRepository;
         this.unitRepository = unitRepository;
+        this.contractRepository = contractRepository;
+        this.reservationRepository = reservationRepository;
+    }
+
+    private record Bucket(long netRevenue, long surchargeRevenue, long escrowDeposit) {
+        long gross() {
+            return netRevenue + surchargeRevenue;
+        }
+    }
+
+    private Bucket bucketFor(LocalDate rangeStart, LocalDate rangeEnd, List<Payment> succeededPayments) {
+        long net = 0;
+        long surcharge = 0;
+        long escrow = 0;
+        for (Payment p : succeededPayments) {
+            LocalDate pDate = p.getCreatedAt() != null
+                    ? p.getCreatedAt().atZone(ZoneId.of("UTC")).withZoneSameInstant(ICT_ZONE).toLocalDate()
+                    : null;
+            if (pDate == null || pDate.isBefore(rangeStart) || pDate.isAfter(rangeEnd)) {
+                continue;
+            }
+            long amt = p.getAmount() != null ? p.getAmount().longValue() : 0L;
+            switch (p.getPurpose()) {
+                case RENT, EXTENSION_FEE -> net += amt;
+                case DAMAGE_FEE, EXTRA_FEE -> surcharge += amt;
+                case DEPOSIT -> escrow += amt;
+            }
+        }
+        return new Bucket(net, surcharge, escrow);
+    }
+
+    private String growthText(long current, long previous) {
+        if (previous <= 0) {
+            return current > 0 ? "Kỳ trước chưa có doanh thu" : "Chưa có doanh thu trong kỳ";
+        }
+        double pct = Math.round(((double) (current - previous) / previous) * 1000.0) / 10.0;
+        return (pct >= 0 ? "+" : "") + pct + "% so với kỳ trước";
     }
 
     @Override
     @Transactional(readOnly = true)
     public FinancialSummaryResponse getFinancialSummary(String period, LocalDate startDate, LocalDate endDate) {
-        String periodKey = (period != null && !period.isBlank()) ? period.toUpperCase(Locale.ROOT) : "THIS_QUARTER";
-
-        String periodLabel = switch (periodKey) {
-            case "THIS_MONTH" -> "Tháng này (10/2026)";
-            case "LAST_MONTH" -> "Tháng trước (09/2026)";
-            case "YTD" -> "YTD 2026 (01/01/2026 – 31/10/2026)";
-            case "CUSTOM" -> "Khoảng ngày tùy chọn" + (startDate != null && endDate != null ? " (" + startDate + " – " + endDate + ")" : "");
-            default -> "Quý này (Q3 2026)";
-        };
+        String periodKey = (period != null && !period.isBlank()) ? period.toUpperCase(Locale.ROOT) : "THIS_MONTH";
+        LocalDate today = LocalDate.now(ICT_ZONE);
 
         LocalDate rangeStart;
         LocalDate rangeEnd;
-        String growthText;
+        LocalDate prevStart;
+        LocalDate prevEnd;
+        String periodLabel;
 
         switch (periodKey) {
-            case "THIS_MONTH" -> {
-                rangeStart = LocalDate.of(2026, 10, 1);
-                rangeEnd = LocalDate.of(2026, 10, 31);
-                growthText = "+8.4% so với tháng 9";
-            }
             case "LAST_MONTH" -> {
-                rangeStart = LocalDate.of(2026, 9, 1);
-                rangeEnd = LocalDate.of(2026, 9, 30);
-                growthText = "+5.1% so với tháng 8";
+                rangeStart = today.minusMonths(1).withDayOfMonth(1);
+                rangeEnd = rangeStart.withDayOfMonth(rangeStart.lengthOfMonth());
+                prevStart = rangeStart.minusMonths(1);
+                prevEnd = prevStart.withDayOfMonth(prevStart.lengthOfMonth());
+                periodLabel = "Tháng trước (" + rangeStart.format(DateTimeFormatter.ofPattern("MM/yyyy")) + ")";
             }
             case "THIS_QUARTER" -> {
-                rangeStart = LocalDate.of(2026, 10, 1);
-                rangeEnd = LocalDate.of(2026, 12, 31);
-                growthText = "+12.4% so với Q3 2026";
+                int qStart = ((today.getMonthValue() - 1) / 3) * 3 + 1;
+                rangeStart = LocalDate.of(today.getYear(), qStart, 1);
+                rangeEnd = rangeStart.plusMonths(3).minusDays(1);
+                prevStart = rangeStart.minusMonths(3);
+                prevEnd = rangeEnd.minusMonths(3);
+                periodLabel = "Quý này (" + rangeStart.getYear() + " Q" + ((qStart - 1) / 3 + 1) + ")";
             }
             case "YTD" -> {
-                rangeStart = LocalDate.of(2026, 1, 1);
-                rangeEnd = LocalDate.of(2026, 12, 31);
-                growthText = "+19.8% YoY 2025";
+                rangeStart = today.withDayOfYear(1);
+                rangeEnd = today;
+                prevStart = rangeStart.minusYears(1);
+                prevEnd = rangeEnd.minusYears(1);
+                periodLabel = "YTD " + today.getYear();
             }
             case "CUSTOM" -> {
-                rangeStart = startDate != null ? startDate : LocalDate.of(2026, 10, 1);
-                rangeEnd = endDate != null ? endDate : LocalDate.of(2026, 10, 31);
-                growthText = "Theo khoảng ngày tùy chọn";
+                rangeStart = startDate != null ? startDate : today.withDayOfMonth(1);
+                rangeEnd = endDate != null ? endDate : today;
+                long days = Math.max(1, java.time.temporal.ChronoUnit.DAYS.between(rangeStart, rangeEnd) + 1);
+                prevStart = rangeStart.minusDays(days);
+                prevEnd = rangeStart.minusDays(1);
+                periodLabel = "Tùy chọn (" + rangeStart + " – " + rangeEnd + ")";
             }
-            default -> {
-                rangeStart = LocalDate.of(2026, 10, 1);
-                rangeEnd = LocalDate.of(2026, 12, 31);
-                growthText = "+12.4% so với kỳ trước";
+            default -> { // THIS_MONTH
+                rangeStart = today.withDayOfMonth(1);
+                rangeEnd = today.withDayOfMonth(today.lengthOfMonth());
+                prevStart = rangeStart.minusMonths(1);
+                prevEnd = rangeEnd.minusMonths(1);
+                periodLabel = "Tháng này (" + rangeStart.format(DateTimeFormatter.ofPattern("MM/yyyy")) + ")";
             }
         }
 
-        // Tính toán từ Payments trong DB theo khoảng thời gian thực tế
         List<Payment> succeededPayments = paymentRepository.findByStatus(Payment.Status.SUCCEEDED);
+        Bucket current = bucketFor(rangeStart, rangeEnd, succeededPayments);
+        Bucket previous = bucketFor(prevStart, prevEnd, succeededPayments);
 
-        long netRevenue = 0L;
-        long surchargeRevenue = 0L;
-        long escrowDeposit = 0L;
-
-        for (Payment p : succeededPayments) {
-            LocalDate pDate = p.getCreatedAt() != null ? p.getCreatedAt().toLocalDate() : LocalDate.of(2026, 10, 15);
-            if (!pDate.isBefore(rangeStart) && !pDate.isAfter(rangeEnd)) {
-                long amt = p.getAmount() != null ? p.getAmount().longValue() : 0L;
-                if (p.getPurpose() == Payment.Purpose.RENT || p.getPurpose() == Payment.Purpose.EXTENSION_FEE) {
-                    netRevenue += amt;
-                } else if (p.getPurpose() == Payment.Purpose.EXTRA_FEE || p.getPurpose() == Payment.Purpose.DAMAGE_FEE) {
-                    surchargeRevenue += amt;
-                } else if (p.getPurpose() == Payment.Purpose.DEPOSIT) {
-                    // Tiền cọc giữ trong Escrow — TUYỆT ĐỐI KHÔNG tính vào doanh thu
-                    escrowDeposit += amt;
-                }
-            }
-        }
-
-        // Đảm bảo số liệu tài chính có sự biến thiên thực tế theo từng kỳ báo cáo
-        if (periodKey.equals("LAST_MONTH") && netRevenue == 0L) {
-            netRevenue = 9_820_000L;
-            surchargeRevenue = 280_000L;
-            escrowDeposit = 510_000L;
-        } else if (periodKey.equals("THIS_QUARTER")) {
-            if (netRevenue < 30_000_000L) {
-                netRevenue += 24_525_000L;
-                surchargeRevenue += 820_000L;
-                escrowDeposit += 4_271_000L;
-            }
-        } else if (periodKey.equals("YTD")) {
-            if (netRevenue < 70_000_000L) {
-                netRevenue += 72_665_000L;
-                surchargeRevenue += 3_400_000L;
-                escrowDeposit += 7_801_000L;
-            }
-        } else if (periodKey.equals("CUSTOM")) {
-            long days = java.time.temporal.ChronoUnit.DAYS.between(rangeStart, rangeEnd) + 1;
-            if (days <= 0) days = 1;
-            netRevenue = 400_000L * days;
-            surchargeRevenue = (long) (netRevenue * 0.04);
-            escrowDeposit = (long) (netRevenue * 0.12);
-        } else if (netRevenue == 0L) {
-            netRevenue = 12_450_000L;
-            surchargeRevenue = 420_000L;
-            escrowDeposit = 680_000L;
-        }
-
-        long grossRevenue = netRevenue + surchargeRevenue;
-
-        // Tính Occupancy Rate từ Units
         long rentedUnits = unitRepository.countByStatus(Unit.Status.RENTED);
         long totalUnits = unitRepository.countByStatusNot(Unit.Status.RETIRED);
 
-        double occupancyRate;
-        String occupancyBreakdown;
-        if (totalUnits > 0) {
-            occupancyRate = Math.round(((double) rentedUnits / totalUnits) * 1000.0) / 10.0;
-            occupancyBreakdown = rentedUnits + " / " + totalUnits + " kho đang cho thuê";
-        } else {
-            occupancyRate = 88.1;
-            occupancyBreakdown = "37 / 42 kho đang cho thuê";
-        }
+        double occupancyRate = totalUnits > 0
+                ? Math.round(((double) rentedUnits / totalUnits) * 1000.0) / 10.0
+                : 0.0;
+        String occupancyBreakdown = rentedUnits + " / " + totalUnits + " kho đang cho thuê";
 
         return new FinancialSummaryResponse(
                 periodLabel,
-                grossRevenue,
-                growthText,
-                netRevenue,
-                escrowDeposit,
-                "Tài khoản giữ hộ cọc tại Vietcombank — Tách biệt 100% khỏi doanh thu kinh doanh",
-                surchargeRevenue,
-                "Bao gồm phí quá giờ, điện lạnh và xử lý rác",
+                current.gross(),
+                growthText(current.gross(), previous.gross()),
+                current.netRevenue(),
+                current.escrowDeposit(),
+                "Tài khoản giữ hộ cọc — tách biệt 100% khỏi doanh thu kinh doanh",
+                current.surchargeRevenue(),
+                "Bao gồm phí quá giờ, hư hại và xử lý phát sinh",
                 occupancyRate,
                 occupancyBreakdown,
-                "+3.2% so với tháng trước"
+                "So sánh theo dữ liệu thực tế trong kỳ"
         );
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<MonthlyRevenueItemResponse> getMonthlyRevenueChart(int months) {
-        // Dữ liệu chuỗi thời gian doanh thu 6 tháng phục vụ biểu đồ (US-31)
-        return List.of(
-                new MonthlyRevenueItemResponse("05/2026", 28500000L, 890000L, 3900000L, 29390000L),
-                new MonthlyRevenueItemResponse("06/2026", 30200000L, 1050000L, 4200000L, 31250000L),
-                new MonthlyRevenueItemResponse("07/2026", 32100000L, 980000L, 4350000L, 33080000L),
-                new MonthlyRevenueItemResponse("08/2026", 34000000L, 1120000L, 4600000L, 35120000L),
-                new MonthlyRevenueItemResponse("09/2026", 35500000L, 1190000L, 4750000L, 36690000L),
-                new MonthlyRevenueItemResponse("10/2026", 36210000L, 1240000L, 4890000L, 37450000L)
-        );
+        LocalDate thisMonth = LocalDate.now(ICT_ZONE).withDayOfMonth(1);
+        int n = Math.max(1, Math.min(months, 24));
+        LocalDate firstMonth = thisMonth.minusMonths(n - 1L);
+
+        List<Payment> succeededPayments = paymentRepository.findByStatus(Payment.Status.SUCCEEDED);
+        Map<String, long[]> byMonth = new LinkedHashMap<>();
+        DateTimeFormatter label = DateTimeFormatter.ofPattern("MM/yyyy");
+        for (int i = 0; i < n; i++) {
+            byMonth.put(firstMonth.plusMonths(i).format(label), new long[4]);
+        }
+
+        for (Payment p : succeededPayments) {
+            if (p.getCreatedAt() == null) {
+                continue;
+            }
+            LocalDate d = p.getCreatedAt().atZone(ZoneId.of("UTC")).withZoneSameInstant(ICT_ZONE).toLocalDate();
+            long[] acc = byMonth.get(d.withDayOfMonth(1).format(label));
+            if (acc == null) {
+                continue;
+            }
+            long amt = p.getAmount() != null ? p.getAmount().longValue() : 0L;
+            switch (p.getPurpose()) {
+                case RENT -> acc[0] += amt;
+                case EXTENSION_FEE -> acc[1] += amt;
+                case DAMAGE_FEE, EXTRA_FEE -> acc[2] += amt;
+                default -> { }
+            }
+        }
+
+        List<MonthlyRevenueItemResponse> items = new ArrayList<>();
+        byMonth.forEach((k, acc) -> items.add(new MonthlyRevenueItemResponse(
+                // rentRevenue | surcharge (phụ thu) | escrowHold (cọc, không vào doanh thu) | total
+                k, acc[0], acc[2], 0L, acc[0] + acc[1] + acc[2])));
+        return items;
     }
 
     @Override
@@ -195,7 +221,6 @@ public class ReportServiceImpl implements ReportService {
                         new DrilldownColumn("contractRef", "Hợp đồng"),
                         new DrilldownColumn("tenant", "Người ký quỹ"),
                         new DrilldownColumn("unitCode", "Kho áp dụng"),
-                        new DrilldownColumn("escrowAccount", "TK ký quỹ"),
                         new DrilldownColumn("amount", "Tiền cọc", true),
                         new DrilldownColumn("heldDate", "Ngày nộp cọc"),
                         new DrilldownColumn("status", "Trạng thái cọc")
@@ -211,7 +236,6 @@ public class ReportServiceImpl implements ReportService {
                         new DrilldownColumn("unitCode", "Mã kho"),
                         new DrilldownColumn("type", "Loại phụ thu"),
                         new DrilldownColumn("amount", "Số tiền", true),
-                        new DrilldownColumn("reason", "Căn cứ phát sinh"),
                         new DrilldownColumn("date", "Ngày ghi nhận")
                 );
                 rows = getSurchargeRows();
@@ -224,7 +248,6 @@ public class ReportServiceImpl implements ReportService {
                         new DrilldownColumn("zone", "Zone"),
                         new DrilldownColumn("tenant", "Người thuê"),
                         new DrilldownColumn("contractRef", "Hợp đồng"),
-                        new DrilldownColumn("monthlyRent", "Giá thuê/tháng", true),
                         new DrilldownColumn("expiryDate", "Hạn hợp đồng"),
                         new DrilldownColumn("status", "Trạng thái")
                 );
@@ -254,8 +277,7 @@ public class ReportServiceImpl implements ReportService {
             String q = query.toLowerCase(Locale.ROOT);
             rows = rows.stream().filter(row ->
                     row.values().stream().anyMatch(val ->
-                            val != null && String.valueOf(val).toLowerCase(Locale.ROOT).contains(q)
-                    )
+                            val != null && String.valueOf(val).toLowerCase(Locale.ROOT).contains(q))
             ).toList();
         }
 
@@ -264,14 +286,14 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public String exportReportCSV(String period) {
-        String periodLabel = (period != null && !period.isBlank()) ? period : "Q3_2026";
+        String periodLabel = (period != null && !period.isBlank()) ? period : "ALL";
         String bom = "\uFEFF";
         StringBuilder sb = new StringBuilder(bom);
 
-        // Header
         sb.append("\"Mã giao dịch\",\"Hợp đồng\",\"Khách hàng\",\"Mã kho\",\"Hạng mục\",\"Tiền thuê (VND)\",\"Phụ thu (VND)\",\"Tổng thu (VND)\",\"Phương thức\",\"Ngày lập\",\"Trạng thái\"\r\n");
 
-        for (Map<String, Object> r : getRevenueRows()) {
+        List<Map<String, Object>> revenueRows = getRevenueRows();
+        for (Map<String, Object> r : revenueRows) {
             sb.append(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%s,%s,%s,\"%s\",\"%s\",\"%s\"\r\n",
                     r.get("id"),
                     r.get("contractRef"),
@@ -287,70 +309,170 @@ public class ReportServiceImpl implements ReportService {
             ));
         }
 
-        // Summary block
+        long baseRent = revenueRows.stream().mapToLong(r -> ((Number) r.get("baseRent")).longValue()).sum();
+        long surcharge = revenueRows.stream().mapToLong(r -> ((Number) r.get("surcharge")).longValue()).sum();
+        long escrow = getDepositRows().stream().mapToLong(r -> ((Number) r.get("amount")).longValue()).sum();
+        long rented = unitRepository.countByStatus(Unit.Status.RENTED);
+        long total = unitRepository.countByStatusNot(Unit.Status.RETIRED);
+
         sb.append("\r\n");
         sb.append("\"# TỔNG HỢP KIỂM TOÁN TÀI CHÍNH STORAGEHUB\"\r\n");
         sb.append(String.format("\"Kỳ báo cáo\",\"%s\"\r\n", periodLabel));
-        sb.append("\"Doanh thu thuần\",36210000\r\n");
-        sb.append("\"Phụ thu phát sinh\",1240000\r\n");
-        sb.append("\"TỔNG DOANH THU KINH DOANH (GROSS REVENUE)\",37450000\r\n");
-        sb.append("\"TIỀN CỌC ĐANG GIỮ TRONG ESCROW (KHÔNG TÍNH VÀO DOANH THU)\",4890000\r\n");
-        sb.append("\"Tỷ lệ lấp đầy cơ sở\",\"88.1% (37/42 kho)\"\r\n");
-        sb.append("\"Chứng chỉ kiểm toán\",\"VN VAS Audit Conformance / VNPT-CA Signed\"\r\n");
-        sb.append(String.format("\"Thời gian xuất báo cáo\",\"%s\"\r\n", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
+        sb.append(String.format("\"Doanh thu thuần\",%d\r\n", baseRent));
+        sb.append(String.format("\"Phụ thu phát sinh\",%d\r\n", surcharge));
+        sb.append(String.format("\"TỔNG DOANH THU KINH DOANH (GROSS REVENUE)\",%d\r\n", baseRent + surcharge));
+        sb.append(String.format("\"TIỀN CỌC ĐANG GIỮ (KHÔNG TÍNH VÀO DOANH THU)\",%d\r\n", escrow));
+        sb.append(String.format("\"Tỷ lệ lấp đầy cơ sở\",\"%.1f%% (%d/%d kho)\"\r\n",
+                total > 0 ? rented * 100.0 / total : 0.0, rented, total));
+        sb.append(String.format("\"Thời gian xuất báo cáo\",\"%s\"\r\n",
+                LocalDateTime.now(ICT_ZONE).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
 
         return sb.toString();
     }
 
+    private String contractRefOf(Reservation reservation) {
+        if (reservation == null) {
+            return "—";
+        }
+        return contractRepository.findByReservation_ReservationIdAndIsLatestTrue(reservation.getReservationId())
+                .map(Contract::getCode)
+                .orElseGet(() -> reservation.getCode());
+    }
+
+    private String unitCodeOf(Payment p) {
+        if (p.getReservation() == null || p.getReservation().getUnit() == null) {
+            return "—";
+        }
+        return p.getReservation().getUnit().getCode();
+    }
+
+    private String payerNameOf(Payment p) {
+        return p.getPayer() != null && p.getPayer().getFullName() != null
+                ? p.getPayer().getFullName() : "—";
+    }
+
+    private String dateOf(Payment p) {
+        return p.getCreatedAt() == null ? "—" : p.getCreatedAt()
+                .atZone(ZoneId.of("UTC")).withZoneSameInstant(ICT_ZONE).format(VN_DATE);
+    }
+
+    private String methodName(Payment p) {
+        return switch (p.getMethod()) {
+            case PAYOS -> "PayOS (QR)";
+            case CARD -> "Thẻ";
+            case MOMO -> "Ví MoMo";
+            case VNPAY -> "VNPay";
+        };
+    }
+
     private List<Map<String, Object>> getRevenueRows() {
-        return List.of(
-                createMap("id", "TX-7801", "contractRef", "CT-1042", "tenant", "Nguyễn Thị Lan", "unitCode", "S-3", "category", "Thuê kho cố định", "baseRent", 345000L, "surcharge", 0L, "total", 345000L, "method", "VietQR (NAPAS)", "date", "01/10/2026", "status", "COMPLETED"),
-                createMap("id", "TX-7802", "contractRef", "CT-1038", "tenant", "Lê Minh Trí", "unitCode", "S-4", "category", "Thuê kho cố định", "baseRent", 345000L, "surcharge", 50000L, "total", 395000L, "method", "VietQR (NAPAS)", "date", "02/10/2026", "status", "COMPLETED"),
-                createMap("id", "TX-7803", "contractRef", "CT-1040", "tenant", "Đỗ Mai Hương", "unitCode", "M-1", "category", "Thuê kho cố định", "baseRent", 380000L, "surcharge", 0L, "total", 380000L, "method", "Chuyển khoản NH", "date", "03/10/2026", "status", "COMPLETED"),
-                createMap("id", "TX-7804", "contractRef", "CT-0941", "tenant", "Công ty Alpha Logistics", "unitCode", "M-3", "category", "Thuê dài hạn (6 tháng)", "baseRent", 2280000L, "surcharge", 0L, "total", 2280000L, "method", "VietQR (NAPAS)", "date", "04/10/2026", "status", "COMPLETED"),
-                createMap("id", "TX-7805", "contractRef", "CT-0912", "tenant", "Trần Anh Quân", "unitCode", "L-1", "category", "Thuê dài hạn (1 năm)", "baseRent", 10680000L, "surcharge", 120000L, "total", 10800000L, "method", "VietQR (NAPAS)", "date", "05/10/2026", "status", "COMPLETED"),
-                createMap("id", "TX-7806", "contractRef", "CT-0925", "tenant", "Vũ Bảo Long", "unitCode", "L-2", "category", "Thuê kho cố định", "baseRent", 890000L, "surcharge", 0L, "total", 890000L, "method", "Chuyển khoản NH", "date", "06/10/2026", "status", "COMPLETED"),
-                createMap("id", "TX-7807", "contractRef", "CT-1011", "tenant", "Trịnh Gia Huy", "unitCode", "LOCK-2", "category", "Thuê Locker quý", "baseRent", 300000L, "surcharge", 0L, "total", 300000L, "method", "VietQR (NAPAS)", "date", "07/10/2026", "status", "COMPLETED"),
-                createMap("id", "TX-7808", "contractRef", "CT-0988", "tenant", "Hoàng Nam", "unitCode", "M-2", "category", "Gia hạn thêm 15 ngày", "baseRent", 190000L, "surcharge", 120000L, "total", 310000L, "method", "VietQR (NAPAS)", "date", "08/10/2026", "status", "COMPLETED")
-        );
+        return paymentRepository.findByStatus(Payment.Status.SUCCEEDED).stream()
+                .filter(p -> p.getPurpose() != Payment.Purpose.DEPOSIT)
+                .sorted(Comparator.comparing(Payment::getPaymentId).reversed())
+                .map(p -> {
+                    long amt = p.getAmount() != null ? p.getAmount().longValue() : 0L;
+                    boolean isSurcharge = p.getPurpose() == Payment.Purpose.DAMAGE_FEE
+                            || p.getPurpose() == Payment.Purpose.EXTRA_FEE;
+                    String category = switch (p.getPurpose()) {
+                        case RENT -> "Tiền thuê kho";
+                        case EXTENSION_FEE -> "Phí gia hạn";
+                        case DAMAGE_FEE -> "Phí hư hại";
+                        case EXTRA_FEE -> "Phí phát sinh";
+                        case DEPOSIT -> "Cọc";
+                    };
+                    return createMap(
+                            "id", p.getReceiptCode() != null ? p.getReceiptCode() : "TX-" + p.getPaymentId(),
+                            "contractRef", contractRefOf(p.getReservation()),
+                            "tenant", payerNameOf(p),
+                            "unitCode", unitCodeOf(p),
+                            "category", category,
+                            "baseRent", isSurcharge ? 0L : amt,
+                            "surcharge", isSurcharge ? amt : 0L,
+                            "total", amt,
+                            "method", methodName(p),
+                            "date", dateOf(p),
+                            "status", "COMPLETED"
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     private List<Map<String, Object>> getDepositRows() {
-        return List.of(
-                createMap("depositId", "DEP-1042", "contractRef", "CT-1042", "tenant", "Nguyễn Thị Lan", "unitCode", "S-3", "escrowAccount", "VCB-ESCROW-0881", "amount", 103500L, "heldDate", "18/09/2026", "status", "HELD_SECURE"),
-                createMap("depositId", "DEP-1038", "contractRef", "CT-1038", "tenant", "Lê Minh Trí", "unitCode", "S-4", "escrowAccount", "VCB-ESCROW-0881", "amount", 103500L, "heldDate", "19/09/2026", "status", "HELD_SECURE"),
-                createMap("depositId", "DEP-1040", "contractRef", "CT-1040", "tenant", "Đỗ Mai Hương", "unitCode", "M-1", "escrowAccount", "VCB-ESCROW-0881", "amount", 114000L, "heldDate", "25/09/2026", "status", "HELD_SECURE"),
-                createMap("depositId", "DEP-0941", "contractRef", "CT-0941", "tenant", "Công ty Alpha Logistics", "unitCode", "M-3", "escrowAccount", "VCB-ESCROW-0881", "amount", 684000L, "heldDate", "15/06/2026", "status", "HELD_SECURE"),
-                createMap("depositId", "DEP-0912", "contractRef", "CT-0912", "tenant", "Trần Anh Quân", "unitCode", "L-1", "escrowAccount", "VCB-ESCROW-0881", "amount", 1068000L, "heldDate", "10/01/2026", "status", "HELD_SECURE"),
-                createMap("depositId", "DEP-0925", "contractRef", "CT-0925", "tenant", "Vũ Bảo Long", "unitCode", "L-2", "escrowAccount", "VCB-ESCROW-0881", "amount", 267000L, "heldDate", "01/05/2026", "status", "HELD_SECURE")
-        );
+        return paymentRepository.findByStatus(Payment.Status.SUCCEEDED).stream()
+                .filter(p -> p.getPurpose() == Payment.Purpose.DEPOSIT)
+                .sorted(Comparator.comparing(Payment::getPaymentId).reversed())
+                .map(p -> createMap(
+                        "depositId", p.getReceiptCode() != null ? p.getReceiptCode() : "DEP-" + p.getPaymentId(),
+                        "contractRef", contractRefOf(p.getReservation()),
+                        "tenant", payerNameOf(p),
+                        "unitCode", unitCodeOf(p),
+                        "amount", p.getAmount() != null ? p.getAmount().longValue() : 0L,
+                        "heldDate", dateOf(p),
+                        "status", "HELD_SECURE"
+                ))
+                .collect(Collectors.toList());
     }
 
     private List<Map<String, Object>> getSurchargeRows() {
-        return List.of(
-                createMap("id", "SC-301", "contractRef", "CT-1038", "tenant", "Lê Minh Trí", "unitCode", "S-4", "type", "Phí gia hạn giờ cao điểm", "amount", 50000L, "reason", "Quá 30 phút giờ checkout", "date", "02/10/2026"),
-                createMap("id", "SC-302", "contractRef", "CT-0912", "tenant", "Trần Anh Quân", "unitCode", "L-1", "type", "Phụ thu bảo dưỡng lạnh", "amount", 120000L, "reason", "Yêu cầu duy trì nhiệt độ 18°C", "date", "05/10/2026"),
-                createMap("id", "SC-303", "contractRef", "CT-0988", "tenant", "Hoàng Nam", "unitCode", "M-2", "type", "Phí vệ sinh xử lý bao bì", "amount", 120000L, "reason", "Khách bỏ lại rác cồng kềnh", "date", "08/10/2026"),
-                createMap("id", "SC-304", "contractRef", "CT-0870", "tenant", "Vũ Thị Nguyệt", "unitCode", "S-2", "type", "Phí cấp lại mã SmartLock", "amount", 60000L, "reason", "Quên mã quá 5 lần", "date", "18/09/2026"),
-                createMap("id", "SC-305", "contractRef", "CT-0832", "tenant", "Nguyễn Văn Hùng", "unitCode", "LOCK-1", "type", "Phí lưu kho quá hạn", "amount", 30000L, "reason", "Nhận hàng trễ 1 ngày", "date", "10/07/2026")
-        );
+        return paymentRepository.findByStatus(Payment.Status.SUCCEEDED).stream()
+                .filter(p -> p.getPurpose() == Payment.Purpose.DAMAGE_FEE
+                        || p.getPurpose() == Payment.Purpose.EXTRA_FEE)
+                .sorted(Comparator.comparing(Payment::getPaymentId).reversed())
+                .map(p -> createMap(
+                        "id", p.getReceiptCode() != null ? p.getReceiptCode() : "SC-" + p.getPaymentId(),
+                        "contractRef", contractRefOf(p.getReservation()),
+                        "tenant", payerNameOf(p),
+                        "unitCode", unitCodeOf(p),
+                        "type", p.getPurpose() == Payment.Purpose.DAMAGE_FEE ? "Phí hư hại" : "Phí phát sinh",
+                        "amount", p.getAmount() != null ? p.getAmount().longValue() : 0L,
+                        "date", dateOf(p)
+                ))
+                .collect(Collectors.toList());
     }
 
     private List<Map<String, Object>> getOccupancyRows() {
-        return List.of(
-                createMap("unitCode", "S-3", "spec", "Small · 5 m²", "zone", "Zone A", "tenant", "Nguyễn Thị Lan", "contractRef", "CT-1042", "monthlyRent", 345000L, "expiryDate", "18/10/2026", "status", "RENTED"),
-                createMap("unitCode", "S-4", "spec", "Small · 5 m²", "zone", "Zone A", "tenant", "Lê Minh Trí", "contractRef", "CT-1038", "monthlyRent", 345000L, "expiryDate", "19/11/2026", "status", "RENTED"),
-                createMap("unitCode", "M-1", "spec", "Medium · 8 m²", "zone", "Zone A", "tenant", "Đỗ Mai Hương", "contractRef", "CT-1040", "monthlyRent", 380000L, "expiryDate", "25/12/2026", "status", "RENTED"),
-                createMap("unitCode", "M-3", "spec", "Medium · 8 m²", "zone", "Zone B", "tenant", "Công ty Alpha Logistics", "contractRef", "CT-0941", "monthlyRent", 380000L, "expiryDate", "15/12/2026", "status", "RENTED"),
-                createMap("unitCode", "L-1", "spec", "Large · 15 m²", "zone", "Zone B", "tenant", "Trần Anh Quân", "contractRef", "CT-0912", "monthlyRent", 890000L, "expiryDate", "10/01/2027", "status", "RENTED"),
-                createMap("unitCode", "L-2", "spec", "Large · 15 m²", "zone", "Zone B", "tenant", "Vũ Bảo Long", "contractRef", "CT-0925", "monthlyRent", 890000L, "expiryDate", "01/11/2026", "status", "RENTED"),
-                createMap("unitCode", "LOCK-2", "spec", "Locker · 1.5 m²", "zone", "Zone C", "tenant", "Trịnh Gia Huy", "contractRef", "CT-1011", "monthlyRent", 100000L, "expiryDate", "12/11/2026", "status", "RENTED"),
-                createMap("unitCode", "M-5", "spec", "Medium · 8 m²", "zone", "Zone B", "tenant", "Phạm Thị Trang", "contractRef", "BK-1044", "monthlyRent", 380000L, "expiryDate", "19/10/2026", "status", "RESERVED"),
-                createMap("unitCode", "LOCK-3", "spec", "Locker · 1.5 m²", "zone", "Zone C", "tenant", "Bùi Tuyết Mai", "contractRef", "BK-1046", "monthlyRent", 100000L, "expiryDate", "20/10/2026", "status", "RESERVED"),
-                createMap("unitCode", "S-1", "spec", "Small · 5 m²", "zone", "Zone A", "tenant", "— (Đang dọn dẹp)", "contractRef", "—", "monthlyRent", 345000L, "expiryDate", "—", "status", "PREPARING"),
-                createMap("unitCode", "M-2", "spec", "Medium · 8 m²", "zone", "Zone B", "tenant", "Hoàng Nam (Nghiệm thu)", "contractRef", "CT-0988", "monthlyRent", 380000L, "expiryDate", "17/10/2026", "status", "PREPARING"),
-                createMap("unitCode", "M-4", "spec", "Medium · 8 m²", "zone", "Zone B", "tenant", "— (Bảo trì SmartLock)", "contractRef", "—", "monthlyRent", 380000L, "expiryDate", "—", "status", "MAINTENANCE")
-        );
+        List<Unit> units = unitRepository.findAll();
+        List<Reservation.Status> blocking = List.of(
+                Reservation.Status.RESERVED,
+                Reservation.Status.CHECKED_IN,
+                Reservation.Status.CHECKOUT_REQUESTED);
+
+        List<Long> unitIds = units.stream().map(Unit::getUnitId).toList();
+        Map<Long, List<Reservation>> activeByUnit = unitIds.isEmpty() ? Map.of()
+                : reservationRepository.findActiveReservationsForUnits(unitIds, blocking).stream()
+                        .collect(Collectors.groupingBy(r -> r.getUnit().getUnitId()));
+
+        return units.stream()
+                .sorted(Comparator.comparing(Unit::getCode))
+                .map(unit -> {
+                    Reservation active = activeByUnit
+                            .getOrDefault(unit.getUnitId(), List.of()).stream()
+                            .max(Comparator.comparing(Reservation::getReservationId))
+                            .orElse(null);
+                    String tenant = active != null && active.getCustomer() != null
+                            ? active.getCustomer().getFullName() : "—";
+                    String status;
+                    if (unit.getStatus() == Unit.Status.MAINTENANCE) {
+                        status = "MAINTENANCE";
+                    } else if (unit.getStatus() == Unit.Status.PREPARING) {
+                        status = "PREPARING";
+                    } else if (active != null) {
+                        status = active.getStatus() == Reservation.Status.CHECKED_IN ? "RENTED" : active.getStatus().name();
+                    } else {
+                        status = unit.getStatus().name();
+                    }
+                    return createMap(
+                            "unitCode", unit.getCode(),
+                            "spec", unit.getType() != null
+                                    ? unit.getType().getName() + " · " + unit.getSizeM2() + " m²" : "—",
+                            "zone", unit.getZone() != null ? unit.getZone().getCode() : "—",
+                            "tenant", tenant,
+                            "contractRef", contractRefOf(active),
+                            "expiryDate", active != null ? active.getEndDate().format(VN_DATE) : "—",
+                            "status", status
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     private Map<String, Object> createMap(Object... keyValues) {

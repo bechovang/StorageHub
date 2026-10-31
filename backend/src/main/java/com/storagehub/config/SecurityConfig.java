@@ -73,6 +73,11 @@ public class SecurityConfig {
                                 "/api/v1/payments/webhook"
                         ).permitAll()
                         .requestMatchers("/api/v1/users/**").hasRole("SYSTEM_ADMIN")
+                        .requestMatchers("/api/v1/policies/**").hasAnyRole("BUSINESS_OPS", "SYSTEM_ADMIN")
+                        // Unit management: đọc public (browse), ghi chỉ manager/ops/admin
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/units").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/units/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/units/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN")
                         .requestMatchers("/api/v1/reports/**").hasAnyRole("BUSINESS_OPS", "SYSTEM_ADMIN")
                         .requestMatchers("/api/v1/facility/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers("/api/v1/activity-logs/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")

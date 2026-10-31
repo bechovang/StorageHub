@@ -235,7 +235,7 @@ paths:
         - { name: type-id, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo loại unit (id từ /units/filter-options)" }
         - { name: size-m2, in: query, schema: { type: number }, description: "Lọc đúng kích thước (m²), vd 5" }
         - { name: start-date, in: query, schema: { type: string, format: date }, description: "Ngày bắt đầu thuê dự kiến (YYYY-MM-DD)" }
-        - { name: duration-months, in: query, schema: { type: integer, minimum: 1, maximum: 36 }, description: "Thời hạn thuê (tháng)" }
+        - { name: end-date, in: query, schema: { type: string, format: date }, description: "Ngày trả kho (inclusive)" }
         - { name: sort, in: query, schema: { type: string, enum: [price-asc, price-desc], default: price-asc }, description: "Sắp xếp theo giá (mặc định giá thấp → cao)" }
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
         - { name: page-size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
@@ -276,7 +276,7 @@ paths:
       parameters:
         - { name: unitId, in: path, required: true, schema: { type: integer, format: int64 } }
         - { name: start-date, in: query, required: true, schema: { type: string, format: date } }
-        - { name: duration-months, in: query, required: true, schema: { type: integer, minimum: 1, maximum: 36 } }
+        - { name: end-date, in: query, required: true, schema: { type: string, format: date } }
       responses:
         "200":
           description: Bảng giá từng dòng + tổng + cọc
@@ -287,7 +287,7 @@ paths:
                 unitId: 3
                 startDate: "2026-10-03"
                 endDate: "2027-01-02"
-                durationMonths: 3
+                endDate: "2026-11-02"
                 lines:
                   - { kind: RENT, code: RENT_RATE, label: "Rent 345.000 ₫ × 3 months", amount: 1035000, refundable: false }
                   - { kind: DEPOSIT, code: DEPOSIT_RATE, label: "Deposit (10%, refundable)", amount: 103500, refundable: true }
@@ -318,12 +318,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [unitId, startDate, durationMonths]
+              required: [unitId, startDate, endDate]
               properties:
                 unitId: { type: integer, format: int64 }
                 startDate: { type: string, format: date }
-                durationMonths: { type: integer, minimum: 1, maximum: 36 }
-            example: { unitId: 3, startDate: "2026-10-03", durationMonths: 3 }
+                endDate: { type: string, format: date, description: "Ngày trả kho (inclusive), >= startDate" }
+            example: { unitId: 3, startDate: "2026-10-03", endDate: "2026-11-02" }
       responses:
         "201":
           description: Reservation PENDING_PAYMENT + quote snapshot — mở Payment Modal (deposit)
@@ -1595,7 +1595,7 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
-          example: { code: VALIDATION_FAILED, message: "Dữ liệu chưa hợp lệ.", fieldErrors: [{ field: "durationMonths", code: "MIN", message: "Tối thiểu 1 tháng" }] }
+          example: { code: VALIDATION_FAILED, message: "Dữ liệu chưa hợp lệ.", fieldErrors: [{ field: "durationDays", code: "MIN", message: "Tối thiểu 1 tháng" }] }
     Unauthorized:
       description: Thiếu/không hợp lệ token — envelope Error từ AuthenticationEntryPoint
       content:
@@ -1775,7 +1775,7 @@ components:
 
     UnitSummary:
       type: object
-      required: [id, code, typeName, sizeM2, baseMonthlyRent, availability]
+      required: [id, code, typeName, sizeM2, baseDailyRent, availability]
       properties:
         id: { type: integer, format: int64 }
         code: { type: string, example: S-3 }
@@ -1785,7 +1785,7 @@ components:
         zoneCode: { type: string, example: B }
         facilityName: { type: string, example: Tân Bình Depot }
         accessType: { type: string, example: PIN }
-        baseMonthlyRent: { type: integer, description: "Giá thuê/tháng theo Policy active (VND) — dùng cho sort giá", example: 345000 }
+        baseDailyRent: { type: integer, description: "Đơn giá thuê/ngày theo Policy active (VND) — dùng cho sort giá", example: 5000 }
         availability:
           type: object
           properties:
@@ -1835,12 +1835,12 @@ components:
 
     Quote:
       type: object
-      required: [unitId, startDate, endDate, durationMonths, lines, totalRent, depositAmount, dueNow, policyVersion]
+      required: [unitId, startDate, endDate, durationDays, lines, totalRent, depositAmount, dueNow, policyVersion]
       properties:
         unitId: { type: integer, format: int64 }
         startDate: { type: string, format: date }
         endDate: { type: string, format: date, description: "Server tính (inclusive)" }
-        durationMonths: { type: integer }
+        durationDays: { type: integer }
         lines:
           type: array
           items: { $ref: "#/components/schemas/QuoteLine" }
@@ -1886,9 +1886,9 @@ components:
       allOf:
         - $ref: "#/components/schemas/ReservationSummary"
         - type: object
-          required: [durationMonths, quote, checkInDeadline, payments, contracts]
+          required: [durationDays, quote, checkInDeadline, payments, contracts]
           properties:
-            durationMonths: { type: integer }
+            durationDays: { type: integer }
             quote:
               allOf:
                 - $ref: "#/components/schemas/Quote"

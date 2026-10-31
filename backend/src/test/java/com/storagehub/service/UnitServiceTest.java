@@ -132,7 +132,7 @@ class UnitServiceTest {
                 null,
                 null,
                 LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")),
-                3,
+                LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).plusDays(92),
                 "price-asc",
                 1,
                 25
@@ -141,7 +141,7 @@ class UnitServiceTest {
         assertThat(response.getTotal()).isEqualTo(1);
         UnitSummaryResponse item = response.getItems().get(0);
         assertThat(item.code()).isEqualTo("S-1");
-        assertThat(item.baseMonthlyRent()).isEqualTo(345000L);
+        assertThat(item.baseDailyRent()).isEqualTo(345000L);
         assertThat(item.availability().status()).isEqualTo("AVAILABLE");
         assertThat(item.availability().availableFromDate()).isNull();
     }
@@ -176,7 +176,7 @@ class UnitServiceTest {
                 null,
                 null,
                 LocalDate.of(2026, 10, 18),
-                1,
+                LocalDate.of(2026, 11, 18),
                 "price-asc",
                 1,
                 25
@@ -224,7 +224,7 @@ class UnitServiceTest {
                 null,
                 null,
                 LocalDate.of(2026, 10, 1),
-                3,
+                LocalDate.of(2026, 12, 31),
                 "price-asc",
                 1,
                 25
@@ -255,7 +255,7 @@ class UnitServiceTest {
         assertThat(detail.code()).isEqualTo("S-1");
         assertThat(detail.typeName()).isEqualTo("S");
         assertThat(detail.sizeM2()).isEqualTo(new BigDecimal("5.00"));
-        assertThat(detail.baseMonthlyRent()).isEqualTo(345000L);
+        assertThat(detail.baseDailyRent()).isEqualTo(345000L);
         assertThat(detail.dimensions()).isEqualTo("2.0 × 2.5 × 2.2 m");
         assertThat(detail.security()).isEqualTo("24/7 PIN + CCTV + Motion sensors");
         assertThat(detail.photoUrls()).hasSize(2);
@@ -283,7 +283,7 @@ class UnitServiceTest {
                 1L,
                 start,
                 end,
-                3,
+                92,
                 List.of(),
                 1035000L,
                 103500L,
@@ -292,9 +292,9 @@ class UnitServiceTest {
         );
 
         when(unitRepository.findById(1L)).thenReturn(Optional.of(unit1));
-        when(pricingEngine.calculateQuote(unit1, start, 3)).thenReturn(mockQuote);
+        when(pricingEngine.calculateQuote(unit1, start, end)).thenReturn(mockQuote);
 
-        QuoteResponse result = unitService.getUnitQuote(1L, start, 3);
+        QuoteResponse result = unitService.getUnitQuote(1L, start, end);
 
         assertThat(result.unitId()).isEqualTo(1L);
         assertThat(result.totalRent()).isEqualTo(1035000L);
@@ -307,7 +307,7 @@ class UnitServiceTest {
     void testGetUnitQuote_NotFound() {
         when(unitRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> unitService.getUnitQuote(999L, LocalDate.of(2026, 10, 3), 3))
+        assertThatThrownBy(() -> unitService.getUnitQuote(999L, LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 10)))
                 .isInstanceOf(UnitNotFoundException.class)
                 .hasMessage("Unit này không tồn tại.");
     }

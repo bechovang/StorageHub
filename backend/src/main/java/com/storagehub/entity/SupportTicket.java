@@ -64,6 +64,26 @@ public class SupportTicket {
     @Enumerated(EnumType.STRING)
     private IncidentType incidentType;
 
+    /** Mô tả sự cố của khách (V20). */
+    private String description;
+
+    /** Phương án xử lý của quản lý khi điều phối (V20). */
+    private String managerPlan;
+
+    /** NORMAL / SEVERE — mức độ điều phối (V20). */
+    private String severityMode;
+
+    /** Kho thay thế khi di dời khẩn cấp SEVERE (V20). */
+    private String relocatedUnitCode;
+
+    /** Ghi chú kết quả xử lý (V20). */
+    private String resolutionNote;
+
+    /** Lý do chuyển cấp lên quản lý (V20). */
+    private String escalationReason;
+
+    private LocalDateTime resolvedAt;
+
     @Enumerated(EnumType.STRING)
     private Status status;
 

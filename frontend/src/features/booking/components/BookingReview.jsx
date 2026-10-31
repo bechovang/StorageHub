@@ -34,11 +34,10 @@ export default function BookingReview({
 }) {
   const [showContractModal, setShowContractModal] = useState(false);
   const unit = reservation?.unit || {};
-  const durationDays = reservation?.durationDays || (reservation?.durationMonths ? reservation.durationMonths * 30 : 30);
-  const monthlyPrice = unit.monthlyPrice || 345000;
-  const dailyPrice = reservation?.dailyRent || Math.max(1, Math.round(monthlyPrice / 30));
-  const totalRent = reservation?.totalRent ||
-    ((durationDays % 30 === 0) ? monthlyPrice * (durationDays / 30) : dailyPrice * durationDays);
+  const durationDays = reservation?.durationDays || 0;
+  // Tổng tiền thuê theo giá ngày × số ngày (API không trả totalRent trên ReservationDetail)
+  const totalRent =
+    reservation?.totalRent ?? (unit.baseDailyRent || 0) * durationDays;
   const initials = user?.fullName
     ? user.fullName
       .split(" ")
@@ -79,22 +78,22 @@ export default function BookingReview({
             <div className="unit-spec-card__header">
               <div className="unit-spec-card__title-row">
                 <div className="unit-badges-row">
-                  <span className="code-pill">KHO {unit.code || "S-3"}</span>
+                  <span className="code-pill">KHO {unit.code || "—"}</span>
                   <Badge tone={isAlreadyPaid ? "success" : "warning"}>
                     {isAlreadyPaid ? "Đã giữ kho (RESERVED)" : "Chưa giữ kho · Cần thanh toán cọc"}
                   </Badge>
                 </div>
                 <h1 className="unit-title">
-                  {unit.typeName || "Kho Tiêu chuẩn"} ({unit.sizeM2 || 5} m²)
+                  {unit.typeName || "Kho Tiêu chuẩn"} ({unit.sizeM2 || "—"} m²)
                 </h1>
                 <p className="unit-location">
-                  {unit.building || "Tầng 2 · Khu B"} · {unit.depot || "Cơ sở Tân Bình"}
+                  {unit.building || "—"}{unit.depot ? ` · ${unit.depot}` : ""}
                 </p>
               </div>
 
               <div className="unit-price-box">
-                <span className="unit-price-val">{formatVND(unit.monthlyPrice || 345000)}</span>
-                <span className="unit-price-sub">mỗi tháng</span>
+                <span className="unit-price-val">{formatVND(unit.baseDailyRent || 0)}</span>
+                <span className="unit-price-sub">mỗi ngày</span>
               </div>
             </div>
 
@@ -104,10 +103,10 @@ export default function BookingReview({
             <div className="unit-params-grid">
               <div className="param-cell">
                 <span className="param-cell__label">Thời hạn thuê</span>
-                <p className="param-cell__value">{durationDays} Ngày</p>
-                <span className="param-cell__sub">
-                  {durationDays % 30 === 0 ? `(~${durationDays / 30} tháng)` : "Linh hoạt theo ngày"}
-                </span>
+                <p className="param-cell__value">
+                  {durationDays ? `${durationDays} ngày` : "—"}
+                </p>
+                <span className="param-cell__sub">Hợp đồng linh hoạt</span>
               </div>
 
               <div className="param-cell">
@@ -163,7 +162,7 @@ export default function BookingReview({
           <article className="swiss-card financial-card">
             <header className="financial-card__header">
               <h2 className="financial-title">Bảng kê thanh toán</h2>
-              <span className="ref-code">REF: {reservation?.code || "RSV-2026-S3"}</span>
+              <span className="ref-code">REF: {reservation?.code || "—"}</span>
             </header>
 
             {/* Multi-reservation Selector nếu có nhiều hơn 1 đơn */}
@@ -191,7 +190,7 @@ export default function BookingReview({
             <div className="ledger-lines">
               <div className="ledger-item">
                 <span className="ledger-item__label">
-                  Tiền thuê kho ({durationDays} ngày{durationDays % 30 === 0 ? ` · ~${durationDays / 30} tháng` : ""})
+                  Tiền thuê kho ({durationDays ? `${durationDays} ngày` : "—"})
                 </span>
                 <span className="ledger-item__val">{formatVND(totalRent)}</span>
               </div>
@@ -207,7 +206,7 @@ export default function BookingReview({
               </div>
 
               <div className="ledger-item ledger-item--total">
-                <span className="ledger-item__label">Tổng giá trị hợp đồng ({durationDays} ngày)</span>
+                <span className="ledger-item__label">Tổng giá trị hợp đồng ({durationDays ? `${durationDays} ngày` : "—"})</span>
                 <span className="ledger-item__val">{formatVND(totalRent)}</span>
               </div>
             </div>
@@ -219,7 +218,7 @@ export default function BookingReview({
                   {isAlreadyPaid ? "Tiền cọc đã thanh toán (10%)" : "Tiền cọc giữ chỗ (10%)"}
                 </span>
                 <span className="deposit-highlight__amount">
-                  {formatVND(reservation?.depositAmount || Math.round(totalRent * 0.1))}
+                  {formatVND(reservation?.depositAmount || 0)}
                 </span>
               </div>
               <p className="deposit-highlight__note">
@@ -293,7 +292,7 @@ export default function BookingReview({
                   disabled={loadingReservation}
                 >
                   <PlusCircle size={15} />
-                  <span>Tạo đơn đặt chỗ thử nghiệm (Demo)</span>
+                  <span>Tạo đơn đặt chỗ để kiểm thử</span>
                 </button>
               )}
             </div>

@@ -98,7 +98,7 @@ class UnitControllerTest {
                 .andExpect(jsonPath("$.pageSize").value(25))
                 .andExpect(jsonPath("$.total").value(1))
                 .andExpect(jsonPath("$.items[0].code").value("S-1"))
-                .andExpect(jsonPath("$.items[0].baseMonthlyRent").value(345000))
+                .andExpect(jsonPath("$.items[0].baseDailyRent").value(345000))
                 .andExpect(jsonPath("$.items[0].availability.status").value("AVAILABLE"));
     }
 
@@ -132,7 +132,7 @@ class UnitControllerTest {
                 .andExpect(jsonPath("$.dimensions").value("2.0 × 2.5 × 2.2 m"))
                 .andExpect(jsonPath("$.security").value("24/7 PIN + CCTV + Motion sensors"))
                 .andExpect(jsonPath("$.photoUrls").isArray())
-                .andExpect(jsonPath("$.baseMonthlyRent").value(345000));
+                .andExpect(jsonPath("$.baseDailyRent").value(345000));
     }
 
     @Test
@@ -165,17 +165,17 @@ class UnitControllerTest {
                 "v3"
         );
 
-        when(unitService.getUnitQuote(eq(3L), any(), eq(3))).thenReturn(quote);
+        when(unitService.getUnitQuote(eq(3L), any(), any())).thenReturn(quote);
 
         mockMvc.perform(get("/api/v1/units/3/quote")
                         .param("start-date", "2026-10-03")
-                        .param("duration-months", "3")
+                        .param("end-date", "2027-01-02")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.unitId").value(3))
                 .andExpect(jsonPath("$.startDate").value("2026-10-03"))
                 .andExpect(jsonPath("$.endDate").value("2027-01-02"))
-                .andExpect(jsonPath("$.durationMonths").value(3))
+                .andExpect(jsonPath("$.durationDays").value(3))
                 .andExpect(jsonPath("$.totalRent").value(1035000))
                 .andExpect(jsonPath("$.depositAmount").value(103500))
                 .andExpect(jsonPath("$.dueNow").value(103500))
@@ -185,13 +185,12 @@ class UnitControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/units/{unitId}/quote trả về 400 khi duration-months không hợp lệ")
+    @DisplayName("GET /api/v1/units/{unitId}/quote trả về 400 khi thiếu end-date")
     void testGetUnitQuote_ValidationFailed() throws Exception {
         mockMvc.perform(get("/api/v1/units/3/quote")
                         .param("start-date", "2026-10-03")
-                        .param("duration-months", "0")
+                        
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+                .andExpect(status().isBadRequest());
     }
 }

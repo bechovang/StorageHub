@@ -11,6 +11,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Chính sách giá theo phiên bản có ngày hiệu lực (FR-29/30). Contract snapshot policy_id
@@ -35,4 +36,9 @@ public class RentalPolicy {
     /** 0 = nháp, 1 = đang dùng, 2 = ngừng. */
     @JdbcTypeCode(SqlTypes.TINYINT)
     private Integer status;
+
+    /** Audit — ai cập nhật phiên bản này (Policy API). */
+    private LocalDateTime updatedAt;
+
+    private String updatedBy;
 }

@@ -20,6 +20,9 @@ import "./UnitManagementPage.css";
 
 export default function UnitManagementPage() {
   const {
+    unitsLoading,
+    unitsError,
+    zoneOptions,
     activeStatusTab,
     searchTerm,
     setSearchTerm,
@@ -28,12 +31,12 @@ export default function UnitManagementPage() {
     selectedUnit,
     drawerTab,
     setDrawerTab,
-    editPrice,
-    setEditPrice,
     editNotes,
     setEditNotes,
     editSizeM2,
     setEditSizeM2,
+    editFloor,
+    setEditFloor,
     blockerModalData,
     setBlockerModalData,
     retireTargetUnit,
@@ -122,7 +125,7 @@ export default function UnitManagementPage() {
             <input
               type="text"
               className="mgmt-search-input"
-              placeholder="Tìm theo mã kho (S-1, M-2), loại kho, khách thuê, hợp đồng..."
+              placeholder="Tìm theo mã kho (S-1, M-2), loại kho, khu vực..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -147,13 +150,21 @@ export default function UnitManagementPage() {
                 onChange={(e) => setSelectedZone(e.target.value)}
               >
                 <option value="ALL">Tất cả khu vực</option>
-                <option value="Zone A">Zone A (Tầng 1)</option>
-                <option value="Zone B">Zone B (Tầng 2)</option>
-                <option value="Zone C">Zone C (Locker)</option>
+                {zoneOptions.map((z) => (
+                  <option key={z} value={z}>{z}</option>
+                ))}
               </select>
             </div>
           </div>
         </div>
+
+        {/* ── Lỗi tải dữ liệu từ API ── */}
+        {unitsError && (
+          <div className="status-alert status-alert--danger mb-3" role="alert">
+            <ShieldCheck size={18} weight="bold" />
+            <span>{unitsError}</span>
+          </div>
+        )}
 
         {/* ── 4. Status Tabs ── */}
         <nav className="mgmt-status-tabs" aria-label="Lọc theo trạng thái kho">
@@ -178,7 +189,7 @@ export default function UnitManagementPage() {
 
         {/* ── 5. Main Table ── */}
         <UnitTable
-          units={filteredUnits}
+          units={unitsLoading ? [] : filteredUnits}
           onOpenDrawer={handleOpenDrawer}
           onFinishMaintenance={handleFinishMaintenance}
           onInitiateMaintenance={handleInitiateMaintenance}
@@ -192,10 +203,10 @@ export default function UnitManagementPage() {
           selectedUnit={selectedUnit}
           drawerTab={drawerTab}
           setDrawerTab={setDrawerTab}
-          editPrice={editPrice}
-          setEditPrice={setEditPrice}
           editSizeM2={editSizeM2}
           setEditSizeM2={setEditSizeM2}
+          editFloor={editFloor}
+          setEditFloor={setEditFloor}
           editNotes={editNotes}
           setEditNotes={setEditNotes}
           unitLogs={unitLogs}

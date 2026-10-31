@@ -69,15 +69,12 @@ public class ContractService {
         LocalDate startDate = reservation.getStartDate();
         LocalDate endDate = reservation.getEndDate();
 
-        int durationMonths = (int) ChronoUnit.MONTHS.between(
-                startDate.withDayOfMonth(1),
-                endDate.plusDays(1).withDayOfMonth(1)
-        );
-        if (durationMonths < 1) {
-            durationMonths = 1;
+        int durationDays = (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        if (durationDays < 1) {
+            durationDays = 1;
         }
 
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, durationMonths);
+        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, endDate);
         String code = generateContractCode();
 
         String contentSnapshot = buildContractContentSnapshot(
@@ -87,7 +84,7 @@ public class ContractService {
                 activePolicy.getVersion(),
                 startDate,
                 endDate,
-                durationMonths,
+                durationDays,
                 quote
         );
 
@@ -301,7 +298,7 @@ public class ContractService {
             String policyVersion,
             LocalDate startDate,
             LocalDate endDate,
-            int durationMonths,
+            int durationDays,
             QuoteResponse quote
     ) {
         String facilityName = (unit.getZone() != null && unit.getZone().getFacility() != null)
@@ -314,8 +311,8 @@ public class ContractService {
                 : "N/A";
         String customerEmail = reservation.getCustomer() != null ? reservation.getCustomer().getEmail() : "N/A";
 
-        long monthlyRent = quote.totalRent() / durationMonths;
-        String formattedMonthlyRent = String.format(Locale.GERMANY, "%,d ₫", monthlyRent);
+        long dailyRent = quote.totalRent() / durationDays;
+        String formattedDailyRent = String.format(Locale.GERMANY, "%,d ₫", dailyRent);
         String formattedTotalRent = String.format(Locale.GERMANY, "%,d ₫", quote.totalRent());
         String formattedDeposit = String.format(Locale.GERMANY, "%,d ₫", quote.depositAmount());
 
@@ -346,12 +343,12 @@ public class ContractService {
                 3. Phương thức mở cửa & an ninh: %s (Kiểm soát kỹ thuật số 24/7).
 
                 ĐIỀU 2. THỜI HẠN THUÊ
-                1. Thời hạn thuê: %d tháng cam kết.
+                1. Thời hạn thuê: %d ngày cam kết.
                 2. Ngày bắt đầu hiệu lực (Check-in): %s.
                 3. Ngày kết thúc hợp đồng dự kiến: %s.
 
                 ĐIỀU 3. GIÁ CẢ VÀ QUY ĐỊNH THANH TOÁN
-                1. Đơn giá thuê tháng: %s / tháng.
+                1. Đơn giá thuê ngày: %s / ngày.
                 2. Tổng giá trị hợp đồng thuê: %s (Thanh toán 100%% tại quầy lúc làm thủ tục Check-in).
                 3. Tiền đặt cọc bảo đảm (10%%): %s (Đã thanh toán lúc đặt chỗ, có hoàn lại 100%% khi thanh lý hợp đồng nếu kho nguyên vẹn).
 
@@ -378,10 +375,10 @@ public class ContractService {
                 unit.getType() != null ? unit.getType().getName() : "Standard",
                 unit.getSizeM2() != null ? unit.getSizeM2().doubleValue() : 5.0,
                 unit.getAccessType() != null ? unit.getAccessType() : "PIN 24/7",
-                durationMonths,
+                durationDays,
                 startDate,
                 endDate,
-                formattedMonthlyRent,
+                formattedDailyRent,
                 formattedTotalRent,
                 formattedDeposit
         );

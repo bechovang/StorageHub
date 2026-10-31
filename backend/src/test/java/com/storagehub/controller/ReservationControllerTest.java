@@ -60,14 +60,14 @@ class ReservationControllerTest {
         CreateReservationRequest request = new CreateReservationRequest(
                 3L,
                 LocalDate.of(2026, 10, 3),
-                3
+                LocalDate.of(2027, 1, 2)
         );
 
         QuoteResponse quote = new QuoteResponse(
                 3L,
                 LocalDate.of(2026, 10, 3),
                 LocalDate.of(2027, 1, 2),
-                3,
+                92,
                 List.of(),
                 1035000L,
                 103500L,
@@ -116,7 +116,7 @@ class ReservationControllerTest {
         CreateReservationRequest request = new CreateReservationRequest(
                 3L,
                 LocalDate.of(2026, 10, 3),
-                3
+                LocalDate.of(2027, 1, 2)
         );
 
         when(reservationService.createReservation(eq("lan@demo.vn"), any(CreateReservationRequest.class)))
@@ -132,12 +132,12 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/reservations trả về 400 Bad Request khi duration-months không hợp lệ")
+    @DisplayName("POST /api/v1/reservations trả về 400 Bad Request khi endDate bị thiếu")
     void testCreateReservation_ValidationFailed() throws Exception {
         CreateReservationRequest request = new CreateReservationRequest(
                 3L,
                 LocalDate.of(2026, 10, 3),
-                0 // Invalid duration
+                null // endDate thiếu — @NotNull violation
         );
 
         mockMvc.perform(post("/api/v1/reservations")

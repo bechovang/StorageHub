@@ -72,7 +72,7 @@ public class UnitService {
             Long typeId,
             BigDecimal sizeM2,
             LocalDate startDate,
-            Integer durationMonths,
+            LocalDate endDate,
             String sort,
             Integer page,
             Integer pageSize
@@ -84,7 +84,7 @@ public class UnitService {
 
         LocalDate today = LocalDate.now(ICT_ZONE);
         LocalDate queryStartDate = (startDate != null) ? startDate : today;
-        int duration = (durationMonths != null && durationMonths >= 1) ? durationMonths : 1;
+        LocalDate queryEndDate = (endDate != null && !endDate.isBefore(queryStartDate)) ? endDate : queryStartDate;
 
         // Lấy chính sách giá đang hoạt động (status = 1)
         RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
@@ -141,7 +141,7 @@ public class UnitService {
         for (Unit unit : filteredUnits) {
             Integer typeIdVal = unit.getType().getTypeId();
             int bufferDays = bufferDaysMap.getOrDefault(typeIdVal, 1);
-            long monthlyRent = rentRateMap.getOrDefault(typeIdVal, 0L);
+            long dailyRent = rentRateMap.getOrDefault(typeIdVal, 0L);
 
             // 1. Tính ngày sẵn sàng sau dọn dẹp của kho
             LocalDate readyDate = today;
@@ -156,7 +156,7 @@ public class UnitService {
 
             // 2. Tính khoảng thời gian thuê thực tế nếu khách chọn unit này
             LocalDate effectiveStart = queryStartDate.isBefore(readyDate) ? readyDate : queryStartDate;
-            LocalDate effectiveEnd = effectiveStart.plusMonths(duration).minusDays(1);
+            LocalDate effectiveEnd = queryEndDate.isBefore(effectiveStart) ? effectiveStart : queryEndDate;
 
             // 3. Kiểm tra xung đột (overlap) với reservation đang có trong tương lai
             List<Reservation> unitReservations = reservationsByUnit.getOrDefault(unit.getUnitId(), List.of());
@@ -197,7 +197,7 @@ public class UnitService {
                     unit.getZone().getCode(),
                     unit.getZone().getFacility().getName(),
                     unit.getAccessType(),
-                    monthlyRent,
+                    dailyRent,
                     availability,
                     "/units/" + unit.getCode() + ".jpg"
             );
@@ -207,10 +207,10 @@ public class UnitService {
 
         // Sắp xếp theo giá (AD-8 & contract)
         if ("price-desc".equalsIgnoreCase(validSort)) {
-            resultItems.sort(Comparator.comparing(UnitSummaryResponse::baseMonthlyRent).reversed()
+            resultItems.sort(Comparator.comparing(UnitSummaryResponse::baseDailyRent).reversed()
                     .thenComparing(UnitSummaryResponse::code));
         } else {
-            resultItems.sort(Comparator.comparing(UnitSummaryResponse::baseMonthlyRent)
+            resultItems.sort(Comparator.comparing(UnitSummaryResponse::baseDailyRent)
                     .thenComparing(UnitSummaryResponse::code));
         }
 
@@ -241,14 +241,14 @@ public class UnitService {
 
         List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
 
-        long monthlyRent = 0L;
+        long dailyRent = 0L;
         int bufferDays = 1;
         Integer typeIdVal = unit.getType().getTypeId();
 
         for (PolicyRule r : rules) {
             if (r.getType().getTypeId().equals(typeIdVal)) {
                 if (r.getRuleType() == PolicyRule.RuleType.RENT_RATE) {
-                    monthlyRent = r.getValue().longValue();
+                    dailyRent = r.getValue().longValue();
                 } else if (r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER) {
                     bufferDays = r.getValue().intValue();
                 }
@@ -287,7 +287,7 @@ public class UnitService {
                 unit.getZone().getCode(),
                 unit.getZone().getFacility().getName(),
                 unit.getAccessType(),
-                monthlyRent,
+                dailyRent,
                 availability,
                 "/units/" + unit.getCode() + ".jpg",
                 dimensions,
@@ -299,19 +299,11 @@ public class UnitService {
     /**
      * Bảng giá minh bạch (FR-6) tính toán từ PricingEngine (AD-11).
      */
-    public QuoteResponse getUnitQuote(Long unitId, LocalDate startDate, Integer durationMonths) {
-        return getUnitQuote(unitId, startDate, null, durationMonths);
-    }
-
-    public QuoteResponse getUnitQuote(Long unitId, LocalDate startDate, Integer durationDays, Integer durationMonths) {
+    public QuoteResponse getUnitQuote(Long unitId, LocalDate startDate, LocalDate endDate) {
         Unit unit = unitRepository.findById(unitId)
                 .orElseThrow(() -> new UnitNotFoundException("Unit này không tồn tại."));
 
-        if (durationDays != null && durationDays > 0) {
-            return pricingEngine.calculateQuoteByDays(unit, startDate, durationDays, durationMonths);
-        }
-        int months = (durationMonths != null && durationMonths > 0) ? durationMonths : 1;
-        return pricingEngine.calculateQuote(unit, startDate, months);
+        return pricingEngine.calculateQuote(unit, startDate, endDate);
     }
 
     /**

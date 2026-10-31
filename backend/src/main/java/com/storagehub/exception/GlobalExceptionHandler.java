@@ -150,6 +150,18 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ApiError> handleBusinessRule(
+            BusinessRuleException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(
+                        "BUSINESS_RULE_VIOLATED",
+                        exception.getMessage()
+                ));
+    }
+
     @ExceptionHandler(ContractAddendumInvalidStateException.class)
     public ResponseEntity<ApiError> handleContractAddendumInvalidState(
             ContractAddendumInvalidStateException exception

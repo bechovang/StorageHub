@@ -30,31 +30,20 @@ async function handleResponse(res, defaultCode, defaultMessage) {
 export const paymentService = {
   /**
    * Khởi tạo phiên thanh toán mới (POST /api/v1/payments)
+   * Backend chỉ chấp nhận method = "PAYOS" (thanh toán QR).
    *
    * @param {Object} params
-   * @param {string} [params.purpose="DEPOSIT"] - "DEPOSIT" | "RENT"
+   * @param {string} [params.purpose="DEPOSIT"] - "DEPOSIT" | "RENT" | "EXTENSION_FEE"
    * @param {number|string} params.reservationId - ID đơn đặt chỗ
-   * @param {string} params.method - "CARD" | "MOMO" | "VNPAY"
-   * @param {Object} [params.card] - { number, expiry, cvc } (bắt buộc khi method=CARD)
-   * @param {string} [params.momoPhone] - SĐT MoMo (bắt buộc khi method=MOMO)
+   * @param {string} params.method - "PAYOS"
    * @returns {Promise<Object>} PaymentSessionResponse
    */
-  async createPayment({ purpose = "DEPOSIT", reservationId, method, card, momoPhone }) {
+  async createPayment({ purpose = "DEPOSIT", reservationId, method = "PAYOS" }) {
     const body = {
       purpose,
       reservationId: Number(reservationId),
       method,
     };
-
-    if (method === "CARD" && card) {
-      body.card = {
-        number: card.number.replace(/[\s-]/g, ""),
-        expiry: card.expiry.trim(),
-        cvc: card.cvc.trim(),
-      };
-    } else if (method === "MOMO" && momoPhone) {
-      body.momoPhone = momoPhone.trim().replace(/[\s.-]/g, "");
-    }
 
     const res = await apiClient("/api/v1/payments", {
       method: "POST",
@@ -66,7 +55,7 @@ export const paymentService = {
 
   /**
    * Lấy thông tin trạng thái phiên thanh toán (GET /api/v1/payments/{paymentId})
-   * Dùng để FE poll khi trạng thái là PROCESSING (CARD) hoặc PENDING (VNPAY auto-resolve)
+   * Dùng để FE poll khi trạng thái là PENDING (chờ webhook PayOS)
    *
    * @param {number|string} paymentId
    * @returns {Promise<Object>} PaymentSessionResponse
@@ -80,21 +69,19 @@ export const paymentService = {
   },
 
   /**
-   * Xác nhận thanh toán bước 2 bằng OTP (POST /api/v1/payments/{paymentId}/confirm)
-   * Chỉ dùng cho MoMo (mock OTP: 123456)
+   * DEMO ONLY: Bỏ qua thanh toán — đánh dấu phiên PENDING/PROCESSING là SUCCEEDED
+   * (POST /api/v1/payments/{paymentId}/demo-complete)
+   * Backend có thể trả 400 (demo disabled) — message sẽ surface lên UI.
    *
    * @param {number|string} paymentId
-   * @param {Object} params
-   * @param {string} params.otp - 6 chữ số
-   * @returns {Promise<Object>} PaymentResultResponse
+   * @returns {Promise<Object>} PaymentSessionResponse (giống getPayment)
    */
-  async confirmPayment(paymentId, { otp }) {
-    const res = await apiClient(`/api/v1/payments/${paymentId}/confirm`, {
+  async demoCompletePayment(paymentId) {
+    const res = await apiClient(`/api/v1/payments/${paymentId}/demo-complete`, {
       method: "POST",
-      body: JSON.stringify({ otp: otp.trim() }),
     });
 
-    return handleResponse(res, "PAYMENT_CONFIRM_FAILED", "Xác nhận OTP thất bại.");
+    return handleResponse(res, "DEMO_COMPLETE_FAILED", "Không thể bỏ qua thanh toán (demo).");
   },
 
   /**
@@ -158,26 +145,20 @@ export const paymentService = {
   },
 
   /**
-   * Tạo đơn đặt chỗ mới để test trực tiếp luồng (POST /api/v1/reservations)
+   * Tạo đơn đặt chỗ mới (POST /api/v1/reservations)
+   * Mô hình thuê theo ngày: endDate là ngày trả kho (inclusive), >= startDate.
    *
-   * @param {Object} payload { unitId, startDate, durationMonths }
+   * @param {Object} payload { unitId, startDate, endDate }
    * @returns {Promise<Object>} ReservationDetailResponse
    */
-  async createReservation({ unitId = 1, startDate, durationDays, durationMonths = 3 }) {
-    const body = {
-      unitId,
-      startDate,
-    };
-    if (durationDays) {
-      body.durationDays = Number(durationDays);
-    }
-    if (durationMonths) {
-      body.durationMonths = Number(durationMonths);
-    }
-
+  async createReservation({ unitId, startDate, endDate }) {
     const res = await apiClient("/api/v1/reservations", {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        unitId,
+        startDate,
+        endDate,
+      }),
     });
 
     return handleResponse(res, "RESERVATION_CREATE_FAILED", "Không thể tạo đơn đặt chỗ.");

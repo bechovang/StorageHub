@@ -5,9 +5,6 @@
 
 import { apiClient, safeParseJson } from "./apiClient.js";
 import { ENTITY_TYPE_LABELS } from "../utils/statusLabels.js";
-import { matchSearch } from "../utils/formatters.js";
-
-const STORAGE_KEY = "storagehub_activity_logs_v4";
 
 // Chỉ chứa các nhóm lọc thực thể duy nhất (đã loại bỏ khóa trùng lặp STAFF_ASSIGNMENT gây lặp 2 nút "Ca trực")
 export const ENTITY_TYPES = {
@@ -109,114 +106,56 @@ export async function fetchActivityLogs({
   pageSize = 50,
   signal,
 } = {}) {
-  const localLogs = getActivityLogs({ entityType, searchTerm });
+  const params = new URLSearchParams();
+  if (entityType && entityType !== "ALL") {
+    params.append("entityType", entityType);
+  }
+  if (searchTerm && searchTerm.trim()) params.append("query", searchTerm.trim());
+  if (startDate) params.append("startDate", startDate);
+  if (endDate) params.append("endDate", endDate);
+  params.append("page", String(page));
+  params.append("pageSize", String(pageSize));
 
-  try {
-    const params = new URLSearchParams();
-    if (entityType && entityType !== "ALL" && entityType !== "POLICY") {
-      params.append("entityType", entityType);
-    }
-    if (searchTerm && searchTerm.trim()) params.append("query", searchTerm.trim());
-    if (startDate) params.append("startDate", startDate);
-    if (endDate) params.append("endDate", endDate);
-    params.append("page", String(page));
-    params.append("pageSize", String(pageSize));
+  const response = await apiClient(`/api/v1/activity-logs?${params.toString()}`, { signal });
+  const errorData = await safeParseJson(response).catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(errorData.message || "Không thể tải nhật ký hoạt động hệ thống.");
+  }
 
-    // Nếu lọc riêng POLICY (chưa có bảng riêng phía server), trả từ kho kiểm toán đồng bộ
-    if (entityType === "POLICY") {
-      return {
-        items: localLogs,
-        page: 1,
-        pageSize,
-        total: localLogs.length,
-        totalPages: 1,
-      };
-    }
+  const data = await safeParseJson(response);
+  const items = Array.isArray(data.items) ? data.items : [];
 
-    const response = await apiClient(`/api/v1/activity-logs?${params.toString()}`, { signal });
-    if (!response.ok) {
-      const errorData = await safeParseJson(response);
-      if (localLogs.length > 0) {
-        return { items: localLogs, page: 1, pageSize, total: localLogs.length, totalPages: 1 };
-      }
-      throw new Error(errorData.message || "Không thể tải nhật ký hoạt động hệ thống.");
-    }
-
-    const data = await safeParseJson(response);
-    const items = Array.isArray(data.items) ? data.items : [];
-
-    const mapped = items.map((item) => {
-      const normalizedEntity = item.entityType === "STAFF_ASSIGNMENT" ? "SHIFT" : item.entityType;
-      return {
-        id: item.logId,
-        timestamp: item.createdAt,
-        actor: item.actorName || "Hệ thống",
-        actorEmail: item.actorEmail || null,
-        actorRole: item.actorRole || "SYSTEM",
-        entityType: normalizedEntity,
-        entityId: String(item.entityId || item.logId),
-        entityCode: formatEntityCode(normalizedEntity, item.entityId || item.logId, item.actorEmail),
-        action: item.action,
-        fromValue: item.fromValue,
-        toValue: item.toValue,
-        reason: item.reason || "Ghi nhận nghiệp vụ hệ thống",
-      };
-    });
-
-    const combined = page === 1 ? [...localLogs, ...mapped] : mapped;
-    combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
+  const mapped = items.map((item) => {
+    const normalizedEntity = item.entityType === "STAFF_ASSIGNMENT" ? "SHIFT" : item.entityType;
     return {
-      items: combined,
-      page: data.page || page,
-      pageSize: data.pageSize || pageSize,
-      total: (data.total || mapped.length) + localLogs.length,
-      totalPages: data.totalPages || 1,
+      id: item.logId,
+      timestamp: item.createdAt,
+      actor: item.actorName || "Hệ thống",
+      actorEmail: item.actorEmail || null,
+      actorRole: item.actorRole || "SYSTEM",
+      entityType: normalizedEntity,
+      entityId: String(item.entityId || item.logId),
+      entityCode: formatEntityCode(normalizedEntity, item.entityId || item.logId, item.actorEmail),
+      action: item.action,
+      fromValue: item.fromValue,
+      toValue: item.toValue,
+      reason: item.reason || "Ghi nhận nghiệp vụ hệ thống",
     };
-  } catch (err) {
-    if (err?.name === "AbortError") throw err;
-    if (localLogs.length > 0) {
-      return { items: localLogs, page: 1, pageSize, total: localLogs.length, totalPages: 1 };
-    }
-    throw err;
-  }
+  });
+
+  return {
+    items: mapped,
+    page: data.page || page,
+    pageSize: data.pageSize || pageSize,
+    total: data.total || mapped.length,
+    totalPages: data.totalPages || 1,
+  };
 }
 
-export function getActivityLogs({ entityType = "ALL", searchTerm = "" } = {}) {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        let logs = parsed;
-        if (entityType && entityType !== "ALL") {
-          logs = logs.filter((log) => {
-            if (entityType === "SHIFT") {
-              return log.entityType === "SHIFT" || log.entityType === "STAFF_ASSIGNMENT";
-            }
-            if (entityType === "AUTH") {
-              return log.action === "LOGIN" || log.action === "LOGOUT" || log.action === "LOGIN_FAILED";
-            }
-            return log.entityType === entityType;
-          });
-        }
-        if (searchTerm && searchTerm.trim()) {
-          logs = logs.filter(
-            (log) =>
-              matchSearch(log.actor, searchTerm) ||
-              matchSearch(log.entityCode, searchTerm) ||
-              matchSearch(log.reason, searchTerm)
-          );
-        }
-        return logs;
-      }
-    }
-  } catch {
-    // Bỏ qua lỗi đọc bộ nhớ đệm
-  }
-  return [];
-}
-
+/**
+ * Ghi nhận log kiểm toán phía client (fire-and-forget).
+ * Backend chưa có endpoint POST activity-logs nên không persist; trả về bản ghi để UI dùng ngay.
+ */
 export function appendActivityLog({
   actor,
   actorRole = "FACILITY_MANAGER",
@@ -229,8 +168,8 @@ export function appendActivityLog({
   toValue = null,
   reason,
 }) {
-  const newLog = {
-    id: `LOC-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+  return {
+    id: `LOC-${Date.now()}`,
     timestamp: new Date().toISOString(),
     actor: actor || "Hệ thống",
     actorRole,
@@ -242,15 +181,4 @@ export function appendActivityLog({
     toValue,
     reason: (reason || "Cập nhật nghiệp vụ hệ thống").trim(),
   };
-
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const logs = raw ? JSON.parse(raw) : [];
-    logs.unshift(newLog);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs.slice(0, 150)));
-  } catch {
-    // Ignore storage quota error
-  }
-
-  return newLog;
 }

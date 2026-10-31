@@ -67,7 +67,7 @@ class PricingEngineTest {
         PolicyRule rentRule = new PolicyRule();
         rentRule.setType(typeS);
         rentRule.setRuleType(PolicyRule.RuleType.RENT_RATE);
-        rentRule.setValue(new BigDecimal("345000"));
+        rentRule.setValue(new BigDecimal("5000"));
 
         PolicyRule depositRule = new PolicyRule();
         depositRule.setType(typeS);
@@ -77,37 +77,38 @@ class PricingEngineTest {
         when(policyRuleRepository.findByPolicy_PolicyId(2)).thenReturn(List.of(rentRule, depositRule));
 
         LocalDate startDate = LocalDate.of(2026, 10, 3);
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, 3);
+        LocalDate endDate = LocalDate.of(2026, 10, 31);
+        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, endDate);
 
         assertThat(quote.unitId()).isEqualTo(3L);
         assertThat(quote.startDate()).isEqualTo(LocalDate.of(2026, 10, 3));
-        assertThat(quote.endDate()).isEqualTo(LocalDate.of(2027, 1, 2));
-        assertThat(quote.durationMonths()).isEqualTo(3);
-        assertThat(quote.totalRent()).isEqualTo(1035000L);
-        assertThat(quote.depositAmount()).isEqualTo(103500L);
-        assertThat(quote.dueNow()).isEqualTo(103500L);
+        assertThat(quote.endDate()).isEqualTo(LocalDate.of(2026, 10, 31));
+        assertThat(quote.durationDays()).isEqualTo(29);
+        assertThat(quote.totalRent()).isEqualTo(145000L);
+        assertThat(quote.depositAmount()).isEqualTo(14500L);
+        assertThat(quote.dueNow()).isEqualTo(14500L);
         assertThat(quote.policyVersion()).isEqualTo("v3");
 
         assertThat(quote.lines()).hasSize(2);
         QuoteLineResponse rentLine = quote.lines().get(0);
         assertThat(rentLine.kind()).isEqualTo("RENT");
         assertThat(rentLine.code()).isEqualTo("RENT_RATE");
-        assertThat(rentLine.amount()).isEqualTo(1035000L);
+        assertThat(rentLine.amount()).isEqualTo(145000L);
         assertThat(rentLine.refundable()).isFalse();
 
         QuoteLineResponse depositLine = quote.lines().get(1);
         assertThat(depositLine.kind()).isEqualTo("DEPOSIT");
         assertThat(depositLine.code()).isEqualTo("DEPOSIT_RATE");
-        assertThat(depositLine.amount()).isEqualTo(103500L);
+        assertThat(depositLine.amount()).isEqualTo(14500L);
         assertThat(depositLine.refundable()).isTrue();
     }
 
     @Test
-    @DisplayName("calculateQuote ném ngoại lệ khi durationMonths < 1")
+    @DisplayName("calculateQuote ném ngoại lệ khi endDate trước startDate")
     void testCalculateQuote_InvalidDuration() {
-        assertThatThrownBy(() -> pricingEngine.calculateQuote(unit, LocalDate.of(2026, 10, 3), 0))
+        assertThatThrownBy(() -> pricingEngine.calculateQuote(unit, LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 1)))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Thời hạn thuê tối thiểu 1 tháng");
+                .hasMessage("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu");
     }
 
     @Test
@@ -115,46 +116,8 @@ class PricingEngineTest {
     void testCalculateQuote_NoActivePolicy() {
         when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> pricingEngine.calculateQuote(unit, LocalDate.of(2026, 10, 3), 3))
+        assertThatThrownBy(() -> pricingEngine.calculateQuote(unit, LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 3)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Hệ thống chưa có chính sách giá hiệu lực");
-    }
-
-    @Test
-    @DisplayName("calculateQuoteByDays tính chính xác giá thuê theo ngày")
-    void testCalculateQuoteByDays_Success() {
-        when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(activePolicy));
-
-        PolicyRule rentRule = new PolicyRule();
-        rentRule.setType(typeS);
-        rentRule.setRuleType(PolicyRule.RuleType.RENT_RATE);
-        rentRule.setValue(new BigDecimal("345000"));
-
-        PolicyRule depositRule = new PolicyRule();
-        depositRule.setType(typeS);
-        depositRule.setRuleType(PolicyRule.RuleType.DEPOSIT_RATE);
-        depositRule.setValue(new BigDecimal("10"));
-
-        when(policyRuleRepository.findByPolicy_PolicyId(2)).thenReturn(List.of(rentRule, depositRule));
-
-        LocalDate startDate = LocalDate.of(2026, 10, 3);
-        QuoteResponse quote = pricingEngine.calculateQuoteByDays(unit, startDate, 7);
-
-        assertThat(quote.unitId()).isEqualTo(3L);
-        assertThat(quote.startDate()).isEqualTo(LocalDate.of(2026, 10, 3));
-        assertThat(quote.endDate()).isEqualTo(LocalDate.of(2026, 10, 9));
-        assertThat(quote.durationDays()).isEqualTo(7);
-        assertThat(quote.dailyRent()).isEqualTo(11500L);
-        assertThat(quote.totalRent()).isEqualTo(80500L); // 11500 * 7
-        assertThat(quote.depositAmount()).isEqualTo(8050L); // 10%
-        assertThat(quote.dueNow()).isEqualTo(8050L);
-    }
-
-    @Test
-    @DisplayName("calculateQuoteByDays ném ngoại lệ khi durationDays < 1")
-    void testCalculateQuoteByDays_InvalidDays() {
-        assertThatThrownBy(() -> pricingEngine.calculateQuoteByDays(unit, LocalDate.of(2026, 10, 3), 0))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Thời hạn thuê tối thiểu 1 ngày");
     }
 }

@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router";
 import { matchSearch } from "../../../utils/formatters.js";
 import {
-  getFacilityUnits,
+  fetchFacilityUnits,
   updateUnitSpecs,
   checkRetireGuard,
   retireUnit,
@@ -16,8 +16,43 @@ import {
 export function useUnitManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Dữ liệu Units từ Storage/Service
-  const [units, setUnits] = useState(() => getFacilityUnits());
+  // Dữ liệu Units từ API (GET /api/v1/units/admin)
+  const [units, setUnits] = useState([]);
+  const [unitsLoading, setUnitsLoading] = useState(true);
+  const [unitsError, setUnitsError] = useState("");
+
+  const loadUnits = useCallback(async (signalIgnore) => {
+    setUnitsLoading(true);
+    setUnitsError("");
+    try {
+      const list = await fetchFacilityUnits();
+      if (!signalIgnore) setUnits(list);
+    } catch (err) {
+      if (!signalIgnore) setUnitsError(err.message || "Không thể tải danh mục kho.");
+    } finally {
+      if (!signalIgnore) setUnitsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    loadUnits(ignore);
+    return () => {
+      ignore = true;
+    };
+  }, [loadUnits]);
+
+  // Sau mỗi thao tác ghi (PATCH/POST/DELETE) -> tải lại danh sách từ API
+  const refreshUnits = async () => {
+    try {
+      const list = await fetchFacilityUnits();
+      setUnits(list);
+      return list;
+    } catch (err) {
+      setUnitsError(err.message || "Không thể tải lại danh mục kho.");
+      return [];
+    }
+  };
 
   // Bộ lọc trạng thái lấy trực tiếp từ searchParams (Single Source of Truth)
   const activeStatusTab = searchParams.get("status") || "ALL";
@@ -28,10 +63,10 @@ export function useUnitManagement() {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [drawerTab, setDrawerTab] = useState("SPECS"); // "SPECS" | "LOGS"
 
-  // Form edit specs trong drawer
-  const [editPrice, setEditPrice] = useState("");
+  // Form edit specs trong drawer (đã bỏ giá thuê — giá thuộc Policy page)
   const [editNotes, setEditNotes] = useState("");
   const [editSizeM2, setEditSizeM2] = useState("");
+  const [editFloor, setEditFloor] = useState("");
 
   // Modals
   // 1. Blocker modal (khi vi phạm guard)
@@ -84,6 +119,15 @@ export function useUnitManagement() {
     return counts;
   }, [units]);
 
+  // Danh sách khu vực duy nhất (từ dữ liệu thật thay vì hardcode)
+  const zoneOptions = useMemo(() => {
+    const set = new Set();
+    units.forEach((u) => {
+      if (u.zone) set.add(u.zone);
+    });
+    return [...set].sort();
+  }, [units]);
+
   // Danh sách lọc
   const filteredUnits = useMemo(() => {
     let result = [...units];
@@ -96,43 +140,45 @@ export function useUnitManagement() {
     if (searchTerm.trim()) {
       const q = searchTerm.trim();
       result = result.filter(
-        (u) =>
-          matchSearch(u.code, q) ||
-          matchSearch(u.typeName, q) ||
-          matchSearch(u.zone, q) ||
-          matchSearch(u.tenant, q) ||
-          matchSearch(u.contractRef, q)
+        (u) => matchSearch(u.code, q) || matchSearch(u.typeName, q) || matchSearch(u.zone, q)
       );
     }
     return result;
   }, [units, activeStatusTab, selectedZone, searchTerm]);
 
+  // Đồng bộ selectedUnit với dữ liệu mới nhất sau refresh
+  const syncSelectedUnit = (updatedList, unitId) => {
+    if (!unitId) return;
+    const fresh = updatedList.find((u) => Number(u.id) === Number(unitId));
+    if (fresh) setSelectedUnit(fresh);
+  };
+
   // Mở Drawer chi tiết kho
   const handleOpenDrawer = (unit) => {
     setSelectedUnit(unit);
     setDrawerTab("SPECS");
-    setEditPrice(String(unit.baseRentPrice));
     setEditNotes(unit.notes || "");
     setEditSizeM2(String(unit.sizeM2));
+    setEditFloor(String(unit.floor ?? 1));
   };
 
   const handleCloseDrawer = () => {
     setSelectedUnit(null);
   };
 
-  // Lưu thông số kho (Update Specs)
-  const handleSaveSpecs = (e) => {
+  // Lưu thông số kho (PATCH /api/v1/units/{id} — không còn giá thuê)
+  const handleSaveSpecs = async (e) => {
     e.preventDefault();
     if (!selectedUnit) return;
     try {
-      const updated = updateUnitSpecs(selectedUnit.id, {
-        baseRentPrice: Number(editPrice),
+      await updateUnitSpecs(selectedUnit.id, {
         notes: editNotes,
-        sizeM2: Number(editSizeM2),
+        sizeM2: editSizeM2,
+        floor: editFloor,
       });
-      setSelectedUnit(updated);
-      setUnits(getFacilityUnits());
-      showToast(`Đã lưu thông số kho ${updated.code} thành công.`);
+      const list = await refreshUnits();
+      syncSelectedUnit(list, selectedUnit.id);
+      showToast(`Đã lưu thông số kho ${selectedUnit.code} thành công.`);
     } catch (err) {
       alert(err.message);
     }
@@ -151,18 +197,25 @@ export function useUnitManagement() {
     setRetireTargetUnit(unit);
   };
 
-  const handleConfirmRetire = () => {
+  const handleConfirmRetire = async () => {
     if (!retireTargetUnit) return;
     try {
-      const updated = retireUnit(retireTargetUnit.id);
-      setUnits(getFacilityUnits());
-      if (selectedUnit && selectedUnit.id === updated.id) {
-        setSelectedUnit(updated);
-      }
+      await retireUnit(retireTargetUnit.id, "Ngừng khai thác kho, tạm rút khỏi danh mục cho thuê");
+      const list = await refreshUnits();
+      syncSelectedUnit(list, retireTargetUnit.id);
+      showToast(`Kho ${retireTargetUnit.code} đã được chuyển sang trạng thái Ngừng thuê (RETIRED).`);
       setRetireTargetUnit(null);
-      showToast(`Kho ${updated.code} đã được chuyển sang trạng thái Ngừng thuê (RETIRED).`);
     } catch (err) {
-      alert(err.message);
+      // Backend từ chối (kho RENTED / có đơn giữ chỗ) — surface message
+      setRetireTargetUnit(null);
+      setBlockerModalData({
+        unit: retireTargetUnit,
+        blocker: {
+          title: "Không thể ngừng khai thác kho",
+          message: err.message,
+          actionAdvice: "Vui lòng kiểm tra lại trạng thái hợp đồng / đơn giữ chỗ của kho này.",
+        },
+      });
     }
   };
 
@@ -180,30 +233,26 @@ export function useUnitManagement() {
     setMaintenanceReason("");
   };
 
-  const handleConfirmMaintenance = () => {
+  const handleConfirmMaintenance = async () => {
     if (!maintenanceTargetUnit) return;
     try {
-      const updated = setUnitMaintenance(maintenanceTargetUnit.id, maintenanceReason);
-      setUnits(getFacilityUnits());
-      if (selectedUnit && selectedUnit.id === updated.id) {
-        setSelectedUnit(updated);
-      }
+      await setUnitMaintenance(maintenanceTargetUnit.id, maintenanceReason);
+      const list = await refreshUnits();
+      syncSelectedUnit(list, maintenanceTargetUnit.id);
+      showToast(`Kho ${maintenanceTargetUnit.code} đã được chuyển vào bảo trì.`);
       setMaintenanceTargetUnit(null);
-      showToast(`Kho ${updated.code} đã được chuyển vào bảo trì.`);
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // 3. Hoàn tất bảo trì -> Tự động sang PREPARING + Cleaning Task (Rule FR-26/20)
-  const handleFinishMaintenance = (unit) => {
+  // 3. Hoàn tất bảo trì -> Mở kho cho thuê lại (AVAILABLE)
+  const handleFinishMaintenance = async (unit) => {
     try {
-      const updated = finishUnitMaintenance(unit.id);
-      setUnits(getFacilityUnits());
-      if (selectedUnit && selectedUnit.id === updated.id) {
-        setSelectedUnit(updated);
-      }
-      showToast(`Bảo trì hoàn tất. Kho ${updated.code} đã chuyển sang Đang xử lý (PREPARING) để dọn dẹp bàn giao.`);
+      await finishUnitMaintenance(unit.id);
+      const list = await refreshUnits();
+      syncSelectedUnit(list, unit.id);
+      showToast(`Bảo trì hoàn tất. Kho ${unit.code} đã mở lại cho thuê (AVAILABLE).`);
     } catch (err) {
       alert(err.message);
     }
@@ -212,29 +261,23 @@ export function useUnitManagement() {
   // 4. Sửa trạng thái trực tiếp (Fix Status) — Bắt buộc nhập lý do (FR-26 / Flow 4)
   const handleInitiateFixStatus = (unit) => {
     setFixStatusTargetUnit(unit);
-    setFixStatusValue(unit.status === "RENTED" ? "PREPARING" : "AVAILABLE");
+    setFixStatusValue("AVAILABLE");
     setFixStatusReason("");
     setFixStatusError("");
   };
 
-  const handleConfirmFixStatus = () => {
+  const handleConfirmFixStatus = async () => {
     if (!fixStatusTargetUnit) return;
     if (!fixStatusReason.trim() || fixStatusReason.trim().length < 5) {
       setFixStatusError("Lý do điều chỉnh là bắt buộc theo quy định kiểm toán (tối thiểu 5 ký tự).");
       return;
     }
     try {
-      const updated = fixUnitStatus(
-        fixStatusTargetUnit.id,
-        fixStatusValue,
-        fixStatusReason
-      );
-      setUnits(getFacilityUnits());
-      if (selectedUnit && selectedUnit.id === updated.id) {
-        setSelectedUnit(updated);
-      }
+      await fixUnitStatus(fixStatusTargetUnit.id, fixStatusValue, fixStatusReason);
+      const list = await refreshUnits();
+      syncSelectedUnit(list, fixStatusTargetUnit.id);
+      showToast(`Đã điều chỉnh trạng thái kho ${fixStatusTargetUnit.code} thành ${fixStatusValue}.`);
       setFixStatusTargetUnit(null);
-      showToast(`Đã điều chỉnh trạng thái kho ${updated.code} thành ${fixStatusValue}.`);
     } catch (err) {
       setFixStatusError(err.message);
     }
@@ -256,6 +299,9 @@ export function useUnitManagement() {
 
   return {
     units,
+    unitsLoading,
+    unitsError,
+    zoneOptions,
     activeStatusTab,
     searchTerm,
     setSearchTerm,
@@ -264,12 +310,12 @@ export function useUnitManagement() {
     selectedUnit,
     drawerTab,
     setDrawerTab,
-    editPrice,
-    setEditPrice,
     editNotes,
     setEditNotes,
     editSizeM2,
     setEditSizeM2,
+    editFloor,
+    setEditFloor,
     blockerModalData,
     setBlockerModalData,
     retireTargetUnit,
