@@ -8,8 +8,7 @@ import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   DAYS_OF_WEEK,
   ZONES,
-  INITIAL_STAFF,
-} from "../../services/shiftService.js";
+  } from "../../services/shiftService.js";
 import {
   useStaffShifts,
   ShiftKpiGrid,
@@ -35,6 +34,7 @@ export default function StaffShiftsPage() {
     setToast,
     staffRoster,
     staffList,
+    allShifts,
     totalConflicts,
     liveConflict,
     filteredRoster,
@@ -64,26 +64,7 @@ export default function StaffShiftsPage() {
           </div>
         )}
 
-        {/* ── Subheader Telemetry Bar ── */}
-        <section className="shifts-telemetry" aria-label="Thông tin cơ sở & ca trực">
-          <div className="shifts-telemetry__left">
-            <span className="telemetry-dot" aria-hidden="true" />
-            <span className="telemetry-facility">Cơ sở Tân Bình (VN-SGN-01)</span>
-            <span className="telemetry-sep">•</span>
-            <span className="telemetry-status">Hệ thống bình thường</span>
-            <span className="telemetry-sep">•</span>
-            <span className="telemetry-online">Cổng tự động: Online</span>
-          </div>
-          <div className="shifts-telemetry__right">
-            <div className="telemetry-shift-window">
-              <Clock size={15} weight="bold" className="telemetry-icon" />
-              <span>
-                Khung ca hiện tại: <strong>Morning (07:00 – 15:00)</strong>
-              </span>
-            </div>
-            <span className="telemetry-clock">11:42 ICT (UTC+7)</span>
-          </div>
-        </section>
+        
 
         {/* ── Main Canvas ── */}
         <div className="shifts-container">
@@ -103,7 +84,11 @@ export default function StaffShiftsPage() {
           </header>
 
           {/* ── Row 4 KPI Summary Cards ── */}
-          <ShiftKpiGrid totalConflicts={totalConflicts} />
+          <ShiftKpiGrid
+            totalConflicts={totalConflicts}
+            staffRoster={staffRoster}
+            allShifts={allShifts}
+          />
 
           {/* ── Top Assignment Form Bar ── */}
           <ShiftAssignmentForm
@@ -119,7 +104,7 @@ export default function StaffShiftsPage() {
             staffList={staffList}
             onSaveAssignment={handleSaveAssignment}
             onResetDefaults={() => {
-              setSelectedStaffId(INITIAL_STAFF[0].id);
+              if (staffList && staffList.length > 0) setSelectedStaffId(staffList[0].id);
               setSelectedZone(ZONES[0].code);
               setSelectedWindow("MORNING");
               setSelectedDate(DAYS_OF_WEEK[0].key);
@@ -138,7 +123,7 @@ export default function StaffShiftsPage() {
                     Phát hiện trùng lịch trực ({totalConflicts} ca):
                   </strong>
                   <p className="conflict-banner__msg">
-                    Minh Nguyễn hiện đang có 2 ca trùng vào Thứ 2 (12/10). Bấm vào biểu tượng thùng rác ở bảng lịch bên dưới để điều chỉnh lại.
+                    Có ca trực bị trùng khung giờ hoặc nhân sự trong tuần. Vui lòng kiểm tra các ô màu cam trên bảng lịch bên dưới để điều chỉnh.
                   </p>
                 </div>
               </div>

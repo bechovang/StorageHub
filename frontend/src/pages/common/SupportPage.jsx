@@ -51,19 +51,7 @@ export default function SupportPage() {
   return (
     <AppShell>
       <div className="support-page">
-        {/* Status Bar */}
-        <div className="mgmt-telemetry">
-          <div className="mgmt-telemetry__left">
-            <span className="mgmt-telemetry__dot" />
-            <span style={{ fontWeight: 600 }}>Bộ phận hỗ trợ kỹ thuật & vận hành:</span>
-            <span>Cơ sở Tân Bình (VN-SGN-01)</span>
-            <span>|</span>
-            <span>Hotline trực ca: 1900 8888</span>
-          </div>
-          <div className="mgmt-telemetry__right">
-            <span>PHẢN HỒI TRONG 15 PHÚT</span>
-          </div>
-        </div>
+        
 
         <div className="support-container">
           {/* Header */}
@@ -161,9 +149,9 @@ export default function SupportPage() {
                 </p>
               </div>
             ) : (
-              filteredTickets.map((t) => (
+              filteredTickets.map((t, idx) => (
                 <TicketCard
-                  key={t.ticketId}
+                  key={t.ticketId || t.id || t.code || idx}
                   ticket={t}
                   isStaffOrAdmin={isStaffOrAdmin}
                   onResolve={(ticket) => {

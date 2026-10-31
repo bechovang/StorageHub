@@ -3,8 +3,7 @@ import {
   CheckCircle,
   ArrowClockwise,
   FloppyDisk,
-  Warehouse,
-} from "@phosphor-icons/react";
+  } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   usePolicyManagement,
@@ -63,26 +62,7 @@ export default function PolicyManagementPage() {
   return (
     <AppShell>
       <div className="policy-page">
-        {/* ── 1. Telemetry Context Strip (Swiss Architecture) ── */}
-        <aside className="policy-telemetry">
-          <div className="policy-telemetry__inner">
-            <div className="policy-telemetry__left">
-              <div className="telemetry-item">
-                <Warehouse size={15} weight="duotone" className="text-muted" />
-                <span className="telemetry-bold">Cơ sở Tân Bình</span>
-                <span className="text-muted">(VN-SGN-01)</span>
-              </div>
-              <span className="telemetry-divider">|</span>
-              <div className="telemetry-item">
-                <span className="dot-pulse-green" />
-                <span className="text-success font-medium">Dữ liệu vận hành & sổ cái: Đã đồng bộ</span>
-              </div>
-            </div>
-            <div className="policy-telemetry__right">
-              <span className="tabular-clock">MÚI GIỜ: TP. HỒ CHÍ MINH (UTC+07)</span>
-            </div>
-          </div>
-        </aside>
+        
 
         {/* ── 2. Toast Notification ── */}
         {toastMessage && (

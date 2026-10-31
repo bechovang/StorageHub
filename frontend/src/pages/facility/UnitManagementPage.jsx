@@ -74,38 +74,7 @@ export default function UnitManagementPage() {
   return (
     <AppShell>
       <div className="unit-mgmt-page">
-        {/* ── 1. Telemetry Context Strip ── */}
-        <section className="mgmt-telemetry" aria-label="Thông tin cơ sở & kiểm toán">
-          <div className="mgmt-telemetry__inner">
-            <div className="mgmt-telemetry__left">
-              <div className="telemetry-item">
-                <Warehouse size={16} className="text-muted" />
-                <span className="telemetry-bold">Cơ sở:</span>
-                <span>Cơ sở Tân Bình (VN-SGN-01)</span>
-              </div>
-              <span className="telemetry-divider">|</span>
-              <div className="telemetry-item">
-                <ShieldCheck size={16} className="text-success" />
-                <span>Quy chuẩn vận hành:</span>
-                <span className="font-mono font-semibold">Chế độ bảo vệ: Đang bật</span>
-              </div>
-            </div>
-
-            <div className="mgmt-telemetry__right">
-              <div className="telemetry-item">
-                <span className="telemetry-badge-count">
-                  Tổng: <strong>{statusCounts.ALL} kho</strong>
-                </span>
-                <span className="telemetry-badge-count text-success">
-                  Thuê: <strong>{statusCounts.RENTED}</strong> ({((statusCounts.RENTED / (statusCounts.ALL || 1)) * 100).toFixed(0)}%)
-                </span>
-                <span className="telemetry-badge-count">
-                  Trống: <strong>{statusCounts.AVAILABLE}</strong>
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
+        
 
         {/* ── 2. Header & Breadcrumbs ── */}
         <header className="mgmt-header">

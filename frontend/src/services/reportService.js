@@ -13,51 +13,6 @@ export const REPORT_PERIODS = {
   CUSTOM: { id: "CUSTOM", label: "Khoảng ngày tùy chọn", sub: "Tùy chỉnh" },
 };
 
-// Danh sách các phiên bản Rental Policy (Hiển thị trên Business Overview)
-export const POLICY_VERSIONS = [
-  {
-    version: "v3",
-    effectiveDate: "01/10/2026",
-    changedBy: "Hằng (Business Ops)",
-    status: "ACTIVE",
-    scope: "Ngưỡng khấu trừ hao mòn sàn Epoxy 15% & biểu phí quá hạn trả kho",
-    diff: [
-      { field: "Ngưỡng bồi hoàn xước sàn Epoxy", oldVal: "Tính theo hóa đơn nhà thầu thực tế", newVal: "Đồng giá tối đa 15% cọc giữ (tối đa 600.000 ₫/vết)" },
-      { field: "Phụ thu quá giờ trả kho", oldVal: "50.000 ₫ / ngày", newVal: "5% giá thuê / ngày (tối đa trần 10%)" },
-      { field: "Thời gian hoàn cọc tối đa", oldVal: "7 ngày làm việc", newVal: "Ngay khi ký biên bản Checkout (qua VietQR)" },
-    ],
-  },
-  {
-    version: "v2",
-    effectiveDate: "01/07/2026",
-    changedBy: "Hằng (Business Ops)",
-    status: "SUPERSEDED",
-    scope: "Chính sách đệm vệ sinh kho và cơ chế đặt cọc",
-    diff: [
-      { field: "Thời gian đệm vệ sinh", oldVal: "2 giờ", newVal: "1 – 7 ngày tiêu chuẩn" },
-      { field: "Mức cọc tối thiểu", oldVal: "0%", newVal: "10% tổng giá trị hợp đồng" },
-    ],
-  },
-  {
-    version: "v1",
-    effectiveDate: "15/01/2026",
-    changedBy: "Quân (Facility Lead)",
-    status: "ARCHIVED",
-    scope: "Khung quy chế vận hành cơ sở ban đầu tại Cơ sở Tân Bình (VN-SGN-01)",
-    diff: [
-      { field: "Mức cọc cơ bản", oldVal: "Không có", newVal: "10% tổng tiền thuê" },
-      { field: "Buffer dọn dẹp chuyển giao", oldVal: "Không", newVal: "1 ngày sau mỗi lượt thuê" },
-    ],
-  },
-];
-
-// Báo cáo hiệu suất theo Zone
-export const ZONE_PERFORMANCE = [
-  { zone: "Zone A (Small)", unitCount: 14, rentedCount: 12, rate: "85.7%", baseRev: 4140000, surcharge: 110000, total: 4250000, avgDuration: "2.4 tháng", status: "HEALTHY" },
-  { zone: "Zone B (Medium & Large)", unitCount: 18, rentedCount: 17, rate: "94.4%", baseRev: 10260000, surcharge: 980000, total: 11240000, avgDuration: "5.8 tháng", status: "HIGH_DEMAND" },
-  { zone: "Zone C (Lockers)", unitCount: 10, rentedCount: 8, rate: "80.0%", baseRev: 800000, surcharge: 150000, total: 950000, avgDuration: "1.5 tháng", status: "STABLE" },
-];
-
 export const EMPTY_FINANCIAL_SUMMARY = {
   periodId: "THIS_QUARTER",
   periodLabel: "Quý này (Q3 2026)",

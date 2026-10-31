@@ -7,8 +7,7 @@ import {
 import {
   DAYS_OF_WEEK,
   ZONES,
-  INITIAL_STAFF,
-} from "../../../services/shiftService.js";
+  } from "../../../services/shiftService.js";
 
 export default function ShiftAssignmentForm({
   selectedStaffId,
@@ -22,7 +21,7 @@ export default function ShiftAssignmentForm({
   liveConflict,
   onSaveAssignment,
   onResetDefaults,
-  staffList = INITIAL_STAFF,
+  staffList = [],
 }) {
   return (
     <section className="shifts-form-panel">

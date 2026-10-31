@@ -65,52 +65,19 @@ export const ZONES = [
 ];
 
 export const DAYS_OF_WEEK = [
-  { key: "2026-10-12", dayName: "Thứ 2", label: "Mon 12", fullDate: "12/10/2026", isToday: true },
-  { key: "2026-10-13", dayName: "Thứ 3", label: "Tue 13", fullDate: "13/10/2026", isToday: false },
-  { key: "2026-10-14", dayName: "Thứ 4", label: "Wed 14", fullDate: "14/10/2026", isToday: false },
-  { key: "2026-10-15", dayName: "Thứ 5", label: "Thu 15", fullDate: "15/10/2026", isToday: false },
-  { key: "2026-10-16", dayName: "Thứ 6", label: "Fri 16", fullDate: "16/10/2026", isToday: false },
-  { key: "2026-10-17", dayName: "Thứ 7", label: "Sat 17", fullDate: "17/10/2026", isToday: false },
-  { key: "2026-10-18", dayName: "Chủ nhật", label: "Sun 18", fullDate: "18/10/2026", isToday: false },
-];
-
-export const INITIAL_STAFF = [
-  {
-    id: 2,
-    code: "KC-8842",
-    fullName: "Minh Nguyễn",
-    roleLabel: "Staff · Zones A, B (Ground Floor Warden)",
-    rfid: "RFID #KC-8842",
-    station: "Station Desk 02",
-    status: "ON_DUTY",
-    statusText: "On duty",
-  },
-  {
-    id: 7,
-    code: "KC-7721",
-    fullName: "Mai Trần",
-    roleLabel: "Staff · Zone C (Drive-Up Units)",
-    rfid: "RFID #KC-7721",
-    station: "Direct climate audit",
-    status: "SCHEDULED",
-    statusText: "Scheduled (15:00)",
-  },
-  {
-    id: 8,
-    code: "KC-9011",
-    fullName: "Hùng Lê",
-    roleLabel: "Senior staff · All zones (Supervisor)",
-    rfid: "RFID #KC-9011",
-    station: "Gate automation tech & override",
-    status: "SENIOR",
-    statusText: "Senior staff",
-  },
+  { key: "2026-10-26", dayName: "Thứ 2", label: "Mon 26", fullDate: "26/10/2026", isToday: false },
+  { key: "2026-10-27", dayName: "Thứ 3", label: "Tue 27", fullDate: "27/10/2026", isToday: false },
+  { key: "2026-10-28", dayName: "Thứ 4", label: "Wed 28", fullDate: "28/10/2026", isToday: false },
+  { key: "2026-10-29", dayName: "Thứ 5", label: "Thu 29", fullDate: "29/10/2026", isToday: false },
+  { key: "2026-10-30", dayName: "Thứ 6", label: "Fri 30", fullDate: "30/10/2026", isToday: false },
+  { key: "2026-10-31", dayName: "Thứ 7", label: "Sat 31", fullDate: "31/10/2026", isToday: true },
+  { key: "2026-11-01", dayName: "Chủ nhật", label: "Sun 01", fullDate: "01/11/2026", isToday: false },
 ];
 
 /**
  * Lấy danh sách ca trực theo khoảng ngày
  */
-export async function getShifts({ startDate = "2026-10-12", endDate = "2026-10-18", staffId, zoneId } = {}) {
+export async function getShifts({ startDate = "2026-10-26", endDate = "2026-11-01", staffId, zoneId } = {}) {
   const params = new URLSearchParams();
   if (startDate) params.append("startDate", startDate);
   if (endDate) params.append("endDate", endDate);
@@ -128,7 +95,7 @@ export async function getShifts({ startDate = "2026-10-12", endDate = "2026-10-1
 /**
  * Lấy danh sách nhân sự trực ca kèm thống kê tuần (FR-27 / F5-03)
  */
-export async function getStaffRoster({ startDate = "2026-10-12", endDate = "2026-10-18" } = {}) {
+export async function getStaffRoster({ startDate = "2026-10-26", endDate = "2026-11-01" } = {}) {
   const params = new URLSearchParams();
   if (startDate) params.append("startDate", startDate);
   if (endDate) params.append("endDate", endDate);
@@ -200,7 +167,7 @@ export function areShiftsConflicting(shiftA, shiftB) {
 /**
  * Phát hiện xung đột trước khi lưu phân công (Client-side pre-validation)
  */
-export function detectShiftConflict({ staffId, date, shiftWindow, shifts = [], staffList = INITIAL_STAFF }) {
+export function detectShiftConflict({ staffId, date, shiftWindow, shifts = [], staffList = [] }) {
   const staff = staffList.find((s) => s.id === Number(staffId));
   const staffName = staff ? staff.fullName : "Nhân viên";
 

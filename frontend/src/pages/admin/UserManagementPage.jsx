@@ -81,19 +81,7 @@ export default function UserManagementPage() {
   return (
     <AppShell>
       <div className="user-mgmt-page">
-        {/* Top Status Bar */}
-        <div className="mgmt-telemetry">
-          <div className="mgmt-telemetry__left">
-            <span className="mgmt-telemetry__dot" />
-            <span style={{ fontWeight: 600 }}>Quản trị hệ thống:</span>
-            <span>Cấp tài khoản & Phân quyền</span>
-            <span>|</span>
-            <span>Cơ sở: Toàn hệ thống</span>
-          </div>
-          <div className="mgmt-telemetry__right">
-            <span>KHÔNG GIAN QUẢN TRỊ TOÀN QUYỀN</span>
-          </div>
-        </div>
+        
 
         <div className="user-mgmt-container">
           {/* Header */}

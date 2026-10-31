@@ -42,7 +42,7 @@ export function useSupportTickets() {
   // Modal tạo ticket & Danh sách kho đang thuê
   const [rentedUnits, setRentedUnits] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [unitCode, setUnitCode] = useState("S-3");
+  const [unitCode, setUnitCode] = useState("");
   const [incidentType, setIncidentType] = useState("DEVICE_ISSUE");
   const [description, setDescription] = useState("");
   const [createError, setCreateError] = useState("");
@@ -65,13 +65,7 @@ export function useSupportTickets() {
             });
           }
         });
-        let list = Array.from(unitsMap.values());
-        if (list.length === 0) {
-          list = [
-            { code: "S-3", typeName: "Kho nhỏ (S)", sizeM2: 5, facilityName: "Cơ sở Tân Bình" },
-            { code: "M-2", typeName: "Kho vừa (M)", sizeM2: 8, facilityName: "Cơ sở Tân Bình" },
-          ];
-        }
+        const list = Array.from(unitsMap.values());
         setRentedUnits(list);
         if (list.length > 0) {
           setUnitCode(list[0].code);
@@ -79,12 +73,8 @@ export function useSupportTickets() {
       })
       .catch(() => {
         if (!isMounted) return;
-        const fallbackList = [
-          { code: "S-3", typeName: "Kho nhỏ (S)", sizeM2: 5, facilityName: "Cơ sở Tân Bình" },
-          { code: "M-2", typeName: "Kho vừa (M)", sizeM2: 8, facilityName: "Cơ sở Tân Bình" },
-        ];
-        setRentedUnits(fallbackList);
-        setUnitCode("S-3");
+        setRentedUnits([]);
+        setUnitCode("");
       });
 
     return () => {

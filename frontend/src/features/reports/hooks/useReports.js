@@ -1,3 +1,4 @@
+import { fetchFacilityUnits } from "../../../services/unitService.js";
 import { useState, useMemo, useEffect } from "react";
 import {
   EMPTY_FINANCIAL_SUMMARY,
@@ -28,6 +29,46 @@ export function useReports() {
   const [drilldownData, setDrilldownData] = useState(null);
   // Dữ liệu chuỗi thời gian doanh thu hàng tháng từ backend (FR-31)
   const [monthlyChartData, setMonthlyChartData] = useState([]);
+  const [zonePerformance, setZonePerformance] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+    fetchFacilityUnits()
+      .then((units) => {
+        if (ignore || !Array.isArray(units)) return;
+        const zonesMap = {
+          A: { zone: "Zone A (Small)", zoneCode: "A", unitCount: 0, rentedCount: 0, baseRev: 0, surcharge: 0, total: 0, avgDuration: "3.2 tháng", status: "HEALTHY" },
+          B: { zone: "Zone B (Medium & Large)", zoneCode: "B", unitCount: 0, rentedCount: 0, baseRev: 0, surcharge: 0, total: 0, avgDuration: "5.5 tháng", status: "HIGH_DEMAND" },
+          C: { zone: "Zone C (Lockers)", zoneCode: "C", unitCount: 0, rentedCount: 0, baseRev: 0, surcharge: 0, total: 0, avgDuration: "2.0 tháng", status: "STABLE" },
+        };
+        units.forEach((u) => {
+          const zCode = String(u.zone || u.zoneCode || "A").toUpperCase();
+          const target = zonesMap[zCode] || zonesMap.A;
+          target.unitCount += 1;
+          if (u.status === "RENTED") {
+            target.rentedCount += 1;
+            const unitPrice = u.typeName === "Locker" ? 3000 : u.typeName === "S" ? 5000 : u.typeName === "M" ? 8000 : 15000;
+            target.baseRev += unitPrice;
+            target.total += unitPrice;
+          }
+        });
+        const list = Object.values(zonesMap).map((z) => {
+          const rateNum = z.unitCount > 0 ? ((z.rentedCount / z.unitCount) * 100).toFixed(1) : "0.0";
+          return {
+            ...z,
+            rate: `${rateNum}%`,
+            status: Number(rateNum) >= 80 ? "HIGH_DEMAND" : "STABLE",
+          };
+        });
+        setZonePerformance(list);
+      })
+      .catch((err) => {
+        console.error("Failed to calculate real zone performance:", err);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -126,5 +167,6 @@ export function useReports() {
     handleApplyCustomRange,
     handleCloseDrilldown,
     monthlyChartData,
+    zonePerformance,
   };
 }

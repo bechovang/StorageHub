@@ -36,38 +36,7 @@ export default function FacilityOverviewPage() {
   return (
     <AppShell>
       <div className="facility-overview-page">
-        {/* ── Subheader Telemetry Context Bar ── */}
-        <section className="facility-telemetry" aria-label="Thông tin cơ sở & telemetry">
-          <div className="facility-telemetry__inner">
-            <div className="facility-telemetry__left">
-              <div className="telemetry-item">
-                <Warehouse size={16} className="text-muted" />
-                <span className="telemetry-bold">Cơ sở:</span>
-                <span>Tân Bình (VN-SGN-01)</span>
-              </div>
-              <span className="telemetry-divider">|</span>
-              <div className="telemetry-item">
-                <span className="dot-pulse-green" />
-                <span className="text-success font-semibold">Hệ thống ổn định</span>
-                <span className="text-muted">· Cổng ra vào hoạt động tốt</span>
-              </div>
-            </div>
-
-            <div className="facility-telemetry__right">
-              <div className="telemetry-item">
-                <Clock size={15} className="text-muted" />
-                <span className="tabular-clock font-mono">11:42:08</span>
-                <span>(UTC+07 ICT)</span>
-              </div>
-              <span className="telemetry-divider">|</span>
-              <div className="telemetry-item">
-                <ShieldCheck size={16} className="text-primary" />
-                <span className="telemetry-bold">Ca trực:</span>
-                <span>Tuấn (Quản lý trực ca)</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        
 
         {/* ── Main Canvas ── */}
         <div className="facility-canvas">
