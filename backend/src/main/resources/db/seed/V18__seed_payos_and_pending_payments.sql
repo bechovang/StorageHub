@@ -4,9 +4,9 @@
 -- Kịch bản: khách Lan đặt cọc kho M-6 (61 ngày × 8.000 ₫/ngày = 488.000 ₫
 -- thuê, cọc 10% = 48.800 ₫ — khớp PricingEngine, ≥ 2.000 ₫ mốc PayOS).
 --
--- KHÔNG còn đơn PENDING_PAYMENT: booking draft (TTL 30 phút) là thứ tồn tại
--- trước khi trả cọc, và Reservation chỉ sinh sau khi PayOS SUCCEEDED. Seed này
--- giữ một đơn đã cọc làm ví dụ trạng thái RESERVED/HELD.
+-- KHÔNG còn đơn PENDING_PAYMENT: trước khi trả cọc chỉ có payment PENDING
+-- mang unit/ngày; Reservation chỉ sinh sau khi PayOS SUCCEEDED. Seed này giữ
+-- một đơn đã cọc làm ví dụ trạng thái RESERVED/HELD.
 -- ============================================================================
 
 INSERT INTO reservations (reservation_id, code, customer_id, unit_id, start_date, end_date,

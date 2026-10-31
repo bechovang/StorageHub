@@ -1,7 +1,9 @@
 package com.storagehub.repository;
 
 import com.storagehub.entity.Unit;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -40,6 +42,10 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
             "JOIN FETCH z.facility f " +
             "WHERE u.unitId = :unitId")
     Optional<Unit> findWithDetailsById(@Param("unitId") Long unitId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM Unit u WHERE u.unitId = :unitId")
+    Optional<Unit> findByIdForUpdate(@Param("unitId") Long unitId);
 
     /**
      * Lấy các kho ứng viên tương tự (cùng typeId, khác unitId hiện tại, status hợp lệ).

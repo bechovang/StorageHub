@@ -49,8 +49,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             Collection<Payment.Status> statuses
     );
 
-    boolean existsByBookingDraft_DraftIdAndPurposeAndStatusIn(
-            Long draftId,
+    Optional<Payment> findFirstByPayer_UserIdAndUnit_UnitIdAndStartDateAndEndDateAndPurposeAndStatusInOrderByPaymentIdDesc(
+            Long payerId,
+            Long unitId,
+            java.time.LocalDate startDate,
+            java.time.LocalDate endDate,
             Payment.Purpose purpose,
             Collection<Payment.Status> statuses
     );

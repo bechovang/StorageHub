@@ -1,10 +1,8 @@
 package com.storagehub.service;
 
 import com.storagehub.dto.quote.QuoteResponse;
-import com.storagehub.dto.reservation.BookingDraftResponse;
 import com.storagehub.dto.reservation.CreateReservationRequest;
 import com.storagehub.dto.reservation.ReservationDetailResponse;
-import com.storagehub.entity.BookingDraft;
 import com.storagehub.entity.Contract;
 import com.storagehub.entity.Facility;
 import com.storagehub.entity.PolicyRule;
@@ -18,7 +16,6 @@ import com.storagehub.entity.Zone;
 import com.storagehub.exception.BookingUnitTakenException;
 import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.exception.UnitNotFoundException;
-import com.storagehub.repository.BookingDraftRepository;
 import com.storagehub.repository.ContractAddendumRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
@@ -53,9 +50,6 @@ class ReservationServiceTest {
 
     @Mock
     private ReservationRepository reservationRepository;
-
-    @Mock
-    private BookingDraftRepository bookingDraftRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -316,50 +310,5 @@ class ReservationServiceTest {
         assertThat(detailSigned.accessCode()).isEqualTo("PIN-8842");
     }
 
-    @Test
-    @DisplayName("createDraft tạo booking draft 30 phút, chưa sinh Reservation")
-    void testCreateDraft_Success() {
-        CreateReservationRequest request = new CreateReservationRequest(
-                3L,
-                LocalDate.of(2026, 10, 3),
-                LocalDate.of(2027, 1, 2)
-        );
 
-        when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customerUser));
-        when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
-        when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(activePolicy));
-
-        PolicyRule bufferRule = new PolicyRule();
-        bufferRule.setType(typeS);
-        bufferRule.setRuleType(PolicyRule.RuleType.TURNOVER_BUFFER);
-        bufferRule.setValue(new BigDecimal("1"));
-        when(policyRuleRepository.findByPolicy_PolicyId(2)).thenReturn(List.of(bufferRule));
-        when(reservationRepository.findActiveReservationsForUnit(eq(3L), anyCollection())).thenReturn(List.of());
-        when(bookingDraftRepository.findActiveDraftsForUnit(eq(3L), any(), any(), any())).thenReturn(List.of());
-
-        QuoteResponse quote = new QuoteResponse(
-                3L,
-                LocalDate.of(2026, 10, 3),
-                LocalDate.of(2027, 1, 2),
-                92,
-                List.of(),
-                1035000L,
-                103500L,
-                103500L,
-                "v3"
-        );
-        when(pricingEngine.calculateQuote(unitS3, LocalDate.of(2026, 10, 3), LocalDate.of(2027, 1, 2))).thenReturn(quote);
-        when(bookingDraftRepository.save(any(BookingDraft.class))).thenAnswer(invocation -> {
-            BookingDraft d = invocation.getArgument(0);
-            d.setDraftId(77L);
-            return d;
-        });
-
-        BookingDraftResponse response = reservationService.createDraft("lan@demo.vn", request);
-
-        assertThat(response.id()).isEqualTo(77L);
-        assertThat(response.depositAmount()).isEqualTo(103500L);
-        assertThat(response.unit().code()).isEqualTo("S-3");
-        assertThat(response.quote().totalRent()).isEqualTo(1035000L);
-    }
 }

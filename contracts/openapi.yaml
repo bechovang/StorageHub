@@ -301,59 +301,6 @@ paths:
 
   # ------------------------- RESERVATIONS (US-9/10/12) --------------------
 
-  /booking-drafts:
-    post:
-      tags: [Reservations]
-      summary: Giữ chỗ tạm 30 phút — CHƯA tạo đơn thuê
-      description: |
-        Kiểm tra availability (reservation + draft khác) rồi tạo booking draft.
-        Draft không xuất hiện trong danh sách đơn thuê; reservation chỉ sinh
-        sau khi PayOS SUCCEEDED (purpose DEPOSIT với draftId).
-      operationId: createBookingDraft
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [unitId, startDate, endDate]
-              properties:
-                unitId: { type: integer, format: int64 }
-                startDate: { type: string, format: date }
-                endDate: { type: string, format: date, description: "Ngày trả kho (inclusive), >= startDate" }
-            example: { unitId: 3, startDate: "2026-10-03", endDate: "2026-11-02" }
-      responses:
-        "201":
-          description: Booking draft + quote snapshot + hạn giữ chỗ 30 phút
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [id, startDate, endDate, depositAmount, expiresAt]
-                properties:
-                  id: { type: integer, format: int64 }
-                  startDate: { type: string, format: date }
-                  endDate: { type: string, format: date }
-                  depositAmount: { type: integer }
-                  durationDays: { type: integer }
-                  quote: { $ref: "#/components/schemas/Quote" }
-                  expiresAt: { type: string, format: date-time }
-                  unit:
-                    type: object
-                    properties:
-                      code: { type: string }
-                      sizeM2: { type: number }
-                      typeName: { type: string }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409":
-          description: Unit vừa bị chiếm / ngày không còn hợp lệ
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
-              example: { code: BOOKING_UNIT_TAKEN, message: "S-3 vừa được đặt. 5 unit tương tự còn trống.", fieldErrors: [] }
-
   /reservations:
     get:
       tags: [Reservations]
@@ -677,10 +624,11 @@ paths:
       tags: [Payments]
       summary: Bắt đầu thanh toán (Payment Modal) — FR-8
       description: |
-        DEPOSIT nhận `draftId` (booking draft giữ chỗ 30 phút) — reservation
-        chỉ được sinh sau khi PayOS SUCCEEDED. RENT (check-in tại quầy — US-15)
-        nhận `reservationId` và chỉ mở khi reservation đã RESERVED, chưa quá
-        hạn nhận kho. Truyền đúng một trong hai id.
+        DEPOSIT nhận `unitId/startDate/endDate` — server kiểm tra availability,
+        tính quote và tạo payment PENDING; reservation chỉ sinh sau khi PayOS
+        SUCCEEDED. Không giữ chỗ: nếu kho bị người khác đặt trước khi webhook
+        chạy, payment vẫn SUCCEEDED nhưng gắn refund_required.
+        RENT/EXTENSION_FEE nhận `reservationId`.
         Kết quả thanh toán do gateway phía server quyết định — KHÔNG có field
         outcome trong request.
         CARD / MOMO / VNPAY = DEMO: trả PROCESSING, FE poll GET ~1s sau đó
@@ -700,7 +648,9 @@ paths:
               properties:
                 purpose: { $ref: "#/components/schemas/PaymentPurpose" }
                 reservationId: { type: integer, format: int64, nullable: true, description: "RENT/EXTENSION_FEE" }
-                draftId: { type: integer, format: int64, nullable: true, description: "DEPOSIT — booking draft" }
+                unitId: { type: integer, format: int64, nullable: true, description: "DEPOSIT" }
+                startDate: { type: string, format: date, nullable: true, description: "DEPOSIT" }
+                endDate: { type: string, format: date, nullable: true, description: "DEPOSIT" }
                 method: { $ref: "#/components/schemas/PaymentMethod" }
                 card:
                   type: object
@@ -711,7 +661,7 @@ paths:
                     cvc: { type: string, example: "123" }
                 momoPhone: { type: string, example: "0901234567" }
               description: "card bắt buộc khi method=CARD; momoPhone bắt buộc khi method=MOMO; VNPAY không cần field bổ sung."
-            example: { purpose: DEPOSIT, draftId: 12, method: PAYOS }
+            example: { purpose: DEPOSIT, unitId: 18, startDate: "2026-11-07", endDate: "2027-01-06", method: PAYOS }
       responses:
         "201":
           description: Payment session khởi tạo
@@ -2035,7 +1985,7 @@ components:
       required: [id, purpose, method, amount, status, createdAt]
       properties:
         id: { type: integer, format: int64 }
-        reservationId: { type: integer, format: int64, nullable: true, description: "null khi payment còn gắn booking draft; có giá trị sau khi SUCCEEDED" }
+        reservationId: { type: integer, format: int64, nullable: true, description: "null khi payment chưa tạo được booking; có giá trị sau khi SUCCEEDED và tạo reservation thành công" }
         purpose: { $ref: "#/components/schemas/PaymentPurpose" }
         method: { $ref: "#/components/schemas/PaymentMethod" }
         amount: { type: integer, example: 103500 }

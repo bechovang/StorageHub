@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate } from "react-router";
 import QRCode from "qrcode";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { paymentService } from "../../../services/paymentService.js";
-import { getUnitDetail } from "../../../services/unitService.js";
+import { getUnitDetail, getUnitQuote } from "../../../services/unitService.js";
 
 /**
  * Chuẩn hoá thông điệp lỗi: bảo vệ người dùng khỏi các lỗi nội bộ, config keys, hoặc stack traces
@@ -152,12 +152,21 @@ export function usePayment() {
           ) {
             stopPolling();
             if (updated.status === "SUCCEEDED") {
-              setNotificationToast({
-                type: "PAYMENT_CONFIRMED",
-                title: "Thanh toán cọc thành công",
-                body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
-              });
-              syncReservationFromSession(updated);
+              if (updated.refundRequired) {
+                setNotificationToast({
+                  type: "PAYMENT_REFUND_REQUIRED",
+                  title: "Đã thanh toán nhưng kho vừa được đặt",
+                  body: updated.refundReason
+                    || "Hệ thống sẽ hoàn lại tiền cọc cho bạn. Không có đơn thuê nào được tạo.",
+                });
+              } else {
+                setNotificationToast({
+                  type: "PAYMENT_CONFIRMED",
+                  title: "Thanh toán cọc thành công",
+                  body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
+                });
+                syncReservationFromSession(updated);
+              }
             }
           }
         } catch (err) {
@@ -181,31 +190,28 @@ export function usePayment() {
         setReservationError("");
 
         if (paramUnitId) {
-          // Flow /units/:unitId/book — tạo booking draft (giữ chỗ 30 phút).
+          // Flow /units/:unitId/book — chỉ lấy quote; booking sinh sau khi trả cọc.
           // CHƯA có reservation; reservation chỉ sinh khi PayOS SUCCEEDED.
           const u = await getUnitDetail(paramUnitId);
           const start =
             searchParams.get("startDate") || new Date().toISOString().split("T")[0];
           const end = searchParams.get("endDate") || addDays(start, 1);
-          const draft = await paymentService.createBookingDraft({
-            unitId: Number(paramUnitId),
-            startDate: start,
-            endDate: end,
-          });
+          // Chỉ lấy quote để hiển thị — KHÔNG tạo booking/draft. Payment PENDING
+          // mới là thứ tồn tại trước khi PayOS SUCCEEDED.
+          const quote = await getUnitQuote(paramUnitId, { startDate: start, endDate: end });
 
           if (isMounted) {
             setReservation({
               id: null,
-              draftId: draft.id,
-              draftExpiresAt: draft.expiresAt,
-              code: `DRAFT-${draft.id}`,
+              unitId: Number(paramUnitId),
+              code: `Đơn mới · ${u.code || u.id}`,
               status: "DRAFT",
-              depositAmount: draft.depositAmount,
-              depositStatus: "UNPAID",
-              durationDays: draft.durationDays,
-              totalRent: draft.quote?.totalRent,
-              startDate: draft.startDate,
-              endDate: draft.endDate,
+              depositAmount: quote.depositAmount ?? quote.deposit ?? 0,
+              depositStatus: null,
+              durationDays: quote.durationDays,
+              totalRent: quote.totalRent,
+              startDate: quote.startDate || start,
+              endDate: quote.endDate || end,
               unit: {
                 code: u.code || `UNIT-${u.id}`,
                 sizeM2: u.sizeM2 || 0,
@@ -379,16 +385,22 @@ export function usePayment() {
 
       setSubmitting(true);
       const reservationId = reservation?.id;
-      const draftId = reservation?.draftId;
+      const unitId = reservation?.unitId;
       try {
-        if (!reservationId && !draftId) {
-          setApiError("Chưa có phiên giữ chỗ để thanh toán. Hãy chọn kho và thời gian thuê.");
+        if (!reservationId && !unitId) {
+          setApiError("Chưa có kho/thời gian thuê để thanh toán.");
           return;
         }
 
         const session = await paymentService.createPayment({
           purpose: "DEPOSIT",
-          ...(draftId ? { draftId } : { reservationId }),
+          ...(reservationId
+            ? { reservationId }
+            : {
+                unitId,
+                startDate: reservation.startDate,
+                endDate: reservation.endDate,
+              }),
           method: methodToUse,
         });
 
@@ -554,48 +566,48 @@ export function usePayment() {
       const start = today;
       const end = addDays(today, 30);
       const candidateUnits = [4, 5, 7, 8, 9, 10, 12, 13, 14, 2];
-      let created = null;
+      let unit = null;
+      let quote = null;
+      let unitId = null;
 
       for (const uId of candidateUnits) {
         try {
-          created = await paymentService.createBookingDraft({
-            unitId: uId,
-            startDate: start,
-            endDate: end,
-          });
-          if (created?.id) break;
+          const [detail, q] = await Promise.all([
+            getUnitDetail(uId),
+            getUnitQuote(uId, { startDate: start, endDate: end }),
+          ]);
+          unit = detail;
+          quote = q;
+          unitId = uId;
+          break;
         } catch {
-          // Kho đã bận — thử kho kế tiếp
+          // Kho không khả dụng — thử kho kế tiếp
         }
       }
 
-      if (!created?.id) {
-        throw new Error("Không còn kho mẫu nào khả dụng để giữ chỗ.");
+      if (!unitId) {
+        throw new Error("Không còn kho mẫu nào khả dụng để đặt.");
       }
 
-      const dailyRent = created.quote?.durationDays
-        ? Math.round((created.quote.totalRent || 0) / created.quote.durationDays)
-        : 0;
       setReservation({
         id: null,
-        draftId: created.id,
-        draftExpiresAt: created.expiresAt,
-        code: `DRAFT-${created.id}`,
+        unitId,
+        code: `Đơn mới · ${unit.code || unitId}`,
         status: "DRAFT",
-        depositAmount: created.depositAmount,
-        depositStatus: "UNPAID",
-        durationDays: created.durationDays,
-        totalRent: created.quote?.totalRent,
-        startDate: created.startDate,
-        endDate: created.endDate,
+        depositAmount: quote.depositAmount ?? quote.deposit ?? 0,
+        depositStatus: null,
+        durationDays: quote.durationDays,
+        totalRent: quote.totalRent,
+        startDate: quote.startDate || start,
+        endDate: quote.endDate || end,
         unit: {
-          code: created.unit?.code || "",
-          sizeM2: created.unit?.sizeM2 || 0,
-          typeName: created.unit?.typeName || "",
-          baseDailyRent: dailyRent,
-          depot: created.unit?.facilityName || "",
-          building: created.unit?.zoneCode ? `Khu ${created.unit.zoneCode}` : "",
-          floor: created.unit?.floor,
+          code: unit.code || "",
+          sizeM2: unit.sizeM2 || 0,
+          typeName: unit.typeName || "",
+          baseDailyRent: unit.baseDailyRent || 0,
+          depot: unit.facilityName || "",
+          building: unit.floor ? `Tầng ${unit.floor}` : "",
+          floor: unit.floor,
         },
       });
 
