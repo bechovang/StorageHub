@@ -4,11 +4,22 @@ import {
   Receipt,
   GridFour,
   TrendUp,
+  TrendDown,
   ArrowRight,
 } from "@phosphor-icons/react";
 import { formatVND } from "../../../utils/formatters.js";
 
 export function ReportsKpiGrid({ summary, onDrilldown }) {
+  // Chuẩn hóa tỷ lệ tăng trưởng doanh thu: lấy phần % ngắn gọn
+  const revMatch = String(summary?.revenueGrowth || "").match(/([+-]?\d+(?:\.\d+)?%)/);
+  const revRate = revMatch ? revMatch[1] : (summary?.revenueGrowth || "0%");
+  const isRevNeg = String(revRate).startsWith("-");
+
+  // Kiểm tra nếu phụ thu có tỷ lệ % hay là chuỗi diễn giải nghiệp vụ
+  const surchMatch = String(summary?.surchargeGrowth || "").match(/([+-]?\d+(?:\.\d+)?%)/);
+  const surchRate = surchMatch ? surchMatch[1] : null;
+  const isSurchNeg = surchRate && String(surchRate).startsWith("-");
+
   return (
     <section className="reports-kpi-grid" aria-label="Quarterly KPIs">
       {/* KPI 1: Gross Revenue */}
@@ -27,9 +38,12 @@ export function ReportsKpiGrid({ summary, onDrilldown }) {
         </div>
         <div className="reports-kpi-amount">{formatVND(summary.grossRevenue)}</div>
         <div className="reports-kpi-bottom">
-          <span className="badge-growth badge-growth--positive">
-            <TrendUp size={12} weight="bold" />
-            {summary.revenueGrowth}
+          <span
+            className={`badge-growth ${isRevNeg ? "badge-growth--negative" : "badge-growth--positive"}`}
+            title={summary.revenueGrowth || "Tăng trưởng so với kỳ trước"}
+          >
+            {isRevNeg ? <TrendDown size={12} weight="bold" /> : <TrendUp size={12} weight="bold" />}
+            {revRate}
           </span>
           <span className="kpi-drill-hint">
             Chi tiết <ArrowRight size={12} weight="bold" />
@@ -78,10 +92,22 @@ export function ReportsKpiGrid({ summary, onDrilldown }) {
         </div>
         <div className="reports-kpi-amount">{formatVND(summary.surcharges)}</div>
         <div className="reports-kpi-bottom">
-          <span className="badge-growth badge-growth--positive">
-            <TrendUp size={12} weight="bold" />
-            {summary.surchargeGrowth}
-          </span>
+          {surchRate ? (
+            <span
+              className={`badge-growth ${isSurchNeg ? "badge-growth--negative" : "badge-growth--positive"}`}
+              title={summary.surchargeGrowth}
+            >
+              {isSurchNeg ? <TrendDown size={12} weight="bold" /> : <TrendUp size={12} weight="bold" />}
+              {surchRate}
+            </span>
+          ) : (
+            <span
+              className="badge-surcharges"
+              title={summary.surchargeGrowth || "Bao gồm phí quá giờ, hư hại và xử lý phát sinh"}
+            >
+              {summary.surcharges > 0 ? "Phí trễ & Hư hại" : "0 ₫ phát sinh"}
+            </span>
+          )}
           <span className="kpi-drill-hint">
             Chi tiết <ArrowRight size={12} weight="bold" />
           </span>
