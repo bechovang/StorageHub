@@ -585,11 +585,28 @@
 
 /* ── Header Greeting & Guest Register Button ── */
 .header-greeting {
-  font: 700 0.82rem / 1 var(--font-body);
-  color: var(--color-ink);
-  letter-spacing: -0.01em;
-  margin-right: 6px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-right: 8px;
   white-space: nowrap;
+  line-height: 1;
+}
+
+.header-greeting__prefix {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-muted, #71717a);
+  letter-spacing: 0;
+}
+
+.header-greeting__name {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--color-ink, #09090b);
+  letter-spacing: -0.015em;
 }
 
 .header-register-btn {

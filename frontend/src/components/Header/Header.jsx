@@ -25,6 +25,14 @@ import {
 import { parseBackendDate } from "../../utils/formatters.js";
 import "./Header.css";
 
+function getShortDisplayName(fullName) {
+  if (!fullName || typeof fullName !== "string") return "Quý khách";
+  const trimmed = fullName.trim();
+  if (!trimmed) return "Quý khách";
+  const parts = trimmed.split(/\s+/);
+  return parts[parts.length - 1] || "Quý khách";
+}
+
 const ROLE_CONFIGS = {
   CUSTOMER: {
     label: ROLE_BADGE_UPPER.CUSTOMER,
@@ -262,7 +270,10 @@ export default function Header({
         <div className="account-tools">
           {isAuthenticated ? (
             <span className="header-greeting">
-              Xin chào, {user?.fullName || "Quý khách"}
+              <span className="header-greeting__prefix">Xin chào,</span>
+              <strong className="header-greeting__name">
+                {getShortDisplayName(user?.fullName)}
+              </strong>
             </span>
           ) : null}
           {rightContent ? (
