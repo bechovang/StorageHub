@@ -2,6 +2,8 @@ import { MagnifyingGlass } from "@phosphor-icons/react";
 
 export default function BrowseFilterForm({
   filterOptions,
+  searchQuery,
+  setSearchQuery,
   selectedType,
   setSelectedType,
   selectedSize,
@@ -10,14 +12,27 @@ export default function BrowseFilterForm({
   setStartDate,
   endDate,
   setEndDate,
-  selectedFacility,
-  setSelectedFacility,
   onSearchSubmit,
 }) {
   return (
     <section className="browse-filter-card" aria-label="Bộ lọc tìm kiếm kho">
       <form className="browse-filter-grid" onSubmit={onSearchSubmit}>
-        {/* 1. Loại kho */}
+        {/* 1. Tìm theo mã kho (A+X): "s7", "S-7" đều khớp S-7 */}
+        <div className="browse-filter-field">
+          <label className="browse-filter-field__label" htmlFor="filter-query">
+            Tìm mã kho
+          </label>
+          <input
+            id="filter-query"
+            type="text"
+            className="browse-filter-field__input"
+            placeholder="Ví dụ: S-7"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* 2. Loại kho */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-type">
             Loại kho
@@ -84,26 +99,6 @@ export default function BrowseFilterForm({
             min={startDate}
             onChange={(e) => setEndDate(e.target.value)}
           />
-        </div>
-
-        {/* 5. Chọn cơ sở */}
-        <div className="browse-filter-field">
-          <label className="browse-filter-field__label" htmlFor="filter-facility">
-            Chọn cơ sở
-          </label>
-          <select
-            id="filter-facility"
-            className="browse-filter-field__select"
-            value={selectedFacility}
-            onChange={(e) => setSelectedFacility(e.target.value)}
-          >
-            <option value="">Tất cả cơ sở</option>
-            {(filterOptions.facilities || []).map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* 6. Nút tìm kiếm */}

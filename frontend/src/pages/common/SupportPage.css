@@ -419,3 +419,52 @@
   border-color: #dc2626;
 }
 
+
+/* ── Ticket Detail Modal ── */
+.ticket-detail__status-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.ticket-detail__section {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--color-surface-muted, #f7f7f5);
+  border: 1px solid var(--color-border, #e5e5e2);
+  border-radius: 8px;
+}
+.ticket-detail__heading {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted, #737373);
+}
+.ticket-detail__text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.ticket-detail__text--warn {
+  color: var(--color-accent, #b45309);
+}
+.ticket-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+.ticket-detail__grid dt {
+  font-size: 0.72rem;
+  color: var(--color-muted, #737373);
+}
+.ticket-detail__grid dd {
+  margin: 2px 0 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+.ticket-card[role="button"]:hover {
+  border-color: var(--color-secondary, #1f6f54);
+}

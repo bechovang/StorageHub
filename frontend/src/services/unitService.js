@@ -59,24 +59,19 @@ export async function getUnitFilterOptions() {
 export async function searchUnits({
   typeId = "",
   sizeM2 = "",
+  query = "",
   startDate = "",
   endDate = "",
-  facilityId = "",
   sort = "price-asc",
   page = 1,
   pageSize = 25,
 } = {}) {
-  // Nếu chọn cơ sở chưa khai trương (facilityId !== 1), trả mảng rỗng trung thực
-  if (facilityId && Number(facilityId) !== 1) {
-    return { items: [], page: 1, pageSize, total: 0, totalPages: 0 };
-  }
-
   const queryParams = new URLSearchParams();
   if (typeId) queryParams.set("type-id", typeId);
   if (sizeM2) queryParams.set("size-m2", sizeM2);
+  if (query) queryParams.set("q", query.trim());
   if (startDate) queryParams.set("start-date", startDate);
   if (endDate) queryParams.set("end-date", endDate);
-  if (facilityId) queryParams.set("facility-id", facilityId);
   if (sort) queryParams.set("sort", sort);
   queryParams.set("page", page);
   queryParams.set("page-size", pageSize);

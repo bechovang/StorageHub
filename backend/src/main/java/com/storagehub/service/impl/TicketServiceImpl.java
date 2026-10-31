@@ -3,12 +3,14 @@ package com.storagehub.service.impl;
 import com.storagehub.dto.ticket.CreateTicketRequest;
 import com.storagehub.dto.ticket.TicketResponse;
 import com.storagehub.dto.ticket.UpdateTicketStatusRequest;
+import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.SupportTicket;
 import com.storagehub.entity.Unit;
 import com.storagehub.entity.User;
 import com.storagehub.exception.BusinessRuleException;
 import com.storagehub.exception.UnitNotFoundException;
+import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.SupportTicketRepository;
 import com.storagehub.repository.UnitRepository;
 import com.storagehub.repository.UserRepository;
@@ -35,6 +37,7 @@ public class TicketServiceImpl implements TicketService {
 
     private final SupportTicketRepository ticketRepository;
     private final UnitRepository unitRepository;
+    private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final LogService logService;
@@ -73,9 +76,29 @@ public class TicketServiceImpl implements TicketService {
             throw new BusinessRuleException("Loại sự cố không hợp lệ: " + request.incidentType());
         }
 
+        // FR-23: customer tạo ticket thì phải ĐANG thuê unit này. Staff/manager
+        // tạo hộ (escalate Flow 7) thì bỏ check và gắn ticket với khách đang
+        // thuê unit (nếu có) thay vì chính mình.
+        List<Reservation> occupancies = reservationRepository.findActiveReservationsForUnit(
+                unit.getUnitId(),
+                List.of(Reservation.Status.CHECKED_IN, Reservation.Status.CHECKOUT_REQUESTED));
+        User ticketOwner = customer;
+        if (isStaff(customer)) {
+            ticketOwner = occupancies.isEmpty()
+                    ? customer
+                    : occupancies.get(0).getCustomer();
+        } else {
+            boolean ownsUnit = occupancies.stream()
+                    .anyMatch(r -> r.getCustomer().getUserId().equals(customer.getUserId()));
+            if (!ownsUnit) {
+                throw new BusinessRuleException(
+                        "Yêu cầu hỗ trợ bắt buộc phải gắn với kho hợp lệ bạn đang thuê.");
+            }
+        }
+
         SupportTicket ticket = new SupportTicket();
         ticket.setCode(generateCode());
-        ticket.setCustomer(customer);
+        ticket.setCustomer(ticketOwner);
         ticket.setUnit(unit);
         ticket.setIncidentType(incidentType);
         ticket.setDescription(request.description());

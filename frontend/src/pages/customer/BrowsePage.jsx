@@ -22,9 +22,9 @@ export default function BrowsePage() {
     endDate,
     setEndDate,
     searchError,
-    selectedFacility,
-    setSelectedFacility,
     activeFilters,
+    searchQuery,
+    setSearchQuery,
     sortOrder,
     units,
     loading,
@@ -43,7 +43,6 @@ export default function BrowsePage() {
     handleViewDetails,
     handleBook,
     activeTypeName,
-    activeFacilityName,
   } = useBrowseUnits();
 
   return (
@@ -67,6 +66,8 @@ export default function BrowsePage() {
         {/* ── Thẻ bộ lọc (Filter Card) ── */}
         <BrowseFilterForm
           filterOptions={filterOptions}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
           selectedType={selectedType}
           setSelectedType={setSelectedType}
           selectedSize={selectedSize}
@@ -75,8 +76,6 @@ export default function BrowsePage() {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
-          selectedFacility={selectedFacility}
-          setSelectedFacility={setSelectedFacility}
           onSearchSubmit={handleSearchSubmit}
         />
 
@@ -113,6 +112,20 @@ export default function BrowsePage() {
                 </span>
               )}
 
+              {activeFilters.query && (
+                <span className="browse-chip">
+                  Tìm: {activeFilters.query}
+                  <button
+                    type="button"
+                    className="browse-chip__remove"
+                    onClick={() => handleRemoveFilter("query")}
+                    aria-label={`Xóa tìm kiếm ${activeFilters.query}`}
+                  >
+                    <X size={12} weight="bold" />
+                  </button>
+                </span>
+              )}
+
               {activeFilters.sizeM2 && (
                 <span className="browse-chip">
                   Diện tích: {activeFilters.sizeM2} m²
@@ -127,19 +140,6 @@ export default function BrowsePage() {
                 </span>
               )}
 
-              {activeFacilityName && (
-                <span className="browse-chip">
-                  Cơ sở: {activeFacilityName}
-                  <button
-                    type="button"
-                    className="browse-chip__remove"
-                    onClick={() => handleRemoveFilter("facilityId")}
-                    aria-label={`Xóa lọc cơ sở ${activeFacilityName}`}
-                  >
-                    <X size={12} weight="bold" />
-                  </button>
-                </span>
-              )}
             </div>
           </div>
 
@@ -175,9 +175,7 @@ export default function BrowsePage() {
             <Funnel size={36} color="var(--color-muted)" aria-hidden="true" />
             <h2 className="browse-empty__title">Không tìm thấy kho phù hợp</h2>
             <p className="browse-empty__desc">
-              {activeFilters.facilityId && Number(activeFilters.facilityId) === 2
-                ? "Cơ sở Quận 7 hiện đang chuẩn bị khai trương nên chưa có kho khả dụng. Vui lòng chọn cơ sở Tân Bình hoặc bấm nút bên dưới để xem tất cả kho."
-                : "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê."}
+              "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê."
             </p>
             <button
               type="button"

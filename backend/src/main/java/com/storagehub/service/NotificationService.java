@@ -42,6 +42,9 @@ public interface NotificationService {
     /** FR-34: Đánh dấu tất cả thông báo của user là đã đọc. */
     void markAllRead(String email);
 
+    /** FR-33: Đánh dấu MỘT thông báo đã đọc khi user bấm vào nó (owner-check). */
+    void markRead(String email, Long notificationId);
+
     /** US-18 (FR-16): phí gia hạn đã trả → EndDate + cọc giữ dịch ngay. */
     NotificationEventResponse notifyExtensionApplied(Reservation reservation, com.storagehub.entity.Extension extension);
 

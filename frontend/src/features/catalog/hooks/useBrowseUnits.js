@@ -16,21 +16,22 @@ export function useBrowseUnits() {
   // State các giá trị trong form bộ lọc
   const [selectedType, setSelectedType] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
+  // Tìm theo mã kho (vd: "S-7") — BE match contains, bỏ qua hoa/thường + dấu gạch
+  const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split("T")[0];
   });
   const [endDate, setEndDate] = useState("");
-  const [selectedFacility, setSelectedFacility] = useState("");
   const [searchError, setSearchError] = useState("");
 
   // State bộ lọc đang có hiệu lực (active filters) sau khi bấm Tìm kiếm
   const [activeFilters, setActiveFilters] = useState({
     typeId: "",
     sizeM2: "",
+    query: "",
     startDate: "",
     endDate: "",
-    facilityId: "",
   });
 
   // Thứ tự sắp xếp
@@ -69,9 +70,9 @@ export function useBrowseUnits() {
       const data = await searchUnits({
         typeId: filters.typeId,
         sizeM2: filters.sizeM2,
+        query: filters.query,
         startDate: filters.startDate,
         endDate: filters.endDate,
-        facilityId: filters.facilityId,
         sort,
         page: targetPage,
         pageSize,
@@ -99,7 +100,6 @@ export function useBrowseUnits() {
           sizeM2: activeFilters.sizeM2,
           startDate: activeFilters.startDate,
           endDate: activeFilters.endDate,
-          facilityId: activeFilters.facilityId,
           sort: sortOrder,
           page: 1,
           pageSize,
@@ -145,9 +145,9 @@ export function useBrowseUnits() {
     const newFilters = {
       typeId: selectedType,
       sizeM2: selectedSize,
+      query: searchQuery,
       startDate,
       endDate,
-      facilityId: selectedFacility,
     };
     setActiveFilters(newFilters);
     setPage(1);
@@ -165,14 +165,14 @@ export function useBrowseUnits() {
   const handleResetFilters = () => {
     setSelectedType("");
     setSelectedSize("");
-    setSelectedFacility("");
+    setSearchQuery("");
     const reset = {
       typeId: "",
       sizeM2: "",
+      query: "",
       startDate,
       endDate: "",
-      facilityId: "",
-    };
+      };
     setActiveFilters(reset);
     setPage(1);
     fetchUnits(reset, sortOrder, 1);
@@ -187,9 +187,9 @@ export function useBrowseUnits() {
     } else if (filterKey === "sizeM2") {
       updated.sizeM2 = "";
       setSelectedSize("");
-    } else if (filterKey === "facilityId") {
-      updated.facilityId = "";
-      setSelectedFacility("");
+    } else if (filterKey === "query") {
+      updated.query = "";
+      setSearchQuery("");
     }
     setActiveFilters(updated);
     setPage(1);
@@ -215,11 +215,6 @@ export function useBrowseUnits() {
     (t) => String(t.id) === String(activeFilters.typeId),
   )?.name;
 
-  // Lấy tên cơ sở đang được lọc để hiển thị trên chip
-  const activeFacilityName = filterOptions.facilities?.find(
-    (f) => String(f.id) === String(activeFilters.facilityId),
-  )?.name;
-
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return {
@@ -229,13 +224,13 @@ export function useBrowseUnits() {
     setSelectedType,
     selectedSize,
     setSelectedSize,
+    searchQuery,
+    setSearchQuery,
     startDate,
     setStartDate,
     endDate,
     setEndDate,
     searchError,
-    selectedFacility,
-    setSelectedFacility,
     activeFilters,
     sortOrder,
     units,
@@ -255,6 +250,5 @@ export function useBrowseUnits() {
     handleViewDetails,
     handleBook,
     activeTypeName,
-    activeFacilityName,
   };
 }

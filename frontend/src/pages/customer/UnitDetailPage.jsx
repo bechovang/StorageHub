@@ -90,7 +90,7 @@ export default function UnitDetailPage() {
               </Link>
               <span className="unit-detail-sep">/</span>
               <span className="unit-detail-crumb-current">
-                Kho {typeLabel} ({unit.sizeM2} m²)
+                Kho {unit.code} · {typeLabel} ({unit.sizeM2} m²)
               </span>
             </div>
 
@@ -116,7 +116,7 @@ export default function UnitDetailPage() {
             <div>
               <div className="unit-detail-title-row">
                 <h1 className="unit-detail-title">
-                  Kho {typeLabel} · {unit.sizeM2} m²
+                  Kho {unit.code} · {typeLabel} · {unit.sizeM2} m²
                 </h1>
                 <Badge tone={isSoon ? "warning" : "success"}>
                   {isSoon ? "Sắp khả dụng" : "Đang trống · Cọc để giữ chỗ"}

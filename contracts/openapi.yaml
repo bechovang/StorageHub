@@ -235,6 +235,7 @@ paths:
         - { name: type-id, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo loại unit (id từ /units/filter-options)" }
         - { name: size-m2, in: query, schema: { type: number }, description: "Lọc đúng kích thước (m²), vd 5" }
         - { name: start-date, in: query, schema: { type: string, format: date }, description: "Ngày bắt đầu thuê dự kiến (YYYY-MM-DD)" }
+        - { name: q, in: query, schema: { type: string }, description: "Tìm theo mã kho (contains, bỏ qua hoa/thường và dấu gạch)" }
         - { name: end-date, in: query, schema: { type: string, format: date }, description: "Ngày trả kho (inclusive)" }
         - { name: sort, in: query, schema: { type: string, enum: [price-asc, price-desc], default: price-asc }, description: "Sắp xếp theo giá (mặc định giá thấp → cao)" }
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
