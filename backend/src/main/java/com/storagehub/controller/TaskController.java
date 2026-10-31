@@ -88,4 +88,34 @@ public class TaskController {
         TaskResponse created = taskService.autoCreateTask(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+
+    /**
+     * US-15: nhân viên hoàn tất ritual nhận kho tại quầy — ghi payment RENT
+     * (CASH/QR/POS) + ký hợp đồng + cấp Access Code + DONE task (một transaction).
+     */
+    @PostMapping("/{taskId}/rituals/check-in")
+    public ResponseEntity<com.storagehub.dto.task.TaskResponse> completeCheckinRitual(
+            @PathVariable("taskId") Long taskId,
+            @org.springframework.web.bind.annotation.RequestBody
+            @jakarta.validation.Valid com.storagehub.dto.task.CheckinRitualRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(taskService.completeCheckinRitual(
+                authentication.getName(), taskId, request));
+    }
+
+    /**
+     * US-21: nhân viên tất toán trả kho tại quầy — Settlement + Inspection +
+     * phí hư hại/phát sinh (payments) + đóng vòng thuê trong cùng transaction.
+     */
+    @PostMapping("/{taskId}/rituals/checkout")
+    public ResponseEntity<com.storagehub.dto.task.TaskResponse> completeCheckoutRitual(
+            @PathVariable("taskId") Long taskId,
+            @org.springframework.web.bind.annotation.RequestBody
+            @jakarta.validation.Valid com.storagehub.dto.task.CheckoutRitualRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(taskService.completeCheckoutRitual(
+                authentication.getName(), taskId, request));
+    }
 }

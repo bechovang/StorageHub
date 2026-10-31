@@ -19,6 +19,7 @@ export function TaskCard({
   onOpenCleaning,
   onOpenSupport,
   onOpenContract,
+  onShowDetail,
 }) {
   const typeConfig = TASK_TYPES[task.type] || TASK_TYPES.CHECK_IN;
 
@@ -28,6 +29,14 @@ export function TaskCard({
       draggable={!isDone}
       onDragStart={(e) => onDragStart(e, task.taskId)}
       onDragEnd={onDragEnd}
+      role="button"
+      tabIndex={0}
+      style={{ cursor: "pointer" }}
+      title="Bấm để xem chi tiết nhiệm vụ"
+      onClick={() => onShowDetail?.(task)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onShowDetail?.(task);
+      }}
     >
       {/* 4px Left Status Bar */}
       <div
@@ -111,7 +120,7 @@ export function TaskCard({
           <span>{task.dueTime || "Trong ca"}</span>
         </div>
 
-        <div className="task-card__actions">
+        <div className="task-card__actions" onClick={(e) => e.stopPropagation()}>
           {/* Left navigation arrow */}
           {task.status === "IN_PROGRESS" && (
             <button
@@ -126,7 +135,7 @@ export function TaskCard({
           )}
 
           {/* Ritual Trigger Action Buttons */}
-          {task.type === "CHECK_IN" && task.status !== "DONE" && (
+          {task.type === "CHECK_IN" && task.status === "IN_PROGRESS" && (
             <button
               type="button"
               className="card-ritual-btn"
@@ -137,7 +146,7 @@ export function TaskCard({
             </button>
           )}
 
-          {task.type === "CHECKOUT" && task.status !== "DONE" && (
+          {task.type === "CHECKOUT" && task.status === "IN_PROGRESS" && (
             <button
               type="button"
               className="card-ritual-btn"
@@ -148,7 +157,7 @@ export function TaskCard({
             </button>
           )}
 
-          {task.type === "CLEANING" && task.status !== "DONE" && (
+          {task.type === "CLEANING" && task.status === "IN_PROGRESS" && (
             <button
               type="button"
               className="card-ritual-btn"
@@ -159,7 +168,7 @@ export function TaskCard({
             </button>
           )}
 
-          {task.type === "SUPPORT" && task.status !== "DONE" && (
+          {task.type === "SUPPORT" && task.status === "IN_PROGRESS" && (
             <button
               type="button"
               className="card-ritual-btn"
@@ -170,7 +179,7 @@ export function TaskCard({
             </button>
           )}
 
-          {task.type === "CONTRACT" && task.status !== "DONE" && (
+          {task.type === "CONTRACT" && task.status === "IN_PROGRESS" && (
             <button
               type="button"
               className="card-ritual-btn"

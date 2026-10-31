@@ -362,6 +362,9 @@ public class ReportServiceImpl implements ReportService {
             case CARD -> "Thẻ";
             case MOMO -> "Ví MoMo";
             case VNPAY -> "VNPay";
+            case CASH -> "Tiền mặt tại quầy";
+            case BANK -> "Chuyển khoản tại quầy";
+            case POS -> "Quẹt thẻ POS";
         };
     }
 

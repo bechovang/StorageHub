@@ -42,7 +42,10 @@ public class Payment {
         CARD,
         MOMO,
         VNPAY,
-        PAYOS
+        PAYOS,
+        CASH,   // Thu tiền mặt tại quầy (check-in ritual)
+        BANK,   // Chuyển khoản VietQR tại quầy
+        POS     // Quẹt thẻ POS tại quầy
     }
 
     public enum Status {

@@ -9,7 +9,6 @@
  */
 
 import { apiClient, safeParseJson } from "./apiClient.js";
-import { appendActivityLog } from "./activityService.js";
 
 export const USER_ROLES = {
   CUSTOMER: { key: "CUSTOMER", label: "Customer (Khách thuê)", badgeClass: "role-badge--customer" },
@@ -105,17 +104,6 @@ export async function createUser({
   const createdUser = normalizeUser(data.user || data);
   const tempPassword = data.temporaryPassword || data.tempPassword || "";
 
-  appendActivityLog({
-    actor: currentActor,
-    actorRole: "SYSTEM_ADMIN",
-    entityType: "USER",
-    entityId: createdUser.userId,
-    entityName: createdUser.fullName,
-    action: "CREATED",
-    fromValue: null,
-    toValue: `ROLE_${role}`,
-    reason: `Cấp tài khoản mới cho ${createdUser.fullName} (${createdUser.email}) kèm mật khẩu tạm.`,
-  });
 
   return { user: createdUser, tempPassword };
 }
@@ -150,17 +138,6 @@ export async function updateUserRole({
 
   const updatedUser = normalizeUser(backendData);
 
-  appendActivityLog({
-    actor: currentActor,
-    actorRole: "SYSTEM_ADMIN",
-    entityType: "USER",
-    entityId: targetId,
-    entityName: updatedUser.fullName || `User #${targetId}`,
-    action: "STATUS_CHANGE",
-    fromValue: null,
-    toValue: `ROLE_${newRole}`,
-    reason: reason.trim(),
-  });
 
   return updatedUser;
 }
@@ -200,17 +177,6 @@ export async function updateUserStatus({
   const updatedUser = normalizeUser(backendData);
   const statusLabelMap = { 1: "ACTIVE", 0: "INACTIVE", 2: "LOCKED" };
 
-  appendActivityLog({
-    actor: currentActor,
-    actorRole: "SYSTEM_ADMIN",
-    entityType: "USER",
-    entityId: targetId,
-    entityName: updatedUser.fullName || `User #${targetId}`,
-    action: "STATUS_CHANGE",
-    fromValue: null,
-    toValue: statusLabelMap[newStatus] || String(newStatus),
-    reason: reason.trim(),
-  });
 
   return updatedUser;
 }
@@ -234,17 +200,6 @@ export async function resetUserPassword({
 
   const tempPassword = data.temporaryPassword || data.tempPassword || "";
 
-  appendActivityLog({
-    actor: currentActor,
-    actorRole: "SYSTEM_ADMIN",
-    entityType: "USER",
-    entityId: targetId,
-    entityName: data.email || `User #${targetId}`,
-    action: "STATUS_CHANGE",
-    fromValue: null,
-    toValue: "TEMP_PASSWORD_ISSUED",
-    reason: "Cấp lại mật khẩu tạm theo yêu cầu hỗ trợ tài khoản.",
-  });
 
   return {
     userId: data.userId || targetId,

@@ -15,10 +15,13 @@ import {
   SupportTicketDrawer,
   ContractRitualDrawer,
   SnapbackToast,
+  TaskDetailModal,
 } from "../../features/tasks/index.js";
 import "./TaskBoardPage.css";
 
 export default function TaskBoardPage() {
+  // Task đang xem chi tiết read-only (mở được cả khi DONE)
+  const [detailTask, setDetailTask] = useState(null);
   const {
     tasks,
     activeTab,
@@ -130,6 +133,7 @@ export default function TaskBoardPage() {
                   <KanbanColumn
                     key={statusDef.key}
                     statusDef={statusDef}
+                    onShowDetail={setDetailTask}
                     colTasks={colTasks}
                     isOver={isOver}
                     onDragOver={handleDragOver}
@@ -163,6 +167,9 @@ export default function TaskBoardPage() {
         onOpenSupport={setActiveSupportTask}
         onOpenContract={setActiveContractTask}
       />
+
+      {/* ── Task Detail Modal (read-only, mọi trạng thái) ── */}
+      <TaskDetailModal task={detailTask} onClose={() => setDetailTask(null)} />
 
       {/* ── Check-in Ritual Drawer ── */}
       {activeCheckinTask && (
