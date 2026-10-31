@@ -41,6 +41,7 @@ public class TicketServiceImpl implements TicketService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final LogService logService;
+    private final com.storagehub.service.TaskService taskService;
 
     @Override
     @Transactional(readOnly = true)
@@ -110,6 +111,10 @@ public class TicketServiceImpl implements TicketService {
                 "Ticket " + saved.getCode() + " — kho " + unit.getCode()
                         + " (" + incidentType + ")");
         notificationService.notifyTicketCreated(saved);
+
+        // Vòng support 2 chiều: sinh task SUPPORT gán staff trực ca để staff
+        // xử lý trên Task Board; hoàn thành task sẽ tự resolve ticket này.
+        taskService.createSupportTask(saved);
 
         return TicketResponse.from(saved);
     }

@@ -62,4 +62,7 @@ public interface NotificationService {
 
     /** Early checkout: manager buộc trả kho sớm (VIOLATION/TRANSFER) → báo khách. */
     void notifyForcedCheckout(com.storagehub.entity.Reservation reservation, String type, String note);
+
+    /** US-21: tất toán trả kho xong → báo khách số tiền hoàn cọc. */
+    void notifySettlementCompleted(com.storagehub.entity.Reservation reservation, long refundAmount);
 }

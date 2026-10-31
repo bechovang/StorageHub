@@ -9,6 +9,7 @@ import com.storagehub.exception.TaskNotFoundException;
 import com.storagehub.exception.TaskSnapBackException;
 import com.storagehub.repository.*;
 import com.storagehub.service.LogService;
+import com.storagehub.service.NotificationService;
 import com.storagehub.service.TaskService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,12 @@ public class TaskServiceImpl implements TaskService {
     private final SupportTicketRepository supportTicketRepository;
     private final PaymentRepository paymentRepository;
     private final LogService logService;
+    private final NotificationService notificationService;
+    private final com.storagehub.repository.SettlementRepository settlementRepository;
+    private final com.storagehub.repository.InspectionRepository inspectionRepository;
+    private final com.storagehub.repository.CheckoutRequestRepository checkoutRequestRepository;
+    private final com.storagehub.service.PricingEngine pricingEngine;
+    private final com.storagehub.service.ReservationService reservationService;
     private final Clock clock;
 
     public TaskServiceImpl(
@@ -49,6 +56,12 @@ public class TaskServiceImpl implements TaskService {
             SupportTicketRepository supportTicketRepository,
             PaymentRepository paymentRepository,
             LogService logService,
+            NotificationService notificationService,
+            com.storagehub.repository.SettlementRepository settlementRepository,
+            com.storagehub.repository.InspectionRepository inspectionRepository,
+            com.storagehub.repository.CheckoutRequestRepository checkoutRequestRepository,
+            com.storagehub.service.PricingEngine pricingEngine,
+            @org.springframework.context.annotation.Lazy com.storagehub.service.ReservationService reservationService,
             Clock clock
     ) {
         this.taskRepository = taskRepository;
@@ -60,6 +73,12 @@ public class TaskServiceImpl implements TaskService {
         this.supportTicketRepository = supportTicketRepository;
         this.paymentRepository = paymentRepository;
         this.logService = logService;
+        this.notificationService = notificationService;
+        this.settlementRepository = settlementRepository;
+        this.inspectionRepository = inspectionRepository;
+        this.checkoutRequestRepository = checkoutRequestRepository;
+        this.pricingEngine = pricingEngine;
+        this.reservationService = reservationService;
         this.clock = clock;
     }
 
@@ -150,6 +169,15 @@ public class TaskServiceImpl implements TaskService {
         Task.Status oldStatus = task.getStatus();
         task.setStatus(newStatus);
         Task saved = taskRepository.save(task);
+
+        // Vòng support 2 chiều: task SUPPORT hoàn thành → resolve ticket SR-...
+        // (khách thấy "Đã xử lý xong" ngay trên Support page).
+        if (newStatus == Task.Status.DONE
+                && task.getType() == Task.Type.SUPPORT
+                && task.getRefCode() != null
+                && task.getRefCode().startsWith("SR-")) {
+            resolveSupportTicketByTask(currentUser, task.getRefCode());
+        }
 
         logService.log(
                 currentUser,
@@ -520,6 +548,291 @@ public class TaskServiceImpl implements TaskService {
         logService.log(actor != null ? actor : assignee, "TASK", saved.getTaskId(),
                 "CREATED", null, "TODO",
                 "Auto check-in task for " + reservation.getCode());
+        return saved;
+    }
+
+    /** Gắn trách nhiệm resolve ticket cho TaskServiceImpl (tránh vòng phụ thuộc TicketService). */
+    private void resolveSupportTicketByTask(User staff, String ticketCode) {
+        supportTicketRepository.findByCode(ticketCode).ifPresent(ticket -> {
+            if (ticket.getStatus() == com.storagehub.entity.SupportTicket.Status.RESOLVED) {
+                return; // idempotent
+            }
+            String oldStatus = ticket.getStatus().name();
+            ticket.setStatus(com.storagehub.entity.SupportTicket.Status.RESOLVED);
+            if (ticket.getAssignedStaff() == null) {
+                ticket.setAssignedStaff(staff);
+            }
+            if (ticket.getResolutionNote() == null || ticket.getResolutionNote().isBlank()) {
+                ticket.setResolutionNote("Đã xử lý xong bởi " + staff.getFullName()
+                        + " qua Task Board (" + ticketCode + ").");
+            }
+            ticket.setResolvedAt(java.time.LocalDateTime.now());
+            supportTicketRepository.save(ticket);
+            notificationService.notifyTicketStatusChanged(ticket, oldStatus);
+        });
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public com.storagehub.dto.task.TaskResponse completeCheckoutRitual(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.CheckoutRitualRequest request
+    ) {
+        User staff = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Người dùng không tồn tại"));
+        if (staff.getRole().getName() == Role.Name.CUSTOMER) {
+            throw new org.springframework.security.access.AccessDeniedException("Chỉ nhân viên mới được tất toán trả kho.");
+        }
+
+        Task task = taskRepository.findWithStaffById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        if (task.getType() != Task.Type.CHECKOUT) {
+            throw new com.storagehub.exception.BusinessRuleException("Task không phải loại CHECKOUT.");
+        }
+        if (task.getStatus() == Task.Status.DONE) {
+            return toTaskResponse(task, getCurrentShift(), null, null, null, null);
+        }
+        Reservation reservation = reservationRepository.findByCode(task.getRefCode())
+                .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
+                        "Không tìm thấy đặt chỗ " + task.getRefCode() + "."));
+        if (reservation.getStatus() != Reservation.Status.CHECKED_IN
+                && reservation.getStatus() != Reservation.Status.CHECKOUT_REQUESTED) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Chỉ đơn CHECKED_IN / CHECKOUT_REQUESTED mới tất toán được.");
+        }
+        Contract contract = contractRepository
+                .findByReservation_ReservationIdAndIsLatestTrue(reservation.getReservationId())
+                .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
+                        "Đơn chưa có hợp đồng — không thể lập biên bản thanh lý."));
+
+        // 1. Bảng nghiệm thu (Inspection)
+        java.util.List<com.storagehub.entity.Inspection> inspections = new java.util.ArrayList<>();
+        for (var ci : request.checklist()) {
+            // FE gửi accessCard/padlock/... hoặc ACCESS_CARD — chuẩn hoá về enum.
+            String itemKey = ci.item()
+                    .replaceAll("([a-z0-9])([A-Z])", "$1_$2")
+                    .replace('-', '_')
+                    .replace(' ', '_')
+                    .toUpperCase(java.util.Locale.ROOT);
+            var item = com.storagehub.entity.Inspection.Item.valueOf(itemKey);
+            var result = com.storagehub.entity.Inspection.Result.valueOf(ci.result().toUpperCase(java.util.Locale.ROOT));
+            com.storagehub.entity.Inspection ins = new com.storagehub.entity.Inspection();
+            ins.setSettlement(null);
+            ins.setItem(item);
+            ins.setResult(result);
+            inspections.add(ins);
+        }
+
+        // 2. Phí hư hại — lý do bắt buộc khi > 0 (DB CHECK constraint)
+        long damageFee = request.damageCharges() == null ? 0L
+                : request.damageCharges().stream().mapToLong(c -> c.amount() == null ? 0L : c.amount()).sum();
+        String damageReason = null;
+        if (damageFee > 0) {
+            damageReason = request.damageCharges().stream()
+                    .filter(c -> c.amount() != null && c.amount() > 0)
+                    .map(c -> c.item() + ": " + c.reason())
+                    .reduce((a, b) -> a + "; " + b)
+                    .orElse("Phí hư hại ghi nhận tại quầy");
+        }
+
+        long refundAmount = request.refundAmount() == null ? 0L : Math.max(0, request.refundAmount());
+        long extraCharged = request.extraCharged() == null ? 0L : Math.max(0, request.extraCharged());
+
+        // 3. Settlement — biên bản thanh lý
+        var method = switch (request.settlementMethod().toUpperCase()) {
+            case "CASH" -> com.storagehub.entity.Payment.Method.CASH;
+            case "QR", "TRANSFER", "BANK" -> com.storagehub.entity.Payment.Method.BANK;
+            case "POS" -> com.storagehub.entity.Payment.Method.POS;
+            default -> throw new com.storagehub.exception.BusinessRuleException(
+                    "Phương thức tất toán không hợp lệ: " + request.settlementMethod());
+        };
+        com.storagehub.entity.Settlement settlement = new com.storagehub.entity.Settlement();
+        settlement.setReservation(reservation);
+        settlement.setContract(contract);
+        settlement.setStaff(staff);
+        settlement.setDamageFee(java.math.BigDecimal.valueOf(damageFee));
+        settlement.setDamageReason(damageReason);
+        settlement.setRefundAmount(java.math.BigDecimal.valueOf(refundAmount));
+        settlement.setReceiptCode("TL-" + System.currentTimeMillis());
+        settlementRepository.save(settlement);
+
+        // 4. Phí thu thêm khách: DAMAGE_FEE / EXTRA_FEE — money-in ghi payments
+        if (damageFee > 0) {
+            saveSettlementPayment(reservation, settlement, staff,
+                    com.storagehub.entity.Payment.Purpose.DAMAGE_FEE, method, damageFee,
+                    "Phí hư hại theo biên bản thanh lý");
+        }
+        if (extraCharged > 0) {
+            saveSettlementPayment(reservation, settlement, staff,
+                    com.storagehub.entity.Payment.Purpose.EXTRA_FEE, method, extraCharged,
+                    "Phí phát sinh vượt cọc thu tại quầy");
+        }
+
+        // 5. Inspection với FK settlement
+        for (com.storagehub.entity.Inspection ins : inspections) {
+            ins.setSettlement(settlement);
+            inspectionRepository.save(ins);
+        }
+
+        // 6. Đóng vòng thuê: reservation CLOSED, contract CLOSED, kho về PREPARING
+        String oldResStatus = reservation.getStatus().name();
+        reservation.setStatus(Reservation.Status.CLOSED);
+        reservationRepository.save(reservation);
+        contract.setStatus(Contract.Status.CLOSED);
+        contractRepository.save(contract);
+        Unit unit = reservation.getUnit();
+        unit.setStatus(Unit.Status.PREPARING);
+        unitRepository.save(unit);
+        checkoutRequestRepository.findByReservation_ReservationIdOrderByCreatedAtDesc(
+                        reservation.getReservationId()).stream()
+                .filter(cr -> cr.getStatus() == com.storagehub.entity.CheckoutRequest.Status.PENDING)
+                .forEach(cr -> {
+                    cr.setStatus(com.storagehub.entity.CheckoutRequest.Status.DONE);
+                    checkoutRequestRepository.save(cr);
+                });
+
+        logService.log(staff, "RESERVATION", reservation.getReservationId(),
+                "STATUS_CHANGED", oldResStatus, "CLOSED",
+                "Tất toán " + settlement.getReceiptCode() + " — hoàn cọc " + refundAmount
+                        + " ₫, phí hư hại " + damageFee + " ₫"
+                        + (extraCharged > 0 ? ", thu thêm " + extraCharged + " ₫" : ""));
+
+        // 7. Task DONE + báo khách
+        task.setStatus(Task.Status.DONE);
+        Task saved = taskRepository.save(task);
+        notificationService.notifySettlementCompleted(reservation, refundAmount);
+
+        return toTaskResponse(saved, getCurrentShift(), null, null, null, null);
+    }
+
+    private void saveSettlementPayment(
+            Reservation reservation,
+            com.storagehub.entity.Settlement settlement,
+            User staff,
+            com.storagehub.entity.Payment.Purpose purpose,
+            com.storagehub.entity.Payment.Method method,
+            long amount,
+            String note
+    ) {
+        com.storagehub.entity.Payment p = new com.storagehub.entity.Payment();
+        p.setPayer(reservation.getCustomer());
+        // CHECK đúng-một-nguồn: settlement payment chỉ gắn settlement_id,
+        // reservation được suy ra qua settlement khi đọc.
+        p.setSettlement(settlement);
+        p.setPurpose(purpose);
+        p.setMethod(method);
+        p.setAmount(java.math.BigDecimal.valueOf(amount));
+        p.setStatus(com.storagehub.entity.Payment.Status.SUCCEEDED);
+        p.setReceiptCode("RT-TT-" + System.currentTimeMillis());
+        paymentRepository.save(p);
+        logService.log(staff, "PAYMENT", p.getPaymentId(), "PAYMENT_SUCCEEDED",
+                null, "SUCCEEDED", note + " — " + amount + " ₫");
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public com.storagehub.dto.task.TaskResponse completeCheckinRitual(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.CheckinRitualRequest request
+    ) {
+        User staff = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Người dùng không tồn tại"));
+        if (staff.getRole().getName() == Role.Name.CUSTOMER) {
+            throw new org.springframework.security.access.AccessDeniedException("Chỉ nhân viên mới được hoàn tất nhận kho.");
+        }
+
+        Task task = taskRepository.findWithStaffById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        if (task.getType() != Task.Type.CHECK_IN) {
+            throw new com.storagehub.exception.BusinessRuleException("Task không phải loại CHECK_IN.");
+        }
+        if (task.getStatus() == Task.Status.DONE) {
+            return toTaskResponse(task, getCurrentShift(), null, null, null, null);
+        }
+        Reservation reservation = reservationRepository.findByCode(task.getRefCode())
+                .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
+                        "Không tìm thấy đặt chỗ " + task.getRefCode() + "."));
+
+        // 1. Ghi nhận tiền thu tại quầy thành payment RENT SUCCEEDED — ngồn
+        //    chân lý doanh thu (AD-11) + tự qua được guard "Chặn Done ảo".
+        com.storagehub.entity.Payment.Method method = switch (request.paymentMethod().toUpperCase()) {
+            case "CASH" -> com.storagehub.entity.Payment.Method.CASH;
+            case "QR" -> com.storagehub.entity.Payment.Method.BANK;
+            case "POS" -> com.storagehub.entity.Payment.Method.POS;
+            default -> throw new com.storagehub.exception.BusinessRuleException(
+                    "Phương thức thu tiền không hợp lệ: " + request.paymentMethod());
+        };
+        var quote = pricingEngine.calculateQuote(
+                reservation.getUnit(), reservation.getStartDate(), reservation.getEndDate());
+        com.storagehub.entity.Payment rent = new com.storagehub.entity.Payment();
+        rent.setPayer(reservation.getCustomer());
+        rent.setReservation(reservation);
+        rent.setPurpose(com.storagehub.entity.Payment.Purpose.RENT);
+        rent.setMethod(method);
+        rent.setAmount(java.math.BigDecimal.valueOf(quote.totalRent()));
+        rent.setStatus(com.storagehub.entity.Payment.Status.SUCCEEDED);
+        rent.setReceiptCode("RT-CT-" + System.currentTimeMillis());
+        paymentRepository.save(rent);
+
+        logService.log(staff, "PAYMENT", rent.getPaymentId(), "PAYMENT_SUCCEEDED",
+                null, "SUCCEEDED",
+                "Thu tại quầy " + request.paymentMethod() + " — " + quote.totalRent()
+                        + " ₫, có ảnh chứng từ (check-in " + reservation.getCode() + ")");
+
+        // 2. Check-in chuẩn: ký hợp đồng (ảnh) + Unit RENTED + cấp Access Code.
+        reservationService.checkIn(currentUserEmail, reservation.getReservationId(),
+                request.contractPhotoUrl());
+
+        // 3. DONE task — guard rent-collected đã thỏa vì payment vừa ghi.
+        task.setStatus(Task.Status.DONE);
+        Task saved = taskRepository.save(task);
+        logService.log(staff, "TASK", saved.getTaskId(),
+                "STATUS_CHANGED", task.getStatus() == Task.Status.DONE ? "DONE" : "IN_PROGRESS",
+                "DONE", "Check-in ritual hoàn tất — " + reservation.getCode());
+
+        return toTaskResponse(saved, getCurrentShift(), null, null, null, null);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public Task createSupportTask(com.storagehub.entity.SupportTicket ticket) {
+        Task existing = taskRepository
+                .findFirstByTypeAndRefCodeOrderByCreatedAtDesc(
+                        Task.Type.SUPPORT, ticket.getCode())
+                .orElse(null);
+        if (existing != null) {
+            return existing;
+        }
+
+        StaffAssignment.Shift shift = getCurrentShift();
+        User assignee = ticket.getAssignedStaff();
+        if (assignee == null) {
+            try {
+                assignee = autoAssignStaff(ticket.getUnit(), java.time.LocalDate.now(), shift);
+            } catch (Exception e) {
+                assignee = userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1).orElse(null);
+            }
+        }
+        if (assignee == null) {
+            return null;
+        }
+
+        Task task = new Task();
+        task.setType(Task.Type.SUPPORT);
+        task.setRefCode(ticket.getCode());
+        task.setAssignedStaff(assignee);
+        task.setWorkDate(java.time.LocalDate.now());
+        // Ticket đã IN_PROGRESS/ESCALATED (staff tạo hộ) → task intoprogress luôn
+        task.setStatus(ticket.getStatus() == com.storagehub.entity.SupportTicket.Status.OPEN
+                ? Task.Status.TODO
+                : Task.Status.IN_PROGRESS);
+        Task saved = taskRepository.save(task);
+
+        logService.log(assignee, "TASK", saved.getTaskId(),
+                "CREATED", null, saved.getStatus().name(),
+                "Auto support task cho ticket " + ticket.getCode());
         return saved;
     }
 

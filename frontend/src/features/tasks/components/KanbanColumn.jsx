@@ -17,6 +17,7 @@ export function KanbanColumn({
   onOpenCleaning,
   onOpenSupport,
   onOpenContract,
+  onShowDetail,
 }) {
   return (
     <section
@@ -63,6 +64,7 @@ export function KanbanColumn({
             onOpenCleaning={onOpenCleaning}
             onOpenSupport={onOpenSupport}
             onOpenContract={onOpenContract}
+            onShowDetail={onShowDetail}
           />
         ))}
       </div>
