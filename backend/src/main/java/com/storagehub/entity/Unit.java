@@ -62,6 +62,9 @@ public class Unit {
      */
     private String accessType;
 
+    /** Ghi chú vận hành (V20) — không chứa giá (giá thuộc Policy AD-11). */
+    private String notes;
+
     @Enumerated(EnumType.STRING)
     private Status status;
 

@@ -86,4 +86,14 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.confirmPayment(
                 authentication.getName(), paymentId, request));
     }
+
+    /** DEMO ONLY — bỏ qua PayOS (chỉ bật khi payment.demo.skip-enabled=true, dev). */
+    @PostMapping("/{paymentId}/demo-complete")
+    public ResponseEntity<PaymentSessionResponse> demoComplete(
+            @PathVariable Long paymentId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(paymentService.demoCompletePayment(
+                authentication.getName(), paymentId));
+    }
 }

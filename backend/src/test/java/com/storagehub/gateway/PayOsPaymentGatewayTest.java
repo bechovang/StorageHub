@@ -64,6 +64,18 @@ class PayOsPaymentGatewayTest {
     }
 
     @Test
+    @DisplayName("orderCode format mới (paymentId * 1e9 + random) giải mã đúng paymentId")
+    void decodesNewOrderCodeFormat() throws Exception {
+        long paymentId = 42L;
+        long orderCode = paymentId * 1_000_000_000L + 999_999_999L;
+        WebhookData data = webhookData(orderCode, 50_000L);
+        String payload = signedPayload(data, 50_000L);
+
+        PaymentGateway.WebhookEvent event = gateway.verifyWebhook(payload).orElseThrow();
+        assertThat(event.paymentId()).isEqualTo(paymentId);
+    }
+
+    @Test
     @DisplayName("orderCode ngoài dải StorageHub (payload mẫu PayOS 123) → bỏ qua, trả empty")
     void ignoresForeignOrderCodeAsProbe() throws Exception {
         WebhookData data = webhookData(42L, 50_000L);

@@ -8,6 +8,8 @@ export default function BrowseFilterForm({
   setSelectedSize,
   startDate,
   setStartDate,
+  endDate,
+  setEndDate,
   selectedFacility,
   setSelectedFacility,
   onSearchSubmit,
@@ -69,7 +71,22 @@ export default function BrowseFilterForm({
           />
         </div>
 
-        {/* 4. Chọn cơ sở */}
+        {/* 4. Ngày kết thúc (thuê theo ngày) */}
+        <div className="browse-filter-field">
+          <label className="browse-filter-field__label" htmlFor="filter-end-date">
+            Ngày kết thúc
+          </label>
+          <input
+            id="filter-end-date"
+            type="date"
+            className="browse-filter-field__input"
+            value={endDate || ""}
+            min={startDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </div>
+
+        {/* 5. Chọn cơ sở */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-facility">
             Chọn cơ sở
@@ -81,13 +98,7 @@ export default function BrowseFilterForm({
             onChange={(e) => setSelectedFacility(e.target.value)}
           >
             <option value="">Tất cả cơ sở</option>
-            {(filterOptions.facilities && filterOptions.facilities.length > 0
-              ? filterOptions.facilities
-              : [
-                  { id: 1, name: "Cơ sở Tân Bình (VN-SGN-01)" },
-                  { id: 2, name: "Cơ sở Quận 7 (Sắp mở)" },
-                ]
-            ).map((f) => (
+            {(filterOptions.facilities || []).map((f) => (
               <option key={f.id} value={f.id}>
                 {f.name}
               </option>
@@ -95,7 +106,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 5. Nút tìm kiếm */}
+        {/* 6. Nút tìm kiếm */}
         <button id="browse-search-btn" type="submit" className="browse-filter-btn">
           <MagnifyingGlass size={18} weight="bold" aria-hidden="true" />
           <span>Tìm kiếm</span>

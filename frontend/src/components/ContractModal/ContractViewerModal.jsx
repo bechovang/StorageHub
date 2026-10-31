@@ -17,21 +17,21 @@ export default function ContractViewerModal({
   const u = unit || res.unit || {};
   const usr = user || {};
 
-  const contractCode = contract?.code || res.code ? `HĐ-${res.code}` : "HĐ-2026-0047";
-  const customerName = usr.fullName || res.customerName || "Nguyễn Thị Lan";
-  const customerPhone = usr.phone || res.customerPhone || "0901234567";
-  const customerEmail = usr.email || "lan@demo.storagehub.vn";
-  const unitCode = u.code || res.unitCode || "S-3";
-  const typeName = u.typeName || "Kho nhỏ (S)";
-  const sizeM2 = u.sizeM2 || 5;
+  const contractCode = contract?.code || res.code ? `HĐ-${res.code}` : "HĐTK-SH";
+  const customerName = usr.fullName || res.customerName || "";
+  const customerPhone = usr.phone || res.customerPhone || "";
+  const customerEmail = usr.email || "";
+  const unitCode = u.code || res.unitCode || "—";
+  const typeName = u.typeName || "Kho lưu trữ";
+  const sizeM2 = u.sizeM2 || 0;
   const volumeM3 = (sizeM2 * 2.8).toFixed(1);
-  const monthlyRent = u.baseMonthlyRent || u.monthlyPrice || 345000;
-  const durationMonths = res.durationMonths || 3;
-  const totalRent = res.totalEstimatedPrice || monthlyRent * durationMonths;
-  const depositPaid = res.depositAmount || Math.round(totalRent * 0.1);
+  const dailyRent = u.baseDailyRent || 0;
+  const durationDays = res.durationDays || res.quote?.durationDays || 0;
+  const totalRent = res.totalRent ?? res.totalEstimatedPrice ?? res.quote?.totalRent ?? 0;
+  const depositPaid = res.depositAmount || 0;
 
-  const startDate = res.startDate || "2026-11-01";
-  const endDate = res.endDate || "2027-02-01";
+  const startDate = res.startDate || "";
+  const endDate = res.endDate || "";
 
   const handlePrint = () => {
     window.print();
@@ -158,10 +158,10 @@ export default function ContractViewerModal({
             <div className="contract-clause-item">
               <h3 className="clause-title">ĐIỀU 2: THỜI HẠN THUÊ VÀ ĐIỀU KHOẢN TÀI CHÍNH</h3>
               <p>
-                2.1. <strong>Thời hạn thuê cam kết:</strong> {durationMonths} tháng, bắt đầu từ ngày <strong>{formatDate(startDate)}</strong> đến hết ngày <strong>{formatDate(endDate)}</strong>.
+                2.1. <strong>Thời hạn thuê cam kết:</strong> {durationDays || "—"} ngày, bắt đầu từ ngày <strong>{formatDate(startDate)}</strong> đến hết ngày <strong>{formatDate(endDate)}</strong>.
               </p>
               <p>
-                2.2. <strong>Giá thuê hàng tháng:</strong> <strong>{formatVND(monthlyRent)} / tháng</strong> (đã bao gồm phí chiếu sáng hành lang, camera an ninh 24/7 và dịch vụ bảo trì định kỳ).
+                2.2. <strong>Giá thuê theo ngày:</strong> <strong>{formatVND(dailyRent)} / ngày</strong> (đã bao gồm phí chiếu sáng hành lang, camera an ninh 24/7 và dịch vụ bảo trì định kỳ).
               </p>
               <p>
                 2.3. <strong>Tổng tiền thuê kỳ cam kết:</strong> <strong>{formatVND(totalRent)}</strong>.

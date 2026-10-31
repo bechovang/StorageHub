@@ -162,7 +162,7 @@ class ContractServiceTest {
     @DisplayName("autoDraftContract sinh hợp đồng DRAFT, isLatest=true, snapshot nội dung đầy đủ khi lần đầu sinh")
     void testAutoDraftContract_FirstContract_Success() {
         when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(activePolicy));
-        when(pricingEngine.calculateQuote(eq(unit), eq(reservation.getStartDate()), eq(3)))
+        when(pricingEngine.calculateQuote(eq(unit), eq(reservation.getStartDate()), eq(reservation.getEndDate())))
                 .thenReturn(quoteResponse);
         when(contractRepository.findByReservation_ReservationIdAndIsLatestTrue(1042L))
                 .thenReturn(Optional.empty());
@@ -212,7 +212,7 @@ class ContractServiceTest {
         previousContract.setIsLatest(true);
 
         when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(activePolicy));
-        when(pricingEngine.calculateQuote(eq(unit), eq(reservation.getStartDate()), eq(3)))
+        when(pricingEngine.calculateQuote(eq(unit), eq(reservation.getStartDate()), eq(reservation.getEndDate())))
                 .thenReturn(quoteResponse);
         when(contractRepository.findByReservation_ReservationIdAndIsLatestTrue(1042L))
                 .thenReturn(Optional.of(previousContract));
@@ -248,7 +248,7 @@ class ContractServiceTest {
         when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customerUser));
         when(reservationRepository.findWithDetailsById(1042L)).thenReturn(Optional.of(reservation));
         when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(activePolicy));
-        when(pricingEngine.calculateQuote(any(), any(), anyInt())).thenReturn(quoteResponse);
+        when(pricingEngine.calculateQuote(any(), any(), any())).thenReturn(quoteResponse);
         when(contractRepository.findByReservation_ReservationIdAndIsLatestTrue(1042L)).thenReturn(Optional.empty());
         when(contractRepository.count()).thenReturn(0L);
         when(contractRepository.existsByCode(any())).thenReturn(false);

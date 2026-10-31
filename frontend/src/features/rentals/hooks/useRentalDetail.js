@@ -123,7 +123,8 @@ export function useRentalDetail() {
       return {
         ...prev,
         endDate: extensionData.newEndDate,
-        durationMonths: (prev.durationMonths || 3) + extensionData.addedMonths,
+        durationDays:
+          (prev.durationDays || 0) + (extensionData.addedDays || 0),
         depositAmount: extensionData.newDepositHeld,
         contracts: updatedContracts,
         payments: newPayments,

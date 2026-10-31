@@ -163,7 +163,7 @@ public class ReservationService {
         }
 
         Unit unit = reservation.getUnit();
-        Long baseMonthlyRent = policyRuleRepository.findActivePolicyRule(
+        Long baseDailyRent = policyRuleRepository.findActivePolicyRule(
                 unit.getType(),
                 PolicyRule.RuleType.RENT_RATE
         ).map(pr -> pr.getValue().longValue()).orElse(null);
@@ -188,7 +188,7 @@ public class ReservationService {
                 zoneCode,
                 facilityName,
                 unit.getAccessType(),
-                baseMonthlyRent,
+                baseDailyRent,
                 availability,
                 "/units/" + unit.getCode() + ".jpg"
         );
@@ -243,7 +243,10 @@ public class ReservationService {
 
         Long unitId = request.unitId();
         LocalDate startDate = request.startDate();
-        Integer durationMonths = request.durationMonths();
+        LocalDate endDate = request.endDate();
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu");
+        }
 
         // 1. Kiểm tra tồn tại của unit
         Unit unit = unitRepository.findWithDetailsById(unitId)
@@ -285,7 +288,6 @@ public class ReservationService {
         }
 
         // C. Kiểm tra Anti-Overlap với các reservations đã xác nhận / đang thuê (RESERVED, CHECKED_IN, CHECKOUT_REQUESTED)
-        LocalDate endDate = startDate.plusMonths(durationMonths).minusDays(1);
         if (!isTaken) {
             List<Reservation> activeReservations = reservationRepository.findActiveReservationsForUnit(
                     unit.getUnitId(),
@@ -304,7 +306,7 @@ public class ReservationService {
 
         // 3. Nếu bị chiếm giữa chừng: đếm unit tương tự và ném 409
         if (isTaken) {
-            int similarCount = countSimilarAvailableUnits(unit, startDate, durationMonths, bufferDays, today);
+            int similarCount = countSimilarAvailableUnits(unit, startDate, endDate, bufferDays, today);
             String message = similarCount > 0
                     ? String.format("%s vừa được đặt. %d unit tương tự còn trống.", unit.getCode(), similarCount)
                     : String.format("%s vừa được đặt. Không còn unit tương tự trống trong thời gian này.", unit.getCode());
@@ -312,7 +314,7 @@ public class ReservationService {
         }
 
         // 4. Tính toán bảng giá minh bạch snapshot theo AD-11
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, durationMonths);
+        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, endDate);
 
         // 5. Sinh mã đặt chỗ duy nhất BK-YYYY-NNNN
         String code = generateReservationCode();
@@ -345,7 +347,7 @@ public class ReservationService {
                 savedReservation.getEndDate(),
                 savedReservation.getDepositAmount().longValue(),
                 null,
-                durationMonths,
+                quote.durationDays(),
                 quote,
                 savedReservation.getStartDate(),
                 null,
@@ -397,18 +399,10 @@ public class ReservationService {
             }
         }
 
-        int durationMonths = (int) ChronoUnit.MONTHS.between(
-                reservation.getStartDate().withDayOfMonth(1),
-                reservation.getEndDate().plusDays(1).withDayOfMonth(1)
-        );
-        if (durationMonths < 1) {
-            durationMonths = 1;
-        }
+        QuoteResponse quote = pricingEngine.calculateQuote(unit, reservation.getStartDate(), reservation.getEndDate());
 
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, reservation.getStartDate(), durationMonths);
-
-        Long baseMonthlyRent = (quote != null && quote.durationMonths() > 0)
-                ? (quote.totalRent() / quote.durationMonths())
+        Long baseDailyRent = (quote != null && quote.durationDays() > 0)
+                ? (quote.totalRent() / quote.durationDays())
                 : policyRuleRepository.findActivePolicyRule(
                         unit.getType(),
                         PolicyRule.RuleType.RENT_RATE
@@ -428,7 +422,7 @@ public class ReservationService {
                 unit.getZone() != null ? unit.getZone().getCode() : null,
                 (unit.getZone() != null && unit.getZone().getFacility() != null) ? unit.getZone().getFacility().getName() : null,
                 unit.getAccessType(),
-                baseMonthlyRent,
+                baseDailyRent,
                 availability,
                 "/units/" + unit.getCode() + ".jpg"
         );
@@ -487,7 +481,7 @@ public class ReservationService {
                 reservation.getEndDate(),
                 reservation.getDepositAmount() != null ? reservation.getDepositAmount().longValue() : 0L,
                 depositStatus,
-                durationMonths,
+                quote.durationDays(),
                 quote,
                 reservation.getStartDate(),
                 depositForfeitReason,
@@ -519,7 +513,7 @@ public class ReservationService {
                 "Gia hạn áp dụng — cọc giữ mới " + newDepositHeld + " ₫");
     }
 
-    private int countSimilarAvailableUnits(Unit currentUnit, LocalDate startDate, int durationMonths, int bufferDays, LocalDate today) {
+    private int countSimilarAvailableUnits(Unit currentUnit, LocalDate startDate, LocalDate endDate, int bufferDays, LocalDate today) {
         List<Unit> similarCandidates = unitRepository.findSimilarCandidateUnits(
                 currentUnit.getType().getTypeId(),
                 currentUnit.getUnitId(),
@@ -539,7 +533,6 @@ public class ReservationService {
         Map<Long, List<Reservation>> reservationsByUnit = activeReservations.stream()
                 .collect(Collectors.groupingBy(r -> r.getUnit().getUnitId()));
 
-        LocalDate endDate = startDate.plusMonths(durationMonths).minusDays(1);
         LocalDate reqOccupiedEnd = endDate.plusDays(bufferDays);
 
         int count = 0;
@@ -762,7 +755,7 @@ public class ReservationService {
                     "Chưa thu tiền thuê — trả 100% rent qua Payment Modal trước khi check-in.");
         }
         QuoteResponse quote = pricingEngine.calculateQuote(
-                reservation.getUnit(), reservation.getStartDate(), durationMonthsOf(reservation));
+                reservation.getUnit(), reservation.getStartDate(), reservation.getEndDate());
         BigDecimal paid = rentPayments.stream()
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -791,15 +784,6 @@ public class ReservationService {
     /** FR-15: mã truy cập 6 chữ số — chỉ sinh 1 lần lúc check-in. */
     private String generateAccessCode() {
         return String.format("%06d", ThreadLocalRandom.current().nextInt(1_000_000));
-    }
-
-    /** Cùng công thức duration với Rental Detail. */
-    private int durationMonthsOf(Reservation reservation) {
-        int months = (int) ChronoUnit.MONTHS.between(
-                reservation.getStartDate().withDayOfMonth(1),
-                reservation.getEndDate().plusDays(1).withDayOfMonth(1)
-        );
-        return Math.max(months, 1);
     }
 
     /**

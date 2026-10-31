@@ -32,7 +32,9 @@ export function RentalSpecsCard({ reservation }) {
             <div className="rd-meta-row">
               <span className="rd-meta-row__label">Thời hạn thuê</span>
               <span className="rd-meta-row__value">
-                {reservation.durationMonths} tháng
+                {reservation.durationDays
+                  ? `${reservation.durationDays} ngày`
+                  : "—"}
               </span>
             </div>
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import {
   getTickets,
@@ -16,9 +16,27 @@ export function useSupportTickets() {
     user?.role === "FACILITY_MANAGER";
 
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [tickets, setTickets] = useState(() =>
-    getTickets(isCustomer ? { customerId: user?.id } : {})
-  );
+  const [tickets, setTickets] = useState([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [ticketsError, setTicketsError] = useState("");
+
+  const loadTickets = useCallback(async () => {
+    setTicketsLoading(true);
+    setTicketsError("");
+    try {
+      const list = await getTickets(isCustomer ? { customerId: user?.id } : {});
+      setTickets(list);
+    } catch (err) {
+      setTicketsError(err.message || "Không thể tải danh sách yêu cầu hỗ trợ.");
+      setTickets([]);
+    } finally {
+      setTicketsLoading(false);
+    }
+  }, [isCustomer, user?.id]);
+
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
 
   // Modal tạo ticket
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -52,37 +70,39 @@ export function useSupportTickets() {
     return list;
   }, [statusFilter, tickets]);
 
-  const handleCreateSubmit = (e) => {
+  const handleCreateSubmit = async (e) => {
     e.preventDefault();
     setCreateError("");
     try {
-      const created = createSupportTicket({
-        customerId: user?.id || 1,
+      const created = await createSupportTicket({
+        customerId: user?.id,
+        customerEmail: user?.email || null,
         customerName: user?.fullName || "Khách thuê",
-        customerPhone: user?.phone || "0901234567",
+        customerPhone: user?.phone || "",
         unitCode,
         incidentType,
         description,
       });
-      setTickets(getTickets(isCustomer ? { customerId: user?.id } : {}));
+      await loadTickets();
       setShowCreateModal(false);
       setDescription("");
-      showToast(`Đã gửi yêu cầu hỗ trợ mã ${created.code}. Nhân viên trực ca sẽ xử lý ngay.`);
+      showToast(`Đã gửi yêu cầu hỗ trợ mã ${created.code || ""}. Nhân viên trực ca sẽ xử lý ngay.`.trim());
     } catch (err) {
       setCreateError(err.message);
     }
   };
 
-  const handleResolveSubmit = (e) => {
+  const handleResolveSubmit = async (e) => {
     e.preventDefault();
     setResolveError("");
     try {
-      resolveSupportTicket({
+      await resolveSupportTicket({
         ticketId: resolveTargetTicket.ticketId,
         resolutionNote,
-        staffName: user?.fullName || "Trần Minh (Staff)",
+        staffName: user?.fullName || "",
+        actorRole: user?.role || "STAFF",
       });
-      setTickets(getTickets(isCustomer ? { customerId: user?.id } : {}));
+      await loadTickets();
       setResolveTargetTicket(null);
       setResolutionNote("");
       showToast(`Đã hoàn tất xử lý sự cố ${resolveTargetTicket.code}.`);
@@ -91,16 +111,16 @@ export function useSupportTickets() {
     }
   };
 
-  const handleEscalateSubmit = (e) => {
+  const handleEscalateSubmit = async (e) => {
     e.preventDefault();
     setEscalateError("");
     try {
-      escalateSupportTicket({
+      await escalateSupportTicket({
         ticketId: escalateTargetTicket.ticketId,
         escalationReason: escalateReason,
-        staffName: user?.fullName || "Trần Minh (Staff)",
+        staffName: user?.fullName || "",
       });
-      setTickets(getTickets(isCustomer ? { customerId: user?.id } : {}));
+      await loadTickets();
       setEscalateTargetTicket(null);
       setEscalateReason("");
       showToast(`Đã chuyển tiếp sự cố ${escalateTargetTicket.code} lên Quản lý cơ sở.`);
@@ -116,6 +136,9 @@ export function useSupportTickets() {
     statusFilter,
     setStatusFilter,
     tickets,
+    ticketsLoading,
+    ticketsError,
+    reloadTickets: loadTickets,
     filteredTickets,
     showCreateModal,
     setShowCreateModal,

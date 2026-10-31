@@ -59,8 +59,9 @@ INSERT INTO unit_types (type_id, name, description) VALUES
 
 -- ----------------------------------------------------------- CHÍNH SÁCH ----
 -- v2 = ngừng (chỉ còn ở history + report theo kỳ); v3 = đang dùng — mọi
--- contract seed đều khoá v3. Rent: Locker 100k / S 345k / M 380k / L 890k
--- (khớp bảng giá F4-02). Buffer 1 ngày → "checkout 10-18, khách kế 10-19".
+-- contract seed đều khoá v3. Mô hình thuê THEO NGÀY — giá RENT_RATE tính ₫/ngày:
+-- Locker 3k / S 5k / M 8k / L 15k (rẻ để test PayOS, luôn > 2.000đ/giao dịch).
+-- Buffer 1 ngày → "checkout 10-18, khách kế 10-19".
 
 INSERT INTO rental_policies (policy_id, version, effective_date, status) VALUES
     (1, 'v2', '2026-01-01', 2),
@@ -68,10 +69,10 @@ INSERT INTO rental_policies (policy_id, version, effective_date, status) VALUES
 
 INSERT INTO policy_rules (policy_id, type_id, rule_type, surcharge_type, value, cap) VALUES
     -- v2 (giá cũ, ngừng dùng)
-    (1, 1, 'RENT_RATE',       NULL, 100000, NULL),
-    (1, 2, 'RENT_RATE',       NULL, 330000, NULL),
-    (1, 3, 'RENT_RATE',       NULL, 360000, NULL),
-    (1, 4, 'RENT_RATE',       NULL, 850000, NULL),
+    (1, 1, 'RENT_RATE',       NULL,   2500, NULL),
+    (1, 2, 'RENT_RATE',       NULL,   4500, NULL),
+    (1, 3, 'RENT_RATE',       NULL,   7000, NULL),
+    (1, 4, 'RENT_RATE',       NULL,  12000, NULL),
     (1, 1, 'DEPOSIT_RATE',    NULL, 10,     NULL),
     (1, 2, 'DEPOSIT_RATE',    NULL, 10,     NULL),
     (1, 3, 'DEPOSIT_RATE',    NULL, 10,     NULL),
@@ -81,10 +82,10 @@ INSERT INTO policy_rules (policy_id, type_id, rule_type, surcharge_type, value, 
     (1, 3, 'TURNOVER_BUFFER', NULL, 1,      NULL),
     (1, 4, 'TURNOVER_BUFFER', NULL, 1,      NULL),
     -- v3 (đang dùng)
-    (2, 1, 'RENT_RATE',       NULL,   100000, NULL),   -- Locker /mo
-    (2, 2, 'RENT_RATE',       NULL,   345000, NULL),   -- S /mo (chuẩn UJ-1)
-    (2, 3, 'RENT_RATE',       NULL,   380000, NULL),   -- M /mo
-    (2, 4, 'RENT_RATE',       NULL,   890000, NULL),   -- L /mo
+    (2, 1, 'RENT_RATE',       NULL,     3000, NULL),   -- Locker /ngày
+    (2, 2, 'RENT_RATE',       NULL,     5000, NULL),   -- S /ngày
+    (2, 3, 'RENT_RATE',       NULL,     8000, NULL),   -- M /ngày
+    (2, 4, 'RENT_RATE',       NULL,    15000, NULL),   -- L /ngày
     (2, 1, 'DEPOSIT_RATE',    NULL,   10,     NULL),   -- % tổng tiền thuê
     (2, 2, 'DEPOSIT_RATE',    NULL,   10,     NULL),
     (2, 3, 'DEPOSIT_RATE',    NULL,   10,     NULL),
@@ -93,20 +94,20 @@ INSERT INTO policy_rules (policy_id, type_id, rule_type, surcharge_type, value, 
     (2, 2, 'TURNOVER_BUFFER', NULL,   1,      NULL),
     (2, 3, 'TURNOVER_BUFFER', NULL,   1,      NULL),
     (2, 4, 'TURNOVER_BUFFER', NULL,   1,      NULL),
-    (2, 1, 'LATE_FEE',        NULL,   10000,  NULL),   -- /ngày trễ quá EndDate
-    (2, 2, 'LATE_FEE',        NULL,   35000,  NULL),
-    (2, 3, 'LATE_FEE',        NULL,   38000,  NULL),
-    (2, 4, 'LATE_FEE',        NULL,   90000,  NULL),
+    (2, 1, 'LATE_FEE',        NULL,    2000,  NULL),   -- /ngày trễ quá EndDate
+    (2, 2, 'LATE_FEE',        NULL,    3000,  NULL),
+    (2, 3, 'LATE_FEE',        NULL,    5000,  NULL),
+    (2, 4, 'LATE_FEE',        NULL,    8000,  NULL),
     (2, 1, 'SURCHARGE',       'PERCENT', 5,   10),     -- late-checkout 5%,
     (2, 2, 'SURCHARGE',       'PERCENT', 5,   10),     -- trần 10% (Hằng bị
     (2, 3, 'SURCHARGE',       'PERCENT', 5,   10),     -- chặn ở 15% — UJ-3)
     (2, 4, 'SURCHARGE',       'PERCENT', 5,   10),
     (2, 3, 'DISCOUNT',        'PERCENT', 5,   NULL),   -- FR-40 giảm giá theo type
     (2, 4, 'DISCOUNT',        'PERCENT', 10,  NULL),
-    (2, 1, 'WAIVER_CAP',      NULL,   50000,  NULL),   -- FR-41 trần miễn phí
-    (2, 2, 'WAIVER_CAP',      NULL,   50000,  NULL),
-    (2, 3, 'WAIVER_CAP',      NULL,   50000,  NULL),
-    (2, 4, 'WAIVER_CAP',      NULL,   50000,  NULL);
+    (2, 1, 'WAIVER_CAP',      NULL,   10000,  NULL),   -- FR-41 trần miễn phí
+    (2, 2, 'WAIVER_CAP',      NULL,   10000,  NULL),
+    (2, 3, 'WAIVER_CAP',      NULL,   10000,  NULL),
+    (2, 4, 'WAIVER_CAP',      NULL,   10000,  NULL);
 
 -- -------------------------------------------------------------- USERS ----
 -- roles 1..5 đã có ở V1. Password hash = bcrypt("password").

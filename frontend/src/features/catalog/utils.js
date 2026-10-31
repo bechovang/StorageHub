@@ -46,8 +46,8 @@ export function sortUnitsWithAvailableFirst(items, sort) {
     if (aAvail !== bAvail) {
       return aAvail ? -1 : 1; // Kho còn trống luôn lên đầu
     }
-    const aPrice = a.baseMonthlyRent ?? a.monthlyPrice ?? 0;
-    const bPrice = b.baseMonthlyRent ?? b.monthlyPrice ?? 0;
+    const aPrice = a.baseDailyRent ?? 0;
+    const bPrice = b.baseDailyRent ?? 0;
     return sort === "price-desc" ? bPrice - aPrice : aPrice - bPrice;
   });
 }

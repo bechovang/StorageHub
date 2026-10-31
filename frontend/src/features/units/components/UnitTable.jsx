@@ -5,7 +5,6 @@ import {
   Wrench,
   SlidersHorizontal,
 } from "@phosphor-icons/react";
-import { formatVND } from "../../../utils/formatters.js";
 import { STATUS_LABELS } from "../constants.js";
 
 export function UnitTable({
@@ -26,15 +25,14 @@ export function UnitTable({
             <th>PHÂN LOẠI & DIỆN TÍCH</th>
             <th>VỊ TRÍ</th>
             <th>TRẠNG THÁI</th>
-            <th>GIÁ NIÊM YẾT</th>
-            <th>KHÁCH THUÊ & DIỄN BIẾN</th>
+            <th style={{ width: "180px" }}>GHI CHÚ</th>
             <th style={{ textAlign: "right", width: "240px" }}>THAO TÁC QUẢN TRỊ</th>
           </tr>
         </thead>
         <tbody>
           {units.length === 0 ? (
             <tr>
-              <td colSpan={7} className="mgmt-table-empty">
+              <td colSpan={6} className="mgmt-table-empty">
                 <Archive size={32} className="text-muted mb-2" />
                 <div>Không tìm thấy kho nào phù hợp với bộ lọc hiện tại.</div>
                 <button
@@ -71,24 +69,14 @@ export function UnitTable({
                       {statusMeta.text}
                     </span>
                   </td>
-                  <td className="font-mono">
-                    {formatVND(unit.baseRentPrice)}
-                    <span className="text-muted text-xs">/tháng</span>
-                  </td>
-                  <td>
-                    <div className="tenant-info-cell">
-                      {unit.tenant ? (
-                        <div className="tenant-info-header">
-                          <span className="tenant-name font-semibold">{unit.tenant}</span>
-                          {unit.contractRef && (
-                            <span className="contract-tag font-mono">{unit.contractRef}</span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-muted italic text-xs">Chưa có khách thuê</span>
-                      )}
-                      <div className="tenant-event text-xs text-muted">{unit.nextEvent}</div>
-                    </div>
+                  <td className="text-muted text-xs">
+                    {unit.notes ? (
+                      <span title={unit.notes}>
+                        {unit.notes.length > 60 ? `${unit.notes.slice(0, 60)}…` : unit.notes}
+                      </span>
+                    ) : (
+                      <span className="italic">—</span>
+                    )}
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <div className="table-actions">
@@ -107,7 +95,7 @@ export function UnitTable({
                           type="button"
                           className="btn btn--success btn--xs"
                           onClick={() => onFinishMaintenance(unit)}
-                          title="Hoàn tất bảo trì -> Chuyển sang Dọn dẹp"
+                          title="Hoàn tất bảo trì -> Mở kho cho thuê lại"
                         >
                           <CheckCircle size={13} />
                           <span>Xong bảo trì</span>

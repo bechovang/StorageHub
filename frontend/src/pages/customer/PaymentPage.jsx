@@ -13,11 +13,6 @@ export default function PaymentPage() {
     isModalOpen,
     setIsModalOpen,
     selectedMethod,
-    cardForm,
-    momoPhone,
-    setMomoPhone,
-    otp,
-    setOtp,
     paymentSession,
     paymentResult,
     qrDataUrl,
@@ -26,8 +21,6 @@ export default function PaymentPage() {
     submitting,
     polling,
     checkingStatus,
-    formErrors,
-    setFormErrors,
     apiError,
     notificationToast,
     paymentHistory,
@@ -35,15 +28,11 @@ export default function PaymentPage() {
     setShowHistory,
     copiedCode,
     isAlreadyPaid,
-    handleCardNumberChange,
-    handleExpiryChange,
-    handleCardFormChange,
-    handleApplyCardPreset,
     handleInitiatePayment,
-    handleConfirmOtp,
     handleResetOrSwitch,
     handleSelectMethod,
     handleCheckPaymentStatus,
+    handleDemoCompletePayment,
     handleCreateTestReservation,
     handleSelectReservation,
     handleCopyReceipt,
@@ -80,21 +69,6 @@ export default function PaymentPage() {
           reservation={reservation}
           selectedMethod={selectedMethod}
           onSelectMethod={handleSelectMethod}
-          cardForm={cardForm}
-          onCardNumberChange={handleCardNumberChange}
-          onExpiryChange={handleExpiryChange}
-          onCardFormChange={handleCardFormChange}
-          onApplyCardPreset={handleApplyCardPreset}
-          momoPhone={momoPhone}
-          onMomoPhoneChange={(v) => {
-            setMomoPhone(v);
-            if (formErrors.momoPhone) setFormErrors({});
-          }}
-          otp={otp}
-          onOtpChange={(v) => {
-            setOtp(v);
-            if (formErrors.otp) setFormErrors({});
-          }}
           paymentSession={paymentSession}
           paymentResult={paymentResult}
           qrDataUrl={qrDataUrl}
@@ -104,16 +78,15 @@ export default function PaymentPage() {
           polling={polling}
           checkingStatus={checkingStatus}
           onCheckPaymentStatus={handleCheckPaymentStatus}
-          formErrors={formErrors}
+          onDemoCompletePayment={handleDemoCompletePayment}
           apiError={apiError}
           notificationToast={notificationToast}
           onInitiatePayment={handleInitiatePayment}
-          onConfirmOtp={handleConfirmOtp}
           onResetOrSwitch={handleResetOrSwitch}
           copiedCode={copiedCode}
           onCopyReceipt={handleCopyReceipt}
           onNavigateRentals={() => navigate("/rentals")}
-          onNavigateRentalDetail={() => navigate(`/rentals/${reservation.id}`)}
+          onNavigateRentalDetail={() => navigate(`/rentals/${reservation?.id || ""}`)}
           formatVND={formatVND}
         />
       </div>

@@ -30,11 +30,11 @@ export function RentalDepositCard({ reservation, depositText }) {
 
         <div className="rd-meta-list">
           <div className="rd-meta-row">
-            <span className="rd-meta-row__label">Giá thuê theo tháng</span>
+            <span className="rd-meta-row__label">Giá thuê theo ngày</span>
             <span className="rd-meta-row__value font-mono">
               {fmtMoney(
-                reservation.quote?.monthlyRent ||
-                  reservation.unit?.baseMonthlyRent
+                reservation.quote?.dailyRent ||
+                  reservation.unit?.baseDailyRent
               )}
             </span>
           </div>

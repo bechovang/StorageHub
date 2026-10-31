@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 /**
- * Một cửa duy nhất cho PaymentService (AD-9): CARD/MOMO/VNPAY → mock demo;
- * PAYOS → PayOS thật. PayOS chỉ có bean khi {@code payment.payos.enabled=true}
- * và đủ 3 key; chưa cấu hình thì báo lỗi rõ thay vì âm thầm mock.
+ * Một cửa duy nhất cho PaymentService (AD-9): mọi method đều đi PayOS thật.
+ * PayOS chỉ có bean khi {@code payment.payos.enabled=true} và đủ 3 key;
+ * chưa cấu hình thì báo lỗi rõ thay vì âm thầm mock.
  */
 @Primary
 @Component
@@ -21,44 +21,30 @@ public class PaymentGatewayRouter implements PaymentGateway {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentGatewayRouter.class);
 
-    private final MockPaymentGateway mock;
     private final ObjectProvider<PayOsPaymentGateway> payOsProvider;
 
-    public PaymentGatewayRouter(
-            MockPaymentGateway mock,
-            ObjectProvider<PayOsPaymentGateway> payOsProvider
-    ) {
-        this.mock = mock;
+    public PaymentGatewayRouter(ObjectProvider<PayOsPaymentGateway> payOsProvider) {
         this.payOsProvider = payOsProvider;
     }
 
     @Override
     public InitiationResult initiate(InitiationCommand command) {
-        if (command.method() == Payment.Method.PAYOS) {
-            return payOs().initiate(command);
-        }
-        return mock.initiate(command);
+        return payOs().initiate(command);
     }
 
     @Override
     public Optional<Payment.Status> poll(Long paymentId, Payment.Method method) {
-        if (method == Payment.Method.PAYOS) {
-            return payOs().poll(paymentId, method);
-        }
-        return mock.poll(paymentId, method);
+        return payOs().poll(paymentId, method);
     }
 
     @Override
     public Payment.Status confirmOtp(Long paymentId, String otp) {
-        return mock.confirmOtp(paymentId, otp);
+        throw new PaymentBadRequestException("Xác nhận OTP không được hỗ trợ — chỉ có kênh PayOS.");
     }
 
     @Override
     public Optional<SessionView> describe(Long paymentId, Payment.Method method) {
-        if (method == Payment.Method.PAYOS) {
-            return payOs().describe(paymentId, method);
-        }
-        return mock.describe(paymentId, method);
+        return payOs().describe(paymentId, method);
     }
 
     @Override
@@ -72,7 +58,7 @@ public class PaymentGatewayRouter implements PaymentGateway {
         if (payOs == null) {
             log.warn("PayOS payment gateway requested but not configured (PAYOS_ENABLED=false or missing keys in environment).");
             throw new PaymentBadRequestException(
-                    "Kênh thanh toán QR hiện đang tạm bảo trì kết nối. Quý khách vui lòng chọn phương thức Thẻ hoặc Ví MoMo để hoàn tất thanh toán cọc.");
+                    "Kênh thanh toán QR PayOS chưa được cấu hình. Vui lòng đặt PAYOS_ENABLED=true và bổ sung PAYOS_CLIENT_ID / PAYOS_API_KEY / PAYOS_CHECKSUM_KEY.");
         }
         return payOs;
     }

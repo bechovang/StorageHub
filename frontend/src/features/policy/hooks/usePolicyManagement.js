@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import {
   getCurrentPolicy,
@@ -15,28 +15,46 @@ export function usePolicyManagement() {
     ? `${user.fullName} (${user.role === "SYSTEM_ADMIN" ? "System Admin" : "Business Ops"})`
     : "Lê Thị Hằng (Business Ops)";
 
-  // Bản lưu trữ hiện tại trên hệ thống
-  const [persistedPolicy, setPersistedPolicy] = useState(() => getCurrentPolicy());
+  // Bản lưu trữ hiện tại trên hệ thống (tải từ API)
+  const [persistedPolicy, setPersistedPolicy] = useState(null);
+  const [policyError, setPolicyError] = useState("");
+  const [policyLoading, setPolicyLoading] = useState(true);
 
   // Bản nháp đang thao tác (Form Draft)
-  const [draftBaseRates, setDraftBaseRates] = useState(() =>
-    persistedPolicy.baseRates.map((r) => ({ ...r }))
-  );
-  const [draftLateFee, setDraftLateFee] = useState(
-    persistedPolicy.surcharges.lateCheckoutPercent
-  );
-  const [draftDeposit, setDraftDeposit] = useState(
-    persistedPolicy.surcharges.depositPercent
-  );
-  const [draftBufferDays, setDraftBufferDays] = useState(
-    persistedPolicy.surcharges.turnoverBufferDays
-  );
+  const [draftBaseRates, setDraftBaseRates] = useState([]);
+  const [draftLateFee, setDraftLateFee] = useState("");
+  const [draftDeposit, setDraftDeposit] = useState("");
+  const [draftBufferDays, setDraftBufferDays] = useState("");
 
   // Lỗi validation & Banner cảnh báo
   const [validationBanner, setValidationBanner] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
   const capRulesRef = useRef(null);
+
+  // Tải chính sách hiện hành từ API
+  useEffect(() => {
+    let ignore = false;
+    async function loadPolicy() {
+      setPolicyLoading(true);
+      setPolicyError("");
+      try {
+        const policy = await getCurrentPolicy();
+        if (!ignore) {
+          setPersistedPolicy(policy);
+          syncDraftFromPersisted(policy);
+        }
+      } catch (err) {
+        if (!ignore) setPolicyError(err.message || "Không thể tải chính sách thuê kho.");
+      } finally {
+        if (!ignore) setPolicyLoading(false);
+      }
+    }
+    loadPolicy();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Khi persistedPolicy đổi, đồng bộ form draft
   const syncDraftFromPersisted = (policy) => {
@@ -54,6 +72,7 @@ export function usePolicyManagement() {
 
   // Tính danh sách thay đổi (Pending Modifications) so với bản persisted
   const pendingModifications = useMemo(() => {
+    if (!persistedPolicy) return [];
     const list = [];
 
     // Kiểm tra giá thuê
@@ -64,7 +83,7 @@ export function usePolicyManagement() {
         const isValid = !isNaN(val) && val > 0;
         list.push({
           id: `rate-${draftRate.id}`,
-          title: `${draftRate.code} · ${draftRate.typeName} Đơn giá`,
+          title: `${draftRate.fullName || draftRate.typeName} Đơn giá`,
           from: formatVND(origRate.rateVnd),
           to: isNaN(val) ? "Không hợp lệ" : formatVND(val),
           isValid,
@@ -131,6 +150,9 @@ export function usePolicyManagement() {
 
   // Tổng hợp đối tượng Draft hoàn chỉnh để validate
   const currentDraftObject = useMemo(() => {
+    if (!persistedPolicy) {
+      return { baseRates: [], surcharges: {} };
+    }
     return {
       ...persistedPolicy,
       baseRates: draftBaseRates,
@@ -172,7 +194,7 @@ export function usePolicyManagement() {
   };
 
   // Lưu chính sách (EXACTLY ONE Primary Action)
-  const handleSavePolicy = () => {
+  const handleSavePolicy = async () => {
     setValidationBanner(null);
 
     const errors = validatePolicy(currentDraftObject);
@@ -183,11 +205,11 @@ export function usePolicyManagement() {
     }
 
     try {
-      const saved = savePolicy(currentDraftObject, currentActorName);
+      const saved = await savePolicy(currentDraftObject, currentActorName);
       setPersistedPolicy(saved);
       syncDraftFromPersisted(saved);
       showToast(
-        `Đã ban hành thành công Rental Policy ${saved.version}! Ngày hiệu lực: ${saved.effectiveDate}`
+        `Đã ban hành thành công Rental Policy ${saved.version || ""}! Cập nhật lúc: ${saved.updatedAt || "—"}`.trim()
       );
     } catch (err) {
       setValidationBanner(err.message);
@@ -202,16 +224,20 @@ export function usePolicyManagement() {
   };
 
   // Khôi phục về mặc định gốc v3.0.4
-  const handleResetToBaseline = () => {
+  const handleResetToBaseline = async () => {
     if (
       window.confirm(
         "Bạn có chắc muốn khôi phục chính sách về phiên bản mặc định chuẩn v3.0.4 không? Thao tác này sẽ ghi nhật ký kiểm toán."
       )
     ) {
-      const reset = resetPolicyToDefault(currentActorName);
-      setPersistedPolicy(reset);
-      syncDraftFromPersisted(reset);
-      showToast("Đã khôi phục chính sách về bản gốc v3.0.4.");
+      try {
+        const reset = await resetPolicyToDefault(currentActorName);
+        setPersistedPolicy(reset);
+        syncDraftFromPersisted(reset);
+        showToast("Đã khôi phục chính sách về bản gốc mặc định.");
+      } catch (err) {
+        setValidationBanner(err.message);
+      }
     }
   };
 
@@ -219,6 +245,8 @@ export function usePolicyManagement() {
     user,
     currentActorName,
     persistedPolicy,
+    policyError,
+    policyLoading,
     draftBaseRates,
     draftLateFee,
     setDraftLateFee,

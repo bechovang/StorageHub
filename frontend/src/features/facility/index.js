@@ -4,4 +4,4 @@ export { default as FacilityStatusDistribution } from "./components/FacilityStat
 export { default as FacilityStatusDonutChart } from "./components/FacilityStatusDonutChart.jsx";
 export { default as TurnoverQueueTable } from "./components/TurnoverQueueTable.jsx";
 export { default as FacilityDrilldownDrawer } from "./components/FacilityDrilldownDrawer.jsx";
-export { INITIAL_FACILITY_UNITS, TURNOVER_QUEUE, STATUS_CONFIGS } from "./constants.js";
+export { STATUS_CONFIGS } from "./constants.js";

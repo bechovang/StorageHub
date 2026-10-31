@@ -41,6 +41,10 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String TYPE_CHECKOUT_REQUEST_CANCELLED = "CHECKOUT_REQUEST_CANCELLED";
     private static final String TYPE_EXTENSION_APPLIED = "EXTENSION_APPLIED";
     private static final String TYPE_ADDENDUM_AWAITING_SIGNATURE = "ADDENDUM_AWAITING_SIGNATURE";
+    private static final String TYPE_RENT_PAID_READY_CHECKIN = "RENT_PAID_READY_CHECKIN";
+    private static final String TYPE_TICKET_CREATED = "TICKET_CREATED";
+    private static final String TYPE_TICKET_STATUS_CHANGED = "TICKET_STATUS_CHANGED";
+    private static final String TYPE_FORCED_CHECKOUT = "FORCED_CHECKOUT";
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -307,6 +311,69 @@ public class NotificationServiceImpl implements NotificationService {
                     row.setIsRead(false);
                     notificationRepository.save(row);
                 });
+    }
+
+    @Override
+    @Transactional
+    public void notifyRentPaidReadyForCheckIn(Reservation reservation, com.storagehub.entity.Payment payment) {
+        String deepLink = "/rentals/" + reservation.getReservationId();
+
+        // Staff: khách đã trả đủ tiền thuê — sẵn sàng làm thủ tục check-in tại quầy.
+        userRepository.findFirstByRole_NameAndStatusOrderByUserIdAsc(Role.Name.STAFF, 1)
+                .ifPresent(staff -> {
+                    Notification row = new Notification();
+                    row.setUser(staff);
+                    row.setType(TYPE_RENT_PAID_READY_CHECKIN);
+                    row.setTitle("Khách " + reservation.getCode() + " đã trả đủ tiền thuê");
+                    row.setIsRead(false);
+                    notificationRepository.save(row);
+                });
+
+        // Khách: hướng dẫn mang giấy tờ ra quầy để ký hợp đồng và nhận mã truy cập.
+        Notification forCustomer = new Notification();
+        forCustomer.setUser(reservation.getCustomer());
+        forCustomer.setType(TYPE_RENT_PAID_READY_CHECKIN);
+        forCustomer.setTitle("Đã nhận đủ tiền thuê — " + reservation.getUnit().getCode());
+        forCustomer.setIsRead(false);
+        notificationRepository.save(forCustomer);
+    }
+
+    @Override
+    @Transactional
+    public void notifyTicketCreated(com.storagehub.entity.SupportTicket ticket) {
+        userRepository.findFirstByRole_NameAndStatusOrderByUserIdAsc(Role.Name.STAFF, 1)
+                .ifPresent(staff -> {
+                    Notification row = new Notification();
+                    row.setUser(staff);
+                    row.setType(TYPE_TICKET_CREATED);
+                    row.setTitle("Ticket " + ticket.getCode() + " — kho " + ticket.getUnit().getCode());
+                    row.setIsRead(false);
+                    notificationRepository.save(row);
+                });
+    }
+
+    @Override
+    @Transactional
+    public void notifyTicketStatusChanged(com.storagehub.entity.SupportTicket ticket, String oldStatus) {
+        Notification row = new Notification();
+        row.setUser(ticket.getCustomer());
+        row.setType(TYPE_TICKET_STATUS_CHANGED);
+        row.setTitle("Ticket " + ticket.getCode() + ": " + oldStatus + " → " + ticket.getStatus());
+        row.setIsRead(false);
+        notificationRepository.save(row);
+    }
+
+    @Override
+    @Transactional
+    public void notifyForcedCheckout(com.storagehub.entity.Reservation reservation, String type, String note) {
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_FORCED_CHECKOUT);
+        row.setTitle(("VIOLATION".equals(type) ? "Buộc trả kho — " : "Đổi kho — ")
+                + reservation.getUnit().getCode());
+        row.setDeepLink("/rentals/" + reservation.getReservationId());
+        row.setIsRead(false);
+        notificationRepository.save(row);
     }
 
     /** VND theo AD-7/FR-6: "103.500 ₫" — nhóm 3 bằng dấu chấm. */

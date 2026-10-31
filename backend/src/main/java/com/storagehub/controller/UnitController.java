@@ -43,9 +43,8 @@ public class UnitController {
             @RequestParam(name = "size-m2", required = false) BigDecimal sizeM2,
             @RequestParam(name = "start-date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(name = "duration-months", required = false)
-            @Min(value = 1, message = "Thời hạn thuê tối thiểu 1 tháng")
-            @Max(value = 36, message = "Thời hạn thuê tối đa 36 tháng") Integer durationMonths,
+            @RequestParam(name = "end-date", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(name = "sort", defaultValue = "price-asc") String sort,
             @RequestParam(name = "page", defaultValue = "1")
             @Min(value = 1, message = "Trang phải từ 1 trở lên") Integer page,
@@ -56,7 +55,7 @@ public class UnitController {
                 typeId,
                 sizeM2,
                 startDate,
-                durationMonths,
+                endDate,
                 sort,
                 page,
                 pageSize
@@ -74,10 +73,9 @@ public class UnitController {
             @PathVariable("unitId") Long unitId,
             @RequestParam("start-date")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("duration-months")
-            @Min(value = 1, message = "Thời hạn thuê tối thiểu 1 tháng")
-            @Max(value = 36, message = "Thời hạn thuê tối đa 36 tháng") Integer durationMonths
+            @RequestParam("end-date")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        return ResponseEntity.ok(unitService.getUnitQuote(unitId, startDate, durationMonths));
+        return ResponseEntity.ok(unitService.getUnitQuote(unitId, startDate, endDate));
     }
 }

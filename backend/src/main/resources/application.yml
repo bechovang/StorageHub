@@ -42,21 +42,17 @@ security:
     ttl: PT24H
 
 # ----------------------------------------------------------------------------
-# CARD/MOMO/VNPAY = demo: tạo payment → PROCESSING → poll tự SUCCEEDED
-# (auto-complete-delay 0s). PAYOS = thật, bật bằng PAYOS_ENABLED + 3 key.
-# Test values cũ trong contract chỉ còn giá trị lịch sử.
+# PayOS là kênh thanh toán DUY NHẤT (AD-9). Bật bằng PAYOS_ENABLED + 3 key
+# (đặt trong backend/.env). Webhook URL trên dashboard PayOS:
+#   https://<tunnel>/api/v1/payments/webhooks/payos
 # ----------------------------------------------------------------------------
 payment:
-  mock:
-    auto-complete-delay: PT0S
-
-  # PayOS thật (AD-9/Task 33):
-  #   PAYOS_ENABLED=true
-  #   PAYOS_CLIENT_ID / PAYOS_API_KEY / PAYOS_CHECKSUM_KEY
-  # Webhook URL trên dashboard PayOS:
-  #   https://<tunnel>/api/v1/payments/webhooks/payos
+  demo:
+    # DEMO ONLY — cho phép POST /payments/{id}/demo-complete bỏ qua PayOS.
+    # Chỉ bật ở profile dev; build prod phải để false.
+    skip-enabled: false
   payos:
-    enabled: ${PAYOS_ENABLED:false}
+    enabled: ${PAYOS_ENABLED:true}
     return-url: ${PAYOS_RETURN_URL:http://localhost:5173/payment}
     cancel-url: ${PAYOS_CANCEL_URL:http://localhost:5173/payment}
     client-id: ${PAYOS_CLIENT_ID:}
@@ -79,3 +75,10 @@ spring:
       on-profile: dev
   flyway:
     locations: classpath:db/migration,classpath:db/seed
+    # Dev-only: clean toàn bộ schema rồi migrate + seed lại mỗi lần start
+    clean-disabled: false
+
+# Dev-only: nút "Bỏ qua thanh toán (demo)" hoạt động để demo local không cần quét QR
+payment:
+  demo:
+    skip-enabled: true

@@ -25,7 +25,7 @@ public record ReservationDetailResponse(
         LocalDate endDate,
         Long depositAmount,
         String depositStatus,
-        Integer durationMonths,
+        Integer durationDays,
         QuoteResponse quote,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         LocalDate checkInDeadline,
@@ -57,8 +57,8 @@ public record ReservationDetailResponse(
             String depositStatus,
             LocalDate latestNewCheckout
     ) {
-        long months = ChronoUnit.MONTHS.between(
-                reservation.getStartDate(), reservation.getEndDate());
+        long days = ChronoUnit.DAYS.between(
+                reservation.getStartDate(), reservation.getEndDate()) + 1;
 
         return new ReservationDetailResponse(
                 reservation.getReservationId(),
@@ -72,7 +72,7 @@ public record ReservationDetailResponse(
                 reservation.getEndDate(),
                 reservation.getDepositAmount().longValueExact(),
                 depositStatus,
-                (int) months,
+                (int) days,
                 null,
                 null,
                 null,

@@ -38,15 +38,6 @@ function normalizeUser(u) {
   };
 }
 
-const DEMO_USERS = [
-  { id: 1, userId: 1, fullName: "Hoàng Văn Nam", email: "nam@demo.storagehub.vn", phone: "0901 000 001", role: "SYSTEM_ADMIN", status: 1, facilityName: "Toàn hệ thống", createdAt: "2026-01-01T00:00:00Z" },
-  { id: 2, userId: 2, fullName: "Lê Thu Hằng", email: "hang@demo.storagehub.vn", phone: "0902 000 002", role: "BUSINESS_OPS", status: 1, facilityName: "Toàn hệ thống", createdAt: "2026-01-01T00:00:00Z" },
-  { id: 3, userId: 3, fullName: "Phạm Tuấn", email: "tuan@demo.storagehub.vn", phone: "0903 000 003", role: "FACILITY_MANAGER", status: 1, facilityName: "Cơ sở Tân Bình (VN-SGN-01)", createdAt: "2026-01-01T00:00:00Z" },
-  { id: 4, userId: 4, fullName: "Nguyễn Văn Minh", email: "minh@demo.storagehub.vn", phone: "0904 000 004", role: "STAFF", status: 1, facilityName: "Cơ sở Tân Bình (VN-SGN-01)", createdAt: "2026-01-01T00:00:00Z" },
-  { id: 5, userId: 5, fullName: "Trần Thị Lan", email: "lan@demo.storagehub.vn", phone: "0912 345 678", role: "CUSTOMER", status: 1, facilityName: "Khách thuê cá nhân", createdAt: "2026-02-15T00:00:00Z" },
-  { id: 6, userId: 6, fullName: "Nguyễn Văn Hùng", email: "hung@demo.storagehub.vn", phone: "0988 123 456", role: "CUSTOMER", status: 1, facilityName: "Khách thuê cá nhân", createdAt: "2026-03-10T00:00:00Z" },
-  { id: 7, userId: 7, fullName: "Trần Tuyết Mai", email: "mai@demo.storagehub.vn", phone: "0907 000 007", role: "STAFF", status: 1, facilityName: "Cơ sở Tân Bình (VN-SGN-01)", createdAt: "2026-04-01T00:00:00Z" },
-];
 
 /**
  * Lấy danh sách người dùng từ Backend: GET /api/v1/users
@@ -75,22 +66,7 @@ export async function getUsers({ role = "ALL", status = "ALL", searchTerm = "" }
     const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
     return items.map(normalizeUser);
   } catch (err) {
-    let list = DEMO_USERS;
-    if (role && role !== "ALL") {
-      list = list.filter((u) => u.role === role);
-    }
-    if (status !== "ALL" && status !== undefined && status !== "") {
-      list = list.filter((u) => String(u.status) === String(status));
-    }
-    if (searchTerm && searchTerm.trim()) {
-      const q = searchTerm.toLowerCase().trim();
-      list = list.filter((u) =>
-        u.fullName.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        (u.phone && u.phone.includes(q))
-      );
-    }
-    return list.map(normalizeUser);
+    throw err;
   }
 }
 

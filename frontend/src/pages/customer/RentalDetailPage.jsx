@@ -13,6 +13,7 @@ import AppShell from "../../components/AppShell/AppShell.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import {
   useRentalDetail,
+  useManagerActions,
   PaymentsSection,
   ContractsSection,
   RentalHeroBanner,
@@ -20,6 +21,7 @@ import {
   RentalSpecsCard,
   ExtensionModal,
   CheckoutRequestModal,
+  ManagerActionsCard,
 } from "../../features/rentals/index.js";
 import { fmtDate } from "../../utils/rentalConstants.js";
 import "./RentalDetailPage.css";
@@ -50,6 +52,13 @@ export default function RentalDetailPage() {
     statusLabel,
     depositText,
   } = useRentalDetail();
+
+  // Thao tác quản lý: Buộc trả kho sớm & Đổi kho (gate cho vai trò nhân sự)
+  const managerActions = useManagerActions({
+    reservation,
+    onRefresh: handleRefresh,
+    onToast: setToastMessage,
+  });
 
   return (
     <AppShell>
@@ -251,6 +260,25 @@ export default function RentalDetailPage() {
                 </article>
               </div>
             </div>
+
+            {/* ── Thao tác quản lý: Buộc trả kho & Đổi kho (nhân sự) ── */}
+            {isCheckedIn && (
+              <ManagerActionsCard
+                reservation={reservation}
+                isManagerFeature={managerActions.isManagerFeature}
+                actionError={managerActions.actionError}
+                setActionError={managerActions.setActionError}
+                clearActionError={managerActions.clearActionError}
+                submittingAction={managerActions.submittingAction}
+                availableUnits={managerActions.availableUnits}
+                loadingUnits={managerActions.loadingUnits}
+                loadAvailableUnits={managerActions.loadAvailableUnits}
+                transferResult={managerActions.transferResult}
+                setTransferResult={managerActions.setTransferResult}
+                handleForcedCheckout={managerActions.handleForcedCheckout}
+                handleTransfer={managerActions.handleTransfer}
+              />
+            )}
 
             {/* ── Sprint 2 Modals ── */}
             <ExtensionModal

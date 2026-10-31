@@ -61,84 +61,21 @@ export function AuthProvider({ children }) {
     setLoading(true);
     const trimmedEmail = email.trim();
     try {
-      let res;
-      let data = {};
-      let isOffline = false;
+      const res = await apiClient("/api/v1/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email: trimmedEmail, password }),
+      });
+      const data = await safeParseJson(res);
 
-      try {
-        res = await apiClient("/api/v1/auth/login", {
-          method: "POST",
-          body: JSON.stringify({ email: trimmedEmail, password }),
-        });
-        data = await safeParseJson(res);
-        if (res.status >= 500) {
-          isOffline = true;
-        }
-      } catch {
-        isOffline = true;
-      }
-
-      const DEMO_ACCOUNTS = {
-        "tuan@demo.storagehub.vn": {
-          id: 4,
-          fullName: "Phạm Tuấn",
-          email: "tuan@demo.storagehub.vn",
-          role: "FACILITY_MANAGER",
-          landing: "/facility",
-        },
-        "nam@demo.storagehub.vn": {
-          id: 5,
-          fullName: "Hoàng Nam",
-          email: "nam@demo.storagehub.vn",
-          role: "SYSTEM_ADMIN",
-          landing: "/users",
-        },
-        "minh@demo.storagehub.vn": {
-          id: 2,
-          fullName: "Trần Minh",
-          email: "minh@demo.storagehub.vn",
-          role: "STAFF",
-          landing: "/tasks",
-        },
-        "hang@demo.storagehub.vn": {
-          id: 3,
-          fullName: "Lê Thị Hằng",
-          email: "hang@demo.storagehub.vn",
-          role: "BUSINESS_OPS",
-          landing: "/overview",
-        },
-        "lan@demo.storagehub.vn": {
-          id: 1,
-          fullName: "Nguyễn Thị Lan",
-          email: "lan@demo.storagehub.vn",
-          role: "CUSTOMER",
-          landing: "/",
-        },
-      };
-
-      if (isOffline && DEMO_ACCOUNTS[trimmedEmail] && (password === "password" || password === "Password123!" || password.length >= 6)) {
-        const demoUser = DEMO_ACCOUNTS[trimmedEmail];
-        const mockToken = "mock_jwt_token_" + demoUser.role;
-        tokenStorage.set(mockToken);
-        localStorage.setItem("storagehub_user", JSON.stringify(demoUser));
-        setToken(mockToken);
-        setUser(demoUser);
-        return {
-          token: mockToken,
-          user: demoUser,
-          landingRoute: demoUser.landing,
-        };
-      }
-
-      if (!res || !res.ok) {
-        const isServerDown = !res || res.status >= 500;
+      if (!res.ok) {
+        const isServerDown = res.status >= 500;
         const rawMsg =
           data?.message ||
           (isServerDown
             ? "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại."
             : "Email hoặc mật khẩu không chính xác.");
         throw {
-          status: res?.status || 500,
+          status: res.status,
           code: data?.code || (isServerDown ? "BACKEND_UNAVAILABLE" : "AUTH_FAILED"),
           message: translateBackendMessage(rawMsg),
         };

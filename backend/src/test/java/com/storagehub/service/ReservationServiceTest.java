@@ -134,7 +134,7 @@ class ReservationServiceTest {
         CreateReservationRequest request = new CreateReservationRequest(
                 3L,
                 LocalDate.of(2026, 10, 3),
-                3
+                LocalDate.of(2027, 1, 2)
         );
 
         when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customerUser));
@@ -153,14 +153,14 @@ class ReservationServiceTest {
                 3L,
                 LocalDate.of(2026, 10, 3),
                 LocalDate.of(2027, 1, 2),
-                3,
+                92,
                 List.of(),
                 1035000L,
                 103500L,
                 103500L,
                 "v3"
         );
-        when(pricingEngine.calculateQuote(unitS3, LocalDate.of(2026, 10, 3), 3)).thenReturn(quote);
+        when(pricingEngine.calculateQuote(unitS3, LocalDate.of(2026, 10, 3), LocalDate.of(2027, 1, 2))).thenReturn(quote);
         when(reservationRepository.count()).thenReturn(0L);
         when(reservationRepository.existsByCode(any())).thenReturn(false);
 
@@ -187,7 +187,7 @@ class ReservationServiceTest {
         CreateReservationRequest request = new CreateReservationRequest(
                 999L,
                 LocalDate.of(2026, 10, 3),
-                3
+                LocalDate.of(2027, 1, 2)
         );
 
         when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customerUser));
@@ -206,7 +206,7 @@ class ReservationServiceTest {
         CreateReservationRequest request = new CreateReservationRequest(
                 3L,
                 futureDate,
-                3
+                futureDate.plusDays(92)
         );
 
         when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customerUser));
@@ -241,7 +241,7 @@ class ReservationServiceTest {
         CreateReservationRequest request = new CreateReservationRequest(
                 3L,
                 LocalDate.of(2026, 10, 3),
-                3
+                LocalDate.of(2027, 1, 2)
         );
 
         when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customerUser));
@@ -296,7 +296,7 @@ class ReservationServiceTest {
                 103500L,
                 "v3"
         );
-        when(pricingEngine.calculateQuote(eq(unitS3), eq(futureStart), eq(3)))
+        when(pricingEngine.calculateQuote(eq(unitS3), eq(futureStart), any()))
                 .thenReturn(quote);
         when(paymentRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(1042L)).thenReturn(List.of());
         when(contractRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(1042L)).thenReturn(List.of());
@@ -370,7 +370,7 @@ class ReservationServiceTest {
                 103500L,
                 "v3"
         );
-        when(pricingEngine.calculateQuote(eq(unitS3), eq(LocalDate.of(2026, 8, 1)), eq(3)))
+        when(pricingEngine.calculateQuote(eq(unitS3), eq(LocalDate.of(2026, 8, 1)), any()))
                 .thenReturn(quote);
         when(paymentRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(1042L)).thenReturn(List.of());
         when(contractRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(1042L)).thenReturn(List.of(draftContract));
@@ -413,14 +413,14 @@ class ReservationServiceTest {
                 3L,
                 LocalDate.of(2026, 10, 3),
                 LocalDate.of(2027, 1, 2),
-                3,
+                92,
                 List.of(),
                 1035000L,
                 103500L,
                 103500L,
                 "v3"
         );
-        when(pricingEngine.calculateQuote(eq(unitS3), eq(LocalDate.of(2026, 10, 3)), eq(3)))
+        when(pricingEngine.calculateQuote(eq(unitS3), eq(LocalDate.of(2026, 10, 3)), any()))
                 .thenReturn(quote);
         when(paymentRepository.findByReservation_ReservationIdOrderByCreatedAtAsc(1042L)).thenReturn(List.of());
 
