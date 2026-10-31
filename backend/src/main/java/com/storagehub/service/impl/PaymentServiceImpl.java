@@ -477,7 +477,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         int next = 1;
         if (max != null && max.length() > prefix.length()) {
-            next = Integer.parseInt(max.substring(prefix.length())) + 1;
+            String suffix = max.substring(prefix.length());
+            try {
+                next = Integer.parseInt(suffix) + 1;
+            } catch (NumberFormatException ignored) {
+                // Seed/dữ liệu cũ có thể chứa mã không phải số (vd RT-2026-PAYOS);
+                // bỏ qua và cấp số kế tiếp theo số bản ghi — unique DB chặn trùng.
+                next = (int) paymentRepository.count() + 1;
+            }
         }
         return prefix + String.format("%04d", next);
     }
