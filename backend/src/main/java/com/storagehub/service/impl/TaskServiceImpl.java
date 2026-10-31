@@ -44,6 +44,7 @@ public class TaskServiceImpl implements TaskService {
     private final com.storagehub.repository.CheckoutRequestRepository checkoutRequestRepository;
     private final com.storagehub.service.PricingEngine pricingEngine;
     private final com.storagehub.service.ReservationService reservationService;
+    private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
     private final Clock clock;
 
     public TaskServiceImpl(
@@ -62,6 +63,7 @@ public class TaskServiceImpl implements TaskService {
             com.storagehub.repository.CheckoutRequestRepository checkoutRequestRepository,
             com.storagehub.service.PricingEngine pricingEngine,
             @org.springframework.context.annotation.Lazy com.storagehub.service.ReservationService reservationService,
+            org.springframework.transaction.PlatformTransactionManager transactionManager,
             Clock clock
     ) {
         this.taskRepository = taskRepository;
@@ -79,6 +81,7 @@ public class TaskServiceImpl implements TaskService {
         this.checkoutRequestRepository = checkoutRequestRepository;
         this.pricingEngine = pricingEngine;
         this.reservationService = reservationService;
+        this.transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
         this.clock = clock;
     }
 
@@ -731,7 +734,6 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @org.springframework.transaction.annotation.Transactional
     public com.storagehub.dto.task.TaskResponse completeCheckinRitual(
             String currentUserEmail,
             Long taskId,
@@ -754,9 +756,11 @@ public class TaskServiceImpl implements TaskService {
         Reservation reservation = reservationRepository.findByCode(task.getRefCode())
                 .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
                         "Không tìm thấy đặt chỗ " + task.getRefCode() + "."));
+        if (reservation.getStatus() != Reservation.Status.RESERVED) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Đơn " + reservation.getCode() + " không ở trạng thái RESERVED.");
+        }
 
-        // 1. Ghi nhận tiền thu tại quầy thành payment RENT SUCCEEDED — ngồn
-        //    chân lý doanh thu (AD-11) + tự qua được guard "Chặn Done ảo".
         com.storagehub.entity.Payment.Method method = switch (request.paymentMethod().toUpperCase()) {
             case "CASH" -> com.storagehub.entity.Payment.Method.CASH;
             case "QR" -> com.storagehub.entity.Payment.Method.BANK;
@@ -764,33 +768,52 @@ public class TaskServiceImpl implements TaskService {
             default -> throw new com.storagehub.exception.BusinessRuleException(
                     "Phương thức thu tiền không hợp lệ: " + request.paymentMethod());
         };
-        var quote = pricingEngine.calculateQuote(
-                reservation.getUnit(), reservation.getStartDate(), reservation.getEndDate());
-        com.storagehub.entity.Payment rent = new com.storagehub.entity.Payment();
-        rent.setPayer(reservation.getCustomer());
-        rent.setReservation(reservation);
-        rent.setPurpose(com.storagehub.entity.Payment.Purpose.RENT);
-        rent.setMethod(method);
-        rent.setAmount(java.math.BigDecimal.valueOf(quote.totalRent()));
-        rent.setStatus(com.storagehub.entity.Payment.Status.SUCCEEDED);
-        rent.setReceiptCode("RT-CT-" + System.currentTimeMillis());
-        paymentRepository.save(rent);
 
-        logService.log(staff, "PAYMENT", rent.getPaymentId(), "PAYMENT_SUCCEEDED",
-                null, "SUCCEEDED",
-                "Thu tại quầy " + request.paymentMethod() + " — " + quote.totalRent()
-                        + " ₫, có ảnh chứng từ (check-in " + reservation.getCode() + ")");
+        // Không bọc cả ritual trong 1 transaction: payment RENT insert giữ S-lock
+        // FK reservations, còn checkIn cần FOR UPDATE cùng row → deadlock nếu
+        // dùng 2 transaction chồng nhau. Tách: ghi payment (commit) → checkIn →
+        // DONE task. Retry sẽ tái dùng payment RENT đã có.
+        boolean rentCollected = paymentRepository
+                .findByReservation_ReservationId(reservation.getReservationId()).stream()
+                .anyMatch(p -> p.getPurpose() == com.storagehub.entity.Payment.Purpose.RENT
+                        && p.getStatus() == com.storagehub.entity.Payment.Status.SUCCEEDED);
+        if (!rentCollected) {
+            Unit unit = unitRepository.findWithDetailsById(reservation.getUnit().getUnitId())
+                    .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException("Không tìm thấy kho."));
+            var quote = pricingEngine.calculateQuote(
+                    unit, reservation.getStartDate(), reservation.getEndDate());
+            transactionTemplate.executeWithoutResult(tx -> {
+                com.storagehub.entity.Payment rent = new com.storagehub.entity.Payment();
+                rent.setPayer(reservation.getCustomer());
+                rent.setReservation(reservation);
+                rent.setPurpose(com.storagehub.entity.Payment.Purpose.RENT);
+                rent.setMethod(method);
+                rent.setAmount(java.math.BigDecimal.valueOf(quote.totalRent()));
+                rent.setStatus(com.storagehub.entity.Payment.Status.SUCCEEDED);
+                rent.setReceiptCode("RT-CT-" + System.currentTimeMillis());
+                paymentRepository.saveAndFlush(rent);
+                logService.log(staff, "PAYMENT", rent.getPaymentId(), "PAYMENT_SUCCEEDED",
+                        null, "SUCCEEDED",
+                        "Thu tại quầy " + request.paymentMethod() + " — " + quote.totalRent()
+                                + " ₫, có ảnh chứng từ (check-in " + reservation.getCode() + ")");
+            });
+        }
 
-        // 2. Check-in chuẩn: ký hợp đồng (ảnh) + Unit RENTED + cấp Access Code.
+        // CheckIn mở transaction riêng, không còn outer transaction giữ FK lock.
         reservationService.checkIn(currentUserEmail, reservation.getReservationId(),
                 request.contractPhotoUrl());
 
-        // 3. DONE task — guard rent-collected đã thỏa vì payment vừa ghi.
-        task.setStatus(Task.Status.DONE);
-        Task saved = taskRepository.save(task);
-        logService.log(staff, "TASK", saved.getTaskId(),
-                "STATUS_CHANGED", task.getStatus() == Task.Status.DONE ? "DONE" : "IN_PROGRESS",
-                "DONE", "Check-in ritual hoàn tất — " + reservation.getCode());
+        Task saved = transactionTemplate.execute(tx -> {
+            Task current = taskRepository.findWithStaffById(taskId)
+                    .orElseThrow(() -> new TaskNotFoundException(taskId));
+            String oldStatus = current.getStatus().name();
+            current.setStatus(Task.Status.DONE);
+            Task done = taskRepository.save(current);
+            logService.log(staff, "TASK", done.getTaskId(),
+                    "STATUS_CHANGED", oldStatus, "DONE",
+                    "Check-in ritual hoàn tất — " + reservation.getCode());
+            return done;
+        });
 
         return toTaskResponse(saved, getCurrentShift(), null, null, null, null);
     }
