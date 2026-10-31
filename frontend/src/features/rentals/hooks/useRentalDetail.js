@@ -203,10 +203,12 @@ export function useRentalDetail() {
 
   const statusColor = STATUS_COLOR[reservation?.status] || "neutral";
   const statusLabel = STATUS_LABEL[reservation?.status] || reservation?.status;
-  const depositText =
-    DEPOSIT_STATUS_LABEL[reservation?.depositStatus] ||
-    reservation?.depositStatus ||
-    "—";
+  // PENDING_PAYMENT: BE trả depositStatus = null (cọc chưa ghi sổ).
+  const depositText = reservation?.status === "PENDING_PAYMENT"
+    ? "Chưa thanh toán"
+    : DEPOSIT_STATUS_LABEL[reservation?.depositStatus] ||
+      reservation?.depositStatus ||
+      "—";
 
   return {
     reservationId,

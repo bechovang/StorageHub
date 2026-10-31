@@ -20,8 +20,11 @@ import {
 export default function RentalCard({ item }) {
   const statusColor = STATUS_COLOR[item.status] || "neutral";
   const statusText = STATUS_LABEL[item.status] || item.status;
-  const depositText =
-    DEPOSIT_STATUS_LABEL[item.depositStatus] || item.depositStatus || "—";
+  // PENDING_PAYMENT: BE cố ý trả depositStatus = null (cọc chưa tồn tại trên
+  // sổ) — hiển thị "Chưa thanh toán" thay vì "(—)".
+  const depositText = item.status === "PENDING_PAYMENT"
+    ? "Chưa thanh toán"
+    : DEPOSIT_STATUS_LABEL[item.depositStatus] || item.depositStatus || "—";
 
   const isPending = item.status === "PENDING_PAYMENT";
   const isReserved = item.status === "RESERVED";
