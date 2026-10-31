@@ -17,10 +17,6 @@ export default function BrowsePage() {
     setSelectedType,
     selectedSize,
     setSelectedSize,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
     searchError,
     selectedFacility,
     setSelectedFacility,
@@ -59,7 +55,7 @@ export default function BrowsePage() {
               </h1>
               <p className="browse-banner__desc">
                 Kho tự quản sạch sẽ, an ninh 24/7, ra vào chủ động bằng mã PIN
-                riêng tại cơ sở Tân Bình.
+                riêng.
               </p>
             </div>
           </section>
@@ -71,10 +67,6 @@ export default function BrowsePage() {
           setSelectedType={setSelectedType}
           selectedSize={selectedSize}
           setSelectedSize={setSelectedSize}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
           selectedFacility={selectedFacility}
           setSelectedFacility={setSelectedFacility}
           onSearchSubmit={handleSearchSubmit}
@@ -177,7 +169,7 @@ export default function BrowsePage() {
             <p className="browse-empty__desc">
               {activeFilters.facilityId && Number(activeFilters.facilityId) === 2
                 ? "Cơ sở Quận 7 hiện đang chuẩn bị khai trương nên chưa có kho khả dụng. Vui lòng chọn cơ sở Tân Bình hoặc bấm nút bên dưới để xem tất cả kho."
-                : "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê."}
+                : "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc cơ sở."}
             </p>
             <button
               type="button"

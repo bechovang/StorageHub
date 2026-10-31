@@ -6,10 +6,6 @@ export default function BrowseFilterForm({
   setSelectedType,
   selectedSize,
   setSelectedSize,
-  startDate,
-  setStartDate,
-  endDate,
-  setEndDate,
   selectedFacility,
   setSelectedFacility,
   onSearchSubmit,
@@ -57,36 +53,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 3. Ngày bắt đầu */}
-        <div className="browse-filter-field">
-          <label className="browse-filter-field__label" htmlFor="filter-date">
-            Ngày bắt đầu
-          </label>
-          <input
-            id="filter-date"
-            type="date"
-            className="browse-filter-field__input"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-
-        {/* 4. Ngày kết thúc (thuê theo ngày) */}
-        <div className="browse-filter-field">
-          <label className="browse-filter-field__label" htmlFor="filter-end-date">
-            Ngày kết thúc
-          </label>
-          <input
-            id="filter-end-date"
-            type="date"
-            className="browse-filter-field__input"
-            value={endDate || ""}
-            min={startDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-
-        {/* 5. Chọn cơ sở */}
+        {/* 3. Chọn cơ sở */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-facility">
             Chọn cơ sở
@@ -106,7 +73,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 6. Nút tìm kiếm */}
+        {/* 4. Nút tìm kiếm */}
         <button id="browse-search-btn" type="submit" className="browse-filter-btn">
           <MagnifyingGlass size={18} weight="bold" aria-hidden="true" />
           <span>Tìm kiếm</span>

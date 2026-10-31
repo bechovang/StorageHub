@@ -16,11 +16,6 @@ export function useBrowseUnits() {
   // State các giá trị trong form bộ lọc
   const [selectedType, setSelectedType] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
-  const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  });
-  const [endDate, setEndDate] = useState("");
   const [selectedFacility, setSelectedFacility] = useState("");
   const [searchError, setSearchError] = useState("");
 
@@ -28,8 +23,6 @@ export function useBrowseUnits() {
   const [activeFilters, setActiveFilters] = useState({
     typeId: "",
     sizeM2: "",
-    startDate: "",
-    endDate: "",
     facilityId: "",
   });
 
@@ -69,8 +62,6 @@ export function useBrowseUnits() {
       const data = await searchUnits({
         typeId: filters.typeId,
         sizeM2: filters.sizeM2,
-        startDate: filters.startDate,
-        endDate: filters.endDate,
         facilityId: filters.facilityId,
         sort,
         page: targetPage,
@@ -97,8 +88,6 @@ export function useBrowseUnits() {
         const data = await searchUnits({
           typeId: activeFilters.typeId,
           sizeM2: activeFilters.sizeM2,
-          startDate: activeFilters.startDate,
-          endDate: activeFilters.endDate,
           facilityId: activeFilters.facilityId,
           sort: sortOrder,
           page: 1,
@@ -145,8 +134,6 @@ export function useBrowseUnits() {
     const newFilters = {
       typeId: selectedType,
       sizeM2: selectedSize,
-      startDate,
-      endDate,
       facilityId: selectedFacility,
     };
     setActiveFilters(newFilters);
@@ -169,8 +156,6 @@ export function useBrowseUnits() {
     const reset = {
       typeId: "",
       sizeM2: "",
-      startDate,
-      endDate: "",
       facilityId: "",
     };
     setActiveFilters(reset);
@@ -229,10 +214,6 @@ export function useBrowseUnits() {
     setSelectedType,
     selectedSize,
     setSelectedSize,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
     searchError,
     selectedFacility,
     setSelectedFacility,

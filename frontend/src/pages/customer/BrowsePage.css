@@ -115,7 +115,7 @@
 
 .browse-filter-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) auto;
+  grid-template-columns: repeat(3, 1fr) auto;
   gap: var(--space-4);
   align-items: flex-end;
 }
