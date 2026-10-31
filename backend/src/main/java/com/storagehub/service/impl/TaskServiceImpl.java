@@ -734,6 +734,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public com.storagehub.dto.task.TaskResponse completeCheckinRitual(
             String currentUserEmail,
             Long taskId,
