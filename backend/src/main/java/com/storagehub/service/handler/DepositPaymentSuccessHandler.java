@@ -1,12 +1,14 @@
 package com.storagehub.service.handler;
 
 import com.storagehub.dto.notification.NotificationEventResponse;
+import com.storagehub.entity.BookingDraft;
 import com.storagehub.entity.Contract;
 import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
 import com.storagehub.service.ContractService;
 import com.storagehub.service.LogService;
 import com.storagehub.service.NotificationService;
+import com.storagehub.exception.PaymentInvalidStateException;
 import com.storagehub.service.ReservationService;
 import org.springframework.stereotype.Component;
 
@@ -43,8 +45,17 @@ public class DepositPaymentSuccessHandler implements PaymentSuccessHandler {
 
     @Override
     public PaymentSuccessOutcome onSuccess(Payment payment) {
-        Reservation reservation = payment.getReservation();
-        reservationService.markDepositPaid(reservation);
+        BookingDraft draft = payment.getBookingDraft();
+        if (draft == null) {
+            throw new PaymentInvalidStateException(
+                    "Payment cọc phải gắn booking draft — không còn tạo reservation trước khi trả cọc.");
+        }
+
+        Reservation reservation = reservationService.convertDraft(
+                draft.getDraftId(), payment.getPayer().getEmail());
+        // CHECK payments: chuyển nguồn draft → reservation trong cùng update.
+        payment.setReservation(reservation);
+        payment.setBookingDraft(null);
 
         Contract contract = contractService.autoDraftContract(reservation);
 
@@ -66,7 +77,7 @@ public class DepositPaymentSuccessHandler implements PaymentSuccessHandler {
                 "RESERVATION",
                 reservation.getReservationId(),
                 "STATUS_CHANGED",
-                "PENDING_PAYMENT",
+                null,
                 "RESERVED",
                 "Deposit paid — " + payment.getReceiptCode()
         );

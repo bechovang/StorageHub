@@ -187,7 +187,6 @@ export function useRentalDetail() {
   };
 
   const canCheckIn = reservation?.status === "RESERVED";
-  const needsPayment = reservation?.status === "PENDING_PAYMENT";
   const isExpired = reservation?.status === "EXPIRED";
   const isCheckedIn =
     reservation?.status === "CHECKED_IN" ||
@@ -203,12 +202,9 @@ export function useRentalDetail() {
 
   const statusColor = STATUS_COLOR[reservation?.status] || "neutral";
   const statusLabel = STATUS_LABEL[reservation?.status] || reservation?.status;
-  // PENDING_PAYMENT: BE trả depositStatus = null (cọc chưa ghi sổ).
-  const depositText = reservation?.status === "PENDING_PAYMENT"
-    ? "Chưa thanh toán"
-    : DEPOSIT_STATUS_LABEL[reservation?.depositStatus] ||
-      reservation?.depositStatus ||
-      "—";
+  const depositText = DEPOSIT_STATUS_LABEL[reservation?.depositStatus] ||
+    reservation?.depositStatus ||
+    "—";
 
   return {
     reservationId,
@@ -226,7 +222,6 @@ export function useRentalDetail() {
     handleConfirmCheckoutRequest,
     handleCancelCheckoutRequest,
     canCheckIn,
-    needsPayment,
     isExpired,
     isCheckedIn,
     unsignedAddendum,

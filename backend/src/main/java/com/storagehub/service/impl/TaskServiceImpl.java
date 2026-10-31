@@ -262,13 +262,6 @@ public class TaskServiceImpl implements TaskService {
                 if (ref != null && ref.startsWith("BK-")) {
                     Reservation res = reservationRepository.findByCode(ref).orElse(null);
                     if (res != null) {
-                        if (res.getStatus() == Reservation.Status.PENDING_PAYMENT) {
-                            throw new TaskSnapBackException(
-                                    "Chặn Done ảo: Đơn chưa xác nhận thanh toán tiền cọc!",
-                                    "DEPOSIT_NOT_VERIFIED"
-                            );
-                        }
-
                         boolean rentCollected = paymentRepository
                                 .findByReservation_ReservationIdOrderByCreatedAtAsc(res.getReservationId())
                                 .stream()

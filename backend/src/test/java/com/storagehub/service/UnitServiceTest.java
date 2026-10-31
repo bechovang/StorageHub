@@ -13,6 +13,7 @@ import com.storagehub.entity.Unit;
 import com.storagehub.entity.UnitType;
 import com.storagehub.entity.Zone;
 import com.storagehub.exception.UnitNotFoundException;
+import com.storagehub.repository.BookingDraftRepository;
 import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
@@ -37,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,6 +60,9 @@ class UnitServiceTest {
     private ReservationRepository reservationRepository;
 
     @Mock
+    private BookingDraftRepository bookingDraftRepository;
+
+    @Mock
     private PricingEngine pricingEngine;
 
     @InjectMocks
@@ -71,6 +76,7 @@ class UnitServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(bookingDraftRepository.findActiveDraftsForUnits(anyCollection(), any())).thenReturn(List.of());
         facility = new Facility();
         facility.setFacilityId(1);
         facility.setName("Tân Bình Depot");

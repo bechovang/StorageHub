@@ -108,7 +108,7 @@ export default function BookingReview({
                 color: "#92400e",
                 lineHeight: "1.45",
               }}>
-                <strong>Lưu ý quan trọng về giữ chỗ:</strong> Kho chỉ chính thức được chuyển sang trạng thái <strong>RESERVED</strong> và khóa giữ chỗ sau khi bạn hoàn tất thanh toán cọc. Trong thời gian này, kho vẫn khả dụng cho khách hàng khác.
+                <strong>Lưu ý quan trọng về giữ chỗ:</strong> Chỗ đang được giữ tạm trong 30 phút. Đơn thuê (RESERVED) chỉ được tạo sau khi bạn hoàn tất thanh toán cọc.
               </div>
             )}
 

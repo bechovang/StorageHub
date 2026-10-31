@@ -67,7 +67,6 @@ export const STATUS_LABELS = {
   MAINTENANCE: "Đang bảo trì",
   PREPARING: "Đang chuẩn bị",
   RETIRED: "Ngừng khai thác",
-  PENDING_PAYMENT: "Chờ thanh toán cọc",
   CHECKED_IN: "Đang thuê",
   CHECKOUT_REQUESTED: "Chờ trả kho",
   CLOSED: "Đã hoàn tất",

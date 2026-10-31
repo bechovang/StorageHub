@@ -36,7 +36,6 @@ export const UNIT_STATUS_LABELS = {
 };
 
 export const RESERVATION_STATUS_LABELS = {
-  PENDING_PAYMENT: "Chờ thanh toán cọc",
   RESERVED: "Đã giữ chỗ — Chờ nhận kho",
   CHECKED_IN: "Đang thuê",
   CHECKOUT_REQUESTED: "Chờ trả kho",

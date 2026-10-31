@@ -30,7 +30,6 @@ import java.time.LocalDateTime;
 public class Reservation {
 
     public enum Status {
-        PENDING_PAYMENT,
         RESERVED,
         CHECKED_IN,
         CHECKOUT_REQUESTED,
