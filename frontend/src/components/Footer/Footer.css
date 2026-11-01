@@ -14,15 +14,36 @@
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.05em;
+  gap: 16px;
 }
 
-@media (max-width: 600px) {
+.site-footer__links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.site-footer__link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+
+.site-footer__link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.site-footer__sep {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
   .site-footer__inner {
     align-items: flex-start;
     flex-direction: column;
     justify-content: center;
-    gap: 6px;
+    gap: 10px;
     padding-block: 20px;
   }
 }
-

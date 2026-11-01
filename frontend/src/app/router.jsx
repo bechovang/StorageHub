@@ -9,6 +9,8 @@ import LoginPage from "../pages/auth/LoginPage.jsx";
 import RegisterPage from "../pages/auth/RegisterPage.jsx";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage.jsx";
 import ForbiddenPage from "../pages/auth/ForbiddenPage.jsx";
+import TermsPage from "../pages/legal/TermsPage.jsx";
+import PrivacyPage from "../pages/legal/PrivacyPage.jsx";
 
 // Customer Pages
 import BrowsePage from "../pages/customer/BrowsePage.jsx";
@@ -72,6 +74,11 @@ export default function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       </Route>
       <Route path="/403" element={<ForbiddenPage />} />
+
+      {/* ── Legal & Policies ── */}
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/term" element={<Navigate to="/terms" replace />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
 
       {/* ── 2. Customer & Public Catalog Routes ── */}
       <Route path="/browse" element={<BrowsePage />} />
