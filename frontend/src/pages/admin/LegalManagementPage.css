@@ -1,0 +1,312 @@
+/* ==========================================================================
+   LEGAL MANAGEMENT PAGE — Internal Admin & Business Ops Editor (StorageHub)
+   ========================================================================== */
+
+.legal-mgmt-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 54px);
+  background-color: var(--color-surface-page, #f5f5f5);
+  color: var(--color-ink, #000000);
+  padding-bottom: 48px;
+}
+
+.legal-mgmt-canvas {
+  width: min(calc(100% - 48px), var(--page-width, 1200px));
+  margin: 0 auto;
+  padding-top: var(--space-6, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 24px);
+}
+
+/* ── Toast ── */
+.legal-mgmt-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--color-ink, #0f172a);
+  color: #ffffff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid #334155;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  animation: slideInUp 200ms ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Header ── */
+.legal-mgmt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: var(--border-strong, 2px solid #000000);
+}
+
+.legal-mgmt-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--color-secondary, #64748b);
+  margin-bottom: 6px;
+}
+
+.legal-mgmt-title {
+  font-family: var(--font-display, inherit);
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-ink, #000000);
+}
+
+.legal-mgmt-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Tab Bar chuyển giữa Điều khoản & Bảo mật ── */
+.legal-mgmt-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: var(--border, 1px solid #cbd5e1);
+  padding: 4px;
+}
+
+.legal-mgmt-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.legal-mgmt-tab:hover {
+  color: var(--color-ink, #000000);
+}
+
+.legal-mgmt-tab.is-active {
+  background: var(--color-ink, #000000);
+  color: #ffffff;
+}
+
+/* ── 2-Column Grid Layout ── */
+.legal-mgmt-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ── Cột trái: Metadata & Danh sách điều khoản ── */
+.legal-mgmt-col-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.legal-mgmt-card {
+  background: #ffffff;
+  border: var(--border-strong, 2px solid #000000);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.legal-mgmt-card__header {
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.legal-mgmt-card__title {
+  font-family: var(--font-display, inherit);
+  font-size: 0.88rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-ink, #000000);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.legal-mgmt-card__body {
+  padding: 16px;
+}
+
+/* Clause list in left card */
+.legal-clause-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.legal-clause-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 120ms ease;
+  text-align: left;
+}
+
+.legal-clause-nav-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.legal-clause-nav-item.is-selected {
+  background: var(--color-ink, #000000);
+  color: #ffffff;
+  border-color: var(--color-ink, #000000);
+}
+
+.legal-clause-nav-item__badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  background: #e2e8f0;
+  color: #334155;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.legal-clause-nav-item.is-selected .legal-clause-nav-item__badge {
+  background: #334155;
+  color: #ffffff;
+}
+
+.legal-clause-nav-item__title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* ── Cột phải: Form biên tập điều khoản chi tiết ── */
+.legal-mgmt-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.legal-edit-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.legal-edit-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+  color: #334155;
+}
+
+.legal-edit-input,
+.legal-edit-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--color-ink, #000000);
+  outline: none;
+  background: #ffffff;
+  transition: border-color 120ms ease;
+}
+
+.legal-edit-input:focus,
+.legal-edit-textarea:focus {
+  border-color: var(--color-ink, #000000);
+}
+
+.legal-edit-textarea {
+  line-height: 1.6;
+}
+
+/* Preview Box inside Right Column */
+.legal-clause-preview {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-left: 3px solid var(--color-accent, #ea580c);
+}
+
+.legal-clause-preview__header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.legal-clause-preview__title {
+  font-family: var(--font-display, inherit);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+}
+
+.legal-clause-preview__content {
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: #334155;
+  margin: 0 0 10px 0;
+}
+
+.legal-clause-preview__bullets {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+@media (max-width: 900px) {
+  .legal-mgmt-grid {
+    grid-template-columns: 1fr;
+  }
+}

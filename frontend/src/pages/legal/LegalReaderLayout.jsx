@@ -1,43 +1,33 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   ArrowLeft,
   Printer,
-  PencilSimple,
   ShieldCheck,
   CalendarCheck,
   ClockCounterClockwise,
   UserGear,
 } from "@phosphor-icons/react";
-import { useAuth } from "../../context/AuthContext.jsx";
-import LegalEditorModal from "./LegalEditorModal.jsx";
 import "./LegalPage.css";
 
 /**
- * LegalReaderLayout — Bố cục đọc văn bản pháp lý tối giản & chuyên nghiệp
+ * LegalReaderLayout — Bố cục đọc văn bản pháp lý công khai (Read-only) dành cho Khách hàng
  */
 export default function LegalReaderLayout({
   activeType = "TERMS", // "TERMS" | "PRIVACY"
   docData,
-  onSaveContent,
-  onResetContent,
 }) {
-  const location = useLocation();
-  const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-
-  // Kiểm tra quyền Admin/Business Ops để hiển thị nút chỉnh sửa văn bản
-  const canEdit =
-    user?.role === "SYSTEM_ADMIN" ||
-    user?.role === "BUSINESS_OPS" ||
-    user?.role === "FACILITY_MANAGER";
+  const navigate = useNavigate();
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleSave = (updated) => {
-    onSaveContent(updated, user?.fullName || user?.role || "Quản trị viên");
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
   };
 
   return (
@@ -45,10 +35,15 @@ export default function LegalReaderLayout({
       {/* ── Topbar tối giản ── */}
       <header className="legal-topbar no-print">
         <div className="legal-topbar__left">
-          <Link to="/" className="legal-back-btn" title="Quay lại trang chủ">
+          <button
+            type="button"
+            className="legal-back-btn"
+            onClick={handleBack}
+            title="Quay lại trang trước"
+          >
             <ArrowLeft size={15} weight="bold" />
             <span>Quay lại</span>
-          </Link>
+          </button>
 
           <Link to="/" className="legal-brand" title="Trang chủ StorageHub">
             <span className="legal-brand__mark" aria-hidden="true">
@@ -74,7 +69,7 @@ export default function LegalReaderLayout({
           </Link>
         </nav>
 
-        {/* Topbar Actions */}
+        {/* Topbar Actions (In ấn / Lưu PDF) */}
         <div className="legal-topbar__right">
           <button
             type="button"
@@ -85,18 +80,6 @@ export default function LegalReaderLayout({
             <Printer size={15} weight="bold" />
             <span>In / Lưu PDF</span>
           </button>
-
-          {canEdit && (
-            <button
-              type="button"
-              className="legal-action-btn legal-action-btn--admin"
-              onClick={() => setIsEditing(true)}
-              title="Quản trị viên chỉnh sửa nội dung văn bản này"
-            >
-              <PencilSimple size={15} weight="bold" />
-              <span>Chỉnh sửa văn bản</span>
-            </button>
-          )}
         </div>
       </header>
 
@@ -185,17 +168,6 @@ export default function LegalReaderLayout({
           </footer>
         </article>
       </main>
-
-      {/* Modal chỉnh sửa dành cho Admin */}
-      {isEditing && (
-        <LegalEditorModal
-          isOpen={isEditing}
-          onClose={() => setIsEditing(false)}
-          initialData={docData}
-          onSave={handleSave}
-          onReset={onResetContent}
-        />
-      )}
     </div>
   );
 }

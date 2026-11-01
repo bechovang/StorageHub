@@ -261,7 +261,7 @@ export default function PolicyManagementPage() {
                   Quy định ký quỹ cọc 10%, thủ tục nhận kho đối chiếu CCCD, mã PIN ra vào 24/7, danh mục hàng hóa cấm cháy nổ, bảo quản sàn Epoxy và biên bản nghiệm thu 4 bước khi trả kho.
                 </p>
                 <div className="policy-legal-box__actions">
-                  <Link to="/terms" className="policy-btn policy-btn--secondary policy-btn--sm">
+                  <Link to="/legal-management?tab=terms" className="policy-btn policy-btn--secondary policy-btn--sm">
                     <PencilSimple size={14} weight="bold" />
                     <span>Mở & Chỉnh sửa Điều khoản</span>
                   </Link>
@@ -288,7 +288,7 @@ export default function PolicyManagementPage() {
                   Quy định thu thập CCCD/SĐT phục vụ hợp đồng, phạm vi camera an ninh 24/7 tại hành lang chung, bảo mật nhật ký mở khóa số, chuẩn mã hóa TLS/BCrypt và cam kết không chia sẻ bên thứ ba.
                 </p>
                 <div className="policy-legal-box__actions">
-                  <Link to="/privacy" className="policy-btn policy-btn--secondary policy-btn--sm">
+                  <Link to="/legal-management?tab=privacy" className="policy-btn policy-btn--secondary policy-btn--sm">
                     <PencilSimple size={14} weight="bold" />
                     <span>Mở & Chỉnh sửa Chính sách</span>
                   </Link>

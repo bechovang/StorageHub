@@ -71,7 +71,7 @@ const ROLE_CONFIGS = {
     links: [
       { label: "Tổng quan", href: "/overview" },
       { label: "Chính sách & Biểu phí", href: "/policy" },
-      { label: "Điều khoản & Pháp lý", href: "/terms" },
+      { label: "Điều khoản & Pháp lý", href: "/legal-management" },
       { label: "Báo cáo tài chính", href: "/reports" },
     ],
   },
@@ -83,7 +83,7 @@ const ROLE_CONFIGS = {
       { label: "Lịch sử đăng nhập", href: "/login-history" },
       { label: "Nhật ký hệ thống", href: "/facility/activity" },
       { label: "Chính sách & Biểu phí", href: "/policy" },
-      { label: "Điều khoản & Pháp lý", href: "/terms" },
+      { label: "Điều khoản & Pháp lý", href: "/legal-management" },
       { label: "Khám phá kho", href: "/browse" },
     ],
   },

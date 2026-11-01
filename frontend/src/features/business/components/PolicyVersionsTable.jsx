@@ -16,9 +16,9 @@ export default function PolicyVersionsTable({
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
           <Link
-            to="/terms"
+            to="/legal-management"
             className="biz-btn biz-btn--secondary biz-btn--sm"
-            title="Xem và chỉnh sửa Điều khoản & Chính sách bảo mật"
+            title="Quản trị nội dung Điều khoản Dịch vụ & Chính sách Bảo mật"
           >
             Văn bản pháp lý →
           </Link>

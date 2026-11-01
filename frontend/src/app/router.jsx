@@ -35,6 +35,7 @@ import ReportsPage from "../pages/business/ReportsPage.jsx";
 
 // System Administrator Pages
 import UserManagementPage from "../pages/admin/UserManagementPage.jsx";
+import LegalManagementPage from "../pages/admin/LegalManagementPage.jsx";
 
 // Shared / Common Pages
 import ActivityLogPage from "../pages/common/ActivityLogPage.jsx";
@@ -79,6 +80,14 @@ export default function AppRouter() {
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/term" element={<Navigate to="/terms" replace />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route
+        path="/legal-management"
+        element={
+          <ProtectedRoute allowedRoles={["SYSTEM_ADMIN", "BUSINESS_OPS"]}>
+            <LegalManagementPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* ── 2. Customer & Public Catalog Routes ── */}
       <Route path="/browse" element={<BrowsePage />} />
