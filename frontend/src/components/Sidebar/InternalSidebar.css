@@ -346,17 +346,6 @@
   color: var(--color-surface);
 }
 
-/* Khi active có 1 vạch đỏ nhỏ tinh tế bên mép */
-.internal-sidebar__link.is-active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 3px;
-  background: var(--color-accent);
-}
-
 /* ── Di động & Tablet (< 1024px): Slide-over Drawer ── */
 @media (max-width: 1023px) {
   .internal-sidebar {
