@@ -17,6 +17,8 @@ export function useBrowseUnits() {
   const [selectedType, setSelectedType] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedFacility, setSelectedFacility] = useState("");
+  // Tìm theo mã kho (vd: "S-7") — BE match contains, bỏ qua hoa/thường + dấu gạch
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchError, setSearchError] = useState("");
 
   // State bộ lọc đang có hiệu lực (active filters) sau khi bấm Tìm kiếm
@@ -24,6 +26,7 @@ export function useBrowseUnits() {
     typeId: "",
     sizeM2: "",
     facilityId: "",
+    query: "",
   });
 
   // Thứ tự sắp xếp
@@ -63,6 +66,7 @@ export function useBrowseUnits() {
         typeId: filters.typeId,
         sizeM2: filters.sizeM2,
         facilityId: filters.facilityId,
+        query: filters.query,
         sort,
         page: targetPage,
         pageSize,
@@ -89,6 +93,7 @@ export function useBrowseUnits() {
           typeId: activeFilters.typeId,
           sizeM2: activeFilters.sizeM2,
           facilityId: activeFilters.facilityId,
+          query: activeFilters.query,
           sort: sortOrder,
           page: 1,
           pageSize,
@@ -135,6 +140,7 @@ export function useBrowseUnits() {
       typeId: selectedType,
       sizeM2: selectedSize,
       facilityId: selectedFacility,
+      query: searchQuery,
     };
     setActiveFilters(newFilters);
     setPage(1);
@@ -153,10 +159,12 @@ export function useBrowseUnits() {
     setSelectedType("");
     setSelectedSize("");
     setSelectedFacility("");
+    setSearchQuery("");
     const reset = {
       typeId: "",
       sizeM2: "",
       facilityId: "",
+      query: "",
     };
     setActiveFilters(reset);
     setPage(1);
@@ -175,6 +183,9 @@ export function useBrowseUnits() {
     } else if (filterKey === "facilityId") {
       updated.facilityId = "";
       setSelectedFacility("");
+    } else if (filterKey === "query") {
+      updated.query = "";
+      setSearchQuery("");
     }
     setActiveFilters(updated);
     setPage(1);
@@ -214,9 +225,11 @@ export function useBrowseUnits() {
     setSelectedType,
     selectedSize,
     setSelectedSize,
-    searchError,
     selectedFacility,
     setSelectedFacility,
+    searchQuery,
+    setSearchQuery,
+    searchError,
     activeFilters,
     sortOrder,
     units,

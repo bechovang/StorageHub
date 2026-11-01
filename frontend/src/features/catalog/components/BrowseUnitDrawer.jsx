@@ -106,7 +106,7 @@ export default function BrowseUnitDrawer({
         <div className="browse-drawer-header">
           <p className="browse-drawer-eyebrow">{facilityName.toUpperCase()}</p>
           <h2 className="browse-drawer-title">
-            {selectedUnit.sizeM2} m² · Kho {typeName}
+            Kho {selectedUnit.code} · {selectedUnit.sizeM2} m² · {typeName}
           </h2>
           <div className="browse-drawer-status-bar">
             <Badge tone={isSoon ? "warning" : "success"}>

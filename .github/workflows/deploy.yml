@@ -110,8 +110,29 @@ jobs:
             '{composeId: $id, composeFile: $cf, env: $env, sourceType: "raw", composeType: "docker-compose"}')
           curl -fsS -X POST "${auth[@]}" -H "content-type: application/json" -d "$payload" "$base/compose.update" >/dev/null
 
-          curl -fsS --max-time 120 -X POST "${auth[@]}" -H "content-type: application/json" \
-            -d "{\"composeId\":\"$DOKPLOY_COMPOSE_ID\"}" "$base/compose.deploy"
+          # Deploy + xác nhận container thực sự chuyển sang image sha mới.
+          ok=0
+          for attempt in 1 2 3; do
+            curl -fsS --max-time 120 -X POST "${auth[@]}" -H "content-type: application/json" \
+              -d "{\"composeId\":\"$DOKPLOY_COMPOSE_ID\"}" "$base/compose.deploy" >/dev/null || true
+            for i in $(seq 1 36); do
+              st=$(curl -fsS "${auth[@]}" "$base/compose.one?composeId=$DOKPLOY_COMPOSE_ID" | jq -r '.composeStatus')
+              img=$(curl -fsS "${auth[@]}" "$base/docker.getContainers" \
+                | jq -r '.[] | select((.name // "") | test("storagehub-myzyte-backend")) | (.image // "")' | head -1)
+              echo "rollout attempt $attempt/$i compose=$st image=$img"
+              if [ "$st" = "done" ] && printf '%s' "$img" | grep -q "sha-${GITHUB_SHA}"; then
+                ok=1
+                break
+              fi
+              [ "$st" = "error" ] && break
+              sleep 5
+            done
+            [ "$ok" = 1 ] && break
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::Rollout did not switch backend to sha-${GITHUB_SHA}"
+            exit 1
+          fi
 
       - name: Wait for application health
         run: |

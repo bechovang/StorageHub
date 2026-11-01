@@ -29,6 +29,27 @@ public interface TaskService {
     );
 
     /**
+     * Ticket API: khách tạo ticket SR-... → tự sinh task SUPPORT gán staff
+     * trực ca (idempotent theo (SUPPORT, refCode)).
+     */
+    Task createSupportTask(com.storagehub.entity.SupportTicket ticket);
+
+    /**
+     * US-15 ritual check-in tại quầy: ghi payment RENT (CASH/BANK/POS) vào DB
+     * rồi chạy check-in chuẩn (ký HĐ + access code) và DONE task.
+     */
+    com.storagehub.dto.task.TaskResponse completeCheckinRitual(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.CheckinRitualRequest request);
+
+    /** US-21 ritual checkout: lập Settlement + Inspection + phí + đóng vòng thuê. */
+    com.storagehub.dto.task.TaskResponse completeCheckoutRitual(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.CheckoutRitualRequest request);
+
+    /**
      * Xem chi tiết 1 task.
      */
     TaskResponse getTaskDetail(String currentUserEmail, Long taskId);

@@ -17,10 +17,12 @@ export default function BrowsePage() {
     setSelectedType,
     selectedSize,
     setSelectedSize,
-    searchError,
     selectedFacility,
     setSelectedFacility,
+    searchError,
     activeFilters,
+    searchQuery,
+    setSearchQuery,
     sortOrder,
     units,
     loading,
@@ -63,6 +65,8 @@ export default function BrowsePage() {
         {/* ── Thẻ bộ lọc (Filter Card) ── */}
         <BrowseFilterForm
           filterOptions={filterOptions}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
           selectedType={selectedType}
           setSelectedType={setSelectedType}
           selectedSize={selectedSize}
@@ -99,6 +103,20 @@ export default function BrowsePage() {
                     className="browse-chip__remove"
                     onClick={() => handleRemoveFilter("typeId")}
                     aria-label={`Xóa lọc loại ${activeTypeName}`}
+                  >
+                    <X size={12} weight="bold" />
+                  </button>
+                </span>
+              )}
+
+              {activeFilters.query && (
+                <span className="browse-chip">
+                  Tìm: {activeFilters.query}
+                  <button
+                    type="button"
+                    className="browse-chip__remove"
+                    onClick={() => handleRemoveFilter("query")}
+                    aria-label={`Xóa tìm kiếm ${activeFilters.query}`}
                   >
                     <X size={12} weight="bold" />
                   </button>

@@ -44,7 +44,6 @@ export default function RentalDetailPage() {
     handleConfirmCheckoutRequest,
     handleCancelCheckoutRequest,
     canCheckIn,
-    needsPayment,
     isExpired,
     isCheckedIn,
     unsignedAddendum,
@@ -176,7 +175,6 @@ export default function RentalDetailPage() {
               statusLabel={statusLabel}
               isCheckedIn={isCheckedIn}
               canCheckIn={canCheckIn}
-              needsPayment={needsPayment}
               onOpenExtension={() => setShowExtensionModal(true)}
               onOpenCheckout={() => setShowCheckoutModal(true)}
             />

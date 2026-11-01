@@ -5,7 +5,6 @@ import com.storagehub.dto.payment.PaymentRecordResponse;
 import com.storagehub.dto.quote.QuoteResponse;
 import com.storagehub.dto.reservation.CheckInPassResponse;
 import com.storagehub.dto.reservation.CheckInResultResponse;
-import com.storagehub.dto.reservation.CreateReservationRequest;
 import com.storagehub.dto.reservation.ReservationDetailResponse;
 import com.storagehub.dto.reservation.ReservationPageResponse;
 import com.storagehub.dto.reservation.ReservationSummaryResponse;
@@ -228,134 +227,110 @@ public class ReservationService {
             case RESERVED, CHECKED_IN, CHECKOUT_REQUESTED -> "HELD";
             case CLOSED -> "SETTLED";
             case EXPIRED -> "FORFEITED";
-            case PENDING_PAYMENT, CANCELLED -> null;
+            case CANCELLED -> null;
         };
     }
 
     /**
-     * Reserve — re-check availability chống stale (FR-5).
-     * Tạo reservation ở trạng thái PENDING_PAYMENT kèm quote snapshot.
+     * Kiểm tra chỗ trống tại thời điểm tạo payment. Không giữ chỗ — có thể
+     * conflict nếu người khác thanh toán trước; webhook sẽ lock unit và
+     * quyết định tạo booking hay refund.
      */
-    @Transactional
-    public ReservationDetailResponse createReservation(String email, CreateReservationRequest request) {
-        User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(InvalidCredentialsException::new);
-
-        Long unitId = request.unitId();
-        LocalDate startDate = request.startDate();
-        LocalDate endDate = request.endDate();
-        if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu");
-        }
-
-        // 1. Kiểm tra tồn tại của unit
-        Unit unit = unitRepository.findWithDetailsById(unitId)
-                .orElseThrow(() -> new UnitNotFoundException("Unit này không tồn tại."));
-
-        // Lấy policy active để đọc turnover buffer
-        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
-                .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
-        List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
-
-        int bufferDays = 1;
-        for (PolicyRule r : rules) {
-            if (r.getType().getTypeId().equals(unit.getType().getTypeId())
-                    && r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER) {
-                bufferDays = r.getValue().intValue();
-                break;
-            }
-        }
-
+    public void assertBookingAvailable(Unit unit, LocalDate startDate, LocalDate endDate) {
+        int bufferDays = turnoverBufferDays(unit);
         LocalDate today = LocalDate.now(ICT_ZONE);
-
-        // 2. Re-check availability của unit
-        boolean isTaken = false;
-
-        // A. Trạng thái vật lý trong DB phải là AVAILABLE hoặc PREPARING
-        if (unit.getStatus() != Unit.Status.AVAILABLE && unit.getStatus() != Unit.Status.PREPARING) {
-            isTaken = true;
-        }
-
-        // B. Nếu PREPARING: kiểm tra ngày readyDate
-        if (!isTaken && unit.getStatus() == Unit.Status.PREPARING) {
-            List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
-            LocalDate readyDate = !closedList.isEmpty()
-                    ? closedList.get(0).getEndDate().plusDays(bufferDays)
-                    : today.plusDays(bufferDays);
-            if (startDate.isBefore(readyDate)) {
-                isTaken = true;
-            }
-        }
-
-        // C. Kiểm tra Anti-Overlap với các reservations đã xác nhận / đang thuê (RESERVED, CHECKED_IN, CHECKOUT_REQUESTED)
-        if (!isTaken) {
-            List<Reservation> activeReservations = reservationRepository.findActiveReservationsForUnit(
-                    unit.getUnitId(),
-                    List.of(Reservation.Status.RESERVED, Reservation.Status.CHECKED_IN, Reservation.Status.CHECKOUT_REQUESTED)
-            );
-
-            LocalDate reqOccupiedEnd = endDate.plusDays(bufferDays);
-            for (Reservation res : activeReservations) {
-                LocalDate resOccupiedEnd = res.getEndDate().plusDays(bufferDays);
-                if (!startDate.isAfter(resOccupiedEnd) && !res.getStartDate().isAfter(reqOccupiedEnd)) {
-                    isTaken = true;
-                    break;
-                }
-            }
-        }
-
-        // 3. Nếu bị chiếm giữa chừng: đếm unit tương tự và ném 409
-        if (isTaken) {
+        if (!isUnitAvailable(unit, startDate, endDate, bufferDays, today)) {
             int similarCount = countSimilarAvailableUnits(unit, startDate, endDate, bufferDays, today);
             String message = similarCount > 0
                     ? String.format("%s vừa được đặt. %d unit tương tự còn trống.", unit.getCode(), similarCount)
                     : String.format("%s vừa được đặt. Không còn unit tương tự trống trong thời gian này.", unit.getCode());
             throw new BookingUnitTakenException(message);
         }
+    }
 
-        // 4. Tính toán bảng giá minh bạch snapshot theo AD-11
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, endDate);
+    /**
+     * Tạo booking (Reservation RESERVED) từ payment đã SUCCEEDED. Lock unit để
+     * hai webhook chạy song song không cùng tạo booking. Trả null nếu unit vừa
+     * bị người khác đặt — caller ghi nhận refund_required.
+     */
+    @Transactional
+    public Reservation createReservedFromBooking(
+            User customer,
+            Long unitId,
+            LocalDate startDate,
+            LocalDate endDate,
+            BigDecimal depositAmount
+    ) {
+        Unit unit = unitRepository.findByIdForUpdate(unitId)
+                .orElseThrow(() -> new UnitNotFoundException("Unit này không tồn tại."));
 
-        // 5. Sinh mã đặt chỗ duy nhất BK-YYYY-NNNN
-        String code = generateReservationCode();
+        int bufferDays = turnoverBufferDays(unit);
+        LocalDate today = LocalDate.now(ICT_ZONE);
+        if (!isUnitAvailable(unit, startDate, endDate, bufferDays, today)) {
+            return null;
+        }
 
-        // 6. Lưu Reservation vào DB ở trạng thái PENDING_PAYMENT
         Reservation reservation = new Reservation();
-        reservation.setCode(code);
-        reservation.setCustomer(user);
+        reservation.setCode(generateReservationCode());
+        reservation.setCustomer(customer);
         reservation.setUnit(unit);
         reservation.setStartDate(startDate);
-        reservation.setEndDate(quote.endDate());
-        reservation.setDepositAmount(BigDecimal.valueOf(quote.depositAmount()));
-        reservation.setStatus(Reservation.Status.PENDING_PAYMENT);
+        reservation.setEndDate(endDate);
+        reservation.setDepositAmount(depositAmount);
+        reservation.setStatus(Reservation.Status.RESERVED);
+        Reservation saved = reservationRepository.save(reservation);
 
-        Reservation savedReservation = reservationRepository.save(reservation);
+        taskService.createCheckInTask(saved.getCustomer(), saved);
+        return saved;
+    }
 
-        // 7. Tạo DTO trả về ReservationDetailResponse
-        ReservationUnitSummaryResponse unitSummary = new ReservationUnitSummaryResponse(
-                unit.getCode(),
-                unit.getSizeM2(),
-                unit.getType() != null ? unit.getType().getName() : null
+    private int turnoverBufferDays(Unit unit) {
+        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
+                .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
+        List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
+        for (PolicyRule r : rules) {
+            if (r.getType().getTypeId().equals(unit.getType().getTypeId())
+                    && r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER) {
+                return r.getValue().intValue();
+            }
+        }
+        return 1;
+    }
+
+    private boolean isUnitAvailable(
+            Unit unit,
+            LocalDate startDate,
+            LocalDate endDate,
+            int bufferDays,
+            LocalDate today
+    ) {
+        if (unit.getStatus() != Unit.Status.AVAILABLE && unit.getStatus() != Unit.Status.PREPARING) {
+            return false;
+        }
+
+        if (unit.getStatus() == Unit.Status.PREPARING) {
+            List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
+            LocalDate readyDate = !closedList.isEmpty()
+                    ? closedList.get(0).getEndDate().plusDays(bufferDays)
+                    : today.plusDays(bufferDays);
+            if (startDate.isBefore(readyDate)) {
+                return false;
+            }
+        }
+
+        List<Reservation> activeReservations = reservationRepository.findActiveReservationsForUnit(
+                unit.getUnitId(),
+                List.of(Reservation.Status.RESERVED, Reservation.Status.CHECKED_IN,
+                        Reservation.Status.CHECKOUT_REQUESTED)
         );
-
-        return new ReservationDetailResponse(
-                savedReservation.getReservationId(),
-                savedReservation.getCode(),
-                savedReservation.getStatus(),
-                unitSummary,
-                savedReservation.getStartDate(),
-                savedReservation.getEndDate(),
-                savedReservation.getDepositAmount().longValue(),
-                null,
-                quote.durationDays(),
-                quote,
-                savedReservation.getStartDate(),
-                null,
-                null,
-                List.of(),
-                List.of(),
-                null
-        );
+        LocalDate reqOccupiedEnd = endDate.plusDays(bufferDays);
+        for (Reservation res : activeReservations) {
+            LocalDate resOccupiedEnd = res.getEndDate().plusDays(bufferDays);
+            if (!startDate.isAfter(resOccupiedEnd) && !res.getStartDate().isAfter(reqOccupiedEnd)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -567,25 +542,6 @@ public class ReservationService {
     }
 
     /**
-     * US-8 (FR-5): Deposit thành công — flip PENDING_PAYMENT → RESERVED.
-     * ReservationService là owner của bảng reservations; chỉ được gọi từ
-     * DepositPaymentSuccessHandler trong cùng transaction với resolve payment.
-     */
-    @Transactional
-    public void markDepositPaid(Reservation reservation) {
-        if (reservation.getStatus() != Reservation.Status.PENDING_PAYMENT) {
-            throw new ReservationInvalidStateException(
-                    "Đặt chỗ " + reservation.getCode()
-                            + " không ở trạng thái chờ thanh toán.");
-        }
-        reservation.setStatus(Reservation.Status.RESERVED);
-        reservationRepository.save(reservation);
-
-        // US-15 (FR-25): cọc xong → sinh task CHECK_IN cho ca trực ngày nhận kho.
-        taskService.createCheckInTask(reservation.getCustomer(), reservation);
-    }
-
-    /**
      * US-10 (FR-36, AD-4): no-show — hết hạn nhận kho (startDate) mà chưa check-in.
      * Cột status gốc VẪN RESERVED (EXPIRED là derived on-read); phương thức này áp
      * side-effect exactly-once tại lần đọc/đụng đầu tiên: mất toàn bộ cọc,
@@ -679,10 +635,6 @@ public class ReservationService {
         }
 
         // FR-14: validate tiền đề trước khi mở transaction — mỗi lỗi một lý do cụ thể.
-        if (reservation.getStatus() == Reservation.Status.PENDING_PAYMENT) {
-            throw new ReservationInvalidStateException(
-                    "Đặt chỗ " + reservation.getCode() + " chưa trả cọc — không thể check-in.");
-        }
         if (reservation.getStatus() != Reservation.Status.RESERVED) {
             throw new ReservationInvalidStateException(
                     "Đặt chỗ " + reservation.getCode() + " đã check-in hoặc đã kết thúc.");
@@ -691,9 +643,11 @@ public class ReservationService {
         validateLatestContractSignable(reservation);
 
         // Action tx: lock dòng reservation + re-check — 2 staff bấm cùng lúc thì
-        // bên sau ăn 409 (giống exactly-once pattern của expireNoShowIfDue).
+        // bên sau ăn 409. Dùng PROPAGATION_REQUIRED để khi được gọi từ ritual
+        // (đã có payment RENT trong tx ngoài) không mở connection thứ hai
+        // => tránh deadlock FK payments.reservation_id (S-lock) vs FOR UPDATE.
         TransactionTemplate checkInTx = new TransactionTemplate(transactionManager);
-        checkInTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        checkInTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         return checkInTx.execute(tx -> {
             Reservation locked = reservationRepository.findByIdForUpdate(reservationId)
                     .orElseThrow();

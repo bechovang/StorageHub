@@ -15,6 +15,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -41,7 +42,10 @@ public class Payment {
         CARD,
         MOMO,
         VNPAY,
-        PAYOS
+        PAYOS,
+        CASH,   // Thu tiền mặt tại quầy (check-in ritual)
+        BANK,   // Chuyển khoản VietQR tại quầy
+        POS     // Quẹt thẻ POS tại quầy
     }
 
     public enum Status {
@@ -67,6 +71,20 @@ public class Payment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
+
+    /** Kho/ngày của booking khi payment cọc chưa thành công (chưa có Reservation). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id")
+    private Unit unit;
+
+    private LocalDate startDate;
+
+    private LocalDate endDate;
+
+    /** PayOS đã thu tiền nhưng không tạo được booking (kho vừa bị đặt) → staff hoàn tiền. */
+    private boolean refundRequired;
+
+    private String refundReason;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "extension_id")

@@ -177,27 +177,49 @@ export async function completeContractRitual(taskId, { contractPhotoUrl }) {
  * Thực hiện nghiệp vụ Check-in Ritual (US-15)
  */
 export async function completeCheckinRitual(taskId, { paymentMethod, contractPhotoUrl, paymentProofPhoto, accessPin }) {
-  // Backend chưa có endpoint lưu chi tiết ritual — chỉ đồng bộ trạng thái qua API
-  void paymentMethod;
-  void contractPhotoUrl;
-  void paymentProofPhoto;
-  void accessPin;
-  return updateTaskStatus(taskId, "DONE");
+  // POST /api/v1/tasks/{id}/rituals/check-in — BE ghi payment RENT (CASH/QR/POS)
+  // vào DB + ký hợp đồng + cấp access code + DONE task trong cùng transaction.
+  const res = await apiClient(`/api/v1/tasks/${taskId}/rituals/check-in`, {
+    method: "POST",
+    body: JSON.stringify({
+      paymentMethod,
+      paymentProofPhoto,
+      contractPhotoUrl,
+      accessPin: accessPin || null,
+    }),
+  });
+  const data = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || "Không thể hoàn tất nhận kho.");
+  }
+  return data;
 }
 
 /**
  * Thực hiện nghiệp vụ Checkout Ritual (US-21)
  */
 export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged, settlementMethod, settlementPhotoUrl }) {
-  // Backend chưa có endpoint lưu chi tiết ritual — chỉ đồng bộ trạng thái qua API
-  void checklist;
-  void damageCharges;
-  void refundAmount;
-  void extraCharged;
-  void settlementMethod;
-  void settlementPhotoUrl;
-
-  await updateTaskStatus(taskId, "DONE");
+  // POST /api/v1/tasks/{id}/rituals/checkout — BE lập Settlement + Inspection +
+  // ghi phí hư hại/phát sinh vào payments + đóng vòng thuê (1 transaction).
+  const res = await apiClient(`/api/v1/tasks/${taskId}/rituals/checkout`, {
+    method: "POST",
+    body: JSON.stringify({
+      checklist: Object.entries(checklist || {}).map(([item, result]) => ({ item, result })),
+      damageCharges: (damageCharges || []).map((c) => ({
+        item: c.item,
+        amount: Number(c.amount) || 0,
+        reason: c.reason || "",
+      })),
+      refundAmount: Number(refundAmount) || 0,
+      extraCharged: Number(extraCharged) || 0,
+      settlementMethod,
+      settlementPhotoUrl,
+    }),
+  });
+  const data = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || "Không thể tất toán trả kho.");
+  }
 
   // Tự động tạo task dọn kho CLEANING qua POST /api/v1/tasks
   try {
@@ -213,6 +235,7 @@ export async function completeCheckoutRitual(taskId, { checklist, damageCharges,
   } catch (err) {
     console.warn("Failed to auto-create cleaning task:", err);
   }
+  return data;
 }
 
 /**

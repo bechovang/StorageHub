@@ -235,6 +235,7 @@ paths:
         - { name: type-id, in: query, schema: { type: integer, format: int64 }, description: "Lọc theo loại unit (id từ /units/filter-options)" }
         - { name: size-m2, in: query, schema: { type: number }, description: "Lọc đúng kích thước (m²), vd 5" }
         - { name: start-date, in: query, schema: { type: string, format: date }, description: "Ngày bắt đầu thuê dự kiến (YYYY-MM-DD)" }
+        - { name: q, in: query, schema: { type: string }, description: "Tìm theo mã kho (contains, bỏ qua hoa/thường và dấu gạch)" }
         - { name: end-date, in: query, schema: { type: string, format: date }, description: "Ngày trả kho (inclusive)" }
         - { name: sort, in: query, schema: { type: string, enum: [price-asc, price-desc], default: price-asc }, description: "Sắp xếp theo giá (mặc định giá thấp → cao)" }
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
@@ -302,44 +303,6 @@ paths:
   # ------------------------- RESERVATIONS (US-9/10/12) --------------------
 
   /reservations:
-    post:
-      tags: [Reservations]
-      summary: Reserve — re-check availability chống stale (FR-5)
-      description: |
-        Server kiểm tra lại availability trong transaction (guard unique/
-        optimistic trên Unit + ngày). Unit bị chiếm giữa chừng → 409
-        BOOKING_UNIT_TAKEN, FE bounce về lưới + toast gợi ý unit tương tự.
-        Tạo thành công → trạng thái PENDING_PAYMENT (chưa giữ unit; bỏ modal
-        không tạo giữ chỗ). Trả cọc xong mới RESERVED. Không có cancel (v1).
-      operationId: createReservation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [unitId, startDate, endDate]
-              properties:
-                unitId: { type: integer, format: int64 }
-                startDate: { type: string, format: date }
-                endDate: { type: string, format: date, description: "Ngày trả kho (inclusive), >= startDate" }
-            example: { unitId: 3, startDate: "2026-10-03", endDate: "2026-11-02" }
-      responses:
-        "201":
-          description: Reservation PENDING_PAYMENT + quote snapshot — mở Payment Modal (deposit)
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ReservationDetail" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409":
-          description: Unit vừa bị chiếm / ngày không còn hợp lệ
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
-              example: { code: BOOKING_UNIT_TAKEN, message: "S-3 vừa được đặt. 5 unit tương tự còn trống.", fieldErrors: [] }
-
     get:
       tags: [Reservations]
       summary: "Danh sách của tôi — My Rentals (FR-35): FE nhóm theo status"
@@ -662,8 +625,11 @@ paths:
       tags: [Payments]
       summary: Bắt đầu thanh toán (Payment Modal) — FR-8
       description: |
-        Nhận purpose DEPOSIT (booking) và RENT (check-in tại quầy — US-15:
-        chỉ mở khi reservation đã RESERVED và chưa quá hạn nhận kho).
+        DEPOSIT nhận `unitId/startDate/endDate` — server kiểm tra availability,
+        tính quote và tạo payment PENDING; reservation chỉ sinh sau khi PayOS
+        SUCCEEDED. Không giữ chỗ: nếu kho bị người khác đặt trước khi webhook
+        chạy, payment vẫn SUCCEEDED nhưng gắn refund_required.
+        RENT/EXTENSION_FEE nhận `reservationId`.
         Kết quả thanh toán do gateway phía server quyết định — KHÔNG có field
         outcome trong request.
         CARD / MOMO / VNPAY = DEMO: trả PROCESSING, FE poll GET ~1s sau đó
@@ -679,10 +645,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [purpose, reservationId, method]
+              required: [purpose, method]
               properties:
                 purpose: { $ref: "#/components/schemas/PaymentPurpose" }
-                reservationId: { type: integer, format: int64 }
+                reservationId: { type: integer, format: int64, nullable: true, description: "RENT/EXTENSION_FEE" }
+                unitId: { type: integer, format: int64, nullable: true, description: "DEPOSIT" }
+                startDate: { type: string, format: date, nullable: true, description: "DEPOSIT" }
+                endDate: { type: string, format: date, nullable: true, description: "DEPOSIT" }
                 method: { $ref: "#/components/schemas/PaymentMethod" }
                 card:
                   type: object
@@ -693,7 +662,7 @@ paths:
                     cvc: { type: string, example: "123" }
                 momoPhone: { type: string, example: "0901234567" }
               description: "card bắt buộc khi method=CARD; momoPhone bắt buộc khi method=MOMO; VNPAY không cần field bổ sung."
-            example: { purpose: DEPOSIT, reservationId: 1042, method: MOMO, momoPhone: "0901234567" }
+            example: { purpose: DEPOSIT, unitId: 18, startDate: "2026-11-07", endDate: "2027-01-06", method: PAYOS }
       responses:
         "201":
           description: Payment session khởi tạo
@@ -2014,10 +1983,10 @@ components:
 
     PaymentSession:
       type: object
-      required: [id, reservationId, purpose, method, amount, status, createdAt]
+      required: [id, purpose, method, amount, status, createdAt]
       properties:
         id: { type: integer, format: int64 }
-        reservationId: { type: integer, format: int64 }
+        reservationId: { type: integer, format: int64, nullable: true, description: "null khi payment chưa tạo được booking; có giá trị sau khi SUCCEEDED và tạo reservation thành công" }
         purpose: { $ref: "#/components/schemas/PaymentPurpose" }
         method: { $ref: "#/components/schemas/PaymentMethod" }
         amount: { type: integer, example: 103500 }

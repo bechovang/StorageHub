@@ -34,16 +34,19 @@ export const paymentService = {
    *
    * @param {Object} params
    * @param {string} [params.purpose="DEPOSIT"] - "DEPOSIT" | "RENT" | "EXTENSION_FEE"
-   * @param {number|string} params.reservationId - ID đơn đặt chỗ
+   * @param {number|string} [params.reservationId] - ID đơn (RENT/EXTENSION_FEE)
+   * @param {number|string} [params.unitId] - DEPOSIT: kho cần đặt
+   * @param {string} [params.startDate] - DEPOSIT yyyy-MM-dd
+   * @param {string} [params.endDate] - DEPOSIT yyyy-MM-dd
    * @param {string} params.method - "PAYOS"
    * @returns {Promise<Object>} PaymentSessionResponse
    */
-  async createPayment({ purpose = "DEPOSIT", reservationId, method = "PAYOS" }) {
-    const body = {
-      purpose,
-      reservationId: Number(reservationId),
-      method,
-    };
+  async createPayment({ purpose = "DEPOSIT", reservationId, unitId, startDate, endDate, method = "PAYOS" }) {
+    const body = { purpose, method };
+    if (reservationId != null) body.reservationId = Number(reservationId);
+    if (unitId != null) body.unitId = Number(unitId);
+    if (startDate) body.startDate = startDate;
+    if (endDate) body.endDate = endDate;
 
     const res = await apiClient("/api/v1/payments", {
       method: "POST",
@@ -144,25 +147,6 @@ export const paymentService = {
     return handleResponse(res, "RESERVATIONS_FETCH_FAILED", "Không thể tải danh sách đặt chỗ.");
   },
 
-  /**
-   * Tạo đơn đặt chỗ mới (POST /api/v1/reservations)
-   * Mô hình thuê theo ngày: endDate là ngày trả kho (inclusive), >= startDate.
-   *
-   * @param {Object} payload { unitId, startDate, endDate }
-   * @returns {Promise<Object>} ReservationDetailResponse
-   */
-  async createReservation({ unitId, startDate, endDate }) {
-    const res = await apiClient("/api/v1/reservations", {
-      method: "POST",
-      body: JSON.stringify({
-        unitId,
-        startDate,
-        endDate,
-      }),
-    });
-
-    return handleResponse(res, "RESERVATION_CREATE_FAILED", "Không thể tạo đơn đặt chỗ.");
-  },
 };
 
 export default paymentService;

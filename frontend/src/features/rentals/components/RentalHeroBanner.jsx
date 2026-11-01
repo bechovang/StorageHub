@@ -14,7 +14,6 @@ export function RentalHeroBanner({
   statusLabel,
   isCheckedIn,
   canCheckIn,
-  needsPayment,
   onOpenExtension,
   onOpenCheckout,
 }) {
@@ -71,16 +70,6 @@ export function RentalHeroBanner({
         </div>
 
         <div className="rd-hero__actions">
-          {needsPayment && (
-            <Link
-              to={`/payment/${reservationId}`}
-              className="rental-btn rental-btn--primary"
-            >
-              Thanh toán cọc ngay
-              <ArrowRight size={14} weight="bold" />
-            </Link>
-          )}
-
           {canCheckIn && (
             <Link
               to={`/rentals/${reservationId}/check-in-pass`}

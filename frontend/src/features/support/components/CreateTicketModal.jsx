@@ -1,19 +1,23 @@
 import Modal from "../../../components/Modal/Modal.jsx";
+import { useAuth } from "../../../context/AuthContext.jsx";
 import { INCIDENT_TYPES } from "../../../services/ticketService.js";
 
 export default function CreateTicketModal({
   isOpen,
   onClose,
   onSubmit,
-  rentedUnits = [],
   unitCode,
   setUnitCode,
+  rentedUnits = [],
   incidentType,
   setIncidentType,
   description,
   setDescription,
   createError,
 }) {
+  const { user } = useAuth();
+  const isStaff = user?.role && user.role !== "CUSTOMER";
+
   if (!isOpen) return null;
 
   return (
@@ -30,36 +34,44 @@ export default function CreateTicketModal({
         )}
 
         <div className="form-field">
-          <label htmlFor="ticket-unit-select" className="form-field__label">
-            Kho đang thuê gặp sự cố *
-          </label>
-          {rentedUnits.length > 0 ? (
-            <select
-              id="ticket-unit-select"
-              required
-              className="form-field__select"
-              value={unitCode}
-              onChange={(e) => setUnitCode(e.target.value)}
-            >
-              <option value="" disabled>-- Chọn kho bạn đang thuê --</option>
-              {rentedUnits.map((u) => (
-                <option key={u.code} value={u.code}>
-                  Kho {u.code} · {u.typeName || "Tiêu chuẩn"} ({u.sizeM2 || 5} m²) · {u.facilityName || "Cơ sở Tân Bình"}
-                </option>
-              ))}
-            </select>
-          ) : (
+          <label className="form-field__label">Kho gặp sự cố *</label>
+          {isStaff ? (
+            /* Staff/manager tạo hộ khách (escalate Flow 7): nhập tay, BE tự
+               gắn ticket với khách đang thuê unit. */
             <input
               type="text"
               required
               className="form-field__input"
               placeholder="Ví dụ: S-3, M-2..."
               value={unitCode}
-              onChange={(e) => setUnitCode(e.target.value)}
+              onChange={(e) => setUnitCode(e.target.value.toUpperCase())}
             />
+          ) : (
+            <select
+              required
+              className="form-field__select"
+              value={unitCode}
+              onChange={(e) => setUnitCode(e.target.value)}
+            >
+              <option value="" disabled>
+                {rentedUnits.length === 0
+                  ? "Quý khách không có kho đang thuê"
+                  : "— Chọn kho đang thuê —"}
+              </option>
+              {rentedUnits.map((r) => {
+                const uCode = r.unit?.code || r.code;
+                const type = r.unit?.typeName || r.typeName || "Tiêu chuẩn";
+                const bCode = r.code ? ` · Đơn ${r.code}` : "";
+                return (
+                  <option key={r.id || uCode} value={uCode}>
+                    Kho {uCode} · {type}{bCode}
+                  </option>
+                );
+              })}
+            </select>
           )}
           <span style={{ fontSize: "0.72rem", color: "var(--color-muted)" }}>
-            Chọn trực tiếp từ danh sách các kho đang hoạt động của bạn.
+            Yêu cầu hỗ trợ bắt buộc phải gắn với kho Quý khách đang thuê.
           </span>
         </div>
 
@@ -79,7 +91,7 @@ export default function CreateTicketModal({
         </div>
 
         <div className="form-field">
-          <label className="form-field__label">Mô tả cụ thể sự cố bạn đang gặp phải *</label>
+          <label className="form-field__label">Mô tả cụ thể sự cố Quý khách đang gặp phải *</label>
           <textarea
             required
             rows={4}

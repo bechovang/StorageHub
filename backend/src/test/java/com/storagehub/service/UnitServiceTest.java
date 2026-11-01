@@ -131,6 +131,7 @@ class UnitServiceTest {
         UnitPageResponse response = unitService.searchUnits(
                 null,
                 null,
+                null,
                 LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")),
                 LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")).plusDays(92),
                 "price-asc",
@@ -173,6 +174,7 @@ class UnitServiceTest {
 
         // Khách tìm ngày 2026-10-18, nhưng buffer kết thúc ngày 2026-10-20 (19 + 1)
         UnitPageResponse response = unitService.searchUnits(
+                null,
                 null,
                 null,
                 LocalDate.of(2026, 10, 18),
@@ -221,6 +223,7 @@ class UnitServiceTest {
 
         // Khách muốn thuê từ 2026-10-01 thời hạn 3 tháng (đến 2026-12-31) -> trùng lặp với BK-1044
         UnitPageResponse response = unitService.searchUnits(
+                null,
                 null,
                 null,
                 LocalDate.of(2026, 10, 1),

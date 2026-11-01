@@ -98,7 +98,6 @@ export default function BookingReview({
             </div>
 
 
-
             {/* Parameters Grid (3 cols) */}
             <div className="unit-params-grid">
               <div className="param-cell">

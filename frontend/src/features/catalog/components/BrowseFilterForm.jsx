@@ -2,6 +2,8 @@ import { MagnifyingGlass } from "@phosphor-icons/react";
 
 export default function BrowseFilterForm({
   filterOptions,
+  searchQuery,
+  setSearchQuery,
   selectedType,
   setSelectedType,
   selectedSize,
@@ -13,7 +15,22 @@ export default function BrowseFilterForm({
   return (
     <section className="browse-filter-card" aria-label="Bộ lọc tìm kiếm kho">
       <form className="browse-filter-grid" onSubmit={onSearchSubmit}>
-        {/* 1. Loại kho */}
+        {/* 1. Tìm theo mã kho (A+X): "s7", "S-7" đều khớp S-7 */}
+        <div className="browse-filter-field">
+          <label className="browse-filter-field__label" htmlFor="filter-query">
+            Tìm mã kho
+          </label>
+          <input
+            id="filter-query"
+            type="text"
+            className="browse-filter-field__input"
+            placeholder="Ví dụ: S-7"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* 2. Loại kho */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-type">
             Loại kho
@@ -33,7 +50,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 2. Kích thước (m²) */}
+        {/* 3. Kích thước (m²) */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-size">
             Kích thước (m²)
@@ -53,7 +70,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 3. Chọn cơ sở */}
+        {/* 4. Chọn cơ sở */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-facility">
             Chọn cơ sở
@@ -73,7 +90,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 4. Nút tìm kiếm */}
+        {/* 5. Nút tìm kiếm */}
         <button id="browse-search-btn" type="submit" className="browse-filter-btn">
           <MagnifyingGlass size={18} weight="bold" aria-hidden="true" />
           <span>Tìm kiếm</span>

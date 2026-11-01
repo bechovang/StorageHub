@@ -67,7 +67,6 @@ export const STATUS_LABELS = {
   MAINTENANCE: "Đang bảo trì",
   PREPARING: "Đang chuẩn bị",
   RETIRED: "Ngừng khai thác",
-  PENDING_PAYMENT: "Chờ thanh toán cọc",
   CHECKED_IN: "Đang thuê",
   CHECKOUT_REQUESTED: "Chờ trả kho",
   CLOSED: "Đã hoàn tất",
@@ -152,33 +151,3 @@ export async function fetchActivityLogs({
   };
 }
 
-/**
- * Ghi nhận log kiểm toán phía client (fire-and-forget).
- * Backend chưa có endpoint POST activity-logs nên không persist; trả về bản ghi để UI dùng ngay.
- */
-export function appendActivityLog({
-  actor,
-  actorRole = "FACILITY_MANAGER",
-  entityType,
-  entityId,
-  entityCode,
-  entityName,
-  action,
-  fromValue = null,
-  toValue = null,
-  reason,
-}) {
-  return {
-    id: `LOC-${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    actor: actor || "Hệ thống",
-    actorRole,
-    entityType: entityType || "UNIT",
-    entityId: String(entityId || ""),
-    entityCode: entityCode || entityName || String(entityId || ""),
-    action: action || "UPDATED",
-    fromValue,
-    toValue,
-    reason: (reason || "Cập nhật nghiệp vụ hệ thống").trim(),
-  };
-}

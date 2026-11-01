@@ -30,9 +30,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("""
             SELECT p FROM Payment p
             JOIN FETCH p.payer
-            JOIN FETCH p.reservation r
-            JOIN FETCH r.unit u
-            JOIN FETCH u.type
+            LEFT JOIN FETCH p.reservation r
+            LEFT JOIN FETCH r.unit u
+            LEFT JOIN FETCH u.type
             WHERE p.paymentId = :paymentId
             """)
     Optional<Payment> findByIdWithAssociations(@Param("paymentId") Long paymentId);
@@ -45,6 +45,15 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     /** Duplicate check — payment active (PENDING/PROCESSING) hoặc đã SUCCEEDED cho (reservation, purpose). */
     boolean existsByReservation_ReservationIdAndPurposeAndStatusIn(
             Long reservationId,
+            Payment.Purpose purpose,
+            Collection<Payment.Status> statuses
+    );
+
+    Optional<Payment> findFirstByPayer_UserIdAndUnit_UnitIdAndStartDateAndEndDateAndPurposeAndStatusInOrderByPaymentIdDesc(
+            Long payerId,
+            Long unitId,
+            java.time.LocalDate startDate,
+            java.time.LocalDate endDate,
             Payment.Purpose purpose,
             Collection<Payment.Status> statuses
     );

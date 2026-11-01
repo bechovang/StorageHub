@@ -3,12 +3,10 @@ package com.storagehub.controller;
 import com.storagehub.dto.reservation.CheckInPassResponse;
 import com.storagehub.dto.reservation.CheckInRequest;
 import com.storagehub.dto.reservation.CheckInResultResponse;
-import com.storagehub.dto.reservation.CreateReservationRequest;
 import com.storagehub.dto.reservation.ReservationDetailResponse;
 import com.storagehub.dto.reservation.ReservationPageResponse;
 import com.storagehub.service.ReservationService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,19 +19,6 @@ public class ReservationController {
 
     public ReservationController(ReservationService reservationService) {
         this.reservationService = reservationService;
-    }
-
-    @PostMapping
-    public ResponseEntity<ReservationDetailResponse> createReservation(
-            @Valid @RequestBody CreateReservationRequest request,
-            Authentication authentication
-    ) {
-        String email = authentication != null ? authentication.getName() : "";
-        ReservationDetailResponse response = reservationService.createReservation(
-                email,
-                request
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping

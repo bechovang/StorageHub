@@ -42,6 +42,7 @@ export function useSupportTickets() {
   // Modal tạo ticket & Danh sách kho đang thuê
   const [rentedUnits, setRentedUnits] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [detailTicket, setDetailTicket] = useState(null);
   const [unitCode, setUnitCode] = useState("");
   const [incidentType, setIncidentType] = useState("DEVICE_ISSUE");
   const [description, setDescription] = useState("");
@@ -182,6 +183,8 @@ export function useSupportTickets() {
     setShowCreateModal,
     unitCode,
     setUnitCode,
+    detailTicket,
+    setDetailTicket,
     incidentType,
     setIncidentType,
     description,

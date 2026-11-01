@@ -7,6 +7,7 @@ import com.storagehub.dto.notification.UnreadCountResponse;
 import com.storagehub.entity.ContractAddendum;
 import com.storagehub.entity.Notification;
 import com.storagehub.entity.Payment;
+import org.springframework.security.access.AccessDeniedException;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.User;
@@ -45,6 +46,7 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String TYPE_TICKET_CREATED = "TICKET_CREATED";
     private static final String TYPE_TICKET_STATUS_CHANGED = "TICKET_STATUS_CHANGED";
     private static final String TYPE_FORCED_CHECKOUT = "FORCED_CHECKOUT";
+    private static final String TYPE_SETTLEMENT_COMPLETED = "SETTLEMENT_COMPLETED";
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -261,6 +263,26 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
+    public void markRead(String email, Long notificationId) {
+        if (email == null || email.isBlank()) {
+            throw new InvalidCredentialsException();
+        }
+        Notification row = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
+                        "Thông báo không tồn tại."));
+        // Owner-check: không cho đánh dấu hộ người khác
+        if (!row.getUser().getEmail().equalsIgnoreCase(email)) {
+            throw new AccessDeniedException("Thông báo không thuộc về bạn.");
+        }
+        if (Boolean.TRUE.equals(row.getIsRead())) {
+            return; // idempotent
+        }
+        row.setIsRead(true);
+        notificationRepository.save(row);
+    }
+
+    @Override
+    @Transactional
     public NotificationEventResponse notifyExtensionApplied(
             Reservation reservation,
             com.storagehub.entity.Extension extension
@@ -371,6 +393,18 @@ public class NotificationServiceImpl implements NotificationService {
         row.setType(TYPE_FORCED_CHECKOUT);
         row.setTitle(("VIOLATION".equals(type) ? "Buộc trả kho — " : "Đổi kho — ")
                 + reservation.getUnit().getCode());
+        row.setDeepLink("/rentals/" + reservation.getReservationId());
+        row.setIsRead(false);
+        notificationRepository.save(row);
+    }
+
+    @Override
+    @Transactional
+    public void notifySettlementCompleted(com.storagehub.entity.Reservation reservation, long refundAmount) {
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_SETTLEMENT_COMPLETED);
+        row.setTitle("Đã tất toán — " + reservation.getUnit().getCode());
         row.setDeepLink("/rentals/" + reservation.getReservationId());
         row.setIsRead(false);
         notificationRepository.save(row);

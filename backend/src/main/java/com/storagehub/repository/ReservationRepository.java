@@ -29,8 +29,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         LEFT JOIN FETCH u.type
         WHERE r.customer.userId = :customerId
           AND (
-            r.status IN (com.storagehub.entity.Reservation.Status.PENDING_PAYMENT,
-                         com.storagehub.entity.Reservation.Status.CHECKED_IN,
+            r.status IN (com.storagehub.entity.Reservation.Status.CHECKED_IN,
                          com.storagehub.entity.Reservation.Status.CHECKOUT_REQUESTED)
             OR (r.status = com.storagehub.entity.Reservation.Status.RESERVED AND r.startDate >= :today)
           )
@@ -39,8 +38,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         SELECT count(r) FROM Reservation r
         WHERE r.customer.userId = :customerId
           AND (
-            r.status IN (com.storagehub.entity.Reservation.Status.PENDING_PAYMENT,
-                         com.storagehub.entity.Reservation.Status.CHECKED_IN,
+            r.status IN (com.storagehub.entity.Reservation.Status.CHECKED_IN,
                          com.storagehub.entity.Reservation.Status.CHECKOUT_REQUESTED)
             OR (r.status = com.storagehub.entity.Reservation.Status.RESERVED AND r.startDate >= :today)
           )

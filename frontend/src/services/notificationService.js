@@ -48,6 +48,24 @@ export async function getUnreadNotificationCount({ force = false } = {}) {
 }
 
 /**
+ * POST /api/v1/notifications/{id}/read — đánh dấu 1 thông báo đã đọc khi bấm vào.
+ * Cập nhật cache unread (giảm 1) để badge chuông phản hồi tức thì.
+ */
+export async function markNotificationRead(id) {
+  const res = await apiClient(`/api/v1/notifications/${id}/read`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const data = await safeParseJson(res);
+    throw { status: res.status, ...data };
+  }
+  if (cachedUnread.count > 0) {
+    cachedUnread = { count: cachedUnread.count - 1, fetchedAt: Date.now() };
+  }
+  return true;
+}
+
+/**
  * POST /api/v1/notifications/mark-all-read
  */
 export async function markAllNotificationsRead() {

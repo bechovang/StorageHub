@@ -5,6 +5,7 @@ import {
   useSupportTickets,
   TicketCard,
   CreateTicketModal,
+  TicketDetailModal,
   ResolveTicketModal,
   EscalateTicketModal,
 } from "../../features/support/index.js";
@@ -37,6 +38,8 @@ export default function SupportPage() {
     resolveError,
     setResolveError,
     escalateTargetTicket,
+    detailTicket,
+    setDetailTicket,
     setEscalateTargetTicket,
     escalateReason,
     setEscalateReason,
@@ -164,6 +167,7 @@ export default function SupportPage() {
                     setEscalateReason("");
                     setEscalateError("");
                   }}
+                  onShowDetail={setDetailTicket}
                 />
               ))
             )}
@@ -171,6 +175,12 @@ export default function SupportPage() {
         </div>
 
         {/* Modal tạo ticket mới */}
+        {/* Modal chi tiết ticket */}
+        <TicketDetailModal
+          ticket={detailTicket}
+          onClose={() => setDetailTicket(null)}
+        />
+
         <CreateTicketModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
@@ -178,6 +188,7 @@ export default function SupportPage() {
           rentedUnits={rentedUnits}
           unitCode={unitCode}
           setUnitCode={setUnitCode}
+          rentedUnits={rentedUnits}
           incidentType={incidentType}
           setIncidentType={setIncidentType}
           description={description}
