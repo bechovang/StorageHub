@@ -499,7 +499,15 @@ public class TaskServiceImpl implements TaskService {
                 customerName = "Phạm Tuấn";
                 customerPhone = "0944 111 222";
                 if (refCode != null && refCode.startsWith("CT-")) {
-                    Contract ct = contractRepository.findByCode(refCode).orElse(null);
+                    // CT-...-A1 là ADDENDUM, không nằm trong contracts — phải tra
+                    // bảng contract_addendums trước, nếu không sẽ fallback S-2.
+                    Contract ct = null;
+                    var addendum = contractAddendumRepository.findByCode(refCode).orElse(null);
+                    if (addendum != null) {
+                        ct = addendum.getContract();
+                    } else {
+                        ct = contractRepository.findByCode(refCode).orElse(null);
+                    }
                     if (ct != null) {
                         unitCode = "Unit " + ct.getReservation().getUnit().getCode();
                         customerName = ct.getReservation().getCustomer().getFullName();
