@@ -55,18 +55,23 @@ export default function CreateTicketModal({
             >
               <option value="" disabled>
                 {rentedUnits.length === 0
-                  ? "Bạn không có kho đang thuê"
+                  ? "Quý khách không có kho đang thuê"
                   : "— Chọn kho đang thuê —"}
               </option>
-              {rentedUnits.map((r) => (
-                <option key={r.id} value={r.unit?.code}>
-                  {r.unit?.code} · {r.unit?.typeName} · Đơn {r.code}
-                </option>
-              ))}
+              {rentedUnits.map((r) => {
+                const uCode = r.unit?.code || r.code;
+                const type = r.unit?.typeName || r.typeName || "Tiêu chuẩn";
+                const bCode = r.code ? ` · Đơn ${r.code}` : "";
+                return (
+                  <option key={r.id || uCode} value={uCode}>
+                    Kho {uCode} · {type}{bCode}
+                  </option>
+                );
+              })}
             </select>
           )}
           <span style={{ fontSize: "0.72rem", color: "var(--color-muted)" }}>
-            Yêu cầu hỗ trợ bắt buộc phải gắn với kho bạn đang thuê (FR-23).
+            Yêu cầu hỗ trợ bắt buộc phải gắn với kho Quý khách đang thuê.
           </span>
         </div>
 
@@ -86,7 +91,7 @@ export default function CreateTicketModal({
         </div>
 
         <div className="form-field">
-          <label className="form-field__label">Mô tả cụ thể sự cố bạn đang gặp phải *</label>
+          <label className="form-field__label">Mô tả cụ thể sự cố Quý khách đang gặp phải *</label>
           <textarea
             required
             rows={4}

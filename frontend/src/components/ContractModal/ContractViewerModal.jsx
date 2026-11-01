@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Printer, X, ShieldCheck, CheckCircle } from "@phosphor-icons/react";
 import Button from "../Button/Button.jsx";
 import "./ContractViewerModal.css";
@@ -11,24 +13,44 @@ export default function ContractViewerModal({
   unit,
   user,
 }) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && onClose) {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const res = reservation || {};
   const u = unit || res.unit || {};
   const usr = user || {};
 
-  const contractCode = contract?.code || res.code ? `HĐ-${res.code}` : "HĐTK-SH";
-  const customerName = usr.fullName || res.customerName || "";
+  const contractCode = contract?.code || (res.code ? `HĐ-${res.code}` : "HĐTK-SH");
+  const customerName = usr.fullName || res.customerName || "Khách hàng";
   const customerPhone = usr.phone || res.customerPhone || "";
   const customerEmail = usr.email || "";
   const unitCode = u.code || res.unitCode || "—";
   const typeName = u.typeName || "Kho lưu trữ";
   const sizeM2 = u.sizeM2 || 0;
   const volumeM3 = (sizeM2 * 2.8).toFixed(1);
-  const dailyRent = u.baseDailyRent || 0;
+  const dailyRent = u.baseDailyRent || res.dailyRent || (u.baseMonthlyRent ? Math.round(u.baseMonthlyRent / 30) : 0);
   const durationDays = res.durationDays || res.quote?.durationDays || 0;
-  const totalRent = res.totalRent ?? res.totalEstimatedPrice ?? res.quote?.totalRent ?? 0;
-  const depositPaid = res.depositAmount || 0;
+  const totalRent = res.totalRent ?? res.totalEstimatedPrice ?? res.quote?.totalRent ?? (dailyRent * durationDays);
+  const depositPaid = res.depositAmount || Math.round(totalRent * 0.1);
 
   const startDate = res.startDate || "";
   const endDate = res.endDate || "";
@@ -37,8 +59,13 @@ export default function ContractViewerModal({
     window.print();
   };
 
-  return (
-    <div className="contract-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+  return createPortal(
+    <div
+      className="contract-modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div
         className="contract-modal-card"
         onClick={(e) => e.stopPropagation()}
@@ -222,6 +249,7 @@ export default function ContractViewerModal({
           </footer>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

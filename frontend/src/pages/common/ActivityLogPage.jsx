@@ -2,7 +2,6 @@ import { useLocation } from "react-router";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   useActivityLogs,
-  ActivityTelemetry,
   ActivityStatsGrid,
   ActivityLogTable,
 } from "../../features/activity/index.js";
@@ -26,8 +25,7 @@ export default function ActivityLogPage() {
   return (
     <AppShell>
       <div className="activity-log-page">
-        {/* Top Status Bar */}
-        <ActivityTelemetry />
+        
 
         <div className="activity-container">
           {/* Header section */}

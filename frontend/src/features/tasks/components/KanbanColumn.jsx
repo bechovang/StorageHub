@@ -45,7 +45,7 @@ export function KanbanColumn({
               fontSize: "0.82rem",
             }}
           >
-            Chưa có nhiệm vụ
+            ChÆ°a cÃ³ nhiá»‡m vá»¥
           </div>
         )}
 

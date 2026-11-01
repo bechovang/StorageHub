@@ -1,12 +1,13 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   EMPTY_FINANCIAL_SUMMARY,
-  POLICY_VERSIONS,
   getFinancialSummary,
   getMonthlyRevenueChartData,
   getDrilldownItems,
   exportFinancialAuditCSV,
 } from "../../../services/reportService.js";
+import { getCurrentPolicy } from "../../../services/policyService.js";
+import { fetchActivityLogs } from "../../../services/activityService.js";
 
 export function useBusinessOverview() {
   // State lọc kỳ báo cáo
@@ -23,6 +24,55 @@ export function useBusinessOverview() {
   const [monthlyData, setMonthlyData] = useState([]);
   // Dữ liệu danh sách drill-down khi bấm KPI
   const [drilldownData, setDrilldownData] = useState(null);
+  const [policyVersions, setPolicyVersions] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+    Promise.all([
+      getCurrentPolicy().catch(() => null),
+      fetchActivityLogs({ entityType: "POLICY", pageSize: 5 }).catch(() => ({ items: [] })),
+    ]).then(([activePol, logsRes]) => {
+      if (ignore) return;
+      const versions = [];
+      if (activePol) {
+        const ratesSummary = (activePol.baseRates || [])
+          .map((r) => `${r.typeName}: ${Number(r.rateVnd).toLocaleString('vi-VN')} ₫`)
+          .join(" · ");
+        versions.push({
+          version: activePol.version || "v3",
+          effectiveDate: activePol.effectiveDate || "01/10/2026",
+          changedBy: activePol.updatedBy || "Lê Thị Hằng (Business Ops)",
+          status: "ACTIVE",
+          scope: `Đơn giá ${activePol.baseRates?.length || 4} phân loại kho, phí phạt trễ ${activePol.surcharges?.lateCheckoutPercent}%, cọc ${activePol.surcharges?.depositPercent}%, buffer ${activePol.surcharges?.turnoverBufferDays} ngày`,
+          diff: [
+            { field: "Đơn giá cơ sở", oldVal: "Biểu giá trước đó", newVal: ratesSummary || "Theo cấu hình niêm yết" },
+            { field: "Phụ thu trả trễ", oldVal: "Theo quy chế cũ", newVal: `${activePol.surcharges?.lateCheckoutPercent}% / ngày` },
+            { field: "Tỷ lệ cọc bảo đảm", oldVal: "Theo quy chế cũ", newVal: `${activePol.surcharges?.depositPercent}% tổng tiền thuê` },
+            { field: "Thời gian đệm vệ sinh", oldVal: "Theo quy chế cũ", newVal: `${activePol.surcharges?.turnoverBufferDays} ngày` },
+          ],
+        });
+      }
+
+      const logItems = logsRes?.items || [];
+      logItems.forEach((log, idx) => {
+        versions.push({
+          version: `v${Math.max(1, (activePol ? 2 : 1) - idx)}`,
+          effectiveDate: log.timestamp ? log.timestamp.slice(0, 10) : "Trước đó",
+          changedBy: log.actor || "Quản trị viên",
+          status: "SUPERSEDED",
+          scope: log.reason || "Cập nhật chính sách vận hành và biểu giá cơ sở",
+          diff: [
+            { field: "Hành động ghi nhận", oldVal: log.fromValue || "—", newVal: log.toValue || log.reason || "Đã lưu bản mới" },
+          ],
+        });
+      });
+
+      setPolicyVersions(versions);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -100,7 +150,7 @@ export function useBusinessOverview() {
     monthlyData,
     drilldownData,
     filteredDrilldownRows,
-    policyVersions: POLICY_VERSIONS,
+    policyVersions,
     handleExportCSV,
   };
 }

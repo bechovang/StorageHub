@@ -6,6 +6,7 @@ import {
 } from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import { formatVND } from "../../../utils/formatters.js";
+import { getUnitStatusLabel } from "../../../utils/statusLabels.js";
 
 export function DrilldownDrawer({
   drilldownData,
@@ -20,13 +21,15 @@ export function DrilldownDrawer({
     <Drawer
       open={Boolean(activeDrilldownKey)}
       headerLabel={drilldownData?.title || "CHI TIẾT CHỈ SỐ"}
+      subtitle="Bảng kê đối soát chứng từ & phân bổ dòng tiền cơ sở VN-SGN-01"
       onClose={onClose}
+      size="xl"
     >
       {drilldownData && (
         <div className="drilldown-drawer-content">
           {drilldownData.warningNotice && (
             <div className="drilldown-warning-banner">
-              <ShieldCheck size={20} weight="duotone" className="text-primary flex-shrink-0" />
+              <ShieldCheck size={22} weight="duotone" className="text-primary flex-shrink-0" />
               <div>
                 <strong>Quy định kiểm toán tài chính:</strong> {drilldownData.warningNotice}
               </div>
@@ -54,7 +57,7 @@ export function DrilldownDrawer({
               )}
             </div>
             <div className="drilldown-count">
-              Hiển thị <strong>{filteredDrilldownRows.length}</strong> chứng từ
+              Hiển thị <strong>{filteredDrilldownRows.length}</strong> / {drilldownData.rows?.length || filteredDrilldownRows.length} chứng từ
             </div>
           </div>
 
@@ -73,61 +76,78 @@ export function DrilldownDrawer({
                 </tr>
               </thead>
               <tbody>
-                {filteredDrilldownRows.map((row, idx) => (
-                  <tr key={row.id || row.unitCode || idx}>
-                    {drilldownData.columns.map((col) => {
-                      const val = row[col.key];
-                      if (col.isMoney) {
-                        return (
-                          <td
-                            key={col.key}
-                            className={`text-right font-mono ${col.isHighlight ? "font-bold text-ink" : "text-secondary"}`}
-                          >
-                            {formatVND(val)}
-                          </td>
-                        );
-                      }
-                      if (col.key === "vaultStatus") {
-                        return (
-                          <td key={col.key}>
-                            <span className={`badge-vault ${val === "ESCROW_LOCKED" ? "badge-vault--locked" : "badge-vault--pending"}`}>
-                              {val === "ESCROW_LOCKED" ? "Đã khóa Escrow" : "Chờ tất toán"}
-                            </span>
-                          </td>
-                        );
-                      }
-                      if (col.key === "status") {
-                        return (
-                          <td key={col.key}>
-                            <span className={`badge-unit-status badge-unit-status--${String(val).toLowerCase()}`}>
-                              {val}
-                            </span>
-                          </td>
-                        );
-                      }
-                      return (
-                        <td key={col.key} className="text-ink">
-                          {val || "—"}
-                        </td>
-                      );
-                    })}
+                {filteredDrilldownRows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={drilldownData.columns.length}
+                      style={{ textAlign: "center", padding: "48px 16px" }}
+                    >
+                      <div style={{ color: "var(--color-ink, #000)", fontWeight: 700, fontSize: "0.95rem" }}>
+                        Không tìm thấy chứng từ phù hợp
+                      </div>
+                      <div style={{ color: "var(--color-muted, #71717a)", fontSize: "0.82rem", marginTop: "4px" }}>
+                        Không có bản ghi nào khớp với từ khóa tìm kiếm "{drilldownSearch}".
+                      </div>
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredDrilldownRows.map((row, idx) => (
+                    <tr key={row.id || row.unitCode || idx}>
+                      {drilldownData.columns.map((col) => {
+                        const val = row[col.key];
+                        if (col.isMoney) {
+                          return (
+                            <td
+                              key={col.key}
+                              className={`text-right font-mono ${col.isHighlight ? "font-bold text-ink" : "text-secondary"}`}
+                            >
+                              {formatVND(val)}
+                            </td>
+                          );
+                        }
+                        if (col.key === "vaultStatus") {
+                          return (
+                            <td key={col.key}>
+                              <span className={`badge-vault ${val === "ESCROW_LOCKED" ? "badge-vault--locked" : "badge-vault--pending"}`}>
+                                {val === "ESCROW_LOCKED" ? "Đã khóa ký quỹ Escrow" : "Chờ tất toán cọc"}
+                              </span>
+                            </td>
+                          );
+                        }
+                        if (col.key === "status") {
+                          return (
+                            <td key={col.key}>
+                              <span className={`badge-unit-status badge-unit-status--${String(val).toLowerCase()}`}>
+                                {getUnitStatusLabel(val)}
+                              </span>
+                            </td>
+                          );
+                        }
+                        return (
+                          <td key={col.key} className="text-ink">
+                            {val || "—"}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
           <div className="drilldown-footer">
             <div className="drilldown-meta">
-              Dữ liệu được cập nhật từ sổ cái cơ sở VN-SGN-01
+              Sổ cái tự quản cơ sở VN-SGN-01 · Dữ liệu đối soát tự động
             </div>
             <button
               type="button"
-              className="reports-btn reports-btn--secondary reports-btn--sm"
+              className="btn-export-sub-csv"
               onClick={onExportCSV}
+              title="Xuất danh sách bảng kê chi tiết ra file CSV"
             >
-              <DownloadSimple size={14} weight="bold" />
-              <span>Xuất file chi tiết</span>
+              <DownloadSimple size={15} weight="bold" />
+              <span>Xuất file chi tiết (CSV)</span>
             </button>
           </div>
         </div>

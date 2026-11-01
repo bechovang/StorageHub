@@ -42,11 +42,11 @@ export function FixStatusModal({
             value={statusValue}
             onChange={(e) => setStatusValue(e.target.value)}
           >
-            <option value="AVAILABLE">Trống (AVAILABLE)</option>
-            <option value="PREPARING">Đang xử lý chuẩn bị (PREPARING)</option>
-            <option value="MAINTENANCE">Bảo trì (MAINTENANCE)</option>
-            <option value="RENTED">Đang thuê (RENTED)</option>
-            <option value="RETIRED">Ngừng thuê (RETIRED)</option>
+            <option value="AVAILABLE">Kho trống</option>
+            <option value="PREPARING">Đang dọn dẹp</option>
+            <option value="MAINTENANCE">Đang bảo trì</option>
+            <option value="RENTED">Đang thuê</option>
+            <option value="RETIRED">Ngừng khai thác</option>
           </select>
         </div>
 

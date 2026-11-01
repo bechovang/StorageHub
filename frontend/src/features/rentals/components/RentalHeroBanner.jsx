@@ -2,7 +2,6 @@ import { Link } from "react-router";
 import {
   ArrowRight,
   Key,
-  CheckCircle,
   QrCode,
   CalendarPlus,
   SignOut,
@@ -34,24 +33,11 @@ export function RentalHeroBanner({
               {statusLabel}
             </span>
 
+            {/* Access Status Chip - Chỉ hiển thị khi kho đã nhận và đang hoạt động */}
             {isCheckedIn && (
               <span className="rd-hero__telemetry rd-hero__telemetry--success font-mono">
                 <Key size={13} weight="bold" />
                 Mở khóa điện tử 24/7
-              </span>
-            )}
-
-            {canCheckIn && (
-              <span className="rd-hero__telemetry rd-hero__telemetry--info font-mono">
-                <CheckCircle size={13} weight="bold" />
-                Sẵn sàng nhận kho
-              </span>
-            )}
-
-            {reservation.status === "CLOSED" && (
-              <span className="rd-hero__telemetry rd-hero__telemetry--success font-mono">
-                <CheckCircle size={13} weight="bold" />
-                Đã tất toán &amp; Hoàn tất
               </span>
             )}
           </div>

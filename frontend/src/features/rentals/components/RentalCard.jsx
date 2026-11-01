@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import {
   ArrowRight,
   CheckCircle,
+  WarningCircle,
   Key,
   QrCode,
   Receipt,
@@ -18,7 +19,10 @@ import {
 export default function RentalCard({ item }) {
   const statusColor = STATUS_COLOR[item.status] || "neutral";
   const statusText = STATUS_LABEL[item.status] || item.status;
-  const depositText = DEPOSIT_STATUS_LABEL[item.depositStatus] || item.depositStatus || "—";
+  const depositText =
+    DEPOSIT_STATUS_LABEL[item.depositStatus] || item.depositStatus || "—";
+
+  const isPending = item.status === "PENDING_PAYMENT";
   const isReserved = item.status === "RESERVED";
   const isCheckedIn =
     item.status === "CHECKED_IN" || item.status === "CHECKOUT_REQUESTED";
@@ -43,25 +47,11 @@ export default function RentalCard({ item }) {
               {statusText}
             </span>
 
-            {/* Access Status Chip */}
+            {/* Access Status Chip - Chỉ hiển thị khi kho đã nhận và đang hoạt động */}
             {isCheckedIn && (
               <span className="rental-card__access-tag rental-card__access-tag--success">
                 <Key size={13} weight="bold" />
                 Mở khóa điện tử 24/7
-              </span>
-            )}
-
-            {isReserved && (
-              <span className="rental-card__access-tag rental-card__access-tag--info">
-                <CheckCircle size={13} weight="bold" />
-                Sẵn sàng nhận kho
-              </span>
-            )}
-
-            {item.status === "CLOSED" && (
-              <span className="rental-card__access-tag rental-card__access-tag--success">
-                <CheckCircle size={13} weight="bold" />
-                Đã hoàn tất hợp đồng
               </span>
             )}
           </div>
@@ -119,11 +109,20 @@ export default function RentalCard({ item }) {
         </div>
 
         {/* Context Prompt / Alert */}
+        {isPending && (
+          <div className="rental-card__prompt rental-card__prompt--warning">
+            <WarningCircle size={16} weight="fill" />
+            <span>
+              <strong>Chờ thanh toán cọc:</strong> Quý khách vui lòng hoàn tất đặt cọc trước thời hạn để đảm bảo kho được giữ chỗ.
+            </span>
+          </div>
+        )}
+
         {isReserved && (
           <div className="rental-card__prompt rental-card__prompt--info">
             <CheckCircle size={16} weight="fill" />
             <span>
-              <strong>Đã giữ chỗ (RESERVED):</strong> Bạn chỉ cần mang theo CCCD và mở thẻ nhận kho khi đến quầy.
+              <strong>Đã giữ chỗ thành công:</strong> Quý khách vui lòng xuất trình CCCD và thẻ nhận kho khi đến quầy lễ tân để nhận kho.
             </span>
           </div>
         )}
@@ -131,6 +130,16 @@ export default function RentalCard({ item }) {
         {/* Action Button Row */}
         <div className="rental-card__actions">
           <div className="rental-card__actions-group">
+            {isPending && (
+              <Link
+                to={`/payment/${item.id}`}
+                className="rental-btn rental-btn--primary"
+              >
+                Thanh toán cọc ngay
+                <ArrowRight size={14} weight="bold" />
+              </Link>
+            )}
+
             {isReserved && (
               <Link
                 to={`/rentals/${item.id}/check-in-pass`}

@@ -108,8 +108,39 @@ function CounterNumber({ value, suffix = "", prefix = "", duration = 1.2 }) {
 }
 
 /**
+ * UnifiedAssetPlaceholder Component
+ * 1 mẫu placeholder chuẩn duy nhất cho toàn bộ hệ thống hình ảnh.
+ * Hiển thị rõ ràng là vị trí giữ chỗ (placeholder) khi ảnh chưa sẵn sàng hoặc bị lỗi,
+ * tránh gây hiểu lầm cho khách là ảnh thật hay bản vẽ phác thảo.
+ */
+function UnifiedAssetPlaceholder({ aspectRatio = "4/3", className = "" }) {
+  return (
+    <div
+      className={`unified-asset-placeholder ${className}`}
+      style={{ aspectRatio }}
+      role="img"
+      aria-label="Hình ảnh đang được cập nhật"
+    >
+      <div className="unified-asset-placeholder__inner">
+        <div className="unified-asset-placeholder__icon-box">
+          <ImageSquare size={26} weight="duotone" className="unified-asset-placeholder__icon" />
+        </div>
+        <div className="unified-asset-placeholder__text-group">
+          <span className="unified-asset-placeholder__status">
+            [ HÌNH ẢNH ĐANG CẬP NHẬT ]
+          </span>
+          <span className="unified-asset-placeholder__brand">
+            STORAGEHUB
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * InteractiveVisualAsset Component — Tự động hoán đổi mượt mà giữa Idle & Hover state
- * Chuẩn đồ hoạ tối giản Swiss Neo-Brutalist, trong suốt (transparent background)
+ * Khi ảnh chưa có hoặc bị lỗi tải (onError), tự động thay thế bằng 1 mẫu placeholder chuẩn duy nhất.
  */
 function InteractiveVisualAsset({
   idleSrc,
@@ -118,25 +149,89 @@ function InteractiveVisualAsset({
   aspectRatio = "4/3",
   caption,
 }) {
+  const [hasError, setHasError] = useState(false);
+  const [hoverError, setHoverError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+    setHoverError(false);
+  }, [idleSrc, hoverSrc]);
+
   return (
     <div className="interactive-asset-wrapper">
       <div className="interactive-asset" style={{ aspectRatio }}>
-        <img
-          src={idleSrc}
-          alt={alt}
-          className="interactive-asset__img interactive-asset__img--idle"
-          loading="lazy"
-        />
-        <img
-          src={hoverSrc}
-          alt={`${alt} (hover)`}
-          className="interactive-asset__img interactive-asset__img--hover"
-          loading="lazy"
-          aria-hidden="true"
-        />
+        {!hasError ? (
+          <>
+            <img
+              src={idleSrc}
+              alt={alt}
+              className="interactive-asset__img interactive-asset__img--idle"
+              loading="lazy"
+              onError={() => setHasError(true)}
+            />
+            {hoverSrc && !hoverError && (
+              <img
+                src={hoverSrc}
+                alt={`${alt} (hover)`}
+                className="interactive-asset__img interactive-asset__img--hover"
+                loading="lazy"
+                aria-hidden="true"
+                onError={() => setHoverError(true)}
+              />
+            )}
+          </>
+        ) : (
+          <UnifiedAssetPlaceholder aspectRatio={aspectRatio} />
+        )}
       </div>
-      {caption && (
+      {!hasError && caption && (
         <p className="interactive-asset__caption">{caption}</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * FacilityVisualAsset Component — Ảnh 2 trạng thái cơ sở kèm Fallback chuẩn duy nhất khi ảnh bị lỗi
+ */
+function FacilityVisualAsset({
+  idleSrc,
+  hoverSrc,
+  alt,
+  aspectRatio = "16/9",
+}) {
+  const [hasError, setHasError] = useState(false);
+  const [hoverError, setHoverError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+    setHoverError(false);
+  }, [idleSrc, hoverSrc]);
+
+  return (
+    <div className="facility-asset-frame">
+      {!hasError ? (
+        <>
+          <img
+            src={idleSrc}
+            alt={alt}
+            className="facility-asset-img facility-asset-img--idle"
+            loading="lazy"
+            onError={() => setHasError(true)}
+          />
+          {hoverSrc && !hoverError && (
+            <img
+              src={hoverSrc}
+              alt={`${alt} (hover)`}
+              className="facility-asset-img facility-asset-img--hover"
+              loading="lazy"
+              aria-hidden="true"
+              onError={() => setHoverError(true)}
+            />
+          )}
+        </>
+      ) : (
+        <UnifiedAssetPlaceholder aspectRatio={aspectRatio} />
       )}
     </div>
   );
@@ -163,8 +258,6 @@ const STORAGE_SIZES = [
     visualAsset: {
       idleSrc: "/assets/landing/size-locker.png",
       hoverSrc: "/assets/landing/size-locker-hover.png",
-      tag: "SKETCH // LOCKER 1.5 M²",
-      caption: "Cửa tủ hé mở, dải LED và khoang chứa tài liệu tối ưu",
     },
   },
   {
@@ -186,8 +279,6 @@ const STORAGE_SIZES = [
     visualAsset: {
       idleSrc: "/assets/landing/size-s.png",
       hoverSrc: "/assets/landing/size-s-hover.png",
-      tag: "SKETCH // MINI S 4.0 M²",
-      caption: "Cửa cuốn mở nửa khoang, thùng carton phác thảo sẵn sàng bốc dỡ",
     },
   },
   {
@@ -209,8 +300,6 @@ const STORAGE_SIZES = [
     visualAsset: {
       idleSrc: "/assets/landing/size-m.png",
       hoverSrc: "/assets/landing/size-m-hover.png",
-      tag: "SKETCH // FAMILY M 8.0 M²",
-      caption: "Cửa đôi mở rộng, phác thảo nội thất gia đình & sofa tiện nghi",
     },
   },
   {
@@ -232,8 +321,6 @@ const STORAGE_SIZES = [
     visualAsset: {
       idleSrc: "/assets/landing/size-l.png",
       hoverSrc: "/assets/landing/size-l-hover.png",
-      tag: "SKETCH // WAREHOUSE L 16.0 M²",
-      caption: "Cửa kho hàng mở rộng, phác thảo kiện pallet & xe nâng tay",
     },
   },
 ];
@@ -245,36 +332,24 @@ const PILLARS = [
     title: "Mã PIN cá nhân 100%",
     description:
       "Mở kho tức thì bằng bàn phím số riêng biệt, chủ động 24/7 không cần chờ lễ tân hay bảo vệ. Bạn là người duy nhất sở hữu mã mở cửa",
-    techTag: "SCHEMATIC // 256-BIT PIN",
-    techBadge: "HARDWARE",
-    techSpec: "Bàn phím mã số vật lý độc lập tại từng ô kho · Zero-trust",
   },
   {
     icon: Receipt,
     title: "Cọc chỉ 10% & Minh bạch",
     description:
       "Không phát sinh phụ phí ẩn. Chỉ cọc 10% để xác nhận giữ kho. Hoàn cọc tự động qua tài khoản ngân hàng trong 24h sau khi kiểm tra trả kho",
-    techTag: "FLOW // 10% ESCROW",
-    techBadge: "FINTECH",
-    techSpec: "Ký quỹ giữ chỗ VietQR tức thì · Hoàn cọc tự động qua STK trong 24h",
   },
   {
     icon: ShieldCheck,
     title: "An ninh & PCCC đa lớp",
     description:
       "Hệ thống camera giám sát liên tục 24/7, đầu dò khói nhiệt PCCC tiêu chuẩn và kiểm soát độ ẩm chống ẩm mốc hư hại hàng hóa tuyệt đối",
-    techTag: "IOT // TELEMETRY",
-    techBadge: "SECURITY",
-    techSpec: "CCTV AI 4K hồng ngoại · Đầu dò nhiệt khói & ẩm kế tự động",
   },
   {
     icon: FileText,
     title: "Hợp đồng số & Bàn giao ảnh",
     description:
       "Mọi lịch sử nhận/trả kho đều được chụp ảnh đối soát minh bạch qua Thẻ nhận kho kỹ thuật số và hợp đồng điện tử có giá trị pháp lý",
-    techTag: "AUDIT // DIGITAL PASS",
-    techBadge: "VERIFIED",
-    techSpec: "Biên bản bàn giao số gắn timestamp & đối soát ảnh hiện trạng",
   },
 ];
 
@@ -288,8 +363,6 @@ const STEPS = [
     visualAsset: {
       idleSrc: "/assets/landing/step-select.png",
       hoverSrc: "/assets/landing/step-select-hover.png",
-      tag: "STEP 01 // FLOORPLAN SKETCH",
-      caption: "Phác thảo sơ đồ kho: Khoang chọn nảy lên cùng kim ghim đỏ định vị",
     },
   },
   {
@@ -300,8 +373,6 @@ const STEPS = [
     visualAsset: {
       idleSrc: "/assets/landing/step-payment.png",
       hoverSrc: "/assets/landing/step-payment-hover.png",
-      tag: "STEP 02 // VIETQR & PIN SKETCH",
-      caption: "Màn hình thanh toán sáng bừng huy hiệu xác nhận cọc thành công",
     },
   },
   {
@@ -312,8 +383,6 @@ const STEPS = [
     visualAsset: {
       idleSrc: "/assets/landing/step-access.png",
       hoverSrc: "/assets/landing/step-access-hover.png",
-      tag: "STEP 03 // SMART KEYPAD SKETCH",
-      caption: "Bàn phím mở chốt thông minh với sóng xung xác thực tự động",
     },
   },
 ];
@@ -536,24 +605,14 @@ export default function LandingPage() {
                 </motion.div>
               </div>
 
-              {/* Right Column: Reserved for Future Interactive Visual Slider */}
+              {/* Right Column: Hero Showcase Visual with Unified Fallback */}
               <div className="landing-hero__visual">
-                <div className="landing-hero__slider-placeholder">
-                  <div className="slider-placeholder__content">
-                    <div className="slider-placeholder__icon-wrap">
-                      <ImageSquare size={32} weight="duotone" className="slider-placeholder__icon" />
-                    </div>
-                    <span className="slider-placeholder__badge">
-                      ASSET // HERO SHOWCASE SLIDER
-                    </span>
-                    <span className="slider-placeholder__spec">
-                      16:10 INTERACTIVE CAROUSEL [1920×1200]
-                    </span>
-                    <span className="slider-placeholder__hint">
-                      Chuỗi slide ảnh cơ sở thực tế, hành lang kho sạch sẽ & thao tác mở kho 24/7
-                    </span>
-                  </div>
-                </div>
+                <InteractiveVisualAsset
+                  idleSrc="/assets/landing/hero-showcase.png"
+                  hoverSrc="/assets/landing/hero-showcase-hover.png"
+                  alt="Không gian cơ sở hệ thống kho tự quản StorageHub"
+                  aspectRatio="16/10"
+                />
               </div>
             </div>
 
@@ -645,14 +704,13 @@ export default function LandingPage() {
                     <div className="size-card__area">{unit.sizeM2}</div>
                   </div>
 
-                  {/* 3D Isometric Cutaway Visual Slot */}
-                  <div className="size-card__visual-slot" aria-label={`Bản vẽ 3D minh họa ${unit.name}`}>
+                  {/* 3D Isometric Cutaway Visual Slot with Unified Fallback */}
+                  <div className="size-card__visual-slot" aria-label={`Mô hình kho ${unit.name}`}>
                     <InteractiveVisualAsset
                       idleSrc={unit.visualAsset.idleSrc}
                       hoverSrc={unit.visualAsset.hoverSrc}
-                      alt={`Mô hình 3D kho ${unit.name}`}
+                      alt={`Mô hình kho ${unit.name}`}
                       aspectRatio="4/3"
-                      caption={unit.visualAsset.caption}
                     />
                   </div>
 
@@ -744,17 +802,6 @@ export default function LandingPage() {
                     <div className="pillar-card__number">0{idx + 1}</div>
                     <h3 className="pillar-card__title">{p.title}</h3>
                     <p className="pillar-card__desc">{p.description}</p>
-
-                    {/* Micro-Technical Schematic Slot */}
-                    <div className="pillar-card__tech-slot">
-                      <div className="visual-placeholder visual-placeholder--pillar">
-                        <div className="visual-placeholder__pillar-header">
-                          <span className="visual-placeholder__tag">{p.techTag}</span>
-                          <span className="visual-placeholder__badge-mini">{p.techBadge}</span>
-                        </div>
-                        <span className="visual-placeholder__spec">{p.techSpec}</span>
-                      </div>
-                    </div>
                   </motion.div>
                 );
               })}
@@ -827,14 +874,13 @@ export default function LandingPage() {
                       <h3 className="step-card__title">{s.title}</h3>
                       <p className="step-card__desc">{s.description}</p>
 
-                      {/* Step Media Preview */}
+                      {/* Step Media Preview with Unified Fallback */}
                       <div className="step-card__visual-slot" aria-label={`Minh họa bước ${s.step}: ${s.title}`}>
                         <InteractiveVisualAsset
                           idleSrc={s.visualAsset.idleSrc}
                           hoverSrc={s.visualAsset.hoverSrc}
                           alt={`Minh họa bước ${s.step}: ${s.title}`}
                           aspectRatio="16/9"
-                          caption={s.visualAsset.caption}
                         />
                       </div>
 
@@ -903,21 +949,12 @@ export default function LandingPage() {
 
                 {/* High-Impact Visual Slot: Tân Bình Facade & Loading Bay */}
                 <div className="facility-card__visual-slot" aria-label="Hình ảnh cơ sở Tân Bình">
-                  <div className="facility-asset-frame">
-                    <img
-                      src="/assets/landing/facility-tanbinh.png"
-                      alt="Bản vẽ phác thảo kiến trúc cơ sở Tân Bình, sảnh đỗ xe tải 5 tấn & hệ thống cửa cuốn tự động 24/7"
-                      className="facility-asset-img facility-asset-img--idle"
-                      loading="lazy"
-                    />
-                    <img
-                      src="/assets/landing/facility-tanbinh-hover.png"
-                      alt="Bản vẽ phác thảo cơ sở Tân Bình ban đêm với ánh sáng hoạt động 24/7"
-                      className="facility-asset-img facility-asset-img--hover"
-                      loading="lazy"
-                      aria-hidden="true"
-                    />
-                  </div>
+                  <FacilityVisualAsset
+                    idleSrc="/assets/landing/facility-tanbinh.png"
+                    hoverSrc="/assets/landing/facility-tanbinh-hover.png"
+                    alt="Cơ sở Tân Bình, sảnh đỗ xe tải 5 tấn & hệ thống cửa cuốn tự động 24/7"
+                    aspectRatio="16/9"
+                  />
                 </div>
 
                 <h3 className="facility-card__name">Cơ sở Tân Bình</h3>
@@ -982,22 +1019,13 @@ export default function LandingPage() {
                 </div>
 
                 {/* High-Impact Visual Slot: Quận 7 Concept Render */}
-                <div className="facility-card__visual-slot" aria-label="Phối cảnh cơ sở Quận 7">
-                  <div className="facility-asset-frame">
-                    <img
-                      src="/assets/landing/facility-quan7.png"
-                      alt="Bản vẽ phác thảo kiến trúc cơ sở thông minh Nam Sài Gòn, hệ thống kho vi khí hậu nhiệt-ẩm tiêu chuẩn cao"
-                      className="facility-asset-img facility-asset-img--idle"
-                      loading="lazy"
-                    />
-                    <img
-                      src="/assets/landing/facility-quan7-hover.png"
-                      alt="Bản vẽ phác thảo kiến trúc cơ sở Quận 7 hoàng hôn lung linh"
-                      className="facility-asset-img facility-asset-img--hover"
-                      loading="lazy"
-                      aria-hidden="true"
-                    />
-                  </div>
+                <div className="facility-card__visual-slot" aria-label="Hình ảnh cơ sở Quận 7">
+                  <FacilityVisualAsset
+                    idleSrc="/assets/landing/facility-quan7.png"
+                    hoverSrc="/assets/landing/facility-quan7-hover.png"
+                    alt="Cơ sở thông minh Nam Sài Gòn Phú Mỹ Hưng, hệ thống kho vi khí hậu nhiệt-ẩm tiêu chuẩn cao"
+                    aspectRatio="16/9"
+                  />
                 </div>
 
                 <h3 className="facility-card__name">Cơ sở Quận 7</h3>

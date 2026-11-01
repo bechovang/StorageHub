@@ -80,7 +80,7 @@ export default function BookingReview({
                 <div className="unit-badges-row">
                   <span className="code-pill">KHO {unit.code || "—"}</span>
                   <Badge tone={isAlreadyPaid ? "success" : "warning"}>
-                    {isAlreadyPaid ? "Đã giữ kho (RESERVED)" : "Chưa giữ kho · Cần thanh toán cọc"}
+                    {isAlreadyPaid ? "Đã giữ chỗ thành công" : "Chưa giữ kho · Cần thanh toán cọc"}
                   </Badge>
                 </div>
                 <h1 className="unit-title">
@@ -97,20 +97,6 @@ export default function BookingReview({
               </div>
             </div>
 
-            {!isAlreadyPaid && (
-              <div style={{
-                margin: "12px 0 16px",
-                padding: "10px 14px",
-                background: "#fffbeb",
-                border: "1px solid #fef3c7",
-                borderLeft: "3px solid #d97706",
-                fontSize: "0.82rem",
-                color: "#92400e",
-                lineHeight: "1.45",
-              }}>
-                <strong>Lưu ý quan trọng về giữ chỗ:</strong> Kho <strong>chưa được giữ</strong>. Đơn thuê (RESERVED) chỉ được tạo sau khi thanh toán cọc thành công; nếu kho vừa được người khác đặt, hệ thống sẽ hoàn tiền.
-              </div>
-            )}
 
             {/* Parameters Grid (3 cols) */}
             <div className="unit-params-grid">
@@ -203,7 +189,7 @@ export default function BookingReview({
             <div className="ledger-lines">
               <div className="ledger-item">
                 <span className="ledger-item__label">
-                  Tiền thuê cơ sở ({durationDays || "—"} ngày)
+                  Tiền thuê kho ({durationDays ? `${durationDays} ngày` : "—"})
                 </span>
                 <span className="ledger-item__val">{formatVND(totalRent)}</span>
               </div>
@@ -219,7 +205,7 @@ export default function BookingReview({
               </div>
 
               <div className="ledger-item ledger-item--total">
-                <span className="ledger-item__label">Tổng giá trị hợp đồng ({durationDays || "—"} ngày)</span>
+                <span className="ledger-item__label">Tổng giá trị hợp đồng ({durationDays ? `${durationDays} ngày` : "—"})</span>
                 <span className="ledger-item__val">{formatVND(totalRent)}</span>
               </div>
             </div>
@@ -228,7 +214,7 @@ export default function BookingReview({
             <div className={`deposit-highlight ${isAlreadyPaid ? "deposit-highlight--paid" : ""}`}>
               <div className="deposit-highlight__top">
                 <span className="deposit-highlight__title">
-                  {isAlreadyPaid ? "Tiền cọc đã thanh toán (10%)" : "Tiền cọc để khóa giữ chỗ (10%)"}
+                  {isAlreadyPaid ? "Tiền cọc đã thanh toán (10%)" : "Tiền cọc giữ chỗ (10%)"}
                 </span>
                 <span className="deposit-highlight__amount">
                   {formatVND(reservation?.depositAmount || 0)}
@@ -236,8 +222,8 @@ export default function BookingReview({
               </div>
               <p className="deposit-highlight__note">
                 {isAlreadyPaid
-                  ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống. Kho đã chính thức được khóa giữ chỗ (RESERVED)."
-                  : "Hoàn tất thanh toán cọc để chính thức giữ chỗ kho (RESERVED). Tiền cọc được hoàn trả 100% khi kết thúc hợp đồng."}
+                  ? "Khoản cọc đã được lưu giữ an toàn trên hệ thống."
+                  : "Tiền cọc được lưu giữ an toàn và hoàn trả 100% khi kết thúc hợp đồng."}
               </p>
             </div>
 
@@ -270,7 +256,7 @@ export default function BookingReview({
                 <>
                   <div className="paid-status-box">
                     <CheckCircle size={20} weight="fill" />
-                    <span>Đơn đặt chỗ đã thanh toán cọc thành công (RESERVED)</span>
+                    <span>Đơn đặt chỗ đã thanh toán cọc thành công</span>
                   </div>
                   <div style={{ display: "flex", gap: "10px", marginTop: "12px", width: "100%" }}>
                     <Link

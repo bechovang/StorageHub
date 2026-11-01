@@ -14,7 +14,7 @@ export default function EscalateTicketModal({
     <Modal
       isOpen={!!ticket}
       onClose={onClose}
-      title="CHUYỂN TIẾP LÊN QUẢN LÝ CƠ SỞ (ESCALATE)"
+      title="CHUYỂN TIẾP LÊN QUẢN LÝ CƠ SỞ"
     >
       <form onSubmit={onSubmit} className="modal-form-grid">
         {escalateError && (
@@ -23,7 +23,7 @@ export default function EscalateTicketModal({
           </div>
         )}
         <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--color-accent)" }}>
-          Sự cố nghiêm trọng vượt thẩm quyền xử lý của nhân viên ca trực tại kho {ticket.unitCode} sẽ được chuyển tiếp thẳng vào hộp thư của Facility Manager.
+          Sự cố nghiêm trọng vượt thẩm quyền xử lý của nhân viên ca trực tại kho {ticket.unitCode} sẽ được chuyển tiếp thẳng vào hộp thư của Quản lý cơ sở.
         </p>
 
         <div className="form-field">

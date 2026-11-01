@@ -39,48 +39,27 @@ export default function UnitPricingCalculator({
         </div>
       </div>
 
-      {/* Bộ chọn khoảng ngày thuê (mô hình thuê theo ngày) */}
+      {/* ── BỘ CHỌN KHOẢNG NGÀY THUÊ: NGÀY NHẬN & TRẢ TRÊN Ô LỊCH ── */}
       <div className="pricing-selector-group">
-        <label htmlFor="start-date-input" className="pricing-selector-label">
-          LỊCH CHỌN NGÀY NHẬN KHO (TÔ ĐỎ NGÀY ĐÃ ĐẶT)
+        <label className="pricing-selector-label">
+          LỊCH CHỌN NGÀY NHẬN & TRẢ KHO (CHỌN TRÊN Ô LỊCH)
         </label>
 
         <UnitAvailabilityCalendar
-          selectedDate={startDate}
-          onSelectDate={setStartDate}
+          startDate={startDate}
+          onSelectStartDate={setStartDate}
+          endDate={endDate}
+          onSelectEndDate={setEndDate}
+          durationDays={durationDays}
           availableFromDate={availableDate}
           isSoon={isSoon}
           minDate={isSoon && availableDate ? availableDate : getTomorrowDate()}
         />
 
-        <div className="pricing-selector-group" style={{ marginTop: "12px" }}>
-          <label htmlFor="end-date-input" className="pricing-selector-label">
-            NGÀY TRẢ KHO (BAO GỒM NGÀY CUỐI)
-          </label>
-          <input
-            id="end-date-input"
-            type="date"
-            className="swiss-input"
-            value={endDate || ""}
-            min={startDate || today}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-          {invalidRange && (
-            <span className="field-error-text">
-              Ngày trả kho phải bằng hoặc sau ngày nhận kho.
-            </span>
-          )}
-        </div>
-
-        {startDate && endDate && !invalidRange && (
-          <p className="pricing-cycle-hint" style={{ marginTop: "12px" }}>
-            <CalendarCheck size={14} weight="bold" />
-            <span>
-              Chu kỳ thuê: <strong>{formatDate(startDate)}</strong> →{" "}
-              <strong>{formatDate(endDate)}</strong> ({durationDays}{" "}
-              ngày)
-            </span>
-          </p>
+        {invalidRange && (
+          <span className="field-error-text" style={{ marginTop: "8px" }}>
+            Ngày trả kho phải bằng hoặc sau ngày nhận kho.
+          </span>
         )}
       </div>
 

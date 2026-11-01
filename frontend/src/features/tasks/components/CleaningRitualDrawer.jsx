@@ -24,13 +24,29 @@ export function CleaningRitualDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   return (
-    <Drawer open={Boolean(task)} headerLabel={`VỆ SINH KHO · ${task.unitCode}`} onClose={onClose}>
+    <Drawer
+      open={Boolean(task)}
+      headerLabel={`VỆ SINH KHO · ${task.unitCode}`}
+      subtitle="Nghiệm thu tiêu chuẩn vệ sinh trước khi bàn giao kho mới"
+      badge={
+        <span className={`ritual-step-badge ${allChecked ? "ritual-step-badge--completed" : "ritual-step-badge--active"} font-mono`}>
+          {allChecked ? "✓ ĐỦ ĐIỀU KIỆN" : "ĐANG VỆ SINH"}
+        </span>
+      }
+      onClose={onClose}
+      size="md"
+    >
       <div className="ritual-flow">
-        <div className="ritual-step-card">
-          <span className="ritual-step-title">
-            <Broom size={18} weight="bold" />
-            Checklist vệ sinh kho tự quản
-          </span>
+        <div className={`ritual-step-card ${allChecked ? "is-completed" : "is-active"}`}>
+          <div className="ritual-step-header">
+            <span className="ritual-step-title">
+              <Broom size={18} weight="bold" />
+              Checklist vệ sinh kho tự quản
+            </span>
+            <span className={`ritual-step-badge ${allChecked ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+              {allChecked ? "✓ 3/3 HẠNG MỤC" : "CẦN HOÀN THÀNH"}
+            </span>
+          </div>
           <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--color-secondary)" }}>
             Hoàn tất các bước dọn dẹp trước khi đưa kho trở về trạng thái Sẵn sàng cho thuê.
           </p>
@@ -41,7 +57,7 @@ export function CleaningRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 checked={checklist.sweptFloor}
                 onChange={(e) => setChecklist({ ...checklist, sweptFloor: e.target.checked })}
               />
-              <span>Quét dọn sàn & hút bụi sạch sẽ</span>
+              <span>Quét dọn sàn &amp; hút bụi sạch sẽ</span>
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
               <input
@@ -49,7 +65,7 @@ export function CleaningRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 checked={checklist.dehumidifierChecked}
                 onChange={(e) => setChecklist({ ...checklist, dehumidifierChecked: e.target.checked })}
               />
-              <span>Kiểm tra máy hút ẩm & nồng độ thông gió</span>
+              <span>Kiểm tra máy hút ẩm &amp; nồng độ thông gió</span>
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
               <input
@@ -57,7 +73,7 @@ export function CleaningRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 checked={checklist.lockLubricated}
                 onChange={(e) => setChecklist({ ...checklist, lockLubricated: e.target.checked })}
               />
-              <span>Tra dầu chốt khóa & reset mã số ổ khóa về mặc định</span>
+              <span>Tra dầu chốt khóa &amp; reset mã số ổ khóa về mặc định</span>
             </label>
           </div>
         </div>

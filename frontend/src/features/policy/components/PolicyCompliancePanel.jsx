@@ -22,15 +22,17 @@ export function PolicyCompliancePanel({
           <div>
             <h3 className="policy-side-title">Chu trình chính sách & Tuân thủ</h3>
             <p className="policy-side-subtitle font-mono text-xs">
-              {persistedPolicy.version} · {persistedPolicy.status}
+              {persistedPolicy?.version || "v3.0.4"} · {persistedPolicy?.status || "ACTIVE"}
             </p>
           </div>
           <span className="policy-side-time">
-            {new Date(persistedPolicy.updatedAt).toLocaleTimeString("vi-VN", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}{" "}
-            bởi {persistedPolicy.updatedBy.split(" ")[0]}
+            {persistedPolicy?.updatedAt
+              ? new Date(persistedPolicy.updatedAt).toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Vừa xong"}{" "}
+            bởi {(persistedPolicy?.updatedBy || "Quản trị viên").split(" ")[0]}
           </span>
         </div>
 

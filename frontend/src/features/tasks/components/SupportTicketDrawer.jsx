@@ -24,13 +24,29 @@ export function SupportTicketDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   return (
-    <Drawer open={Boolean(task)} headerLabel={`XỬ LÝ SỰ CỐ · ${task.refCode}`} onClose={onClose}>
+    <Drawer
+      open={Boolean(task)}
+      headerLabel={`XỬ LÝ SỰ CỐ · ${task.refCode}`}
+      subtitle={`Kho ${task.unitCode} · Khách hàng: ${task.customerName}`}
+      badge={
+        <span className="ritual-step-badge ritual-step-badge--attention font-mono">
+          SỰ CỐ KHÁCH HÀNG
+        </span>
+      }
+      onClose={onClose}
+      size="lg"
+    >
       <div className="ritual-flow">
-        <div className="ritual-step-card">
-          <span className="ritual-step-title">
-            <WarningCircle size={18} weight="bold" color="#dc2626" />
-            Chi tiết phản ánh sự cố từ khách
-          </span>
+        <div className="ritual-step-card needs-attention">
+          <div className="ritual-step-header">
+            <span className="ritual-step-title">
+              <WarningCircle size={18} weight="bold" color="#dc2626" />
+              1. Chi tiết phản ánh sự cố từ khách
+            </span>
+            <span className="ritual-step-badge ritual-step-badge--attention">
+              ⚠ CẦN HỖ TRỢ
+            </span>
+          </div>
           <div style={{ fontSize: "0.82rem" }}>
             <p style={{ margin: "4px 0" }}>Khách hàng: <strong>{task.customerName}</strong> ({task.customerPhone})</p>
             <p style={{ margin: "4px 0" }}>Vị trí kho: <strong>{task.unitCode}</strong></p>
@@ -40,7 +56,15 @@ export function SupportTicketDrawer({ task, onClose, onSuccess, showToast }) {
           </div>
         </div>
 
-        <div className="ritual-step-card">
+        <div className="ritual-step-card is-active">
+          <div className="ritual-step-header">
+            <span className="ritual-step-title">
+              2. Biện pháp khắc phục &amp; Báo cáo
+            </span>
+            <span className="ritual-step-badge ritual-step-badge--active">
+              ĐANG XỬ LÝ
+            </span>
+          </div>
           <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>
             GHI CHÚ XỬ LÝ SỰ CỐ:
           </label>

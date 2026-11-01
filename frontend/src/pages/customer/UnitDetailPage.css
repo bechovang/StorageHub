@@ -787,3 +787,91 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ── Bộ chọn thời hạn thuê theo ngày & Stepper Swiss Grid ── */
+.pricing-duration-buttons--days {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.pricing-custom-stepper-box {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--color-surface-subtle, #f8fafc);
+  border: var(--border);
+  padding: 10px 12px;
+}
+
+.pricing-stepper-label {
+  font: 700 0.7rem / 1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--color-secondary, #64748b);
+}
+
+.pricing-stepper-control {
+  display: flex;
+  align-items: stretch;
+  height: 38px;
+  gap: 0;
+  border: var(--border-strong);
+  background: var(--color-surface, #ffffff);
+}
+
+.pricing-stepper-btn {
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface, #ffffff);
+  border: none;
+  cursor: pointer;
+  color: var(--color-ink, #000000);
+  transition: background-color 120ms ease, color 120ms ease;
+  user-select: none;
+}
+
+.pricing-stepper-btn:hover {
+  background: var(--color-ink, #000000);
+  color: #ffffff;
+}
+
+.pricing-stepper-btn:active {
+  background: #333333;
+}
+
+.pricing-stepper-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: var(--border);
+  border-right: var(--border);
+  background: #ffffff;
+  padding: 0 8px;
+  position: relative;
+}
+
+.pricing-stepper-input {
+  width: 60px;
+  border: none;
+  outline: none;
+  text-align: center;
+  font: 700 1rem / 1 var(--font-mono);
+  color: var(--color-ink, #000000);
+  background: transparent;
+  -moz-appearance: textfield;
+}
+
+.pricing-stepper-input::-webkit-outer-spin-button,
+.pricing-stepper-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pricing-stepper-unit {
+  font: 700 0.8rem / 1 var(--font-mono);
+  color: var(--color-secondary, #64748b);
+  margin-left: 2px;
+}

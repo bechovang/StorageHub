@@ -148,7 +148,7 @@ export default function BusinessKpiGrid({
         <div className="biz-kpi-value">{formatVND(summary.surcharges)}</div>
         <KpiTrendLine metric={comparison.surcharges} />
         <div className="biz-kpi-footer">
-          <span className="biz-kpi-footer-text">Phí quá hạn & Dịch vụ phát sinh</span>
+          <span className="biz-kpi-footer-text">Phí quá hạn &amp; Hư hại</span>
           <span className="kpi-drill-hint">
             Chi tiết <ArrowRight size={12} weight="bold" />
           </span>

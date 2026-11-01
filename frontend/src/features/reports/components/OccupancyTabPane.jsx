@@ -1,7 +1,7 @@
 import { formatVND } from "../../../utils/formatters.js";
-import { ZONE_PERFORMANCE } from "../../../services/reportService.js";
 
-export function OccupancyTabPane({ onDrilldown }) {
+
+export function OccupancyTabPane({ zonePerformance = [], onDrilldown }) {
   return (
     <div className="tab-pane space-y-6">
       <div className="reports-table-card">
@@ -37,7 +37,7 @@ export function OccupancyTabPane({ onDrilldown }) {
               </tr>
             </thead>
             <tbody>
-              {ZONE_PERFORMANCE.map((zp) => (
+              {zonePerformance.map((zp) => (
                 <tr key={zp.zone}>
                   <td className="font-semibold text-ink">{zp.zone}</td>
                   <td className="text-center font-mono">{zp.unitCount}</td>

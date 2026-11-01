@@ -26,6 +26,14 @@ import {
 import { parseBackendDate } from "../../utils/formatters.js";
 import "./Header.css";
 
+function getShortDisplayName(fullName) {
+  if (!fullName || typeof fullName !== "string") return "Quý khách";
+  const trimmed = fullName.trim();
+  if (!trimmed) return "Quý khách";
+  const parts = trimmed.split(/\s+/);
+  return parts[parts.length - 1] || "Quý khách";
+}
+
 const ROLE_CONFIGS = {
   CUSTOMER: {
     label: ROLE_BADGE_UPPER.CUSTOMER,
@@ -98,7 +106,8 @@ export default function Header({
   const currentRole = user?.role || "CUSTOMER";
   const roleConfig = ROLE_CONFIGS[currentRole] || ROLE_CONFIGS.CUSTOMER;
 
-  const resolvedHome = brandHref || "/";
+  const resolvedHome =
+    brandHref || (isAuthenticated && roleConfig.landing ? roleConfig.landing : "/");
   const resolvedRoleLabel =
     roleLabel !== undefined
       ? ROLE_BADGE_UPPER[roleLabel] || roleLabel
@@ -124,7 +133,7 @@ export default function Header({
     navLinks ||
     (isAuthenticated
       ? roleConfig.links
-      : [{ label: "Khám phá kho", href: "/browse" }]);
+      : []);
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -277,11 +286,14 @@ export default function Header({
         )}
 
         <div className="account-tools">
-          {resolvedRoleLabel && (
-            <span className="role-label role-label--adaptive">
-              {resolvedRoleLabel}
+          {isAuthenticated ? (
+            <span className="header-greeting">
+              <span className="header-greeting__prefix">Xin chào,</span>
+              <strong className="header-greeting__name">
+                {getShortDisplayName(user?.fullName)}
+              </strong>
             </span>
-          )}
+          ) : null}
           {rightContent ? (
             rightContent
           ) : (
@@ -456,6 +468,9 @@ export default function Header({
                 </div>
               ) : (
                 <div className="header-guest-actions">
+                  <Link to="/register" className="header-register-btn">
+                    Đăng ký
+                  </Link>
                   <Link to="/login" className="header-login-btn">
                     Đăng nhập
                   </Link>

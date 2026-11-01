@@ -64,7 +64,7 @@ export function RentalDepositCard({ reservation, depositText }) {
         </div>
 
         <p className="rd-card__hint">
-          Tiền cọc được giữ an toàn và sẽ được hoàn trả 100% vào tài khoản khi bạn kết thúc hợp đồng.
+          Tiền cọc được giữ an toàn và sẽ được hoàn trả 100% khi Quý khách hoàn tất thủ tục trả kho và thanh lý hợp đồng.
         </p>
       </div>
     </article>

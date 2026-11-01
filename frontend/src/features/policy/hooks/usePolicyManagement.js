@@ -58,10 +58,11 @@ export function usePolicyManagement() {
 
   // Khi persistedPolicy đổi, đồng bộ form draft
   const syncDraftFromPersisted = (policy) => {
-    setDraftBaseRates(policy.baseRates.map((r) => ({ ...r })));
-    setDraftLateFee(policy.surcharges.lateCheckoutPercent);
-    setDraftDeposit(policy.surcharges.depositPercent);
-    setDraftBufferDays(policy.surcharges.turnoverBufferDays);
+    if (!policy) return;
+    setDraftBaseRates(Array.isArray(policy.baseRates) ? policy.baseRates.map((r) => ({ ...r })) : []);
+    setDraftLateFee(policy.surcharges?.lateCheckoutPercent ?? "");
+    setDraftDeposit(policy.surcharges?.depositPercent ?? "");
+    setDraftBufferDays(policy.surcharges?.turnoverBufferDays ?? "");
     setValidationBanner(null);
   };
 
@@ -72,7 +73,7 @@ export function usePolicyManagement() {
 
   // Tính danh sách thay đổi (Pending Modifications) so với bản persisted
   const pendingModifications = useMemo(() => {
-    if (!persistedPolicy) return [];
+    if (!persistedPolicy || !persistedPolicy.baseRates || !persistedPolicy.surcharges) return [];
     const list = [];
 
     // Kiểm tra giá thuê
@@ -157,7 +158,7 @@ export function usePolicyManagement() {
       ...persistedPolicy,
       baseRates: draftBaseRates,
       surcharges: {
-        ...persistedPolicy.surcharges,
+        ...(persistedPolicy.surcharges || {}),
         lateCheckoutPercent: Number(draftLateFee),
         depositPercent: Number(draftDeposit),
         turnoverBufferDays: Number(draftBufferDays),
@@ -177,11 +178,17 @@ export function usePolicyManagement() {
     Number(draftBufferDays) > HARD_CAPS.TURNOVER_BUFFER_MAX_DAYS;
 
   const isLateFeeModified =
-    Number(draftLateFee) !== Number(persistedPolicy.surcharges.lateCheckoutPercent);
+    persistedPolicy?.surcharges
+      ? Number(draftLateFee) !== Number(persistedPolicy.surcharges.lateCheckoutPercent)
+      : false;
   const isDepositModified =
-    Number(draftDeposit) !== Number(persistedPolicy.surcharges.depositPercent);
+    persistedPolicy?.surcharges
+      ? Number(draftDeposit) !== Number(persistedPolicy.surcharges.depositPercent)
+      : false;
   const isBufferModified =
-    Number(draftBufferDays) !== Number(persistedPolicy.surcharges.turnoverBufferDays);
+    persistedPolicy?.surcharges
+      ? Number(draftBufferDays) !== Number(persistedPolicy.surcharges.turnoverBufferDays)
+      : false;
 
   // Xử lý chỉnh sửa đơn giá loại kho
   const handleRateChange = (id, newRawValue) => {

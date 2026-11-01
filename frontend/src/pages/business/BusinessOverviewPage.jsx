@@ -2,8 +2,7 @@ import { useNavigate, Link } from "react-router";
 import {
   DownloadSimple,
   CaretDown,
-  Warehouse,
-} from "@phosphor-icons/react";
+  } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   useBusinessOverview,
@@ -37,26 +36,7 @@ export default function BusinessOverviewPage() {
   return (
     <AppShell>
       <div className="biz-overview-page">
-        {/* ── 1. Telemetry Context Strip ── */}
-        <aside className="biz-telemetry">
-          <div className="biz-telemetry__inner">
-            <div className="biz-telemetry__left">
-              <div className="telemetry-item">
-                <Warehouse size={15} weight="duotone" className="text-muted" />
-                <span className="telemetry-bold">Cơ sở Tân Bình</span>
-                <span className="text-muted">(VN-SGN-01)</span>
-              </div>
-              <span className="telemetry-divider">|</span>
-              <div className="telemetry-item">
-                <span className="dot-pulse-green" />
-                <span className="text-success font-medium">Dữ liệu vận hành & sổ cái: Đã đồng bộ</span>
-              </div>
-            </div>
-            <div className="biz-telemetry__right">
-              <span className="tabular-clock">MÚI GIỜ: TP. HỒ CHÍ MINH (UTC+07)</span>
-            </div>
-          </div>
-        </aside>
+        
 
         {/* ── 2. Main Canvas ── */}
         <div className="biz-canvas">

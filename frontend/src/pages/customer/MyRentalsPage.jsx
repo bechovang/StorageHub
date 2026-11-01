@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Plus, ArrowClockwise, WarningCircle } from "@phosphor-icons/react";
+import { Plus, ArrowClockwise, WarningCircle, CreditCard } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   useMyRentals,
@@ -55,6 +55,14 @@ export default function MyRentalsPage() {
 
           <div className="my-rentals-page__header-actions">
             <Link
+              to="/payment"
+              className="rental-btn rental-btn--secondary"
+            >
+              <CreditCard size={15} weight="bold" />
+              Thanh toán & Hóa đơn
+            </Link>
+
+            <Link
               to="/browse"
               className="rental-btn rental-btn--primary"
             >
@@ -81,6 +89,18 @@ export default function MyRentalsPage() {
 
         {/* Operational Telemetry Context Bar */}
         <RentalTelemetry />
+
+        {/* Pending Deposit Warning Banner */}
+        {counts.pending > 0 && (
+          <div className="my-rentals-page__alert" role="alert">
+            <WarningCircle size={18} weight="fill" className="my-rentals-page__alert-icon" />
+            <div className="my-rentals-page__alert-content">
+              Quý khách có <strong>{counts.pending}</strong> đơn đang chờ thanh toán
+              tiền cọc (10%). Vui lòng hoàn tất thanh toán trước khi hết hạn để
+              bảo lưu quyền sử dụng kho.
+            </div>
+          </div>
+        )}
 
         {/* Error Notification */}
         {error && (

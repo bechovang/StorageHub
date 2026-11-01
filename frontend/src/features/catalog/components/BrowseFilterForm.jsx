@@ -8,10 +8,8 @@ export default function BrowseFilterForm({
   setSelectedType,
   selectedSize,
   setSelectedSize,
-  startDate,
-  setStartDate,
-  endDate,
-  setEndDate,
+  selectedFacility,
+  setSelectedFacility,
   onSearchSubmit,
 }) {
   return (
@@ -52,7 +50,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 2. Kích thước (m²) */}
+        {/* 3. Kích thước (m²) */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-size">
             Kích thước (m²)
@@ -72,36 +70,27 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 3. Ngày bắt đầu */}
+        {/* 4. Chọn cơ sở */}
         <div className="browse-filter-field">
-          <label className="browse-filter-field__label" htmlFor="filter-date">
-            Ngày bắt đầu
+          <label className="browse-filter-field__label" htmlFor="filter-facility">
+            Chọn cơ sở
           </label>
-          <input
-            id="filter-date"
-            type="date"
-            className="browse-filter-field__input"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
+          <select
+            id="filter-facility"
+            className="browse-filter-field__select"
+            value={selectedFacility}
+            onChange={(e) => setSelectedFacility(e.target.value)}
+          >
+            <option value="">Tất cả cơ sở</option>
+            {(filterOptions.facilities || []).map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* 4. Ngày kết thúc (thuê theo ngày) */}
-        <div className="browse-filter-field">
-          <label className="browse-filter-field__label" htmlFor="filter-end-date">
-            Ngày kết thúc
-          </label>
-          <input
-            id="filter-end-date"
-            type="date"
-            className="browse-filter-field__input"
-            value={endDate || ""}
-            min={startDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-
-        {/* 6. Nút tìm kiếm */}
+        {/* 5. Nút tìm kiếm */}
         <button id="browse-search-btn" type="submit" className="browse-filter-btn">
           <MagnifyingGlass size={18} weight="bold" aria-hidden="true" />
           <span>Tìm kiếm</span>

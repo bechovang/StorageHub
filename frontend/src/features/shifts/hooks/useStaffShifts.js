@@ -3,7 +3,6 @@ import { matchSearch } from "../../../utils/formatters.js";
 import {
   DAYS_OF_WEEK,
   ZONES,
-  INITIAL_STAFF,
   getStaffRoster,
   createShiftAssignment,
   deleteShiftAssignment,
@@ -16,7 +15,7 @@ export function useStaffShifts() {
   const [rawRoster, setRawRoster] = useState([]);
 
   // Form phân công mới
-  const [selectedStaffId, setSelectedStaffId] = useState(INITIAL_STAFF[0].id);
+  const [selectedStaffId, setSelectedStaffId] = useState([0].id);
   const [selectedZone, setSelectedZone] = useState(ZONES[0].code);
   const [selectedWindow, setSelectedWindow] = useState("MORNING");
   const [selectedDate, setSelectedDate] = useState(DAYS_OF_WEEK[0].key);
@@ -33,8 +32,8 @@ export function useStaffShifts() {
       setLoading(true);
       setError(null);
       const data = await getStaffRoster({
-        startDate: "2026-10-12",
-        endDate: "2026-10-18",
+        startDate: "2026-10-26",
+        endDate: "2026-11-01",
       });
       setRawRoster(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -48,8 +47,8 @@ export function useStaffShifts() {
   useEffect(() => {
     let ignore = false;
     getStaffRoster({
-      startDate: "2026-10-12",
-      endDate: "2026-10-18",
+      startDate: "2026-10-26",
+      endDate: "2026-11-01",
     })
       .then((data) => {
         if (!ignore) {
@@ -74,16 +73,10 @@ export function useStaffShifts() {
   const { staffRoster, allShifts, totalConflicts, staffList } = useMemo(() => {
     if (!rawRoster || rawRoster.length === 0) {
       return {
-        staffRoster: INITIAL_STAFF.map((s) => ({
-          ...s,
-          shifts: [],
-          hasConflict: false,
-          conflictCount: 0,
-          shiftCount: 0,
-        })),
+        staffRoster: [],
         allShifts: [],
         totalConflicts: 0,
-        staffList: INITIAL_STAFF,
+        staffList: [],
       };
     }
 
@@ -253,6 +246,7 @@ export function useStaffShifts() {
     totalConflicts,
     liveConflict,
     filteredRoster,
+    allShifts,
     handleSaveAssignment,
     handleRemoveShift,
   };

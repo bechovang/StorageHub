@@ -194,8 +194,8 @@ export default function CheckInPassPage() {
                             <div className={`cip__deadline-banner ${isOverdue ? "cip__deadline-banner--overdue" : "cip__deadline-banner--urgent"}`}>
                                 <Warning size={18} weight="fill" />
                                 {isOverdue
-                                    ? "Đơn này đã quá hạn nhận kho. Vui lòng liên hệ nhân viên quầy để được hỗ trợ nhé."
-                                    : `Lưu ý: Bạn còn ${days} ngày để đến nhận kho trước khi đơn bị hủy.`}
+                                    ? "Đơn đã quá hạn nhận kho. Quý khách vui lòng liên hệ nhân viên quầy để được hỗ trợ kịp thời."
+                                    : `Lưu ý: Quý khách còn ${days} ngày để đến nhận kho trước khi đơn bị hủy.`}
                             </div>
                         )}
 

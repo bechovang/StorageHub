@@ -5,22 +5,38 @@ import {
   Clock,
   Check,
   ShieldCheck,
+  Warehouse,
 } from "@phosphor-icons/react";
 
-export default function ShiftKpiGrid({ totalConflicts }) {
+export default function ShiftKpiGrid({
+  totalConflicts = 0,
+  staffRoster = [],
+  allShifts = [],
+}) {
+  const staffNames = staffRoster.map((s) => s.fullName).filter(Boolean);
+  const staffCount = staffRoster.length;
+  const shiftCount = allShifts.length;
+  const coveragePercent = Math.min(100, Math.round((shiftCount / 21) * 100));
+
+  const countZoneA = allShifts.filter((s) => s.zone && s.zone.includes("A")).length;
+  const countZoneB = allShifts.filter((s) => s.zone && s.zone.includes("B")).length;
+  const countZoneC = allShifts.filter((s) => s.zone && s.zone.includes("C")).length;
+
   return (
     <div className="shifts-kpi-grid">
       {/* KPI 1 */}
       <article className="shifts-kpi-card">
         <div className="shifts-kpi-card__head">
-          <span className="shifts-kpi-card__label">ĐANG TRỰC CA HÔM NAY</span>
+          <span className="shifts-kpi-card__label">NHÂN SỰ VẬN HÀNH</span>
           <Users size={20} className="shifts-kpi-card__icon" />
         </div>
-        <div className="shifts-kpi-card__val">3 Nhân sự</div>
-        <p className="shifts-kpi-card__desc">Minh Nguyễn, Mai Trần, Hùng Lê</p>
+        <div className="shifts-kpi-card__val">{staffCount} Nhân sự</div>
+        <p className="shifts-kpi-card__desc">
+          {staffNames.length > 0 ? staffNames.join(", ") : "Đang tải dữ liệu nhân sự..."}
+        </p>
         <div className="shifts-kpi-card__badge-row">
           <span className="badge badge--success">
-            <Check size={12} weight="bold" /> 100% đúng vị trí phân công
+            <Check size={12} weight="bold" /> 100% tài khoản đã kích hoạt
           </span>
         </div>
       </article>
@@ -31,10 +47,14 @@ export default function ShiftKpiGrid({ totalConflicts }) {
           <span className="shifts-kpi-card__label">ĐỘ PHỦ CA TUẦN NÀY</span>
           <CalendarCheck size={20} className="shifts-kpi-card__icon" />
         </div>
-        <div className="shifts-kpi-card__val">94.2%</div>
-        <p className="shifts-kpi-card__desc">33/35 khung giờ đã được lấp đầy</p>
+        <div className="shifts-kpi-card__val">{shiftCount} Ca trực</div>
+        <p className="shifts-kpi-card__desc">
+          {coveragePercent}% độ phủ khung giờ tiêu chuẩn trong tuần
+        </p>
         <div className="shifts-kpi-card__badge-row">
-          <span className="badge badge--warning">2 vị trí dự phòng cuối tuần</span>
+          <span className="badge badge--warning">
+            {shiftCount >= 7 ? "Đã bố trí ca các ngày" : "Đang hoàn thiện ca tuần"}
+          </span>
         </div>
       </article>
 
@@ -68,7 +88,7 @@ export default function ShiftKpiGrid({ totalConflicts }) {
         </div>
         <p className="shifts-kpi-card__desc">
           {totalConflicts > 0
-            ? "Zone B · Thứ 2, 12/10/2026 (Minh Nguyễn)"
+            ? `Phát hiện ${totalConflicts} ca trực bị chồng lấn khung giờ`
             : "Toàn bộ lịch trực đạt chuẩn không trùng lặp"}
         </p>
         <div className="shifts-kpi-card__badge-row">
@@ -78,7 +98,7 @@ export default function ShiftKpiGrid({ totalConflicts }) {
             </span>
           ) : (
             <span className="badge badge--success">
-              <ShieldCheck size={12} weight="bold" /> Lịch trực đã an toàn
+              <ShieldCheck size={12} weight="bold" /> Lịch trực an toàn
             </span>
           )}
         </div>
@@ -87,13 +107,15 @@ export default function ShiftKpiGrid({ totalConflicts }) {
       {/* KPI 4 */}
       <article className="shifts-kpi-card">
         <div className="shifts-kpi-card__head">
-          <span className="shifts-kpi-card__label">BÀN GIAO CA TIẾP THEO</span>
-          <Clock size={20} className="shifts-kpi-card__icon" />
+          <span className="shifts-kpi-card__label">PHÂN BỔ THEO PHÂN KHU</span>
+          <Warehouse size={20} className="shifts-kpi-card__icon" />
         </div>
-        <div className="shifts-kpi-card__val">15:00 ICT</div>
-        <p className="shifts-kpi-card__desc">Ca chiều — Phụ trách Zone C & Cổng</p>
+        <div className="shifts-kpi-card__val">3 Phân khu (A, B, C)</div>
+        <p className="shifts-kpi-card__desc">
+          Zone A: {countZoneA} ca · Zone B: {countZoneB} ca · Zone C: {countZoneC} ca
+        </p>
         <div className="shifts-kpi-card__badge-row">
-          <span className="badge badge--neutral">Còn 3h 18m trong ca hiện tại</span>
+          <span className="badge badge--neutral">Cơ sở Tân Bình</span>
         </div>
       </article>
     </div>

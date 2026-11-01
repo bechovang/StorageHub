@@ -17,10 +17,8 @@ export default function BrowsePage() {
     setSelectedType,
     selectedSize,
     setSelectedSize,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
+    selectedFacility,
+    setSelectedFacility,
     searchError,
     activeFilters,
     searchQuery,
@@ -43,6 +41,7 @@ export default function BrowsePage() {
     handleViewDetails,
     handleBook,
     activeTypeName,
+    activeFacilityName,
   } = useBrowseUnits();
 
   return (
@@ -58,7 +57,7 @@ export default function BrowsePage() {
               </h1>
               <p className="browse-banner__desc">
                 Kho tự quản sạch sẽ, an ninh 24/7, ra vào chủ động bằng mã PIN
-                riêng tại cơ sở Tân Bình.
+                riêng.
               </p>
             </div>
           </section>
@@ -72,10 +71,8 @@ export default function BrowsePage() {
           setSelectedType={setSelectedType}
           selectedSize={selectedSize}
           setSelectedSize={setSelectedSize}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
+          selectedFacility={selectedFacility}
+          setSelectedFacility={setSelectedFacility}
           onSearchSubmit={handleSearchSubmit}
         />
 
@@ -140,6 +137,19 @@ export default function BrowsePage() {
                 </span>
               )}
 
+              {activeFacilityName && (
+                <span className="browse-chip">
+                  Cơ sở: {activeFacilityName}
+                  <button
+                    type="button"
+                    className="browse-chip__remove"
+                    onClick={() => handleRemoveFilter("facilityId")}
+                    aria-label={`Xóa lọc cơ sở ${activeFacilityName}`}
+                  >
+                    <X size={12} weight="bold" />
+                  </button>
+                </span>
+              )}
             </div>
           </div>
 
@@ -175,7 +185,9 @@ export default function BrowsePage() {
             <Funnel size={36} color="var(--color-muted)" aria-hidden="true" />
             <h2 className="browse-empty__title">Không tìm thấy kho phù hợp</h2>
             <p className="browse-empty__desc">
-              "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê."
+              {activeFilters.facilityId && Number(activeFilters.facilityId) === 2
+                ? "Cơ sở Quận 7 hiện đang chuẩn bị khai trương nên chưa có kho khả dụng. Vui lòng chọn cơ sở Tân Bình hoặc bấm nút bên dưới để xem tất cả kho."
+                : "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc cơ sở."}
             </p>
             <button
               type="button"

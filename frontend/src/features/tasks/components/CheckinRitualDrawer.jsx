@@ -11,6 +11,8 @@ import {
   Eye,
   Camera,
   Image as ImageIcon,
+  Copy,
+  Check,
 } from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import Button from "../../../components/Button/Button.jsx";
@@ -23,6 +25,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [idVerified, setIdVerified] = useState(true);
   const [showFullPassModal, setShowFullPassModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
+  const [copiedPin, setCopiedPin] = useState(false);
 
   // Ảnh thực tế (Base64 URL) — chỉ giữ trong phiên, không cache localStorage
   const [paymentPhotoUrl, setPaymentPhotoUrl] = useState(
@@ -36,6 +39,17 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
 
   const paymentFileInputRef = useRef(null);
   const contractFileInputRef = useRef(null);
+
+  const handleCopyPin = async () => {
+    const pin = task?.accessPin || "8842-Active";
+    try {
+      await navigator.clipboard.writeText(pin);
+      setCopiedPin(true);
+      setTimeout(() => setCopiedPin(false), 1600);
+    } catch {
+      // ignore
+    }
+  };
 
   // Xử lý đọc file ảnh thật
   const handlePaymentFileSelect = (e) => {
@@ -90,18 +104,25 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
       <Drawer
         open={Boolean(task)}
         headerLabel={`QUY TRÌNH NHẬN KHO · ${task.refCode}`}
+        subtitle={`Kho ${task.unitCode} · Khách hàng: ${task.customerName}`}
+        badge={
+          <span className="ritual-step-badge ritual-step-badge--active font-mono">
+            BÀN GIAO TẠI QUẦY
+          </span>
+        }
         onClose={onClose}
+        size="lg"
       >
         <div className="ritual-flow">
           {/* ── BƯỚC 1: THẺ NHẬN KHO CHO STAFF ĐỐI CHIẾU ── */}
-          <div className="ritual-step-card is-completed">
+          <div className={`ritual-step-card ${idVerified ? "is-completed" : "needs-attention"}`}>
             <div className="ritual-step-header">
               <span className="ritual-step-title">
                 <ShieldCheck size={18} color="#16a34a" weight="bold" />
                 1. Thẻ nhận kho đối chiếu (Check-in Pass)
               </span>
-              <span style={{ fontSize: "0.75rem", color: "#16a34a", fontWeight: 700 }}>
-                ✓ ĐÃ CỌC 10% ONLINE
+              <span className={`ritual-step-badge ${idVerified ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+                {idVerified ? "✓ ĐÃ ĐỐI CHIẾU CCCD" : "⚠ CẦN ĐỐI CHIẾU"}
               </span>
             </div>
 
@@ -110,7 +131,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
               background: "#f8fafc",
               border: "1px solid #cbd5e1",
               padding: "12px",
-              marginTop: "8px",
+              marginTop: "4px",
               display: "flex",
               flexDirection: "column",
               gap: "8px",
@@ -144,7 +165,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
                     checked={idVerified}
                     onChange={(e) => setIdVerified(e.target.checked)}
                   />
-                  <span>Đã đối chiếu đúng CCCD & Thẻ nhận kho</span>
+                  <span>Đã đối chiếu đúng CCCD &amp; Thẻ nhận kho</span>
                 </label>
 
                 <button
@@ -160,15 +181,20 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
           </div>
 
           {/* ── BƯỚC 2: THU ĐỦ TIỀN THUÊ KỲ ĐẦU KÈM ẢNH MINH CHỨNG ── */}
-          <div className="ritual-step-card">
+          <div className={`ritual-step-card ${paymentPhotoUrl ? "is-completed" : "needs-attention"}`}>
             <div className="ritual-step-header">
               <span className="ritual-step-title">
                 <Receipt size={18} weight="bold" />
                 2. Thu đủ tiền thuê kỳ đầu tại quầy (Kèm ảnh)
               </span>
-              <strong style={{ color: "var(--color-accent)", fontSize: "0.95rem", fontFamily: "var(--font-mono)" }}>
-                {formatVnd(task.rentAmount || 1800000)}
-              </strong>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <strong style={{ color: "var(--color-accent, #dc2626)", fontSize: "0.95rem", fontFamily: "var(--font-mono)" }}>
+                  {formatVnd(task.rentAmount || 1800000)}
+                </strong>
+                <span className={`ritual-step-badge ${paymentPhotoUrl ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+                  {paymentPhotoUrl ? "✓ ĐÃ THU ĐỦ TIỀN" : "⚠ CHƯA ĐÍNH KÈM ẢNH"}
+                </span>
+              </div>
             </div>
             <p style={{ margin: "2px 0 8px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
               Quy định bắt buộc: Thu đủ 100% tiền thuê kỳ đầu và chụp ảnh biên nhận/giao dịch trước khi bàn giao.
@@ -179,7 +205,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
               <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "6px" }}>
                 PHƯƠNG THỨC THU TIỀN:
               </label>
-              <div style={{ display: "flex", gap: "16px", fontSize: "0.8rem" }}>
+              <div style={{ display: "flex", gap: "16px", fontSize: "0.8rem", flexWrap: "wrap" }}>
                 <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
                   <input
                     type="radio"
@@ -282,19 +308,24 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
           </div>
 
           {/* ── BƯỚC 3: ĐÍNH KÈM ẢNH HỢP ĐỒNG ĐÃ KÝ ── */}
-          <div className="ritual-step-card">
+          <div className={`ritual-step-card ${contractPhotoUrl ? "is-completed" : "needs-attention"}`}>
             <div className="ritual-step-header">
               <span className="ritual-step-title">
                 <FileText size={18} weight="bold" />
                 3. Chụp / Đính kèm ảnh hợp đồng đã ký
               </span>
-              <button
-                type="button"
-                style={{ background: "none", border: "none", color: "var(--color-primary)", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
-                onClick={() => setShowContractModal(true)}
-              >
-                Xem mẫu HĐ
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span className={`ritual-step-badge ${contractPhotoUrl ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+                  {contractPhotoUrl ? "✓ ĐÃ LƯU ẢNH HĐ" : "⚠ CHƯA CÓ ẢNH HĐ"}
+                </span>
+                <button
+                  type="button"
+                  style={{ background: "none", border: "none", color: "var(--color-primary)", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
+                  onClick={() => setShowContractModal(true)}
+                >
+                  Xem mẫu HĐ
+                </button>
+              </div>
             </div>
             <p style={{ margin: "2px 0 8px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
               In bản hợp đồng cho khách ký, sau đó chụp ảnh trang có chữ ký 2 bên để lưu vào hồ sơ lưu trữ điện tử.
@@ -362,24 +393,42 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
           </div>
 
           {/* ── BƯỚC 4: MỞ KHÓA MÃ PIN ACCESS CODE ── */}
-          <div className="ritual-step-card">
+          <div className={`ritual-step-card ${paymentPhotoUrl && contractPhotoUrl ? "is-completed" : ""}`}>
             <div className="ritual-step-header">
               <span className="ritual-step-title">
                 <Key size={18} weight="bold" />
                 4. Cấp mã PIN khóa điện tử cho khách
               </span>
+              <span className={`ritual-step-badge ${paymentPhotoUrl && contractPhotoUrl ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
+                {paymentPhotoUrl && contractPhotoUrl ? "✓ ĐÃ KÍCH HOẠT PIN" : "🔒 KHÓA BẢO MẬT"}
+              </span>
             </div>
             {paymentPhotoUrl && contractPhotoUrl ? (
               <div className="access-pin-reveal-box">
-                <p style={{ margin: 0, fontSize: "0.76rem", color: "#94a3b8" }}>MÃ SỐ BÀN GIAO CHO KHÁCH:</p>
-                <div className="access-pin-number">{task.accessPin || "8842-Active"}</div>
-                <p style={{ margin: 0, fontSize: "0.72rem", color: "#34d399" }}>
-                  ✓ Mã PIN đã được kích hoạt trên hệ thống khóa tự quản Cơ sở Tân Bình
-                </p>
+                <div className="access-pin-header">
+                  <span className="access-pin-label font-mono">MÃ SỐ BÀN GIAO CHO KHÁCH (ACCESS PIN):</span>
+                  <span className="access-pin-badge font-mono">ENCRYPTED IOT LOCK</span>
+                </div>
+                <div className="access-pin-row">
+                  <div className="access-pin-number font-mono">{task.accessPin || "8842-Active"}</div>
+                  <button
+                    type="button"
+                    className={`access-pin-copy-btn ${copiedPin ? "is-copied" : ""}`}
+                    onClick={handleCopyPin}
+                    title="Sao chép mã PIN nhanh"
+                    aria-label="Sao chép mã PIN nhanh"
+                  >
+                    {copiedPin ? <Check size={16} weight="bold" /> : <Copy size={16} weight="bold" />}
+                    <span>{copiedPin ? "ĐÃ CHÉP" : "CHÉP PIN"}</span>
+                  </button>
+                </div>
+                <div className="access-pin-note font-mono">
+                  ✓ Mã PIN tự động kích hoạt trên hệ thống khóa tự quản Cơ sở Tân Bình
+                </div>
               </div>
             ) : (
-              <div style={{ backgroundColor: "#f1f5f9", padding: "12px", fontSize: "0.78rem", color: "#64748b", textAlign: "center" }}>
-                🔒 Mã PIN sẽ hiển thị sau khi hoàn tất thu đủ tiền (kèm ảnh) và lưu ảnh hợp đồng ở Bước 2 &amp; 3.
+              <div style={{ backgroundColor: "#f1f5f9", padding: "14px", fontSize: "0.8rem", color: "#64748b", textAlign: "center", border: "1px dashed #cbd5e1" }}>
+                🔒 Mã PIN sẽ tự động hiển thị sau khi hoàn tất thu đủ tiền (kèm ảnh) và lưu ảnh hợp đồng ở Bước 2 &amp; 3.
               </div>
             )}
           </div>

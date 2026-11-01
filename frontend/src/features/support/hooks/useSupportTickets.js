@@ -1,4 +1,3 @@
-import { listMyReservations } from "../../../services/rentalService.js";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import {
@@ -7,6 +6,7 @@ import {
   resolveSupportTicket,
   escalateSupportTicket,
 } from "../../../services/ticketService.js";
+import { listMyReservations } from "../../../services/rentalService.js";
 
 export function useSupportTickets() {
   const { user } = useAuth();
@@ -39,38 +39,49 @@ export function useSupportTickets() {
     loadTickets();
   }, [loadTickets]);
 
-  // Modal tạo ticket
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  // Kho gặp sự cố: mặc định trống, khách CHỌN từ danh sách kho đang thuê (FR-23)
-  // Danh sách kho khách đang thuê (CHECKED_IN / CHECKOUT_REQUESTED) cho select
+  // Modal tạo ticket & Danh sách kho đang thuê
   const [rentedUnits, setRentedUnits] = useState([]);
-  useEffect(() => {
-    if (!isCustomer) return;
-    let ignore = false;
-    listMyReservations({ group: "active", page: 1, pageSize: 50 })
-      .then((data) => {
-        if (ignore) return;
-        const items = (data.items || []).filter((r) =>
-          ["CHECKED_IN", "CHECKOUT_REQUESTED"].includes(r.status)
-        );
-        setRentedUnits(items);
-        // Không có gì đang thuê thì không chọn sẵn gì cả
-      })
-      .catch(() => {
-        // Lỗi tải danh sách: để select rỗng, BE vẫn chặn khi submit
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [isCustomer]);
-
-  // Ticket đang xem chi tiết trong modal
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [detailTicket, setDetailTicket] = useState(null);
-
   const [unitCode, setUnitCode] = useState("");
   const [incidentType, setIncidentType] = useState("DEVICE_ISSUE");
   const [description, setDescription] = useState("");
   const [createError, setCreateError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    listMyReservations({ group: "active" })
+      .then((res) => {
+        if (!isMounted) return;
+        const activeList = res?.items || [];
+        const unitsMap = new Map();
+        activeList.forEach((r) => {
+          const code = r.unit?.code || r.unitCode;
+          if (code && !unitsMap.has(code)) {
+            unitsMap.set(code, {
+              code,
+              typeName: r.unit?.typeName || r.unit?.type || "Kho tiêu chuẩn",
+              sizeM2: r.unit?.sizeM2 || 5,
+              facilityName: r.unit?.facilityName || "Cơ sở Tân Bình",
+            });
+          }
+        });
+        const list = Array.from(unitsMap.values());
+        setRentedUnits(list);
+        if (list.length > 0) {
+          setUnitCode(list[0].code);
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setRentedUnits([]);
+        setUnitCode("");
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Modal xử lý (RESOLVE)
   const [resolveTargetTicket, setResolveTargetTicket] = useState(null);
@@ -167,11 +178,11 @@ export function useSupportTickets() {
     ticketsError,
     reloadTickets: loadTickets,
     filteredTickets,
+    rentedUnits,
     showCreateModal,
     setShowCreateModal,
     unitCode,
     setUnitCode,
-    rentedUnits,
     detailTicket,
     setDetailTicket,
     incidentType,

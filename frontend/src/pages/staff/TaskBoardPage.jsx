@@ -59,23 +59,7 @@ export default function TaskBoardPage() {
   return (
     <AppShell>
       <div className="taskboard-container">
-        {/* ── Sub-header / Context Bar ── */}
-        <div className="taskboard-context-bar">
-          <div className="taskboard-context-left">
-            <MapPin size={15} weight="bold" />
-            <span>Cơ sở: <strong>Cơ sở Tân Bình (VN-SGN-01)</strong></span>
-            <span style={{ color: "var(--color-line)" }}>/</span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "var(--color-status-success)" }}>
-              <span className="status-dot-pulse" />
-              Cổng tự động: Online
-            </span>
-          </div>
-
-          <div className="taskboard-context-right">
-            <Clock size={15} weight="bold" />
-            <span>Thời gian trực ca: <strong>08:42 ICT (UTC+7)</strong></span>
-          </div>
-        </div>
+        
 
         {/* ── Main Canvas ── */}
         <div className="taskboard-main">

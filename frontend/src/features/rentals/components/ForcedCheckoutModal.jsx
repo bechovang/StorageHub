@@ -80,8 +80,8 @@ export default function ForcedCheckoutModal({
               value={checkoutType}
               onChange={(e) => setCheckoutType(e.target.value)}
             >
-              <option value="VIOLATION">Đuổi vì vi phạm (VIOLATION)</option>
-              <option value="TRANSFER">Trả sớm để điều chuyển (TRANSFER)</option>
+              <option value="VIOLATION">Thu hồi do vi phạm quy định</option>
+              <option value="TRANSFER">Thu hồi để điều chuyển kho</option>
             </select>
           </div>
 
