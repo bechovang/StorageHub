@@ -71,6 +71,13 @@ export async function getStaffTasks() {
 /**
  * Cập nhật trạng thái nhiệm vụ (To do -> In progress -> Done): PATCH /api/v1/tasks/{taskId}/status
  */
+export async function getTaskDetail(taskId) {
+  const res = await apiClient(`/api/v1/tasks/${taskId}`, { method: "GET" });
+  const data = await safeParseJson(res);
+  if (!res.ok) throw new Error(data.message || "Không thể tải chi tiết nhiệm vụ.");
+  return data;
+}
+
 export async function updateTaskStatus(taskId, newStatus) {
   const res = await apiClient(`/api/v1/tasks/${taskId}/status`, {
     method: "PATCH",

@@ -148,7 +148,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findWithStaffById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
 
-        return toTaskResponse(task, getCurrentShift(), null, null, null, null);
+        return toTaskResponse(task, getCurrentShift(), null, null, null, null, true);
     }
 
     @Override
@@ -374,6 +374,18 @@ public class TaskServiceImpl implements TaskService {
             String customAlertNote,
             String customIssueDesc
     ) {
+        return toTaskResponse(task, shift, customDueTime, customPriority, customAlertNote, customIssueDesc, false);
+    }
+
+    private TaskResponse toTaskResponse(
+            Task task,
+            StaffAssignment.Shift shift,
+            String customDueTime,
+            String customPriority,
+            String customAlertNote,
+            String customIssueDesc,
+            boolean includePhotos
+    ) {
         String refCode = task.getRefCode();
         String unitCode = "Unit S-3";
         String customerName = "Nguyễn Thị Lan";
@@ -514,7 +526,10 @@ public class TaskServiceImpl implements TaskService {
                 issueDesc,
                 alertNote,
                 assignedStaffDto,
-                ritual
+                ritual,
+                includePhotos ? task.getPaymentProofPhoto() : null,
+                includePhotos ? task.getContractPhoto() : null,
+                includePhotos ? task.getSettlementPhoto() : null
         );
     }
 
@@ -703,6 +718,7 @@ public class TaskServiceImpl implements TaskService {
 
         // 7. Task DONE + báo khách
         task.setStatus(Task.Status.DONE);
+        task.setSettlementPhoto(request.settlementPhotoUrl());
         Task saved = taskRepository.save(task);
         notificationService.notifySettlementCompleted(reservation, refundAmount);
 
@@ -810,6 +826,8 @@ public class TaskServiceImpl implements TaskService {
                     .orElseThrow(() -> new TaskNotFoundException(taskId));
             String oldStatus = current.getStatus().name();
             current.setStatus(Task.Status.DONE);
+            current.setPaymentProofPhoto(request.paymentProofPhoto());
+            current.setContractPhoto(request.contractPhotoUrl());
             Task done = taskRepository.save(current);
             logService.log(staff, "TASK", done.getTaskId(),
                     "STATUS_CHANGED", oldStatus, "DONE",

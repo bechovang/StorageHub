@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
-import { TASK_TYPES } from "../../../services/taskService.js";
+import { TASK_TYPES, getTaskDetail } from "../../../services/taskService.js";
 
 const STATUS_LABEL = {
   TODO: "Chờ xử lý",
@@ -17,8 +18,28 @@ function fmtVND(v) {
  * (trước đây thẻ hoàn thành không còn nút nào để xem lại thông tin).
  */
 export function TaskDetailModal({ task, onClose }) {
-  if (!task) return null;
-  const typeConfig = TASK_TYPES[task.type] || TASK_TYPES.CHECK_IN;
+  const [detail, setDetail] = useState(task);
+
+  // List không mang ảnh Base64 (payload nặng); mở modal mới lấy chi tiết đầy đủ.
+  useEffect(() => {
+    let ignore = false;
+    setDetail(task);
+    if (!task?.taskId) return undefined;
+    getTaskDetail(task.taskId)
+      .then((full) => {
+        if (!ignore) setDetail(full);
+      })
+      .catch(() => {
+        // Giữ dữ liệu list nếu API chi tiết lỗi
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [task]);
+
+  if (!detail) return null;
+  const taskView = detail;
+  const typeConfig = TASK_TYPES[taskView.type] || TASK_TYPES.CHECK_IN;
 
   return (
     <Modal isOpen={Boolean(task)} onClose={onClose} title={`CHI TIẾT NHIỆM VỤ · ${typeConfig.label}`}>
@@ -27,77 +48,92 @@ export function TaskDetailModal({ task, onClose }) {
           <span className="task-type-badge" style={{ backgroundColor: typeConfig.bg, color: typeConfig.color }}>
             {typeConfig.label}
           </span>
-          <span className={`status-ticket-chip ${task.status === "DONE" ? "status-ticket--resolved" : "status-ticket--progress"}`}>
-            {STATUS_LABEL[task.status] || task.status}
+          <span className={`status-ticket-chip ${taskView.status === "DONE" ? "status-ticket--resolved" : "status-ticket--progress"}`}>
+            {STATUS_LABEL[taskView.status] || taskView.status}
           </span>
         </div>
 
         <dl className="task-detail__grid">
           <div>
             <dt>Mã tham chiếu</dt>
-            <dd className="font-mono">{task.refCode || "—"}</dd>
+            <dd className="font-mono">{taskView.refCode || "—"}</dd>
           </div>
           <div>
             <dt>Kho</dt>
-            <dd className="font-mono">{task.unitCode || "—"}</dd>
+            <dd className="font-mono">{taskView.unitCode || "—"}</dd>
           </div>
           <div>
             <dt>Khách hàng</dt>
             <dd>
-              {task.customerName || "—"}
-              {task.customerPhone ? ` · ${task.customerPhone}` : ""}
+              {taskView.customerName || "—"}
+              {taskView.customerPhone ? ` · ${taskView.customerPhone}` : ""}
             </dd>
           </div>
           <div>
             <dt>Ngày làm việc</dt>
-            <dd>{task.workDate || "—"}</dd>
+            <dd>{taskView.workDate || "—"}</dd>
           </div>
           <div>
             <dt>Hạn trong ca</dt>
-            <dd>{task.dueTime || "—"}</dd>
+            <dd>{taskView.dueTime || "—"}</dd>
           </div>
           <div>
             <dt>Người phụ trách</dt>
-            <dd>{task.assignedStaff?.fullName || "—"}</dd>
+            <dd>{taskView.assignedStaff?.fullName || "—"}</dd>
           </div>
-          {task.accessPin && (
+          {taskView.accessPin && (
             <div>
               <dt>Mã truy cập</dt>
-              <dd className="font-mono">{task.accessPin}</dd>
+              <dd className="font-mono">{taskView.accessPin}</dd>
             </div>
           )}
-          {task.rentAmount != null && (
+          {taskView.rentAmount != null && (
             <div>
               <dt>Tiền thuê cần thu</dt>
-              <dd>{fmtVND(task.rentAmount)}</dd>
+              <dd>{fmtVND(taskView.rentAmount)}</dd>
             </div>
           )}
-          {task.depositPaid != null && (
+          {taskView.depositPaid != null && (
             <div>
               <dt>Cọc đã giữ</dt>
-              <dd>{fmtVND(task.depositPaid)}</dd>
+              <dd>{fmtVND(taskView.depositPaid)}</dd>
             </div>
           )}
-          {task.priority && (
+          {taskView.priority && (
             <div>
               <dt>Ưu tiên</dt>
-              <dd>{task.priority}</dd>
+              <dd>{taskView.priority}</dd>
             </div>
           )}
         </dl>
 
-        {task.issueDescription && (
+        {taskView.issueDescription && (
           <section className="task-detail__section">
             <h4>Mô tả sự cố</h4>
-            <p>{task.issueDescription}</p>
+            <p>{taskView.issueDescription}</p>
           </section>
         )}
-        {task.alertNote && (
+        {taskView.alertNote && (
           <section className="task-detail__section">
             <h4>Cảnh báo</h4>
-            <p>{task.alertNote}</p>
+            <p>{taskView.alertNote}</p>
           </section>
         )}
+
+        {[
+          ["Ảnh chứng từ thu tiền", taskView.paymentProofPhotoUrl],
+          ["Ảnh hợp đồng đã ký", taskView.contractPhotoUrl],
+          ["Ảnh biên bản thanh lý", taskView.settlementPhotoUrl],
+        ]
+          .filter(([, src]) => src)
+          .map(([label, src]) => (
+            <section className="task-detail__section" key={label}>
+              <h4>{label}</h4>
+              <a href={src} target="_blank" rel="noreferrer">
+                <img className="task-detail__photo" src={src} alt={label} />
+              </a>
+            </section>
+          ))}
       </div>
     </Modal>
   );
