@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router";
-import { CaretDown, FileText, ShieldCheck, SignOut } from "@phosphor-icons/react";
+import { CaretDown, SignOut } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { getRoleLabel } from "../../utils/statusLabels.js";
 
@@ -70,23 +69,6 @@ export default function UserAvatarMenu({ className = "", avatarText = null }) {
               {getRoleLabel(currentRole)}
             </span>
           </div>
-          <div className="header-dropdown__divider" />
-          <Link
-            to="/terms"
-            className="header-dropdown__item"
-            onClick={() => setShowAvatarMenu(false)}
-          >
-            <FileText size={16} />
-            <span>Điều khoản Dịch vụ</span>
-          </Link>
-          <Link
-            to="/privacy"
-            className="header-dropdown__item"
-            onClick={() => setShowAvatarMenu(false)}
-          >
-            <ShieldCheck size={16} />
-            <span>Chính sách Bảo mật</span>
-          </Link>
           <div className="header-dropdown__divider" />
           <button
             type="button"
