@@ -13,8 +13,7 @@ Các API phục vụ tìm kiếm kho, xem thông số kỹ thuật, phân trang,
 ```json
 {
   "facilities": [
-    { "id": 1, "name": "Cơ sở Tân Bình (Đang mở)", "address": "123 Hoàng Văn Thụ, Tân Bình" },
-    { "id": 2, "name": "Cơ sở Quận 7 (Sắp mở)", "address": "Khu đô thị Phú Mỹ Hưng, Quận 7" }
+    { "id": 1, "name": "Cơ sở Tân Bình (Đang mở)", "address": "123 Hoàng Văn Thụ, Tân Bình" }
   ],
   "types": [
     { "id": 1, "name": "Locker", "sizeM2": 1.5, "baseMonthlyRent": 100000 },
@@ -45,10 +44,10 @@ Các API phục vụ tìm kiếm kho, xem thông số kỹ thuật, phân trang,
   - Quản lý bộ lọc & Đặt lại: `handleResetFilters`, `handleRemoveFilter`.
   - Kết hợp với component `Pagination.jsx` hiển thị thanh chuyển trang tối giản căn giữa (không viền, nền trong suốt, loại bỏ dòng text phụ "Hiển thị...") với nút *Trước / Sau* và danh sách số trang.
 - **Trạng thái Trống (Empty State) & Nút Xóa bộ lọc**:
-  - Khi không tìm thấy kho phù hợp (ví dụ người dùng chọn lọc theo cơ sở *"Cơ sở Quận 7 (Sắp mở)"* hoặc tổ hợp tiêu chí không có sẵn), giao diện hiển thị khối Empty State (`.browse-empty`):
+  - Khi không tìm thấy kho phù hợp (ví dụ người dùng chọn lọc tổ hợp tiêu chí không có sẵn), giao diện hiển thị khối Empty State (`.browse-empty`):
     - Biểu tượng phễu lọc `Funnel`.
     - Tiêu đề: `"Không tìm thấy kho phù hợp"`.
-    - Lời giải thích trực quan: Nếu chọn Cơ sở Quận 7, hiển thị thông điệp thông báo cơ sở sắp khai trương: *"Cơ sở Quận 7 hiện đang chuẩn bị khai trương nên chưa có kho khả dụng. Vui lòng chọn cơ sở Tân Bình hoặc bấm nút bên dưới để xem tất cả kho."*
+    - Lời giải thích trực quan: Hiển thị thông điệp thông báo chuẩn hóa: *"Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc bấm nút bên dưới để xem tất cả kho."*
     - Nút CTA chuẩn Swiss Neo-Brutalist: **"Xóa bộ lọc & Xem tất cả kho"** (`.browse-empty__btn`) với hiệu ứng đổ bóng `--btn-shadow` và transform nhấn nhả, click vào sẽ xóa sạch bộ lọc và lập tức tải lại đầy đủ 40 kho khả dụng.
 - **Response Thành Công (`200 OK`)**:
 ```json

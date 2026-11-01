@@ -57,7 +57,7 @@ export default function InternalTopBar({ onToggleMobileSidebar = () => {} }) {
           {/* Huy hiệu trạng thái cơ sở */}
           <div className="internal-topbar__facility-pill" title="Hệ thống vận hành trực tuyến">
             <span className="internal-topbar__pulse-dot" />
-            <span className="internal-topbar__facility-name">Chi nhánh Quận 7</span>
+            <span className="internal-topbar__facility-name">Cơ sở Tân Bình</span>
             <span className="internal-topbar__facility-status">• Online</span>
           </div>
 
