@@ -143,45 +143,64 @@ export default function InternalSidebar({
         }`}
         aria-label="Thanh điều hướng nội bộ"
       >
-        {/* Header của Sidebar: Logo & Nút đóng Mobile */}
+        {/* Header của Sidebar: Logo & Nút thu gọn / Nút đóng Mobile */}
         <div className="internal-sidebar__header">
-          <Link
-            to={
-              currentRole === "FACILITY_MANAGER"
-                ? "/facility"
-                : currentRole === "BUSINESS_OPS"
-                ? "/overview"
-                : currentRole === "SYSTEM_ADMIN"
-                ? "/users"
-                : "/tasks"
-            }
-            className="internal-sidebar__brand"
-            title="StorageHub Nội Bộ"
-          >
-            <span className="internal-sidebar__mark" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </span>
-            {!isCollapsed && (
-              <div className="internal-sidebar__brand-text">
-                <span className="internal-sidebar__title">STORAGEHUB</span>
-                <span className="internal-sidebar__badge">
-                  {getRoleLabel(currentRole)}
-                </span>
-              </div>
-            )}
-          </Link>
+          <div className="internal-sidebar__header-left">
+            <Link
+              to={
+                currentRole === "FACILITY_MANAGER"
+                  ? "/facility"
+                  : currentRole === "BUSINESS_OPS"
+                  ? "/overview"
+                  : currentRole === "SYSTEM_ADMIN"
+                  ? "/users"
+                  : "/tasks"
+              }
+              className="internal-sidebar__brand"
+              title="StorageHub Nội Bộ"
+            >
+              <span className="internal-sidebar__mark" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
+              {!isCollapsed && (
+                <div className="internal-sidebar__brand-text">
+                  <span className="internal-sidebar__title">STORAGEHUB</span>
+                  <span className="internal-sidebar__badge">
+                    {getRoleLabel(currentRole)}
+                  </span>
+                </div>
+              )}
+            </Link>
+          </div>
 
-          {/* Nút đóng trên mobile */}
-          <button
-            type="button"
-            className="internal-sidebar__close-btn"
-            onClick={onCloseMobile}
-            aria-label="Đóng bảng điều hướng"
-          >
-            <X size={20} weight="bold" />
-          </button>
+          <div className="internal-sidebar__header-actions">
+            {/* Nút thu gọn / mở rộng đặt cạnh logo */}
+            <button
+              type="button"
+              className="internal-sidebar__collapse-btn"
+              onClick={toggleCollapse}
+              aria-label={isCollapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+              title={isCollapsed ? "Mở rộng (240px)" : "Thu gọn thanh bên"}
+            >
+              {isCollapsed ? (
+                <CaretRight size={14} weight="bold" />
+              ) : (
+                <CaretLeft size={16} weight="bold" />
+              )}
+            </button>
+
+            {/* Nút đóng trên mobile */}
+            <button
+              type="button"
+              className="internal-sidebar__close-btn"
+              onClick={onCloseMobile}
+              aria-label="Đóng bảng điều hướng"
+            >
+              <X size={18} weight="bold" />
+            </button>
+          </div>
         </div>
 
         {/* Nội dung danh sách điều hướng theo phân nhóm */}
@@ -230,26 +249,6 @@ export default function InternalSidebar({
             </div>
           ))}
         </nav>
-
-        {/* Chân Sidebar: Nút co giãn Rail Desktop */}
-        <div className="internal-sidebar__footer">
-          <button
-            type="button"
-            className="internal-sidebar__collapse-btn"
-            onClick={toggleCollapse}
-            aria-label={isCollapsed ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng"}
-            title={isCollapsed ? "Mở rộng (240px)" : "Thu gọn (64px)"}
-          >
-            {isCollapsed ? (
-              <CaretRight size={18} weight="bold" />
-            ) : (
-              <>
-                <CaretLeft size={18} weight="bold" />
-                <span className="internal-sidebar__collapse-text">Thu gọn thanh bên</span>
-              </>
-            )}
-          </button>
-        </div>
       </aside>
     </>
   );

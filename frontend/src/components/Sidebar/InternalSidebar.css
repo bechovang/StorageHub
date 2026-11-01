@@ -53,21 +53,34 @@
   min-width: var(--sidebar-collapsed-width);
 }
 
-/* ── Header của Sidebar ── */
+/* ── Header của Sidebar (Logo + Nút thu gọn bên cạnh) ── */
 .internal-sidebar__header {
   height: 54px;
   min-height: 54px;
-  padding: 0 16px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: var(--border);
   background: var(--color-surface);
+  gap: 8px;
 }
 
 .internal-sidebar.is-collapsed .internal-sidebar__header {
-  padding: 0;
+  padding: 0 6px;
   justify-content: center;
+  gap: 4px;
+}
+
+.internal-sidebar__header-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.internal-sidebar.is-collapsed .internal-sidebar__header-left {
+  flex: 0 0 auto;
 }
 
 .internal-sidebar__brand {
@@ -86,6 +99,11 @@
   grid-template-columns: repeat(3, 1fr);
   border: var(--border-strong);
   flex-shrink: 0;
+}
+
+.internal-sidebar.is-collapsed .internal-sidebar__mark {
+  width: 24px;
+  height: 24px;
 }
 
 .internal-sidebar__mark i {
@@ -122,6 +140,49 @@
   color: var(--color-accent);
   text-transform: uppercase;
   line-height: 1;
+}
+
+.internal-sidebar__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Nút thu gọn / mở rộng đặt bên cạnh logo */
+.internal-sidebar__collapse-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-line);
+  color: var(--color-secondary);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.12s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.internal-sidebar__collapse-btn:hover {
+  background: var(--color-neutral);
+  color: var(--color-ink);
+  border-color: var(--color-line-strong);
+}
+
+.internal-sidebar.is-collapsed .internal-sidebar__collapse-btn {
+  width: 22px;
+  height: 24px;
+  background: var(--color-neutral);
+  border-color: var(--color-line);
+}
+
+.internal-sidebar.is-collapsed .internal-sidebar__collapse-btn:hover {
+  background: var(--color-ink);
+  color: var(--color-surface);
+  border-color: var(--color-ink);
 }
 
 .internal-sidebar__close-btn {
@@ -265,49 +326,6 @@
   background: var(--color-accent);
 }
 
-/* ── Chân Sidebar: Nút co giãn Rail ── */
-.internal-sidebar__footer {
-  padding: 10px;
-  border-top: var(--border);
-  background: var(--color-surface);
-}
-
-.internal-sidebar.is-collapsed .internal-sidebar__footer {
-  padding: 10px 8px;
-}
-
-.internal-sidebar__collapse-btn {
-  width: 100%;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--color-neutral);
-  border: 1px solid var(--color-line);
-  color: var(--color-secondary);
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: var(--radius);
-  transition: all 0.12s ease;
-}
-
-.internal-sidebar.is-collapsed .internal-sidebar__collapse-btn {
-  padding: 0;
-}
-
-.internal-sidebar__collapse-btn:hover {
-  background: var(--color-disabled);
-  color: var(--color-ink);
-  border-color: var(--color-line-strong);
-}
-
-.internal-sidebar__collapse-text {
-  white-space: nowrap;
-}
-
 /* ── Di động & Tablet (< 1024px): Slide-over Drawer ── */
 @media (max-width: 1023px) {
   .internal-sidebar {
@@ -332,7 +350,7 @@
     display: flex;
   }
 
-  .internal-sidebar__footer {
+  .internal-sidebar__collapse-btn {
     display: none;
   }
 }
