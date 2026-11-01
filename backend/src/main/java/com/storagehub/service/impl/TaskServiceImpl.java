@@ -210,6 +210,59 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public com.storagehub.dto.task.ContractPreviewResponse getContractPreview(Long taskId) {
+        Task task = taskRepository.findWithStaffById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        String refCode = task.getRefCode();
+        Reservation reservation = null;
+        if (refCode != null && refCode.startsWith("BK-")) {
+            reservation = reservationRepository.findByCode(refCode).orElse(null);
+        } else if (refCode != null && refCode.startsWith("CT-")) {
+            reservation = contractRepository.findByCode(refCode)
+                    .map(Contract::getReservation)
+                    .orElse(null);
+        }
+        if (reservation == null) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Nhiệm vụ này không gắn với hợp đồng thuê kho.");
+        }
+
+        Unit unit = unitRepository.findWithDetailsById(reservation.getUnit().getUnitId())
+                .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException("Không tìm thấy kho."));
+        LocalDate startDate = reservation.getStartDate();
+        LocalDate endDate = reservation.getEndDate();
+        int durationDays = (int) java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        if (durationDays < 1) {
+            durationDays = 1;
+        }
+        var quote = pricingEngine.calculateQuote(unit, startDate, endDate);
+        long totalRent = quote.totalRent();
+        long dailyRent = totalRent / durationDays;
+        long depositPaid = reservation.getDepositAmount() != null
+                ? reservation.getDepositAmount().longValue()
+                : quote.depositAmount();
+
+        return new com.storagehub.dto.task.ContractPreviewResponse(
+                reservation.getCode(),
+                startDate,
+                endDate,
+                durationDays,
+                dailyRent,
+                totalRent,
+                depositPaid,
+                unit.getCode(),
+                unit.getType() != null ? unit.getType().getName() : "Kho lưu trữ",
+                unit.getSizeM2(),
+                unit.getAccessType(),
+                reservation.getCustomer() != null ? reservation.getCustomer().getFullName() : null,
+                reservation.getCustomer() != null ? reservation.getCustomer().getPhone() : null,
+                reservation.getCustomer() != null ? reservation.getCustomer().getEmail() : null
+        );
+    }
+
+    @Override
     public TaskResponse autoCreateTask(CreateTaskRequest request) {
         // 1. Xác định Unit liên kết
         Unit unit = resolveUnit(request);
