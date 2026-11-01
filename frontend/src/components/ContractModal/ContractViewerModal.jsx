@@ -44,7 +44,8 @@ export default function ContractViewerModal({
   const customerPhone = usr.phone || res.customerPhone || "";
   const customerEmail = usr.email || "";
   const unitCode = u.code || res.unitCode || "—";
-  const typeName = u.typeName || "Kho lưu trữ";
+  const rawTypeName = u.typeName || "Kho lưu trữ";
+  const typeName = /^kho/i.test(rawTypeName) ? rawTypeName : `Kho ${rawTypeName}`;
   const sizeM2 = u.sizeM2 || 0;
   const volumeM3 = (sizeM2 * 2.8).toFixed(1);
   const dailyRent = u.baseDailyRent || res.dailyRent || (u.baseMonthlyRent ? Math.round(u.baseMonthlyRent / 30) : 0);
