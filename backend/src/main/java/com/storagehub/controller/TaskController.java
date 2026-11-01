@@ -42,10 +42,11 @@ public class TaskController {
             @RequestParam(name = "shift", required = false) StaffAssignment.Shift shift,
             @RequestParam(name = "type", required = false) Task.Type type,
             @RequestParam(name = "status", required = false) Task.Status status,
+            @RequestParam(name = "staffId", required = false) Long staffId,
             Authentication authentication
     ) {
         String email = authentication != null ? authentication.getName() : "";
-        List<TaskResponse> tasks = taskService.getTasks(email, workDate, shift, type, status);
+        List<TaskResponse> tasks = taskService.getTasks(email, workDate, shift, type, status, staffId);
         return ResponseEntity.ok(tasks);
     }
 

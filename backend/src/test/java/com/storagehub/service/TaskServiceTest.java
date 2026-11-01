@@ -146,7 +146,7 @@ class TaskServiceTest {
         when(userRepository.findByEmailIgnoreCase("minh@demo.storagehub.vn")).thenReturn(Optional.of(staffUser));
         when(taskRepository.findFilteredTasks(eq(2L), eq(today), eq(null), eq(null))).thenReturn(List.of(task1, task2));
 
-        List<TaskResponse> result = taskService.getTasks("minh@demo.storagehub.vn", null, null, null, null);
+        List<TaskResponse> result = taskService.getTasks("minh@demo.storagehub.vn", null, null, null, null, null);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).taskId()).isEqualTo(1L);
@@ -162,7 +162,7 @@ class TaskServiceTest {
     void testGetTasks_AccessDeniedForCustomer() {
         when(userRepository.findByEmailIgnoreCase("lan@demo.storagehub.vn")).thenReturn(Optional.of(customerUser));
 
-        assertThatThrownBy(() -> taskService.getTasks("lan@demo.storagehub.vn", null, null, null, null))
+        assertThatThrownBy(() -> taskService.getTasks("lan@demo.storagehub.vn", null, null, null, null, null))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("Chỉ Staff hoặc Quản lý mới có quyền truy cập Task Board");
     }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Clock,
   MapPin,
@@ -6,6 +6,8 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { getStaffRoster } from "../../services/shiftService.js";
 import { TASK_TYPES, TASK_STATUSES } from "../../services/taskService.js";
 import {
   useTaskBoard,
@@ -21,6 +23,25 @@ import {
 import "./TaskBoardPage.css";
 
 export default function TaskBoardPage() {
+  const { user } = useAuth();
+  const isSupervisor =
+    user?.role === "FACILITY_MANAGER" || user?.role === "SYSTEM_ADMIN";
+  const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [staffList, setStaffList] = useState([]);
+
+  useEffect(() => {
+    if (!isSupervisor) return;
+    getStaffRoster()
+      .then((rows) =>
+        setStaffList(
+          (Array.isArray(rows) ? rows : []).filter(
+            (row) => row.status !== "INACTIVE" && row.status !== "LOCKED"
+          )
+        )
+      )
+      .catch((err) => console.error("Failed to fetch staff roster:", err));
+  }, [isSupervisor]);
+
   // Task đang xem chi tiết read-only (mở được cả khi DONE)
   const [detailTask, setDetailTask] = useState(null);
   const {
@@ -54,7 +75,9 @@ export default function TaskBoardPage() {
     handleDrop,
     getColTasks,
     taskTypeCounts,
-  } = useTaskBoard();
+  } = useTaskBoard({
+    staffId: isSupervisor && selectedStaffId ? Number(selectedStaffId) : undefined,
+  });
 
   return (
     <AppShell>
@@ -67,16 +90,36 @@ export default function TaskBoardPage() {
           <div className="taskboard-header">
             <div className="taskboard-title-group">
               <h1>
-                <span>Hôm nay · Ca sáng</span>
-                <span className="shift-badge">Ca đang trực</span>
+                <span>{isSupervisor ? "Hôm nay · Giám sát" : "Hôm nay · Ca sáng"}</span>
+                {!isSupervisor && <span className="shift-badge">Ca đang trực</span>}
               </h1>
               <p className="taskboard-subtitle">
-                Khung giờ ca: <strong>07:00 – 15:00</strong> · <strong>{tasks.length} nhiệm vụ hôm nay</strong> ·{" "}
+                {isSupervisor ? (
+                  <><strong>{tasks.length} nhiệm vụ hôm nay</strong> ·{" "}</>
+                ) : (
+                  <>Khung giờ ca: <strong>07:00 – 15:00</strong> · <strong>{tasks.length} nhiệm vụ hôm nay</strong> ·{" "}</>
+                )}
                 <span style={{ color: "var(--color-accent)", fontWeight: 700 }}>
                   {tasks.filter((t) => t.type === "CHECK_IN" && t.status !== "DONE").length} đơn chờ check-in
                 </span>
               </p>
             </div>
+            {isSupervisor && (
+              <label className="taskboard-staff-filter">
+                <span>Nhân viên</span>
+                <select
+                  value={selectedStaffId}
+                  onChange={(e) => setSelectedStaffId(e.target.value)}
+                >
+                  <option value="">Tất cả nhân viên</option>
+                  {staffList.map((staff) => (
+                    <option key={staff.staffId} value={staff.staffId}>
+                      {staff.fullName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
 
           {/* Filter Tabs Bar */}
@@ -134,6 +177,7 @@ export default function TaskBoardPage() {
                     onOpenCleaning={setActiveCleaningTask}
                     onOpenSupport={setActiveSupportTask}
                     onOpenContract={setActiveContractTask}
+                    showAssignee={isSupervisor && !selectedStaffId}
                   />
                 );
               })}

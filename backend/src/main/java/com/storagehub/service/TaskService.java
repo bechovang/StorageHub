@@ -25,7 +25,8 @@ public interface TaskService {
             LocalDate workDate,
             StaffAssignment.Shift shift,
             Task.Type type,
-            Task.Status status
+            Task.Status status,
+            Long staffId
     );
 
     /**
