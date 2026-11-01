@@ -6,14 +6,14 @@ import {
 } from "@phosphor-icons/react";
 import {
   DAYS_OF_WEEK,
-  ZONES,
+  UNIT_TYPES,
   } from "../../../services/shiftService.js";
 
 export default function ShiftAssignmentForm({
   selectedStaffId,
   setSelectedStaffId,
-  selectedZone,
-  setSelectedZone,
+  selectedType,
+  setSelectedType,
   selectedWindow,
   setSelectedWindow,
   selectedDate,
@@ -31,7 +31,7 @@ export default function ShiftAssignmentForm({
           <span className="badge badge--neutral">Trực tiếp lên bảng tuần</span>
         </div>
         <span className="shifts-form-panel__tip">
-          Kiểm tra va chạm tự động theo quy tắc Staff × Zone × Ca × Ngày
+          Kiểm tra va chạm tự động theo quy tắc Staff × Loại kho × Ca × Ngày
         </span>
       </div>
 
@@ -55,20 +55,20 @@ export default function ShiftAssignmentForm({
           </select>
         </div>
 
-        {/* Khu vực Zone */}
+        {/* Loại kho phân công */}
         <div className="form-group">
-          <label className="form-label" htmlFor="shift-zone">
-            Khu vực phân công (Zone)
+          <label className="form-label" htmlFor="shift-type">
+            Loại kho phân công
           </label>
           <select
-            id="shift-zone"
+            id="shift-type"
             className="form-select"
-            value={selectedZone}
-            onChange={(e) => setSelectedZone(e.target.value)}
+            value={selectedType}
+            onChange={(e) => setSelectedType(Number(e.target.value))}
           >
-            {ZONES.map((z) => (
-              <option key={z.id} value={z.code}>
-                {z.name}
+            {UNIT_TYPES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
               </option>
             ))}
           </select>
@@ -105,7 +105,7 @@ export default function ShiftAssignmentForm({
           >
             {DAYS_OF_WEEK.map((d) => (
               <option key={d.key} value={d.key}>
-                {d.dayName}, {d.label} (Tháng 10/2026) {d.isToday ? "· Hôm nay" : ""}
+                {d.dayName}, {d.fullDate} {d.isToday ? "· Hôm nay" : ""}
               </option>
             ))}
           </select>

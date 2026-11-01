@@ -6,13 +6,13 @@ import com.storagehub.dto.shift.StaffRosterMember;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.StaffAssignment;
 import com.storagehub.entity.User;
-import com.storagehub.entity.Zone;
+import com.storagehub.entity.UnitType;
 import com.storagehub.exception.ShiftConflictException;
 import com.storagehub.exception.ShiftNotFoundException;
 import com.storagehub.exception.UserNotFoundException;
 import com.storagehub.repository.StaffAssignmentRepository;
 import com.storagehub.repository.UserRepository;
-import com.storagehub.repository.ZoneRepository;
+import com.storagehub.repository.UnitTypeRepository;
 import com.storagehub.service.LogService;
 import com.storagehub.service.StaffingService;
 import org.springframework.stereotype.Service;
@@ -34,18 +34,18 @@ public class StaffingServiceImpl implements StaffingService {
 
     private final StaffAssignmentRepository staffAssignmentRepository;
     private final UserRepository userRepository;
-    private final ZoneRepository zoneRepository;
+    private final UnitTypeRepository unitTypeRepository;
     private final LogService logService;
 
     public StaffingServiceImpl(
             StaffAssignmentRepository staffAssignmentRepository,
             UserRepository userRepository,
-            ZoneRepository zoneRepository,
+            UnitTypeRepository unitTypeRepository,
             LogService logService
     ) {
         this.staffAssignmentRepository = staffAssignmentRepository;
         this.userRepository = userRepository;
-        this.zoneRepository = zoneRepository;
+        this.unitTypeRepository = unitTypeRepository;
         this.logService = logService;
     }
 
@@ -55,12 +55,12 @@ public class StaffingServiceImpl implements StaffingService {
             LocalDate startDate,
             LocalDate endDate,
             Long staffId,
-            Integer zoneId
+            Integer typeId
     ) {
         LocalDate start = startDate != null ? startDate : LocalDate.now(ICT_ZONE).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate end = endDate != null ? endDate : start.plusDays(6);
 
-        List<StaffAssignment> list = staffAssignmentRepository.findFiltered(start, end, staffId, zoneId);
+        List<StaffAssignment> list = staffAssignmentRepository.findFiltered(start, end, staffId, typeId);
         return list.stream()
                 .map(ShiftAssignmentResponse::fromEntity)
                 .toList();
@@ -76,8 +76,8 @@ public class StaffingServiceImpl implements StaffingService {
         User staff = userRepository.findById(request.staffId())
                 .orElseThrow(() -> new UserNotFoundException("Không tìm thấy nhân viên với ID " + request.staffId()));
 
-        Zone zone = zoneRepository.findById(request.zoneId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy khu vực (Zone) với ID " + request.zoneId()));
+        UnitType unitType = unitTypeRepository.findById(request.unitTypeId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy loại kho với ID " + request.unitTypeId()));
 
         // Guard: Kiểm tra xung đột trước khi lưu (FR-27)
         // Không lưu phân công trùng người - ca - ngày
@@ -86,13 +86,13 @@ public class StaffingServiceImpl implements StaffingService {
 
         if (existingConflict.isPresent()) {
             StaffAssignment conflict = existingConflict.get();
-            String conflictZone = conflict.getZone() != null ? conflict.getZone().getCode() : "";
-            throw new ShiftConflictException(staff.getUserId(), staff.getFullName(), conflict.getShift(), conflictZone, conflict.getWorkDate());
+            String conflictType = conflict.getUnitType() != null ? conflict.getUnitType().getName() : "";
+            throw new ShiftConflictException(staff.getUserId(), staff.getFullName(), conflict.getShift(), conflictType, conflict.getWorkDate());
         }
 
         StaffAssignment assignment = new StaffAssignment();
         assignment.setStaff(staff);
-        assignment.setZone(zone);
+        assignment.setUnitType(unitType);
         assignment.setShift(request.shift());
         assignment.setWorkDate(request.workDate());
 
@@ -106,7 +106,7 @@ public class StaffingServiceImpl implements StaffingService {
                 "CREATED",
                 null,
                 saved.getShift().name(),
-                String.format("Phân công ca trực mới: %s - Zone %s (%s)", staff.getFullName(), zone.getCode(), saved.getShift().name())
+                String.format("Phân công ca trực mới: %s - Kho %s (%s)", staff.getFullName(), unitType.getName(), saved.getShift().name())
         );
 
         return ShiftAssignmentResponse.fromEntity(saved);
@@ -129,9 +129,9 @@ public class StaffingServiceImpl implements StaffingService {
                 "DELETED",
                 assignment.getShift().name(),
                 null,
-                String.format("Hủy phân công ca trực: %s - Zone %s (%s)",
+                String.format("Hủy phân công ca trực: %s - Kho %s (%s)",
                         assignment.getStaff() != null ? assignment.getStaff().getFullName() : "N/A",
-                        assignment.getZone() != null ? assignment.getZone().getCode() : "N/A",
+                        assignment.getUnitType() != null ? assignment.getUnitType().getName() : "N/A",
                         assignment.getShift().name())
         );
 
@@ -166,7 +166,7 @@ public class StaffingServiceImpl implements StaffingService {
                     ))
                     .count();
 
-            String roleLabel = "Staff · Zones " + (staff.getFacility() != null ? staff.getFacility().getName() : "Tân Bình");
+            String roleLabel = "Staff · Cơ sở " + (staff.getFacility() != null ? staff.getFacility().getName() : "Tân Bình");
             String status = staffShifts.isEmpty() ? "OFF" : "ON_DUTY";
             String code = "KC-" + staff.getUserId();
 

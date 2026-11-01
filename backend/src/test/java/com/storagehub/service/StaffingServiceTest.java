@@ -7,13 +7,13 @@ import com.storagehub.entity.Facility;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.StaffAssignment;
 import com.storagehub.entity.User;
-import com.storagehub.entity.Zone;
+import com.storagehub.entity.UnitType;
 import com.storagehub.exception.ShiftConflictException;
 import com.storagehub.exception.ShiftNotFoundException;
 import com.storagehub.exception.UserNotFoundException;
 import com.storagehub.repository.StaffAssignmentRepository;
 import com.storagehub.repository.UserRepository;
-import com.storagehub.repository.ZoneRepository;
+import com.storagehub.repository.UnitTypeRepository;
 import com.storagehub.service.impl.StaffingServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +41,7 @@ class StaffingServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private ZoneRepository zoneRepository;
+    private UnitTypeRepository unitTypeRepository;
 
     @Mock
     private LogService logService;
@@ -51,7 +51,7 @@ class StaffingServiceTest {
 
     private User manager;
     private User staffMinh;
-    private Zone zoneB;
+    private UnitType typeS;
     private LocalDate workDate;
 
     @BeforeEach
@@ -71,10 +71,9 @@ class StaffingServiceTest {
         facility.setName("Tân Bình Depot");
         staffMinh.setFacility(facility);
 
-        zoneB = new Zone();
-        zoneB.setZoneId(2);
-        zoneB.setCode("B");
-        zoneB.setFacility(facility);
+        typeS = new UnitType();
+        typeS.setTypeId(2);
+        typeS.setName("S");
 
         workDate = LocalDate.of(2026, 10, 12);
     }
@@ -91,14 +90,14 @@ class StaffingServiceTest {
 
         when(userRepository.findByEmailIgnoreCase("tuan@demo.storagehub.vn")).thenReturn(Optional.of(manager));
         when(userRepository.findById(2L)).thenReturn(Optional.of(staffMinh));
-        when(zoneRepository.findById(2)).thenReturn(Optional.of(zoneB));
+        when(unitTypeRepository.findById(2)).thenReturn(Optional.of(typeS));
         when(staffAssignmentRepository.findByStaff_UserIdAndWorkDateAndShift(2L, workDate, StaffAssignment.Shift.MORNING))
                 .thenReturn(Optional.empty());
 
         StaffAssignment savedAssignment = new StaffAssignment();
         savedAssignment.setAssignmentId(101L);
         savedAssignment.setStaff(staffMinh);
-        savedAssignment.setZone(zoneB);
+        savedAssignment.setUnitType(typeS);
         savedAssignment.setShift(StaffAssignment.Shift.MORNING);
         savedAssignment.setWorkDate(workDate);
 
@@ -110,7 +109,7 @@ class StaffingServiceTest {
         assertEquals(101L, response.assignmentId());
         assertEquals("Minh Nguyễn", response.staffName());
         assertEquals(StaffAssignment.Shift.MORNING, response.shift());
-        assertEquals("B", response.zoneCode());
+        assertEquals("S", response.unitTypeName());
         assertEquals(workDate, response.workDate());
 
         verify(staffAssignmentRepository, times(1)).save(any(StaffAssignment.class));
@@ -136,12 +135,12 @@ class StaffingServiceTest {
         );
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(staffMinh));
-        when(zoneRepository.findById(2)).thenReturn(Optional.of(zoneB));
+        when(unitTypeRepository.findById(2)).thenReturn(Optional.of(typeS));
 
         StaffAssignment existingConflict = new StaffAssignment();
         existingConflict.setAssignmentId(99L);
         existingConflict.setStaff(staffMinh);
-        existingConflict.setZone(zoneB);
+        existingConflict.setUnitType(typeS);
         existingConflict.setShift(StaffAssignment.Shift.MORNING);
         existingConflict.setWorkDate(workDate);
 
@@ -155,7 +154,7 @@ class StaffingServiceTest {
 
         assertTrue(exception.getMessage().contains("Minh Nguyễn"));
         assertTrue(exception.getMessage().contains("MORNING"));
-        assertTrue(exception.getMessage().contains("Zone B"));
+        assertTrue(exception.getMessage().contains("kho S"));
         assertEquals(2L, exception.getStaffId());
 
         // Đảm bảo TUYỆT ĐỐI không gọi save khi bị conflict
@@ -169,7 +168,7 @@ class StaffingServiceTest {
         StaffAssignment assignment = new StaffAssignment();
         assignment.setAssignmentId(101L);
         assignment.setStaff(staffMinh);
-        assignment.setZone(zoneB);
+        assignment.setUnitType(typeS);
         assignment.setShift(StaffAssignment.Shift.MORNING);
         assignment.setWorkDate(workDate);
 
@@ -208,7 +207,7 @@ class StaffingServiceTest {
         StaffAssignment assignment = new StaffAssignment();
         assignment.setAssignmentId(101L);
         assignment.setStaff(staffMinh);
-        assignment.setZone(zoneB);
+        assignment.setUnitType(typeS);
         assignment.setShift(StaffAssignment.Shift.MORNING);
         assignment.setWorkDate(workDate);
 
@@ -231,7 +230,7 @@ class StaffingServiceTest {
         StaffAssignment assignment = new StaffAssignment();
         assignment.setAssignmentId(101L);
         assignment.setStaff(staffMinh);
-        assignment.setZone(zoneB);
+        assignment.setUnitType(typeS);
         assignment.setShift(StaffAssignment.Shift.MORNING);
         assignment.setWorkDate(workDate);
 

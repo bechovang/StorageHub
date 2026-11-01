@@ -13,12 +13,19 @@ import java.util.Optional;
 @Repository
 public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment, Long> {
 
-    /** Staff trực ca tại zone trong ngày — dùng gán task CHECK_IN tự động (FR-25). */
-    Optional<StaffAssignment> findFirstByZone_ZoneIdAndWorkDate(Integer zoneId, LocalDate workDate);
+    /** Staff trực ca cho loại kho trong ngày — dùng gán task tự động (FR-25). */
+    Optional<StaffAssignment> findFirstByUnitType_TypeIdAndWorkDate(Integer typeId, LocalDate workDate);
 
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.staff JOIN FETCH sa.zone WHERE sa.zone.zoneId = :zoneId AND sa.workDate = :workDate AND sa.shift = :shift")
-    Optional<StaffAssignment> findByZone_ZoneIdAndWorkDateAndShift(
-            @Param("zoneId") Integer zoneId,
+    @Query("""
+            SELECT sa FROM StaffAssignment sa
+            JOIN FETCH sa.staff
+            JOIN FETCH sa.unitType
+            WHERE sa.unitType.typeId = :typeId
+              AND sa.workDate = :workDate
+              AND sa.shift = :shift
+            """)
+    Optional<StaffAssignment> findByUnitType_TypeIdAndWorkDateAndShift(
+            @Param("typeId") Integer typeId,
             @Param("workDate") LocalDate workDate,
             @Param("shift") StaffAssignment.Shift shift
     );
@@ -29,20 +36,13 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
             @Param("shift") StaffAssignment.Shift shift
     );
 
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.staff JOIN FETCH sa.zone WHERE sa.zone.facility.facilityId = :facilityId AND sa.workDate = :workDate AND sa.shift = :shift")
-    List<StaffAssignment> findByFacilityAndWorkDateAndShift(
-            @Param("facilityId") Integer facilityId,
-            @Param("workDate") LocalDate workDate,
-            @Param("shift") StaffAssignment.Shift shift
-    );
-
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.zone WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate")
+    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.unitType WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate")
     List<StaffAssignment> findByStaff_UserIdAndWorkDate(
             @Param("staffId") Long staffId,
             @Param("workDate") LocalDate workDate
     );
 
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.zone WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate AND sa.shift = :shift")
+    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.unitType WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate AND sa.shift = :shift")
     Optional<StaffAssignment> findByStaff_UserIdAndWorkDateAndShift(
             @Param("staffId") Long staffId,
             @Param("workDate") LocalDate workDate,
@@ -52,21 +52,21 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
     @Query("""
         SELECT sa FROM StaffAssignment sa
         JOIN FETCH sa.staff s
-        JOIN FETCH sa.zone z
+        JOIN FETCH sa.unitType t
         WHERE (:startDate IS NULL OR sa.workDate >= :startDate)
           AND (:endDate IS NULL OR sa.workDate <= :endDate)
           AND (:staffId IS NULL OR s.userId = :staffId)
-          AND (:zoneId IS NULL OR z.zoneId = :zoneId)
+          AND (:typeId IS NULL OR t.typeId = :typeId)
         ORDER BY sa.workDate ASC, sa.shift ASC
     """)
     List<StaffAssignment> findFiltered(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("staffId") Long staffId,
-            @Param("zoneId") Integer zoneId
+            @Param("typeId") Integer typeId
     );
 
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.staff s JOIN FETCH sa.zone z WHERE sa.workDate BETWEEN :startDate AND :endDate ORDER BY sa.workDate ASC, sa.shift ASC")
+    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.staff s JOIN FETCH sa.unitType t WHERE sa.workDate BETWEEN :startDate AND :endDate ORDER BY sa.workDate ASC, sa.shift ASC")
     List<StaffAssignment> findByWorkDateBetween(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate

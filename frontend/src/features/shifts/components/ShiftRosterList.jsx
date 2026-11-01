@@ -21,7 +21,7 @@ export default function ShiftRosterList({
           <input
             type="text"
             className="roster-search__input"
-            placeholder="Tìm theo tên, RFID, khu vực..."
+            placeholder="Tìm theo tên, RFID, loại kho..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -84,7 +84,7 @@ export default function ShiftRosterList({
               {staff.hasConflict && (
                 <div className="staff-card__conflict-note">
                   <WarningCircle size={15} weight="fill" />
-                  <span>Cần xử lý xung đột vào Thứ 2 (12/10) ca sáng</span>
+                  <span>Cần xử lý xung đột lịch trực trong tuần</span>
                 </div>
               )}
             </div>

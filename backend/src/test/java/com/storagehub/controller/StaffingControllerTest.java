@@ -74,7 +74,7 @@ class StaffingControllerTest {
                 .andExpect(jsonPath("$[0].assignmentId").value(101))
                 .andExpect(jsonPath("$[0].staffName").value("Minh Nguyễn"))
                 .andExpect(jsonPath("$[0].shift").value("MORNING"))
-                .andExpect(jsonPath("$[0].zoneCode").value("B"));
+                .andExpect(jsonPath("$[0].unitTypeName").value("B"));
     }
 
     @Test
@@ -130,7 +130,7 @@ class StaffingControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("SHIFT_ASSIGNMENT_CONFLICT"))
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Minh Nguyễn đã được phân công ca MORNING tại Zone B")))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Minh Nguyễn đã được phân công ca MORNING tại kho B")))
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("shift"))
                 .andExpect(jsonPath("$.fieldErrors[0].code").value("CONFLICT"));
     }
