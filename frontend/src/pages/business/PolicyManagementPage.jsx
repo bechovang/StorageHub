@@ -3,7 +3,11 @@ import {
   CheckCircle,
   ArrowClockwise,
   FloppyDisk,
-  } from "@phosphor-icons/react";
+  FileText,
+  ShieldCheck,
+  PencilSimple,
+  ArrowSquareOut,
+} from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   usePolicyManagement,
@@ -227,6 +231,75 @@ export default function PolicyManagementPage() {
               capRulesRef={capRulesRef}
             />
           </div>
+
+          {/* ── 6. Văn bản Pháp lý & Quy chế Dịch vụ Công khai (Terms & Privacy) ── */}
+          <section className="policy-legal-card">
+            <div className="policy-legal-card__header">
+              <div>
+                <h2 className="policy-legal-card__title">Văn bản Pháp lý & Quy chế Dịch vụ Công khai</h2>
+                <p className="policy-legal-card__subtitle">
+                  Quản lý nội dung Điều khoản Dịch vụ và Chính sách Bảo mật hiển thị trực tiếp cho khách hàng trên website và hợp đồng điện tử.
+                </p>
+              </div>
+              <span className="policy-tag policy-tag--status">Hiển thị công khai</span>
+            </div>
+
+            <div className="policy-legal-grid">
+              {/* Thẻ Điều khoản dịch vụ */}
+              <div className="policy-legal-box">
+                <div className="policy-legal-box__head">
+                  <div className="policy-legal-box__identity">
+                    <FileText size={22} weight="bold" color="var(--color-accent, #ea580c)" />
+                    <div>
+                      <h3 className="policy-legal-box__title">Điều khoản Dịch vụ Thuê kho</h3>
+                      <span className="policy-legal-box__url font-mono">/terms (alias /term)</span>
+                    </div>
+                  </div>
+                  <span className="policy-legal-badge">8 Điều khoản</span>
+                </div>
+                <p className="policy-legal-box__desc">
+                  Quy định ký quỹ cọc 10%, thủ tục nhận kho đối chiếu CCCD, mã PIN ra vào 24/7, danh mục hàng hóa cấm cháy nổ, bảo quản sàn Epoxy và biên bản nghiệm thu 4 bước khi trả kho.
+                </p>
+                <div className="policy-legal-box__actions">
+                  <Link to="/terms" className="policy-btn policy-btn--secondary policy-btn--sm">
+                    <PencilSimple size={14} weight="bold" />
+                    <span>Mở & Chỉnh sửa Điều khoản</span>
+                  </Link>
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="policy-legal-view-link">
+                    <ArrowSquareOut size={14} />
+                    <span>Xem trang</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Thẻ Chính sách bảo mật */}
+              <div className="policy-legal-box">
+                <div className="policy-legal-box__head">
+                  <div className="policy-legal-box__identity">
+                    <ShieldCheck size={22} weight="bold" color="#16a34a" />
+                    <div>
+                      <h3 className="policy-legal-box__title">Chính sách Bảo mật & Quyền Riêng tư</h3>
+                      <span className="policy-legal-box__url font-mono">/privacy</span>
+                    </div>
+                  </div>
+                  <span className="policy-legal-badge">7 Điều khoản</span>
+                </div>
+                <p className="policy-legal-box__desc">
+                  Quy định thu thập CCCD/SĐT phục vụ hợp đồng, phạm vi camera an ninh 24/7 tại hành lang chung, bảo mật nhật ký mở khóa số, chuẩn mã hóa TLS/BCrypt và cam kết không chia sẻ bên thứ ba.
+                </p>
+                <div className="policy-legal-box__actions">
+                  <Link to="/privacy" className="policy-btn policy-btn--secondary policy-btn--sm">
+                    <PencilSimple size={14} weight="bold" />
+                    <span>Mở & Chỉnh sửa Chính sách</span>
+                  </Link>
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="policy-legal-view-link">
+                    <ArrowSquareOut size={14} />
+                    <span>Xem trang</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </AppShell>

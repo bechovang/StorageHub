@@ -10,6 +10,8 @@ import {
   Check,
   List,
   X,
+  FileText,
+  ShieldCheck,
 } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import {
@@ -69,6 +71,7 @@ const ROLE_CONFIGS = {
     links: [
       { label: "Tổng quan", href: "/overview" },
       { label: "Chính sách & Biểu phí", href: "/policy" },
+      { label: "Điều khoản & Pháp lý", href: "/terms" },
       { label: "Báo cáo tài chính", href: "/reports" },
     ],
   },
@@ -80,6 +83,7 @@ const ROLE_CONFIGS = {
       { label: "Lịch sử đăng nhập", href: "/login-history" },
       { label: "Nhật ký hệ thống", href: "/facility/activity" },
       { label: "Chính sách & Biểu phí", href: "/policy" },
+      { label: "Điều khoản & Pháp lý", href: "/terms" },
       { label: "Khám phá kho", href: "/browse" },
     ],
   },
@@ -480,6 +484,23 @@ export default function Header({
                           {getRoleLabel(currentRole)}
                         </span>
                       </div>
+                      <div className="header-dropdown__divider" />
+                      <Link
+                        to="/terms"
+                        className="header-dropdown__item"
+                        onClick={() => setShowAvatarMenu(false)}
+                      >
+                        <FileText size={16} />
+                        <span>Điều khoản Dịch vụ</span>
+                      </Link>
+                      <Link
+                        to="/privacy"
+                        className="header-dropdown__item"
+                        onClick={() => setShowAvatarMenu(false)}
+                      >
+                        <ShieldCheck size={16} />
+                        <span>Chính sách Bảo mật</span>
+                      </Link>
                       <div className="header-dropdown__divider" />
                       <button
                         type="button"
