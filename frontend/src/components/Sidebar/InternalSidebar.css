@@ -51,9 +51,10 @@
 .internal-sidebar.is-collapsed {
   width: var(--sidebar-collapsed-width);
   min-width: var(--sidebar-collapsed-width);
+  cursor: pointer;
 }
 
-/* ── Header của Sidebar (Logo + Nút thu gọn bên cạnh) ── */
+/* ── Header của Sidebar ── */
 .internal-sidebar__header {
   height: 54px;
   min-height: 54px;
@@ -67,20 +68,67 @@
 }
 
 .internal-sidebar.is-collapsed .internal-sidebar__header {
-  padding: 0 6px;
+  padding: 0;
   justify-content: center;
-  gap: 4px;
+  gap: 0;
 }
 
+/* ── Khi thu gọn (64px): Nút Logo với hiệu ứng Hover thành nút bung ra ── */
+.internal-sidebar__collapsed-logo-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  border-radius: var(--radius);
+  transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.internal-sidebar__collapsed-logo-btn .internal-sidebar__mark {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.internal-sidebar__collapsed-logo-btn .internal-sidebar__expand-cue {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ink, #000000);
+  color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-ink, #000000);
+  border-radius: var(--radius);
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.internal-sidebar__collapsed-logo-btn:hover {
+  border-color: var(--color-line-strong);
+}
+
+.internal-sidebar__collapsed-logo-btn:hover .internal-sidebar__mark {
+  opacity: 0;
+  transform: scale(0.75);
+}
+
+.internal-sidebar__collapsed-logo-btn:hover .internal-sidebar__expand-cue {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Khi mở rộng (240px) ── */
 .internal-sidebar__header-left {
   display: flex;
   align-items: center;
   min-width: 0;
   flex: 1;
-}
-
-.internal-sidebar.is-collapsed .internal-sidebar__header-left {
-  flex: 0 0 auto;
 }
 
 .internal-sidebar__brand {
@@ -99,11 +147,6 @@
   grid-template-columns: repeat(3, 1fr);
   border: var(--border-strong);
   flex-shrink: 0;
-}
-
-.internal-sidebar.is-collapsed .internal-sidebar__mark {
-  width: 24px;
-  height: 24px;
 }
 
 .internal-sidebar__mark i {
@@ -149,7 +192,7 @@
   flex-shrink: 0;
 }
 
-/* Nút thu gọn / mở rộng đặt bên cạnh logo */
+/* Nút thu gọn ở header khi mở rộng */
 .internal-sidebar__collapse-btn {
   width: 28px;
   height: 28px;
@@ -170,19 +213,6 @@
   background: var(--color-neutral);
   color: var(--color-ink);
   border-color: var(--color-line-strong);
-}
-
-.internal-sidebar.is-collapsed .internal-sidebar__collapse-btn {
-  width: 22px;
-  height: 24px;
-  background: var(--color-neutral);
-  border-color: var(--color-line);
-}
-
-.internal-sidebar.is-collapsed .internal-sidebar__collapse-btn:hover {
-  background: var(--color-ink);
-  color: var(--color-surface);
-  border-color: var(--color-ink);
 }
 
 .internal-sidebar__close-btn {
@@ -212,6 +242,7 @@
 .internal-sidebar.is-collapsed .internal-sidebar__nav {
   padding: 14px 8px;
   gap: 12px;
+  cursor: pointer;
 }
 
 .internal-sidebar__group {

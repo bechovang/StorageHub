@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import {
   Kanban,
@@ -116,6 +116,20 @@ export default function InternalSidebar({
     });
   };
 
+  // Mở rộng khi người dùng click vào khoảng trống trên sidebar ở chế độ thu gọn
+  const handleSidebarClick = (e) => {
+    if (!isCollapsed || isOpenMobile) return;
+    // Bỏ qua nếu click trực tiếp vào liên kết điều hướng hoặc nút bấm
+    if (e.target.closest("a, button, input, textarea, select")) {
+      return;
+    }
+    // Click vào khoảng trống -> bung ra (expand)
+    setIsCollapsed(false);
+    try {
+      localStorage.setItem("storagehub_sidebar_collapsed", "false");
+    } catch {}
+  };
+
   const currentRole = user?.role || "STAFF";
   const navGroups = SIDEBAR_NAV_BY_ROLE[currentRole] || SIDEBAR_NAV_BY_ROLE.STAFF;
 
@@ -127,6 +141,15 @@ export default function InternalSidebar({
     }
     return location.pathname.startsWith(href + "/");
   };
+
+  const homeRoute =
+    currentRole === "FACILITY_MANAGER"
+      ? "/facility"
+      : currentRole === "BUSINESS_OPS"
+      ? "/overview"
+      : currentRole === "SYSTEM_ADMIN"
+      ? "/users"
+      : "/tasks";
 
   return (
     <>
@@ -142,65 +165,76 @@ export default function InternalSidebar({
           isOpenMobile ? "is-open-mobile" : ""
         }`}
         aria-label="Thanh điều hướng nội bộ"
+        onClick={handleSidebarClick}
+        title={isCollapsed ? "Nhấn vào khoảng trống để mở rộng thanh bên (240px)" : undefined}
       >
-        {/* Header của Sidebar: Logo & Nút thu gọn / Nút đóng Mobile */}
+        {/* Header của Sidebar */}
         <div className="internal-sidebar__header">
-          <div className="internal-sidebar__header-left">
-            <Link
-              to={
-                currentRole === "FACILITY_MANAGER"
-                  ? "/facility"
-                  : currentRole === "BUSINESS_OPS"
-                  ? "/overview"
-                  : currentRole === "SYSTEM_ADMIN"
-                  ? "/users"
-                  : "/tasks"
-              }
-              className="internal-sidebar__brand"
-              title="StorageHub Nội Bộ"
+          {isCollapsed ? (
+            /* Khi thu gọn (64px): Chỉ hiển thị logo mark sạch sẽ, hover vào hiển thị nút bung ra */
+            <button
+              type="button"
+              className="internal-sidebar__collapsed-logo-btn"
+              onClick={toggleCollapse}
+              aria-label="Mở rộng thanh bên"
+              title="Nhấn để mở rộng thanh bên (240px)"
             >
               <span className="internal-sidebar__mark" aria-hidden="true">
                 <i />
                 <i />
                 <i />
               </span>
-              {!isCollapsed && (
-                <div className="internal-sidebar__brand-text">
-                  <span className="internal-sidebar__title">STORAGEHUB</span>
-                  <span className="internal-sidebar__badge">
-                    {getRoleLabel(currentRole)}
+              <span className="internal-sidebar__expand-cue" aria-hidden="true">
+                <CaretRight size={17} weight="bold" />
+              </span>
+            </button>
+          ) : (
+            /* Khi mở rộng (240px): Hiển thị đầy đủ Logo + Tên + Nút thu gọn cạnh logo */
+            <>
+              <div className="internal-sidebar__header-left">
+                <Link
+                  to={homeRoute}
+                  className="internal-sidebar__brand"
+                  title="StorageHub Nội Bộ"
+                >
+                  <span className="internal-sidebar__mark" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
                   </span>
-                </div>
-              )}
-            </Link>
-          </div>
+                  <div className="internal-sidebar__brand-text">
+                    <span className="internal-sidebar__title">STORAGEHUB</span>
+                    <span className="internal-sidebar__badge">
+                      {getRoleLabel(currentRole)}
+                    </span>
+                  </div>
+                </Link>
+              </div>
 
-          <div className="internal-sidebar__header-actions">
-            {/* Nút thu gọn / mở rộng đặt cạnh logo */}
-            <button
-              type="button"
-              className="internal-sidebar__collapse-btn"
-              onClick={toggleCollapse}
-              aria-label={isCollapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
-              title={isCollapsed ? "Mở rộng (240px)" : "Thu gọn thanh bên"}
-            >
-              {isCollapsed ? (
-                <CaretRight size={14} weight="bold" />
-              ) : (
-                <CaretLeft size={16} weight="bold" />
-              )}
-            </button>
+              <div className="internal-sidebar__header-actions">
+                {/* Nút thu gọn bên cạnh logo */}
+                <button
+                  type="button"
+                  className="internal-sidebar__collapse-btn"
+                  onClick={toggleCollapse}
+                  aria-label="Thu gọn thanh bên"
+                  title="Thu gọn thanh bên"
+                >
+                  <CaretLeft size={16} weight="bold" />
+                </button>
 
-            {/* Nút đóng trên mobile */}
-            <button
-              type="button"
-              className="internal-sidebar__close-btn"
-              onClick={onCloseMobile}
-              aria-label="Đóng bảng điều hướng"
-            >
-              <X size={18} weight="bold" />
-            </button>
-          </div>
+                {/* Nút đóng trên mobile */}
+                <button
+                  type="button"
+                  className="internal-sidebar__close-btn"
+                  onClick={onCloseMobile}
+                  aria-label="Đóng bảng điều hướng"
+                >
+                  <X size={18} weight="bold" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Nội dung danh sách điều hướng theo phân nhóm */}
