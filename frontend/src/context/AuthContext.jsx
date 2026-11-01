@@ -216,9 +216,10 @@ export function AuthProvider({ children }) {
       };
     } catch (err) {
       if (err.name === "TypeError" || !err.status) {
-        return {
-          message:
-            "Nếu email tồn tại trên hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi tới hộp thư của bạn.",
+        throw {
+          status: 0,
+          code: "NETWORK_ERROR",
+          message: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.",
         };
       }
       throw err;
