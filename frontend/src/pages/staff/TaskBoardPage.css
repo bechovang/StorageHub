@@ -5,7 +5,9 @@
 .taskboard-container {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - var(--header-height, 64px));
+  height: calc(100vh - var(--topbar-height, 54px));
+  max-height: calc(100vh - var(--topbar-height, 54px));
+  overflow: hidden;
   background-color: var(--color-surface-page, #f5f5f5);
   color: var(--color-ink, #000000);
 }
@@ -43,22 +45,25 @@
 /* ── Main Canvas ── */
 .taskboard-main {
   flex: 1;
-  padding: 24px;
-  max-width: 1600px;
+  min-height: 0;
+  padding: 16px 20px 20px 20px;
+  max-width: 100%;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
+  overflow: hidden;
 }
 
 /* ── Page Header ── */
 .taskboard-header {
+  flex-shrink: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .taskboard-title-group h1 {
@@ -96,12 +101,21 @@
 
 /* ── Filter Tabs ── */
 .taskboard-filter-tabs {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 8px;
   border-bottom: var(--border);
   overflow-x: auto;
   padding-bottom: 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.taskboard-filter-tabs::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .filter-tab-btn {
@@ -147,10 +161,23 @@
 
 /* ── Kanban Board (3 Columns) ── */
 .kanban-grid {
+  flex: 1;
+  min-height: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-  align-items: flex-start;
+  grid-template-columns: repeat(3, minmax(320px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.kanban-grid::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .kanban-column {
@@ -158,9 +185,11 @@
   border: var(--border);
   display: flex;
   flex-direction: column;
-  min-height: 480px;
-  padding: 14px;
+  height: 100%;
+  min-height: 0;
+  padding: 14px 14px 10px 14px;
   gap: 12px;
+  overflow: hidden;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
@@ -171,6 +200,7 @@
 }
 
 .kanban-column-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -202,14 +232,28 @@
 }
 
 .kanban-cards-list {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.kanban-cards-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* ── Task Card ── */
 .task-card {
+  flex-shrink: 0;
   background-color: #ffffff;
   border: 1px solid #cbd5e1;
   position: relative;
@@ -712,14 +756,10 @@
   border-color: #94a3b8;
 }
 
-/* Responsive */
+/* Responsive: Giữ 3 cột độc lập với cuộn ngang mượt mà nếu màn hình nhỏ */
 @media (max-width: 1024px) {
   .kanban-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .kanban-column {
-    min-height: auto;
+    grid-template-columns: repeat(3, minmax(290px, 1fr));
   }
 }
 
