@@ -72,6 +72,13 @@ export async function getStaffTasks(staffId) {
 /**
  * Cập nhật trạng thái nhiệm vụ (To do -> In progress -> Done): PATCH /api/v1/tasks/{taskId}/status
  */
+export async function getTaskContractPreview(taskId) {
+  const res = await apiClient(`/api/v1/tasks/${taskId}/contract-preview`, { method: "GET" });
+  const data = await safeParseJson(res);
+  if (!res.ok) throw new Error(data.message || "Không thể tải dữ liệu hợp đồng.");
+  return data;
+}
+
 export async function getTaskDetail(taskId) {
   const res = await apiClient(`/api/v1/tasks/${taskId}`, { method: "GET" });
   const data = await safeParseJson(res);

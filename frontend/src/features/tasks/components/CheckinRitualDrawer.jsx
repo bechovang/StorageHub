@@ -17,6 +17,7 @@ import {
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import Button from "../../../components/Button/Button.jsx";
 import ContractViewerModal from "../../../components/ContractModal/ContractViewerModal.jsx";
+import { useContractPreview } from "../hooks/useContractPreview.js";
 import { completeCheckinRitual } from "../../../services/taskService.js";
 import { formatVND as formatVnd, PLACEHOLDER_UNIT_IMAGE } from "../../../utils/formatters.js";
 
@@ -26,6 +27,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [showFullPassModal, setShowFullPassModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
+  const contractProps = useContractPreview(task, showContractModal);
 
   // Ảnh thực tế (Base64 URL) — chỉ giữ trong phiên, không cache localStorage
   const [paymentPhotoUrl, setPaymentPhotoUrl] = useState(
@@ -452,8 +454,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
       <ContractViewerModal
         isOpen={showContractModal}
         onClose={() => setShowContractModal(false)}
-        contract={{ code: `HĐ-${task.refCode}` }}
-        reservation={{ code: task.refCode, customerName: task.customerName, customerPhone: task.customerPhone, unitCode: task.unitCode }}
+        {...contractProps}
       />
 
       {/* Modal xem Thẻ nhận kho đầy đủ có QR */}

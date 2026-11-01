@@ -1,4 +1,5 @@
 export { useTaskBoard } from "./hooks/useTaskBoard.js";
+export { useContractPreview } from "./hooks/useContractPreview.js";
 export { TaskCard } from "./components/TaskCard.jsx";
 export { KanbanColumn } from "./components/KanbanColumn.jsx";
 export { CheckinRitualDrawer } from "./components/CheckinRitualDrawer.jsx";

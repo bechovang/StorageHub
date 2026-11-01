@@ -35,6 +35,9 @@ public interface TaskService {
      */
     Task createSupportTask(com.storagehub.entity.SupportTicket ticket);
 
+    /** Dữ liệu hợp đồng tại quầy cho task check-in/check-out. */
+    com.storagehub.dto.task.ContractPreviewResponse getContractPreview(Long taskId);
+
     /**
      * US-15 ritual check-in tại quầy: ghi payment RENT (CASH/BANK/POS) vào DB
      * rồi chạy check-in chuẩn (ký HĐ + access code) và DONE task.

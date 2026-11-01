@@ -16,6 +16,7 @@ import {
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import Button from "../../../components/Button/Button.jsx";
 import ContractViewerModal from "../../../components/ContractModal/ContractViewerModal.jsx";
+import { useContractPreview } from "../hooks/useContractPreview.js";
 import { completeCheckoutRitual } from "../../../services/taskService.js";
 import { formatVND as formatVnd } from "../../../utils/formatters.js";
 
@@ -46,6 +47,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
   );
 
   const [showContractModal, setShowContractModal] = useState(false);
+  const contractProps = useContractPreview(task, showContractModal);
   const [showFullPhotoModal, setShowFullPhotoModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -687,25 +689,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
       <ContractViewerModal
         isOpen={showContractModal}
         onClose={() => setShowContractModal(false)}
-        reservation={{
-          reservationCode: task?.refCode || "HD-REF",
-          unitCode: task?.unitCode || "A-101",
-          totalAmount: depositHeld * 10,
-          depositAmount: depositHeld,
-          createdDate: new Date().toLocaleDateString("vi-VN"),
-        }}
-        unit={{
-          unitNumber: task?.unitCode || "A-101",
-          type: "STANDARD",
-          facilityName: "Kho Trung Tâm Cát Lái",
-          dimensions: "2m × 3m × 2.8m",
-          areaM2: 6.0,
-        }}
-        user={{
-          fullName: task?.customerName || "Khách Hàng",
-          phone: task?.customerPhone || "0912 345 678",
-          cccd: "079094008899",
-        }}
+        {...contractProps}
       />
     </>
   );

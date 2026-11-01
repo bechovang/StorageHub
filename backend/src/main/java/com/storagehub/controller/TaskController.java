@@ -64,6 +64,16 @@ public class TaskController {
     }
 
     /**
+     * Dữ liệu điền mẫu hợp đồng tại quầy cho task check-in/check-out.
+     */
+    @GetMapping("/{taskId}/contract-preview")
+    public ResponseEntity<com.storagehub.dto.task.ContractPreviewResponse> getContractPreview(
+            @PathVariable("taskId") Long taskId
+    ) {
+        return ResponseEntity.ok(taskService.getContractPreview(taskId));
+    }
+
+    /**
      * Chuyển trạng thái nhiệm vụ (To do -> In progress -> Done).
      * Bị chặn bởi Snap-back (FR-22) nếu thiếu closing steps khi kéo sang Done.
      */
