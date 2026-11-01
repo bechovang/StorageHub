@@ -5,14 +5,14 @@ import com.storagehub.dto.shift.ShiftAssignmentResponse;
 import com.storagehub.dto.shift.StaffRosterMember;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.StaffAssignment;
-import com.storagehub.entity.User;
 import com.storagehub.entity.UnitType;
+import com.storagehub.entity.User;
 import com.storagehub.exception.ShiftConflictException;
 import com.storagehub.exception.ShiftNotFoundException;
 import com.storagehub.exception.UserNotFoundException;
 import com.storagehub.repository.StaffAssignmentRepository;
-import com.storagehub.repository.UserRepository;
 import com.storagehub.repository.UnitTypeRepository;
+import com.storagehub.repository.UserRepository;
 import com.storagehub.service.LogService;
 import com.storagehub.service.StaffingService;
 import org.springframework.stereotype.Service;
@@ -23,8 +23,10 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -60,14 +62,13 @@ public class StaffingServiceImpl implements StaffingService {
         LocalDate start = startDate != null ? startDate : LocalDate.now(ICT_ZONE).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate end = endDate != null ? endDate : start.plusDays(6);
 
-        List<StaffAssignment> list = staffAssignmentRepository.findFiltered(start, end, staffId, typeId);
-        return list.stream()
+        return staffAssignmentRepository.findFiltered(start, end, staffId, typeId).stream()
                 .map(ShiftAssignmentResponse::fromEntity)
                 .toList();
     }
 
     @Override
-    public ShiftAssignmentResponse createShiftAssignment(
+    public List<ShiftAssignmentResponse> createShiftAssignments(
             String actorEmail,
             CreateShiftAssignmentRequest request
     ) {
@@ -76,40 +77,51 @@ public class StaffingServiceImpl implements StaffingService {
         User staff = userRepository.findById(request.staffId())
                 .orElseThrow(() -> new UserNotFoundException("Không tìm thấy nhân viên với ID " + request.staffId()));
 
-        UnitType unitType = unitTypeRepository.findById(request.unitTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy loại kho với ID " + request.unitTypeId()));
-
-        // Guard: Kiểm tra xung đột trước khi lưu (FR-27)
-        // Không lưu phân công trùng người - ca - ngày
-        Optional<StaffAssignment> existingConflict = staffAssignmentRepository
-                .findByStaff_UserIdAndWorkDateAndShift(staff.getUserId(), request.workDate(), request.shift());
-
-        if (existingConflict.isPresent()) {
-            StaffAssignment conflict = existingConflict.get();
-            String conflictType = conflict.getUnitType() != null ? conflict.getUnitType().getName() : "";
-            throw new ShiftConflictException(staff.getUserId(), staff.getFullName(), conflict.getShift(), conflictType, conflict.getWorkDate());
+        if (request.unitTypeIds() == null || request.unitTypeIds().isEmpty()) {
+            throw new IllegalArgumentException("Chọn ít nhất một loại kho.");
+        }
+        List<UnitType> types = unitTypeRepository.findAllById(request.unitTypeIds());
+        if (types.size() != new LinkedHashSet<>(request.unitTypeIds()).size()) {
+            throw new IllegalArgumentException("Có loại kho không tồn tại.");
         }
 
-        StaffAssignment assignment = new StaffAssignment();
-        assignment.setStaff(staff);
-        assignment.setUnitType(unitType);
-        assignment.setShift(request.shift());
-        assignment.setWorkDate(request.workDate());
+        Set<StaffAssignment.Shift> shifts = new LinkedHashSet<>(request.shifts());
+        if (shifts.isEmpty()) {
+            throw new IllegalArgumentException("Chọn ít nhất một ca trực.");
+        }
 
-        StaffAssignment saved = staffAssignmentRepository.save(assignment);
+        // Validate hết trước khi ghi — tránh lưu một nửa.
+        for (StaffAssignment.Shift shift : shifts) {
+            Optional<StaffAssignment> conflict = staffAssignmentRepository
+                    .findByStaff_UserIdAndWorkDateAndShift(staff.getUserId(), request.workDate(), shift);
+            if (conflict.isPresent()) {
+                StaffAssignment existing = conflict.get();
+                String typeName = existing.getUnitTypes().isEmpty()
+                        ? ""
+                        : String.join(", ", existing.getUnitTypes().stream().map(UnitType::getName).toList());
+                throw new ShiftConflictException(
+                        staff.getUserId(), staff.getFullName(), shift, typeName, request.workDate());
+            }
+        }
 
-        // Audit Trail (FR-28 / AD-6)
-        logService.log(
-                actor,
-                "STAFF_ASSIGNMENT",
-                saved.getAssignmentId(),
-                "CREATED",
-                null,
-                saved.getShift().name(),
-                String.format("Phân công ca trực mới: %s - Kho %s (%s)", staff.getFullName(), unitType.getName(), saved.getShift().name())
-        );
+        List<ShiftAssignmentResponse> result = new ArrayList<>();
+        for (StaffAssignment.Shift shift : shifts) {
+            StaffAssignment assignment = new StaffAssignment();
+            assignment.setStaff(staff);
+            assignment.setShift(shift);
+            assignment.setWorkDate(request.workDate());
+            assignment.setUnitTypes(new LinkedHashSet<>(types));
 
-        return ShiftAssignmentResponse.fromEntity(saved);
+            StaffAssignment saved = staffAssignmentRepository.save(assignment);
+            String typeNames = String.join(", ", types.stream().map(UnitType::getName).toList());
+            logService.log(actor, "STAFF_ASSIGNMENT", saved.getAssignmentId(), "CREATED",
+                    null, saved.getShift().name(),
+                    String.format("Phân công ca trực mới: %s - Kho %s (%s)",
+                            staff.getFullName(), typeNames, saved.getShift().name()));
+            result.add(ShiftAssignmentResponse.fromEntity(saved));
+        }
+
+        return result;
     }
 
     @Override
@@ -122,6 +134,9 @@ public class StaffingServiceImpl implements StaffingService {
         StaffAssignment assignment = staffAssignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new ShiftNotFoundException("Không tìm thấy phân công ca trực với ID " + assignmentId));
 
+        String typeNames = assignment.getUnitTypes().isEmpty()
+                ? "N/A"
+                : String.join(", ", assignment.getUnitTypes().stream().map(UnitType::getName).toList());
         logService.log(
                 actor,
                 "STAFF_ASSIGNMENT",
@@ -131,7 +146,7 @@ public class StaffingServiceImpl implements StaffingService {
                 null,
                 String.format("Hủy phân công ca trực: %s - Kho %s (%s)",
                         assignment.getStaff() != null ? assignment.getStaff().getFullName() : "N/A",
-                        assignment.getUnitType() != null ? assignment.getUnitType().getName() : "N/A",
+                        typeNames,
                         assignment.getShift().name())
         );
 
@@ -157,7 +172,6 @@ public class StaffingServiceImpl implements StaffingService {
                     .map(ShiftAssignmentResponse::fromEntity)
                     .toList();
 
-            // Tính số ca xung đột (nếu có 2 ca cùng ngày cùng shift trong dữ liệu)
             long conflicts = staffShifts.stream()
                     .filter(s1 -> staffShifts.stream().anyMatch(s2 ->
                             !s2.assignmentId().equals(s1.assignmentId())

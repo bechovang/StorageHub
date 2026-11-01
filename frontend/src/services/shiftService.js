@@ -141,18 +141,13 @@ export async function getStaffRoster({ startDate, endDate } = {}) {
 /**
  * Phân công ca trực mới kèm phát hiện va chạm tự động (FR-27)
  */
-export async function createShiftAssignment({ staffId, unitTypeId, shift, workDate }) {
-  let finalShift = shift;
-  if (shift === "FULL_DAY" || shift === "ON_CALL") {
-    finalShift = "EVENING";
-  }
-
+export async function createShiftAssignment({ staffId, unitTypeIds, shifts, workDate }) {
   const response = await apiClient("/api/v1/shifts", {
     method: "POST",
     body: JSON.stringify({
       staffId: Number(staffId),
-      unitTypeId: Number(unitTypeId),
-      shift: finalShift,
+      unitTypeIds: (unitTypeIds || []).map(Number),
+      shifts: (shifts || []).filter((s) => s !== "FULL_DAY" && s !== "ON_CALL"),
       workDate,
     }),
   });
@@ -197,7 +192,7 @@ export function areShiftsConflicting(shiftA, shiftB) {
 /**
  * Phát hiện xung đột trước khi lưu phân công (Client-side pre-validation)
  */
-export function detectShiftConflict({ staffId, date, shiftWindow, shifts = [], staffList = [] }) {
+export function detectShiftConflict({ staffId, date, shiftWindows = [], shifts = [], staffList = [] }) {
   const staff = staffList.find((s) => s.id === Number(staffId));
   const staffName = staff ? staff.fullName : "Nhân viên";
 
@@ -205,15 +200,17 @@ export function detectShiftConflict({ staffId, date, shiftWindow, shifts = [], s
     (s) => s.staffId === Number(staffId) && s.date === date
   );
 
-  for (const existing of existingShifts) {
-    if (areShiftsConflicting(existing, { shiftWindow })) {
-      const windowLabel = SHIFT_WINDOWS[existing.shiftWindow]?.label || existing.shiftWindow;
-      const formattedDate = date.split("-").reverse().join("/");
-      return {
-        hasConflict: true,
-        reason: `${staffName} đã được phân công ${windowLabel} tại ${existing.typeName || 'kho'} vào ngày ${formattedDate}. Không thể gán thêm ca trùng lịch!`,
-        conflictingShift: existing,
-      };
+  for (const window of shiftWindows) {
+    for (const existing of existingShifts) {
+      if (areShiftsConflicting(existing, { shiftWindow: window })) {
+        const windowLabel = SHIFT_WINDOWS[existing.shiftWindow]?.label || existing.shiftWindow;
+        const formattedDate = date.split("-").reverse().join("/");
+        return {
+          hasConflict: true,
+          reason: `${staffName} đã được phân công ${windowLabel} tại ${existing.typeName || "kho"} vào ngày ${formattedDate}. Không thể gán thêm ca trùng lịch!`,
+          conflictingShift: existing,
+        };
+      }
     }
   }
 

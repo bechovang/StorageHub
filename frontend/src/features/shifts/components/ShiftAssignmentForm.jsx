@@ -12,10 +12,10 @@ import {
 export default function ShiftAssignmentForm({
   selectedStaffId,
   setSelectedStaffId,
-  selectedType,
-  setSelectedType,
-  selectedWindow,
-  setSelectedWindow,
+  selectedTypeIds,
+  setSelectedTypeIds,
+  selectedShifts,
+  setSelectedShifts,
   selectedDate,
   setSelectedDate,
   liveConflict,
@@ -55,16 +55,22 @@ export default function ShiftAssignmentForm({
           </select>
         </div>
 
-        {/* Loại kho phân công */}
+        {/* Loại kho phân công — chọn nhiều */}
         <div className="form-group">
           <label className="form-label" htmlFor="shift-type">
-            Loại kho phân công
+            Loại kho phân công (chọn nhiều)
           </label>
           <select
             id="shift-type"
             className="form-select"
-            value={selectedType}
-            onChange={(e) => setSelectedType(Number(e.target.value))}
+            multiple
+            size={4}
+            value={selectedTypeIds.map(String)}
+            onChange={(e) =>
+              setSelectedTypeIds(
+                Array.from(e.target.selectedOptions).map((o) => Number(o.value))
+              )
+            }
           >
             {UNIT_TYPES.map((t) => (
               <option key={t.id} value={t.id}>
@@ -74,21 +80,24 @@ export default function ShiftAssignmentForm({
           </select>
         </div>
 
-        {/* Khung giờ ca */}
+        {/* Khung giờ ca — chọn nhiều */}
         <div className="form-group">
           <label className="form-label" htmlFor="shift-window">
-            Khung ca trực
+            Khung ca trực (chọn nhiều)
           </label>
           <select
             id="shift-window"
             className="form-select"
-            value={selectedWindow}
-            onChange={(e) => setSelectedWindow(e.target.value)}
+            multiple
+            size={3}
+            value={selectedShifts}
+            onChange={(e) =>
+              setSelectedShifts(Array.from(e.target.selectedOptions).map((o) => o.value))
+            }
           >
             <option value="MORNING">Ca sáng (07:00 – 15:00)</option>
             <option value="AFTERNOON">Ca chiều (15:00 – 23:00)</option>
-            <option value="FULL_DAY">Cả ngày (07:00 – 23:00)</option>
-            <option value="ON_CALL">Trực khẩn cấp / On-call</option>
+            <option value="EVENING">Ca tối (19:00 – 07:00)</option>
           </select>
         </div>
 

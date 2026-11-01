@@ -13,36 +13,35 @@ import java.util.Optional;
 @Repository
 public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment, Long> {
 
-    /** Staff trực ca cho loại kho trong ngày — dùng gán task tự động (FR-25). */
-    Optional<StaffAssignment> findFirstByUnitType_TypeIdAndWorkDate(Integer typeId, LocalDate workDate);
-
+    /** Các ca trực phụ trách loại kho trong ngày + ca — dùng gán task tự động. */
     @Query("""
-            SELECT sa FROM StaffAssignment sa
-            JOIN FETCH sa.staff
-            JOIN FETCH sa.unitType
-            WHERE sa.unitType.typeId = :typeId
+            SELECT DISTINCT sa FROM StaffAssignment sa
+            JOIN FETCH sa.staff s
+            LEFT JOIN FETCH sa.unitTypes t
+            WHERE s.userId = sa.staff.userId
               AND sa.workDate = :workDate
               AND sa.shift = :shift
+              AND EXISTS (SELECT 1 FROM sa.unitTypes ut WHERE ut.typeId = :typeId)
             """)
-    Optional<StaffAssignment> findByUnitType_TypeIdAndWorkDateAndShift(
+    List<StaffAssignment> findByUnitType_TypeIdAndWorkDateAndShift(
             @Param("typeId") Integer typeId,
             @Param("workDate") LocalDate workDate,
             @Param("shift") StaffAssignment.Shift shift
     );
 
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.staff WHERE sa.workDate = :workDate AND sa.shift = :shift")
+    @Query("SELECT DISTINCT sa FROM StaffAssignment sa JOIN FETCH sa.staff WHERE sa.workDate = :workDate AND sa.shift = :shift")
     List<StaffAssignment> findByWorkDateAndShift(
             @Param("workDate") LocalDate workDate,
             @Param("shift") StaffAssignment.Shift shift
     );
 
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.unitType WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate")
+    @Query("SELECT DISTINCT sa FROM StaffAssignment sa LEFT JOIN FETCH sa.unitTypes WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate")
     List<StaffAssignment> findByStaff_UserIdAndWorkDate(
             @Param("staffId") Long staffId,
             @Param("workDate") LocalDate workDate
     );
 
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.unitType WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate AND sa.shift = :shift")
+    @Query("SELECT DISTINCT sa FROM StaffAssignment sa LEFT JOIN FETCH sa.unitTypes WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate AND sa.shift = :shift")
     Optional<StaffAssignment> findByStaff_UserIdAndWorkDateAndShift(
             @Param("staffId") Long staffId,
             @Param("workDate") LocalDate workDate,
@@ -50,25 +49,24 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
     );
 
     @Query("""
-        SELECT sa FROM StaffAssignment sa
+        SELECT DISTINCT sa FROM StaffAssignment sa
         JOIN FETCH sa.staff s
-        JOIN FETCH sa.unitType t
-        WHERE (:startDate IS NULL OR sa.workDate >= :startDate)
-          AND (:endDate IS NULL OR sa.workDate <= :endDate)
-          AND (:staffId IS NULL OR s.userId = :staffId)
-          AND (:typeId IS NULL OR t.typeId = :typeId)
+        LEFT JOIN FETCH sa.unitTypes t
+        WHERE sa.workDate BETWEEN :startDate AND :endDate
         ORDER BY sa.workDate ASC, sa.shift ASC
     """)
-    List<StaffAssignment> findFiltered(
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("staffId") Long staffId,
-            @Param("typeId") Integer typeId
-    );
-
-    @Query("SELECT sa FROM StaffAssignment sa JOIN FETCH sa.staff s JOIN FETCH sa.unitType t WHERE sa.workDate BETWEEN :startDate AND :endDate ORDER BY sa.workDate ASC, sa.shift ASC")
     List<StaffAssignment> findByWorkDateBetween(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    /** Backward-compatible filtered view (tests/legacy callers). */
+    default List<StaffAssignment> findFiltered(
+            LocalDate startDate, LocalDate endDate, Long staffId, Integer typeId) {
+        return findByWorkDateBetween(startDate, endDate).stream()
+                .filter(a -> staffId == null || (a.getStaff() != null && a.getStaff().getUserId().equals(staffId)))
+                .filter(a -> typeId == null || (a.getUnitTypes() != null
+                        && a.getUnitTypes().stream().anyMatch(t -> t.getTypeId().equals(typeId))))
+                .toList();
+    }
 }

@@ -49,12 +49,12 @@ public class StaffingController {
      * Phân công ca trực mới kèm phát hiện va chạm tự động (FR-27).
      */
     @PostMapping
-    public ResponseEntity<ShiftAssignmentResponse> createShiftAssignment(
+    public ResponseEntity<List<ShiftAssignmentResponse>> createShiftAssignment(
             @Valid @RequestBody CreateShiftAssignmentRequest request,
             Authentication authentication
     ) {
         String actorEmail = authentication != null ? authentication.getName() : null;
-        ShiftAssignmentResponse created = staffingService.createShiftAssignment(actorEmail, request);
+        List<ShiftAssignmentResponse> created = staffingService.createShiftAssignments(actorEmail, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 

@@ -38,9 +38,13 @@ public class StaffAssignment {
     @JoinColumn(name = "staff_id")
     private User staff;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "unit_type_id")
-    private UnitType unitType;
+    @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
+    @jakarta.persistence.JoinTable(
+            name = "staff_assignment_types",
+            joinColumns = @jakarta.persistence.JoinColumn(name = "assignment_id"),
+            inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "unit_type_id")
+    )
+    private java.util.Set<UnitType> unitTypes = new java.util.LinkedHashSet<>();
 
     @Enumerated(EnumType.STRING)
     private Shift shift;
@@ -50,4 +54,19 @@ public class StaffAssignment {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    /** Convenience cho code cũ/test: một loại kho duy nhất. */
+    public UnitType getUnitType() {
+        return unitTypes == null || unitTypes.isEmpty() ? null : unitTypes.iterator().next();
+    }
+
+    public void setUnitType(UnitType type) {
+        if (unitTypes == null) {
+            unitTypes = new java.util.LinkedHashSet<>();
+        }
+        unitTypes.clear();
+        if (type != null) {
+            unitTypes.add(type);
+        }
+    }
 }
