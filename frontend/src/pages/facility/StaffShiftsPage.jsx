@@ -7,7 +7,7 @@ import {
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   DAYS_OF_WEEK,
-  ZONES,
+  UNIT_TYPES,
   } from "../../services/shiftService.js";
 import {
   useStaffShifts,
@@ -22,8 +22,8 @@ export default function StaffShiftsPage() {
   const {
     selectedStaffId,
     setSelectedStaffId,
-    selectedZone,
-    setSelectedZone,
+    selectedType,
+    setSelectedType,
     selectedWindow,
     setSelectedWindow,
     selectedDate,
@@ -78,7 +78,7 @@ export default function StaffShiftsPage() {
               </div>
               <h1 className="shifts-title">Phân công ca trực & Rà soát xung đột</h1>
               <p className="shifts-subtitle">
-                Phân công ca trực theo khu vực và tự động phát hiện lịch trực bị trùng.
+                Phân công ca trực theo loại kho và tự động phát hiện lịch trực bị trùng.
               </p>
             </div>
           </header>
@@ -94,8 +94,8 @@ export default function StaffShiftsPage() {
           <ShiftAssignmentForm
             selectedStaffId={selectedStaffId}
             setSelectedStaffId={setSelectedStaffId}
-            selectedZone={selectedZone}
-            setSelectedZone={setSelectedZone}
+            selectedType={selectedType}
+            setSelectedType={setSelectedType}
             selectedWindow={selectedWindow}
             setSelectedWindow={setSelectedWindow}
             selectedDate={selectedDate}
@@ -105,7 +105,7 @@ export default function StaffShiftsPage() {
             onSaveAssignment={handleSaveAssignment}
             onResetDefaults={() => {
               if (staffList && staffList.length > 0) setSelectedStaffId(staffList[0].id);
-              setSelectedZone(ZONES[0].code);
+              setSelectedType(UNIT_TYPES[0].id);
               setSelectedWindow("MORNING");
               setSelectedDate(DAYS_OF_WEEK[0].key);
             }}

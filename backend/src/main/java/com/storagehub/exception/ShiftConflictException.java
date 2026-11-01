@@ -37,8 +37,8 @@ public class ShiftConflictException extends RuntimeException {
     private static String formatMessage(String staffName, StaffAssignment.Shift shift, String zoneCode, LocalDate workDate) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String formattedDate = workDate != null ? workDate.format(formatter) : "";
-        return String.format("%s đã được phân công ca %s tại %s vào ngày %s. Vui lòng chọn nhân viên khác hoặc ca khác.",
-                staffName, shift != null ? shift.name() : "", zoneCode != null ? ("Zone " + zoneCode) : "", formattedDate);
+        return String.format("%s đã được phân công ca %s tại kho %s vào ngày %s. Vui lòng chọn nhân viên khác hoặc ca khác.",
+                staffName, shift != null ? shift.name() : "", zoneCode != null ? zoneCode : "", formattedDate);
     }
 
     public Long getStaffId() {

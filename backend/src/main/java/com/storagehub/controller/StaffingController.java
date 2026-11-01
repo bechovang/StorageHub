@@ -39,9 +39,9 @@ public class StaffingController {
             @RequestParam(name = "endDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(name = "staffId", required = false) Long staffId,
-            @RequestParam(name = "zoneId", required = false) Integer zoneId
+            @RequestParam(name = "unitTypeId", required = false) Integer unitTypeId
     ) {
-        List<ShiftAssignmentResponse> list = staffingService.getShifts(startDate, endDate, staffId, zoneId);
+        List<ShiftAssignmentResponse> list = staffingService.getShifts(startDate, endDate, staffId, unitTypeId);
         return ResponseEntity.ok(list);
     }
 

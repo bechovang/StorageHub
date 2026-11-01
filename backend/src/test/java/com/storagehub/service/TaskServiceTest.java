@@ -111,6 +111,10 @@ class TaskServiceTest {
         unitS3.setUnitId(3L);
         unitS3.setCode("S-3");
         unitS3.setZone(zoneA);
+        UnitType typeS = new UnitType();
+        typeS.setTypeId(2);
+        typeS.setName("S");
+        unitS3.setType(typeS);
 
         // Fixed clock at 10:00 AM ICT (Morning shift)
         Instant fixedInstant = today.atTime(10, 0).atZone(ictZone).toInstant();
@@ -164,17 +168,17 @@ class TaskServiceTest {
     }
 
     @Test
-    @DisplayName("autoCreateTask tự động phân công staff trực ca phụ trách Zone chứa Unit (FR-21)")
+    @DisplayName("autoCreateTask tự động phân công staff trực ca phụ trách loại kho (FR-21)")
     void testAutoCreateTask_AutoAssignByZoneAndShift() {
         StaffAssignment assignment = new StaffAssignment();
         assignment.setAssignmentId(10L);
         assignment.setStaff(staffUser);
-        assignment.setZone(zoneA);
+        assignment.setUnitType(unitS3.getType());
         assignment.setWorkDate(today);
         assignment.setShift(StaffAssignment.Shift.MORNING);
 
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
-        when(staffAssignmentRepository.findByZone_ZoneIdAndWorkDateAndShift(eq(1), eq(today), eq(StaffAssignment.Shift.MORNING)))
+        when(staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(eq(2), eq(today), eq(StaffAssignment.Shift.MORNING)))
                 .thenReturn(Optional.of(assignment));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
@@ -205,13 +209,11 @@ class TaskServiceTest {
     }
 
     @Test
-    @DisplayName("autoCreateTask fallback khi không có staff trực zone cụ thể")
+    @DisplayName("autoCreateTask fallback khi không có staff trực loại kho cụ thể")
     void testAutoCreateTask_FallbackStaff() {
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
-        when(staffAssignmentRepository.findByZone_ZoneIdAndWorkDateAndShift(eq(1), eq(today), eq(StaffAssignment.Shift.MORNING)))
+        when(staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(eq(2), eq(today), eq(StaffAssignment.Shift.MORNING)))
                 .thenReturn(Optional.empty());
-        when(staffAssignmentRepository.findByFacilityAndWorkDateAndShift(eq(1), eq(today), eq(StaffAssignment.Shift.MORNING)))
-                .thenReturn(List.of());
         when(staffAssignmentRepository.findByWorkDateAndShift(eq(today), eq(StaffAssignment.Shift.MORNING)))
                 .thenReturn(List.of());
         when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))

@@ -18,9 +18,11 @@ export default function ShiftKpiGrid({
   const shiftCount = allShifts.length;
   const coveragePercent = Math.min(100, Math.round((shiftCount / 21) * 100));
 
-  const countZoneA = allShifts.filter((s) => s.zone && s.zone.includes("A")).length;
-  const countZoneB = allShifts.filter((s) => s.zone && s.zone.includes("B")).length;
-  const countZoneC = allShifts.filter((s) => s.zone && s.zone.includes("C")).length;
+  const countType = (name) => allShifts.filter((s) => (s.typeName || "").includes(name)).length;
+  const countLock = countType("LOCK");
+  const countS = countType("S");
+  const countM = countType("M");
+  const countL = countType("L");
 
   return (
     <div className="shifts-kpi-grid">
@@ -58,7 +60,7 @@ export default function ShiftKpiGrid({
         </div>
       </article>
 
-      {/* KPI 3: Zone Bottleneck / Conflict */}
+      {/* KPI 3: Conflict */}
       <article
         className={`shifts-kpi-card ${
           totalConflicts > 0 ? "shifts-kpi-card--conflict" : ""
@@ -107,12 +109,12 @@ export default function ShiftKpiGrid({
       {/* KPI 4 */}
       <article className="shifts-kpi-card">
         <div className="shifts-kpi-card__head">
-          <span className="shifts-kpi-card__label">PHÂN BỔ THEO PHÂN KHU</span>
+          <span className="shifts-kpi-card__label">PHÂN BỔ THEO LOẠI KHO</span>
           <Warehouse size={20} className="shifts-kpi-card__icon" />
         </div>
-        <div className="shifts-kpi-card__val">3 Phân khu (A, B, C)</div>
+        <div className="shifts-kpi-card__val">4 nhóm kho</div>
         <p className="shifts-kpi-card__desc">
-          Zone A: {countZoneA} ca · Zone B: {countZoneB} ca · Zone C: {countZoneC} ca
+          LOCK: {countLock} ca · S: {countS} ca · M: {countM} ca · L: {countL} ca
         </p>
         <div className="shifts-kpi-card__badge-row">
           <span className="badge badge--neutral">Cơ sở Tân Bình</span>

@@ -1,17 +1,19 @@
 import { WarningCircle, Trash } from "@phosphor-icons/react";
-import { DAYS_OF_WEEK } from "../../../services/shiftService.js";
+import { getWeekDays } from "../../../services/shiftService.js";
 
 export default function WeeklyScheduleTable({
   staffRoster,
   totalConflicts,
   onRemoveShift,
 }) {
+  const days = getWeekDays();
+  const weekLabel = `${days[0].fullDate} – ${days[6].fullDate}`;
   return (
     <section className="shifts-schedule-col">
       <div className="schedule-header">
         <div>
           <h2 className="schedule-title">Lịch trực tuần này</h2>
-          <span className="schedule-subtitle">(12/10 – 18/10/2026)</span>
+          <span className="schedule-subtitle">({weekLabel})</span>
         </div>
         <div className="schedule-meta-pill">
           <span className="dot-live" />
@@ -24,7 +26,7 @@ export default function WeeklyScheduleTable({
           <thead>
             <tr>
               <th className="th-staff">Nhân viên</th>
-              {DAYS_OF_WEEK.map((d) => (
+              {days.map((d) => (
                 <th
                   key={d.key}
                   className={`th-day ${
@@ -50,7 +52,7 @@ export default function WeeklyScheduleTable({
                   <strong className="td-staff__name">{staff.fullName}</strong>
                   <span className="td-staff__code">{staff.code}</span>
                 </td>
-                {DAYS_OF_WEEK.map((day) => {
+                {days.map((day) => {
                   const dayShifts = staff.shifts.filter(
                     (s) => s.date === day.key
                   );
@@ -67,9 +69,9 @@ export default function WeeklyScheduleTable({
                     <td key={day.key} className="td-day">
                       <div className="shifts-cell-stack">
                         {dayShifts.map((s) => {
-                          const isMorning = s.window === "MORNING";
-                          const isAfternoon = s.window === "AFTERNOON";
-                          const isFullDay = s.window === "FULL_DAY";
+                          const isMorning = s.shiftWindow === "MORNING";
+                          const isAfternoon = s.shiftWindow === "AFTERNOON";
+                          const isFullDay = s.shiftWindow === "FULL_DAY";
 
                           let badgeType = "badge--neutral";
                           if (isMorning) badgeType = "badge--morning";
@@ -84,17 +86,17 @@ export default function WeeklyScheduleTable({
                               title={
                                 s.hasConflict
                                   ? `Trùng lịch trực: ${s.conflictReason}`
-                                  : `${s.zoneName} · ${s.timeWindow}`
+                                  : `${s.typeName || "Kho"} · ${s.timeWindow || s.shiftWindow}`
                               }
                             >
                               <div className="shift-pill__meta">
                                 <span className="shift-pill__zone">
-                                  {s.zoneCode}
+                                  {s.typeName || "Kho"}
                                 </span>
                                 <span className="shift-pill__time">
-                                  {s.window === "MORNING"
+                                  {s.shiftWindow === "MORNING"
                                     ? "Sáng"
-                                    : s.window === "AFTERNOON"
+                                    : s.shiftWindow === "AFTERNOON"
                                     ? "Chiều"
                                     : "Cả ngày"}
                                 </span>

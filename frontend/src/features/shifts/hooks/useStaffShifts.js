@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { matchSearch } from "../../../utils/formatters.js";
 import {
   DAYS_OF_WEEK,
-  ZONES,
+  UNIT_TYPES,
+  getWeekRange,
   getStaffRoster,
   createShiftAssignment,
   deleteShiftAssignment,
@@ -16,7 +17,7 @@ export function useStaffShifts() {
 
   // Form phân công mới
   const [selectedStaffId, setSelectedStaffId] = useState([0].id);
-  const [selectedZone, setSelectedZone] = useState(ZONES[0].code);
+  const [selectedType, setSelectedType] = useState(UNIT_TYPES[0].id);
   const [selectedWindow, setSelectedWindow] = useState("MORNING");
   const [selectedDate, setSelectedDate] = useState(DAYS_OF_WEEK[0].key);
 
@@ -31,10 +32,8 @@ export function useStaffShifts() {
     try {
       setLoading(true);
       setError(null);
-      const data = await getStaffRoster({
-        startDate: "2026-10-26",
-        endDate: "2026-11-01",
-      });
+      const range = getWeekRange();
+      const data = await getStaffRoster(range);
       setRawRoster(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load staff roster:", err);
@@ -46,10 +45,7 @@ export function useStaffShifts() {
 
   useEffect(() => {
     let ignore = false;
-    getStaffRoster({
-      startDate: "2026-10-26",
-      endDate: "2026-11-01",
-    })
+    getStaffRoster(getWeekRange())
       .then((data) => {
         if (!ignore) {
           setRawRoster(Array.isArray(data) ? data : []);
@@ -88,8 +84,8 @@ export function useStaffShifts() {
           staffId: s.staffId || member.staffId,
           date: s.workDate,
           shiftWindow: s.shift,
-          zone: s.zoneName || (s.zoneCode ? `Zone ${s.zoneCode}` : "Zone A"),
-          zoneId: s.zoneId,
+          typeName: s.unitTypeName || s.unitTypeLabel || "Kho",
+          unitTypeId: s.unitTypeId,
           isConflict: false,
         };
         collectedShifts.push(item);
@@ -169,10 +165,9 @@ export function useStaffShifts() {
   const handleSaveAssignment = async (e) => {
     e.preventDefault();
     try {
-      const zoneObj = ZONES.find((z) => z.code === selectedZone) || ZONES[0];
       await createShiftAssignment({
         staffId: selectedStaffId,
-        zoneId: zoneObj.id,
+        unitTypeId: selectedType,
         shift: selectedWindow,
         workDate: selectedDate,
       });
@@ -231,8 +226,8 @@ export function useStaffShifts() {
     refreshRoster: fetchRoster,
     selectedStaffId,
     setSelectedStaffId,
-    selectedZone,
-    setSelectedZone,
+    selectedType,
+    setSelectedType,
     selectedWindow,
     setSelectedWindow,
     selectedDate,

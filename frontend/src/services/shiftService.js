@@ -1,6 +1,6 @@
 /**
  * StorageHub — Staff & Shifts Management Service (US-26 / FR-27)
- * Quản lý phân công ca trực theo Staff × Zone × Ca × Ngày.
+ * Quản lý phân công ca trực theo Staff × Loại kho × Ca × Ngày.
  * Chặn và phát hiện xung đột lịch trực (người-ca-ngày) trước khi lưu.
  * Kết nối API /api/v1/shifts và /api/v1/shifts/roster
  */
@@ -58,31 +58,60 @@ export const SHIFT_WINDOWS = {
   },
 };
 
-export const ZONES = [
-  { id: 1, code: "Zone A", name: "Zone A (Climate Controlled)" },
-  { id: 2, code: "Zone B", name: "Zone B (Ground Floor Units)" },
-  { id: 3, code: "Zone C", name: "Zone C (Drive-Up Units)" },
+export const UNIT_TYPES = [
+  { id: 1, code: "LOCK", name: "Kho LOCK" },
+  { id: 2, code: "S", name: "Kho S" },
+  { id: 3, code: "M", name: "Kho M" },
+  { id: 4, code: "L", name: "Kho L" },
 ];
 
-export const DAYS_OF_WEEK = [
-  { key: "2026-10-26", dayName: "Thứ 2", label: "Mon 26", fullDate: "26/10/2026", isToday: false },
-  { key: "2026-10-27", dayName: "Thứ 3", label: "Tue 27", fullDate: "27/10/2026", isToday: false },
-  { key: "2026-10-28", dayName: "Thứ 4", label: "Wed 28", fullDate: "28/10/2026", isToday: false },
-  { key: "2026-10-29", dayName: "Thứ 5", label: "Thu 29", fullDate: "29/10/2026", isToday: false },
-  { key: "2026-10-30", dayName: "Thứ 6", label: "Fri 30", fullDate: "30/10/2026", isToday: false },
-  { key: "2026-10-31", dayName: "Thứ 7", label: "Sat 31", fullDate: "31/10/2026", isToday: true },
-  { key: "2026-11-01", dayName: "Chủ nhật", label: "Sun 01", fullDate: "01/11/2026", isToday: false },
-];
+function ymd(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function startOfWeek(base = new Date()) {
+  const d = new Date(base);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay() || 7; // Mon=1..Sun=7
+  d.setDate(d.getDate() - day + 1);
+  return d;
+}
+
+export function getWeekDays(base = new Date()) {
+  const monday = startOfWeek(base);
+  const today = new Date();
+  const dayNames = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
+  const shortNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return {
+      key: ymd(d),
+      dayName: dayNames[i],
+      label: `${shortNames[i]} ${d.getDate()}`,
+      fullDate: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`,
+      isToday: ymd(d) === ymd(today),
+    };
+  });
+}
+
+export function getWeekRange(base = new Date()) {
+  const days = getWeekDays(base);
+  return { startDate: days[0].key, endDate: days[6].key };
+}
+
+export const DAYS_OF_WEEK = getWeekDays();
 
 /**
  * Lấy danh sách ca trực theo khoảng ngày
  */
-export async function getShifts({ startDate = "2026-10-26", endDate = "2026-11-01", staffId, zoneId } = {}) {
+export async function getShifts({ startDate, endDate, staffId, unitTypeId } = {}) {
+  const range = getWeekRange();
   const params = new URLSearchParams();
-  if (startDate) params.append("startDate", startDate);
-  if (endDate) params.append("endDate", endDate);
+  params.append("startDate", startDate || range.startDate);
+  params.append("endDate", endDate || range.endDate);
   if (staffId) params.append("staffId", String(staffId));
-  if (zoneId) params.append("zoneId", String(zoneId));
+  if (unitTypeId) params.append("unitTypeId", String(unitTypeId));
 
   const response = await apiClient(`/api/v1/shifts?${params.toString()}`);
   if (!response.ok) {
@@ -95,10 +124,11 @@ export async function getShifts({ startDate = "2026-10-26", endDate = "2026-11-0
 /**
  * Lấy danh sách nhân sự trực ca kèm thống kê tuần (FR-27 / F5-03)
  */
-export async function getStaffRoster({ startDate = "2026-10-26", endDate = "2026-11-01" } = {}) {
+export async function getStaffRoster({ startDate, endDate } = {}) {
+  const range = getWeekRange();
   const params = new URLSearchParams();
-  if (startDate) params.append("startDate", startDate);
-  if (endDate) params.append("endDate", endDate);
+  params.append("startDate", startDate || range.startDate);
+  params.append("endDate", endDate || range.endDate);
 
   const response = await apiClient(`/api/v1/shifts/roster?${params.toString()}`);
   if (!response.ok) {
@@ -111,7 +141,7 @@ export async function getStaffRoster({ startDate = "2026-10-26", endDate = "2026
 /**
  * Phân công ca trực mới kèm phát hiện va chạm tự động (FR-27)
  */
-export async function createShiftAssignment({ staffId, zoneId, shift, workDate }) {
+export async function createShiftAssignment({ staffId, unitTypeId, shift, workDate }) {
   let finalShift = shift;
   if (shift === "FULL_DAY" || shift === "ON_CALL") {
     finalShift = "EVENING";
@@ -121,7 +151,7 @@ export async function createShiftAssignment({ staffId, zoneId, shift, workDate }
     method: "POST",
     body: JSON.stringify({
       staffId: Number(staffId),
-      zoneId: Number(zoneId),
+      unitTypeId: Number(unitTypeId),
       shift: finalShift,
       workDate,
     }),
@@ -181,7 +211,7 @@ export function detectShiftConflict({ staffId, date, shiftWindow, shifts = [], s
       const formattedDate = date.split("-").reverse().join("/");
       return {
         hasConflict: true,
-        reason: `${staffName} đã được phân công ${windowLabel} tại ${existing.zone} vào ngày ${formattedDate}. Không thể gán thêm ca trùng lịch!`,
+        reason: `${staffName} đã được phân công ${windowLabel} tại ${existing.typeName || 'kho'} vào ngày ${formattedDate}. Không thể gán thêm ca trùng lịch!`,
         conflictingShift: existing,
       };
     }

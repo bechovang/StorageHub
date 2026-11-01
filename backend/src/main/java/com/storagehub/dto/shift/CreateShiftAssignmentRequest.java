@@ -8,8 +8,8 @@ public record CreateShiftAssignmentRequest(
         @NotNull(message = "ID nhân viên không được để trống")
         Long staffId,
 
-        @NotNull(message = "Khu vực phân công (Zone) không được để trống")
-        Integer zoneId,
+        @NotNull(message = "Loại kho phân công không được để trống")
+        Integer unitTypeId,
 
         @NotNull(message = "Ca trực không được để trống")
         StaffAssignment.Shift shift,

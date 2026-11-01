@@ -17,7 +17,7 @@ public interface StaffingService {
             LocalDate startDate,
             LocalDate endDate,
             Long staffId,
-            Integer zoneId
+            Integer typeId
     );
 
     ShiftAssignmentResponse createShiftAssignment(

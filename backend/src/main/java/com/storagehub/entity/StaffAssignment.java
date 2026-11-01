@@ -39,8 +39,8 @@ public class StaffAssignment {
     private User staff;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "zone_id")
-    private Zone zone;
+    @JoinColumn(name = "unit_type_id")
+    private UnitType unitType;
 
     @Enumerated(EnumType.STRING)
     private Shift shift;

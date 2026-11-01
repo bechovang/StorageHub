@@ -9,9 +9,9 @@ public record ShiftAssignmentResponse(
         Long staffId,
         String staffName,
         String staffCode,
-        Integer zoneId,
-        String zoneCode,
-        String zoneName,
+        Integer unitTypeId,
+        String unitTypeName,
+        String unitTypeLabel,
         StaffAssignment.Shift shift,
         LocalDate workDate,
         LocalDateTime createdAt
@@ -19,18 +19,20 @@ public record ShiftAssignmentResponse(
     public static ShiftAssignmentResponse fromEntity(StaffAssignment assignment) {
         String staffName = assignment.getStaff() != null ? assignment.getStaff().getFullName() : "";
         String staffCode = assignment.getStaff() != null ? ("KC-" + assignment.getStaff().getUserId()) : "";
-        Integer zoneId = assignment.getZone() != null ? assignment.getZone().getZoneId() : null;
-        String zoneCode = assignment.getZone() != null ? assignment.getZone().getCode() : "";
-        String zoneName = assignment.getZone() != null ? ("Zone " + assignment.getZone().getCode()) : "";
+        Integer typeId = assignment.getUnitType() != null ? assignment.getUnitType().getTypeId() : null;
+        String typeName = assignment.getUnitType() != null ? assignment.getUnitType().getName() : "";
+        String typeLabel = assignment.getUnitType() != null
+                ? "Kho " + assignment.getUnitType().getName()
+                : "";
 
         return new ShiftAssignmentResponse(
                 assignment.getAssignmentId(),
                 assignment.getStaff() != null ? assignment.getStaff().getUserId() : null,
                 staffName,
                 staffCode,
-                zoneId,
-                zoneCode,
-                zoneName,
+                typeId,
+                typeName,
+                typeLabel,
                 assignment.getShift(),
                 assignment.getWorkDate(),
                 assignment.getCreatedAt()
