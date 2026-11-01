@@ -427,25 +427,85 @@
 
 /* ─ Print styles ────────────────────────────── */
 @media print {
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+
+  body:has(#checkin-pass-print) {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(#checkin-pass-print) * {
+    visibility: hidden;
+  }
+
+  #checkin-pass-print,
+  #checkin-pass-print * {
+    visibility: visible !important;
+  }
+
+  header,
+  footer,
+  nav,
+  .app-header,
+  .app-footer,
   .cip__nav,
-  .cip__print-btn {
+  .cip__print-btn,
+  .cip__error,
+  .cip__skeleton-wrap,
+  .app-shell__notice,
+  .no-print {
     display: none !important;
   }
 
   .checkin-pass-page {
-    padding: 0;
-    max-width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
   }
 
-  .cip__pass-card {
-    box-shadow: none;
-    border: 2px solid #000;
+  #checkin-pass-print {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 580px !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: 2px solid #000000 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .cip__pass-header {
-    background: #000 !important;
-    color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    background: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cip__qr-wrapper {
+    background: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+
+  .cip__code {
+    color: #000000 !important;
+    font-weight: 900 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cip__pass-footer {
+    background: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
