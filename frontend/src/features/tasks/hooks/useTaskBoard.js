@@ -5,7 +5,7 @@ import {
   checkSnapBackViolation,
 } from "../../../services/taskService.js";
 
-export function useTaskBoard() {
+export function useTaskBoard({ staffId } = {}) {
   const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState("ALL");
   const [loading, setLoading] = useState(true);
@@ -34,12 +34,12 @@ export function useTaskBoard() {
 
   const reloadTasks = useCallback(async () => {
     try {
-      const data = await getStaffTasks();
+      const data = await getStaffTasks(staffId);
       setTasks(data);
     } catch (err) {
       console.error("Failed to fetch staff tasks:", err);
     }
-  }, []);
+  }, [staffId]);
 
   // Auto-dismiss Snap-back toast notification sau 4.5s
   useEffect(() => {
@@ -52,7 +52,8 @@ export function useTaskBoard() {
 
   useEffect(() => {
     let ignore = false;
-    getStaffTasks()
+    setLoading(true);
+    getStaffTasks(staffId)
       .then((data) => {
         if (!ignore) {
           setTasks(data);
@@ -67,7 +68,7 @@ export function useTaskBoard() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [staffId]);
 
   // Xử lý chuyển cột trạng thái (bằng nút hoặc drag-drop)
   const handleMoveStatus = async (task, targetStatus) => {

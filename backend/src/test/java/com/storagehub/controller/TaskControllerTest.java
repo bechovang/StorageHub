@@ -75,7 +75,7 @@ class TaskControllerTest {
                 TaskRitualDto.empty()
         );
 
-        when(taskService.getTasks(any(), any(), any(), any(), any())).thenReturn(List.of(task1));
+        when(taskService.getTasks(any(), any(), any(), any(), any(), any())).thenReturn(List.of(task1));
 
         mockMvc.perform(get("/api/v1/tasks")
                         .principal(auth)

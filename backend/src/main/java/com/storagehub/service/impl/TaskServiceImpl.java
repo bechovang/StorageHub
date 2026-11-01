@@ -113,7 +113,8 @@ public class TaskServiceImpl implements TaskService {
             LocalDate workDate,
             StaffAssignment.Shift shift,
             Task.Type type,
-            Task.Status status
+            Task.Status status,
+            Long staffId
     ) {
         User currentUser = userRepository.findByEmailIgnoreCase(currentUserEmail)
                 .orElseThrow(() -> new AccessDeniedException("Người dùng không tồn tại"));
@@ -137,9 +138,10 @@ public class TaskServiceImpl implements TaskService {
                 tasks = taskRepository.findStaffTasks(currentUser.getUserId(), type, status);
             }
         } else {
-            tasks = taskRepository.findFilteredTasks(null, targetDate, type, status);
+            // Facility Manager/System Admin: xem toàn bộ hoặc lọc theo 1 staff.
+            tasks = taskRepository.findFilteredTasks(staffId, targetDate, type, status);
             if (tasks.isEmpty() && isDefaultDate) {
-                tasks = taskRepository.findFilteredTasks(null, null, type, status);
+                tasks = taskRepository.findFilteredTasks(staffId, null, type, status);
             }
         }
 

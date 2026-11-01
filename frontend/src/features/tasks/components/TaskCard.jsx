@@ -20,6 +20,7 @@ export function TaskCard({
   onOpenSupport,
   onOpenContract,
   onShowDetail,
+  showAssignee = false,
 }) {
   const typeConfig = TASK_TYPES[task.type] || TASK_TYPES.CHECK_IN;
 
@@ -70,6 +71,11 @@ export function TaskCard({
         <p className="task-card__meta">
           {task.customerName} {task.dueTime ? `· Hẹn ${task.dueTime}` : ""}
         </p>
+        {showAssignee && task.assignedStaff?.fullName && (
+          <p className="task-card__assignee">
+            Phụ trách: <strong>{task.assignedStaff.fullName}</strong>
+          </p>
+        )}
 
         {/* Extra Badges */}
         {task.accessPin && (

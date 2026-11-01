@@ -61,8 +61,9 @@ export const TASK_STATUSES = {
 /**
  * Lấy danh sách nhiệm vụ của ca trực từ Backend: GET /api/v1/tasks
  */
-export async function getStaffTasks() {
-  const res = await apiClient("/api/v1/tasks");
+export async function getStaffTasks(staffId) {
+  const query = staffId ? `?staffId=${encodeURIComponent(staffId)}` : "";
+  const res = await apiClient(`/api/v1/tasks${query}`);
   const data = await safeParseJson(res);
   if (!res.ok) throw new Error(data.message || "Không thể tải danh sách nhiệm vụ.");
   return Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : [];
