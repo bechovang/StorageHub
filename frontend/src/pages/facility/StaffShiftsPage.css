@@ -785,7 +785,8 @@
 .schedule-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 780px;
+  table-layout: fixed;
+  min-width: 0;
 }
 
 .schedule-table thead tr th {
@@ -801,7 +802,7 @@
 }
 
 .th-staff {
-  width: 160px;
+  width: 138px;
 }
 
 .th-day {
@@ -842,7 +843,7 @@
 }
 
 .td-staff {
-  width: 160px;
+  width: 138px;
 }
 
 .td-staff__name {
@@ -860,7 +861,9 @@
 }
 
 .td-day {
-  min-width: 100px;
+  width: auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .td-day--off {
@@ -1045,8 +1048,11 @@
 .shift-day-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 6px;
+  gap: 4px;
+  padding: 4px 5px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
   border: 1px solid var(--color-border, #d7d7d7);
   background: #fff;
 }
@@ -1055,21 +1061,27 @@
 }
 .shift-day-bars {
   display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
   gap: 2px;
-  min-width: 34px;
+  min-width: 0;
+  max-width: 46px;
 }
 .shift-type-bar {
-  width: 14px;
+  width: 10px;
   height: 8px;
   border-radius: 1px;
+  flex: 0 0 auto;
 }
 .shift-day-shift {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--color-secondary, #0f172a);
+  white-space: nowrap;
 }
 .shift-day-remove {
   margin-left: auto;
+  flex-shrink: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
