@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState } from "react";
 import { apiClient, tokenStorage, safeParseJson } from "../services/apiClient";
+import { resetNotificationCache } from "../services/notificationService";
 import { translateBackendMessage } from "../utils/statusLabels";
 
 const AuthContext = createContext(null);
@@ -94,6 +95,7 @@ export function AuthProvider({ children }) {
 
       const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/";
 
+      resetNotificationCache();
       tokenStorage.set(data.token);
       if (userObj) {
         localStorage.setItem("storagehub_user", JSON.stringify(userObj));
@@ -159,6 +161,7 @@ export function AuthProvider({ children }) {
 
       const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/";
 
+      resetNotificationCache();
       tokenStorage.set(data.token);
       if (userObj) {
         localStorage.setItem("storagehub_user", JSON.stringify(userObj));
@@ -229,6 +232,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    resetNotificationCache();
     tokenStorage.clear();
     setToken(null);
     setUser(null);

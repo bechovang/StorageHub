@@ -4,6 +4,10 @@ import { translateBackendMessage } from "../utils/statusLabels";
 let cachedUnread = { count: 0, fetchedAt: 0 };
 const UNREAD_CACHE_TTL_MS = 12000;
 
+export function resetNotificationCache() {
+  cachedUnread = { count: 0, fetchedAt: 0 };
+}
+
 /**
  * GET /api/v1/notifications?unread-only=false&page=1&page-size=25
  * Lấy danh sách thông báo của người dùng và tự động Việt hóa nội dung
@@ -30,11 +34,11 @@ export async function getNotifications({ unreadOnly = false, page = 1, pageSize 
 
 /**
  * GET /api/v1/notifications/unread-count
- * Có cơ chế chống gọi lặp khi chuyển trang liên tục
+ * Có cơ chế chống gọi lặp khi chuyển trang liên tục (TTL 12s)
  */
 export async function getUnreadNotificationCount({ force = false } = {}) {
   const now = Date.now();
-  if (!force && now - cachedUnread.fetchedAt < UNREAD_CACHE_TTL_MS) {
+  if (!force && cachedUnread.fetchedAt > 0 && now - cachedUnread.fetchedAt < UNREAD_CACHE_TTL_MS) {
     return { count: cachedUnread.count };
   }
   const res = await apiClient("/api/v1/notifications/unread-count");

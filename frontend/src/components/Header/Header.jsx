@@ -138,6 +138,7 @@ export default function Header({
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const [notifError, setNotifError] = useState(null);
 
   // Tự động đóng menu di động khi chuyển trang
   useEffect(() => {
@@ -157,8 +158,8 @@ export default function Header({
         if (isMounted && data) {
           setUnreadCount(Number(data.count || 0));
         }
-      } catch {
-        // Bỏ qua khi ngoại tuyến
+      } catch (err) {
+        console.warn("Poll unread notifications notice:", err?.message || err);
       }
     }
 
@@ -177,13 +178,17 @@ export default function Header({
     let isMounted = true;
     async function fetchList() {
       setLoadingNotifs(true);
+      setNotifError(null);
       try {
         const data = await getNotifications({ page: 1, pageSize: 20 });
-        if (isMounted && data?.items) {
-          setNotifications(data.items);
+        if (isMounted) {
+          setNotifications(Array.isArray(data?.items) ? data.items : []);
         }
-      } catch {
-        // Bỏ qua lỗi tải thông báo
+      } catch (err) {
+        if (isMounted) {
+          console.error("Failed to load notifications:", err);
+          setNotifError(err?.message || "Không thể tải danh sách thông báo.");
+        }
       } finally {
         if (isMounted) setLoadingNotifs(false);
       }
@@ -344,6 +349,27 @@ export default function Header({
                         {loadingNotifs ? (
                           <div className="header-notif-item header-notif-item--empty">
                             <p className="header-notif-item__text">Đang tải thông báo...</p>
+                          </div>
+                        ) : notifError ? (
+                          <div className="header-notif-item header-notif-item--empty header-notif-item--error">
+                            <p className="header-notif-item__text" style={{ color: "var(--color-status-danger, #dc2626)" }}>
+                              {notifError}
+                            </p>
+                            <button
+                              type="button"
+                              className="header-dropdown__mark-read-btn"
+                              style={{ marginTop: 6 }}
+                              onClick={() => {
+                                setLoadingNotifs(true);
+                                setNotifError(null);
+                                getNotifications({ page: 1, pageSize: 20 })
+                                  .then((d) => setNotifications(d?.items || []))
+                                  .catch((e) => setNotifError(e?.message || "Lỗi khi tải lại."))
+                                  .finally(() => setLoadingNotifs(false));
+                              }}
+                            >
+                              Thử lại
+                            </button>
                           </div>
                         ) : notifications.length === 0 ? (
                           <div className="header-notif-item header-notif-item--empty">
