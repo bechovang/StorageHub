@@ -159,12 +159,22 @@
   background: var(--color-neutral);
 }
 
+/* Sân khấu card trung tâm cho GSAP animation */
+.auth-card-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  will-change: transform, opacity;
+}
+
 .login-card {
   width: 100%;
   max-width: 400px;
   background: var(--color-surface);
   border: var(--border-strong);
   border-radius: var(--radius-none, 0px);
+  transition: max-width 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .login-card__header {
