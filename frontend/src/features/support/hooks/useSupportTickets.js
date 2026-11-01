@@ -49,28 +49,19 @@ export function useSupportTickets() {
   const [createError, setCreateError] = useState("");
 
   useEffect(() => {
+    // Chỉ kho khách ĐANG thuê mới được gắn ticket — RESERVED/chờ nhận kho
+    // không hợp lệ (BE cũng chặn). Giữ nguyên object reservation để label
+    // hiển thị đúng "Kho S-4 · S · Đơn BK-2031".
+    if (!isCustomer) return undefined;
     let isMounted = true;
-    listMyReservations({ group: "active" })
+    listMyReservations({ group: "active", page: 1, pageSize: 50 })
       .then((res) => {
         if (!isMounted) return;
-        const activeList = res?.items || [];
-        const unitsMap = new Map();
-        activeList.forEach((r) => {
-          const code = r.unit?.code || r.unitCode;
-          if (code && !unitsMap.has(code)) {
-            unitsMap.set(code, {
-              code,
-              typeName: r.unit?.typeName || r.unit?.type || "Kho tiêu chuẩn",
-              sizeM2: r.unit?.sizeM2 || 5,
-              facilityName: r.unit?.facilityName || "Cơ sở Tân Bình",
-            });
-          }
-        });
-        const list = Array.from(unitsMap.values());
+        const list = (res?.items || []).filter((r) =>
+          ["CHECKED_IN", "CHECKOUT_REQUESTED"].includes(r.status)
+        );
         setRentedUnits(list);
-        if (list.length > 0) {
-          setUnitCode(list[0].code);
-        }
+        setUnitCode(list[0]?.unit?.code || "");
       })
       .catch(() => {
         if (!isMounted) return;
@@ -81,7 +72,7 @@ export function useSupportTickets() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isCustomer]);
 
   // Modal xử lý (RESOLVE)
   const [resolveTargetTicket, setResolveTargetTicket] = useState(null);
