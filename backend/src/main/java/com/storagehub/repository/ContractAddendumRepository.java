@@ -12,6 +12,8 @@ public interface ContractAddendumRepository extends JpaRepository<ContractAddend
 
     List<ContractAddendum> findByContract_ContractIdOrderByCreatedAtAsc(Long contractId);
 
+    java.util.Optional<ContractAddendum> findByCode(String code);
+
     /** US-18: đánh số addendum CT-...-A{n} trong chuỗi của một contract. */
     long countByContract_ContractId(Long contractId);
 }
