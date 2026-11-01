@@ -13,8 +13,8 @@ export function useMyRentals() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const loadRentals = useCallback(async () => {
-    setLoading(true);
+  const loadRentals = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const [activePage, historyPage] = await Promise.all([
@@ -26,9 +26,23 @@ export function useMyRentals() {
     } catch (err) {
       setError(err?.message || "Không thể tải danh sách đơn thuê.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
+
+  // Staff có thể check-in/checkout trong lúc khách đang mở trang — tự làm mới
+  // danh sách khi tab được focus lại và mỗi 15s.
+  useEffect(() => {
+    const refresh = () => {
+      if (!document.hidden) loadRentals({ silent: true });
+    };
+    const timer = setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [loadRentals]);
 
   useEffect(() => {
     let ignore = false;

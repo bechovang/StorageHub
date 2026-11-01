@@ -72,6 +72,22 @@ export function useRentalDetail() {
     };
   }, [reservationId, navigate]);
 
+  // Đồng bộ trạng thái khi staff vừa check-in/checkout ở quầy.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.hidden) return;
+      getReservation(reservationId)
+        .then((data) => setReservation(data))
+        .catch(() => {});
+    };
+    const timer = setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [reservationId]);
+
   // Tự tắt Toast sau 4 giây (theo chuẩn US-17 / FR-33)
   useEffect(() => {
     if (!toastMessage) return;

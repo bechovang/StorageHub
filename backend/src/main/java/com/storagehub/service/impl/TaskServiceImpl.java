@@ -164,6 +164,12 @@ public class TaskServiceImpl implements TaskService {
             throw new AccessDeniedException("Bạn không được phân công xử lý nhiệm vụ này.");
         }
 
+        // Task đã DONE là trạng thái cuối — không cho kéo về TODO/IN_PROGRESS.
+        if (task.getStatus() == Task.Status.DONE && newStatus != Task.Status.DONE) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Nhiệm vụ đã hoàn thành — không thể chuyển lại trạng thái trước.");
+        }
+
         // Kiểm tra Snap-back chống Done ảo (FR-22 / AD-8)
         if (newStatus == Task.Status.DONE) {
             validateSnapBackRule(task);
