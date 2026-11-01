@@ -16,7 +16,6 @@ export function useBrowseUnits() {
   // State các giá trị trong form bộ lọc
   const [selectedType, setSelectedType] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
-  const [selectedFacility, setSelectedFacility] = useState("");
   // Tìm theo mã kho (vd: "S-7") — BE match contains, bỏ qua hoa/thường + dấu gạch
   const [searchQuery, setSearchQuery] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -25,7 +24,6 @@ export function useBrowseUnits() {
   const [activeFilters, setActiveFilters] = useState({
     typeId: "",
     sizeM2: "",
-    facilityId: "",
     query: "",
   });
 
@@ -65,7 +63,6 @@ export function useBrowseUnits() {
       const data = await searchUnits({
         typeId: filters.typeId,
         sizeM2: filters.sizeM2,
-        facilityId: filters.facilityId,
         query: filters.query,
         sort,
         page: targetPage,
@@ -92,7 +89,6 @@ export function useBrowseUnits() {
         const data = await searchUnits({
           typeId: activeFilters.typeId,
           sizeM2: activeFilters.sizeM2,
-          facilityId: activeFilters.facilityId,
           query: activeFilters.query,
           sort: sortOrder,
           page: 1,
@@ -139,7 +135,6 @@ export function useBrowseUnits() {
     const newFilters = {
       typeId: selectedType,
       sizeM2: selectedSize,
-      facilityId: selectedFacility,
       query: searchQuery,
     };
     setActiveFilters(newFilters);
@@ -158,13 +153,11 @@ export function useBrowseUnits() {
   const handleResetFilters = () => {
     setSelectedType("");
     setSelectedSize("");
-    setSelectedFacility("");
     setSearchQuery("");
     const reset = {
       typeId: "",
       sizeM2: "",
-      facilityId: "",
-      query: "",
+        query: "",
     };
     setActiveFilters(reset);
     setPage(1);
@@ -180,9 +173,6 @@ export function useBrowseUnits() {
     } else if (filterKey === "sizeM2") {
       updated.sizeM2 = "";
       setSelectedSize("");
-    } else if (filterKey === "facilityId") {
-      updated.facilityId = "";
-      setSelectedFacility("");
     } else if (filterKey === "query") {
       updated.query = "";
       setSearchQuery("");
@@ -212,10 +202,6 @@ export function useBrowseUnits() {
   )?.name;
 
   // Lấy tên cơ sở đang được lọc để hiển thị trên chip
-  const activeFacilityName = filterOptions.facilities?.find(
-    (f) => String(f.id) === String(activeFilters.facilityId),
-  )?.name;
-
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return {
@@ -225,8 +211,6 @@ export function useBrowseUnits() {
     setSelectedType,
     selectedSize,
     setSelectedSize,
-    selectedFacility,
-    setSelectedFacility,
     searchQuery,
     setSearchQuery,
     searchError,
@@ -249,6 +233,5 @@ export function useBrowseUnits() {
     handleViewDetails,
     handleBook,
     activeTypeName,
-    activeFacilityName,
   };
 }

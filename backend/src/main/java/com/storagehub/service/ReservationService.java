@@ -727,8 +727,11 @@ public class ReservationService {
                 .orElseThrow(() -> new ReservationInvalidStateException(
                         "Đặt chỗ " + reservation.getCode()
                                 + " chưa có hợp đồng — không thể check-in."));
+        // SIGNED cũng cho qua: retry sau lần ritual thất bại một phần —
+        // bước ký sẽ là no-op (xem ContractService.signContractAtCheckIn).
         if (latest.getStatus() != Contract.Status.DRAFT
-                && latest.getStatus() != Contract.Status.PRINTED) {
+                && latest.getStatus() != Contract.Status.PRINTED
+                && latest.getStatus() != Contract.Status.SIGNED) {
             throw new ReservationInvalidStateException(
                     "Hợp đồng " + latest.getCode() + " ở trạng thái "
                             + latest.getStatus() + " — không thể ký tại quầy.");
