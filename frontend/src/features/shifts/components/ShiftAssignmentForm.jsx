@@ -9,6 +9,12 @@ import {
   UNIT_TYPES,
   } from "../../../services/shiftService.js";
 
+const SHIFT_OPTIONS = [
+  { key: "MORNING", label: "Sáng (07:00 – 15:00)" },
+  { key: "AFTERNOON", label: "Tối (15:00 – 23:00)" },
+  { key: "FULL_DAY", label: "Full (07:00 – 23:00)" },
+];
+
 export default function ShiftAssignmentForm({
   selectedStaffId,
   setSelectedStaffId,
@@ -55,50 +61,60 @@ export default function ShiftAssignmentForm({
           </select>
         </div>
 
-        {/* Loại kho phân công — chọn nhiều */}
+        {/* Loại kho phân công — tick nhiều */}
         <div className="form-group">
-          <label className="form-label" htmlFor="shift-type">
-            Loại kho phân công (chọn nhiều)
-          </label>
-          <select
-            id="shift-type"
-            className="form-select"
-            multiple
-            size={4}
-            value={selectedTypeIds.map(String)}
-            onChange={(e) =>
-              setSelectedTypeIds(
-                Array.from(e.target.selectedOptions).map((o) => Number(o.value))
-              )
-            }
-          >
-            {UNIT_TYPES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+          <span className="form-label">Loại kho phân công (chọn nhiều)</span>
+          <div className="shift-check-grid">
+            {UNIT_TYPES.map((t) => {
+              const checked = selectedTypeIds.includes(t.id);
+              return (
+                <label key={t.id} className={`shift-check-chip ${checked ? "is-checked" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => {
+                      setSelectedTypeIds((prev) =>
+                        prev.includes(t.id)
+                          ? prev.filter((id) => id !== t.id)
+                          : [...prev, t.id]
+                      );
+                    }}
+                  />
+                  <span className={`shift-type-dot shift-type-dot--${t.code.toLowerCase()}`} />
+                  <span>{t.name}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Khung giờ ca — chọn nhiều */}
+        {/* Khung giờ ca — tick nhiều */}
         <div className="form-group">
-          <label className="form-label" htmlFor="shift-window">
-            Khung ca trực (chọn nhiều)
-          </label>
-          <select
-            id="shift-window"
-            className="form-select"
-            multiple
-            size={3}
-            value={selectedShifts}
-            onChange={(e) =>
-              setSelectedShifts(Array.from(e.target.selectedOptions).map((o) => o.value))
-            }
-          >
-            <option value="MORNING">Ca sáng (07:00 – 15:00)</option>
-            <option value="AFTERNOON">Ca chiều (15:00 – 23:00)</option>
-            <option value="EVENING">Ca tối (19:00 – 07:00)</option>
-          </select>
+          <span className="form-label">Khung ca trực (chọn nhiều)</span>
+          <div className="shift-check-grid">
+            {SHIFT_OPTIONS.map((opt) => {
+              const checked = selectedShifts.includes(opt.key);
+              return (
+                <label key={opt.key} className={`shift-check-chip ${checked ? "is-checked" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => {
+                      setSelectedShifts((prev) => {
+                        if (prev.includes(opt.key)) {
+                          return prev.filter((k) => k !== opt.key);
+                        }
+                        // Full phủ cả ngày — không trộn với Sáng/Tối.
+                        if (opt.key === "FULL_DAY") return ["FULL_DAY"];
+                        return [...prev.filter((k) => k !== "FULL_DAY"), opt.key];
+                      });
+                    }}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
 
         {/* Ngày áp dụng */}

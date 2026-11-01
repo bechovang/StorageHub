@@ -18,8 +18,8 @@ export const SHIFT_WINDOWS = {
   },
   AFTERNOON: {
     key: "AFTERNOON",
-    label: "Ca chiều (15:00 – 23:00)",
-    shortLabel: "Afternoon (15:00 – 23:00)",
+    label: "Ca tối (15:00 – 23:00)",
+    shortLabel: "Tối (15:00 – 23:00)",
     color: "#0284c7",
     bg: "#f0f9ff",
     border: "#bae6fd",
