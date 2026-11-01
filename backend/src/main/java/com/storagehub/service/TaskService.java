@@ -43,6 +43,12 @@ public interface TaskService {
             Long taskId,
             com.storagehub.dto.task.CheckinRitualRequest request);
 
+    /** US-19 ritual ký hợp đồng/phụ lục tại quầy: lưu ảnh + chuyển addendum/contract sang SIGNED. */
+    com.storagehub.dto.task.TaskResponse completeContractRitual(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.ContractRitualRequest request);
+
     /** US-21 ritual checkout: lập Settlement + Inspection + phí + đóng vòng thuê. */
     com.storagehub.dto.task.TaskResponse completeCheckoutRitual(
             String currentUserEmail,

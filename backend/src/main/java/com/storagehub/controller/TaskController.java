@@ -104,6 +104,18 @@ public class TaskController {
                 authentication.getName(), taskId, request));
     }
 
+    /** US-19: ký hợp đồng/phụ lục tại quầy — lưu ảnh bản ký + SIGNED. */
+    @PostMapping("/{taskId}/rituals/contract")
+    public ResponseEntity<com.storagehub.dto.task.TaskResponse> completeContractRitual(
+            @PathVariable("taskId") Long taskId,
+            @org.springframework.web.bind.annotation.RequestBody
+            @jakarta.validation.Valid com.storagehub.dto.task.ContractRitualRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(taskService.completeContractRitual(
+                authentication.getName(), taskId, request));
+    }
+
     /**
      * US-21: nhân viên tất toán trả kho tại quầy — Settlement + Inspection +
      * phí hư hại/phát sinh (payments) + đóng vòng thuê trong cùng transaction.

@@ -149,6 +149,16 @@ public class ContractService {
                 .orElseThrow(() -> new IllegalStateException(
                         "Không tìm thấy hợp đồng hiện hành của " + reservation.getCode()));
 
+        // Idempotent cho retry: lần ritual trước có thể đã ký xong rồi thất bại
+        // ở bước sau — ký lại là no-op thay vì 409 vĩnh viễn chặn check-in.
+        if (latest.getStatus() == Contract.Status.SIGNED) {
+            if (signedPhotoUrl != null && !signedPhotoUrl.isBlank()
+                    && !signedPhotoUrl.equals(latest.getSignedPhotoUrl())) {
+                latest.setSignedPhotoUrl(signedPhotoUrl);
+                contractRepository.save(latest);
+            }
+            return latest;
+        }
         if (latest.getStatus() != Contract.Status.DRAFT
                 && latest.getStatus() != Contract.Status.PRINTED) {
             throw new IllegalStateException(
@@ -453,6 +463,10 @@ public class ContractService {
 
         if (request == null || request.signedPhotoUrl() == null || request.signedPhotoUrl().isBlank()) {
             throw new IllegalArgumentException("Ảnh chụp bản ký phụ lục (signedPhotoUrl) là bắt buộc.");
+        }
+        if (actor.getRole().getName() == com.storagehub.entity.Role.Name.CUSTOMER) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Chỉ nhân viên mới được ký phụ lục tại quầy.");
         }
 
         ContractAddendum addendum = contractAddendumRepository.findById(addendumId)

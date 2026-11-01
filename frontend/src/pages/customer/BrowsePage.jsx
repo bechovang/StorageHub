@@ -17,8 +17,6 @@ export default function BrowsePage() {
     setSelectedType,
     selectedSize,
     setSelectedSize,
-    selectedFacility,
-    setSelectedFacility,
     searchError,
     activeFilters,
     searchQuery,
@@ -41,7 +39,6 @@ export default function BrowsePage() {
     handleViewDetails,
     handleBook,
     activeTypeName,
-    activeFacilityName,
   } = useBrowseUnits();
 
   return (
@@ -71,8 +68,6 @@ export default function BrowsePage() {
           setSelectedType={setSelectedType}
           selectedSize={selectedSize}
           setSelectedSize={setSelectedSize}
-          selectedFacility={selectedFacility}
-          setSelectedFacility={setSelectedFacility}
           onSearchSubmit={handleSearchSubmit}
         />
 
@@ -137,19 +132,6 @@ export default function BrowsePage() {
                 </span>
               )}
 
-              {activeFacilityName && (
-                <span className="browse-chip">
-                  Cơ sở: {activeFacilityName}
-                  <button
-                    type="button"
-                    className="browse-chip__remove"
-                    onClick={() => handleRemoveFilter("facilityId")}
-                    aria-label={`Xóa lọc cơ sở ${activeFacilityName}`}
-                  >
-                    <X size={12} weight="bold" />
-                  </button>
-                </span>
-              )}
             </div>
           </div>
 

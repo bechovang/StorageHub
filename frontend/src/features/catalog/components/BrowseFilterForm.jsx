@@ -8,8 +8,6 @@ export default function BrowseFilterForm({
   setSelectedType,
   selectedSize,
   setSelectedSize,
-  selectedFacility,
-  setSelectedFacility,
   onSearchSubmit,
 }) {
   return (
@@ -70,27 +68,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 4. Chọn cơ sở */}
-        <div className="browse-filter-field">
-          <label className="browse-filter-field__label" htmlFor="filter-facility">
-            Chọn cơ sở
-          </label>
-          <select
-            id="filter-facility"
-            className="browse-filter-field__select"
-            value={selectedFacility}
-            onChange={(e) => setSelectedFacility(e.target.value)}
-          >
-            <option value="">Tất cả cơ sở</option>
-            {(filterOptions.facilities || []).map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* 5. Nút tìm kiếm */}
+        {/* Nút tìm kiếm */}
         <button id="browse-search-btn" type="submit" className="browse-filter-btn">
           <MagnifyingGlass size={18} weight="bold" aria-hidden="true" />
           <span>Tìm kiếm</span>

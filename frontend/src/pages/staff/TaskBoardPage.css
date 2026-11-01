@@ -1151,3 +1151,13 @@
 .task-card[role="button"]:hover {
   border-color: var(--color-secondary, #1f6f54);
 }
+
+.task-detail__photo {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #e5e5e2);
+  background: #fff;
+}

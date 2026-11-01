@@ -61,6 +61,13 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    /** Ảnh ritual lưu để xem lại trong Task Detail (data URL base64). */
+    private String paymentProofPhoto;
+
+    private String contractPhoto;
+
+    private String settlementPhoto;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

@@ -44,6 +44,8 @@ public class TaskServiceImpl implements TaskService {
     private final com.storagehub.repository.CheckoutRequestRepository checkoutRequestRepository;
     private final com.storagehub.service.PricingEngine pricingEngine;
     private final com.storagehub.service.ReservationService reservationService;
+    private final com.storagehub.service.ContractService contractService;
+    private final com.storagehub.repository.ContractAddendumRepository contractAddendumRepository;
     private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
     private final Clock clock;
 
@@ -63,6 +65,8 @@ public class TaskServiceImpl implements TaskService {
             com.storagehub.repository.CheckoutRequestRepository checkoutRequestRepository,
             com.storagehub.service.PricingEngine pricingEngine,
             @org.springframework.context.annotation.Lazy com.storagehub.service.ReservationService reservationService,
+            com.storagehub.service.ContractService contractService,
+            com.storagehub.repository.ContractAddendumRepository contractAddendumRepository,
             org.springframework.transaction.PlatformTransactionManager transactionManager,
             Clock clock
     ) {
@@ -81,6 +85,8 @@ public class TaskServiceImpl implements TaskService {
         this.checkoutRequestRepository = checkoutRequestRepository;
         this.pricingEngine = pricingEngine;
         this.reservationService = reservationService;
+        this.contractService = contractService;
+        this.contractAddendumRepository = contractAddendumRepository;
         this.transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
         this.clock = clock;
     }
@@ -148,7 +154,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findWithStaffById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
 
-        return toTaskResponse(task, getCurrentShift(), null, null, null, null);
+        return toTaskResponse(task, getCurrentShift(), null, null, null, null, true);
     }
 
     @Override
@@ -162,6 +168,12 @@ public class TaskServiceImpl implements TaskService {
         Role.Name roleName = currentUser.getRole().getName();
         if (roleName == Role.Name.STAFF && !currentUser.getUserId().equals(task.getAssignedStaff().getUserId())) {
             throw new AccessDeniedException("Bạn không được phân công xử lý nhiệm vụ này.");
+        }
+
+        // Task đã DONE là trạng thái cuối — không cho kéo về TODO/IN_PROGRESS.
+        if (task.getStatus() == Task.Status.DONE && newStatus != Task.Status.DONE) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Nhiệm vụ đã hoàn thành — không thể chuyển lại trạng thái trước.");
         }
 
         // Kiểm tra Snap-back chống Done ảo (FR-22 / AD-8)
@@ -374,6 +386,18 @@ public class TaskServiceImpl implements TaskService {
             String customAlertNote,
             String customIssueDesc
     ) {
+        return toTaskResponse(task, shift, customDueTime, customPriority, customAlertNote, customIssueDesc, false);
+    }
+
+    private TaskResponse toTaskResponse(
+            Task task,
+            StaffAssignment.Shift shift,
+            String customDueTime,
+            String customPriority,
+            String customAlertNote,
+            String customIssueDesc,
+            boolean includePhotos
+    ) {
         String refCode = task.getRefCode();
         String unitCode = "Unit S-3";
         String customerName = "Nguyễn Thị Lan";
@@ -475,7 +499,15 @@ public class TaskServiceImpl implements TaskService {
                 customerName = "Phạm Tuấn";
                 customerPhone = "0944 111 222";
                 if (refCode != null && refCode.startsWith("CT-")) {
-                    Contract ct = contractRepository.findByCode(refCode).orElse(null);
+                    // CT-...-A1 là ADDENDUM, không nằm trong contracts — phải tra
+                    // bảng contract_addendums trước, nếu không sẽ fallback S-2.
+                    Contract ct = null;
+                    var addendum = contractAddendumRepository.findByCode(refCode).orElse(null);
+                    if (addendum != null) {
+                        ct = addendum.getContract();
+                    } else {
+                        ct = contractRepository.findByCode(refCode).orElse(null);
+                    }
                     if (ct != null) {
                         unitCode = "Unit " + ct.getReservation().getUnit().getCode();
                         customerName = ct.getReservation().getCustomer().getFullName();
@@ -514,7 +546,10 @@ public class TaskServiceImpl implements TaskService {
                 issueDesc,
                 alertNote,
                 assignedStaffDto,
-                ritual
+                ritual,
+                includePhotos ? task.getPaymentProofPhoto() : null,
+                includePhotos ? task.getContractPhoto() : null,
+                includePhotos ? task.getSettlementPhoto() : null
         );
     }
 
@@ -573,6 +608,61 @@ public class TaskServiceImpl implements TaskService {
             supportTicketRepository.save(ticket);
             notificationService.notifyTicketStatusChanged(ticket, oldStatus);
         });
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public com.storagehub.dto.task.TaskResponse completeContractRitual(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.ContractRitualRequest request
+    ) {
+        User staff = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Người dùng không tồn tại"));
+        if (staff.getRole().getName() == Role.Name.CUSTOMER) {
+            throw new org.springframework.security.access.AccessDeniedException("Chỉ nhân viên mới được ký phụ lục tại quầy.");
+        }
+        if (request == null || request.contractPhotoUrl() == null || request.contractPhotoUrl().isBlank()) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Ảnh chụp bản ký hợp đồng/phụ lục là bắt buộc.");
+        }
+
+        Task task = taskRepository.findWithStaffById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        if (task.getType() != Task.Type.CONTRACT) {
+            throw new com.storagehub.exception.BusinessRuleException("Task không phải loại CONTRACT.");
+        }
+        if (task.getStatus() == Task.Status.DONE) {
+            return toTaskResponse(task, getCurrentShift(), null, null, null, null, true);
+        }
+
+        String ref = task.getRefCode();
+        if (ref == null || ref.isBlank()) {
+            throw new com.storagehub.exception.BusinessRuleException("Task thiếu mã hợp đồng/phụ lục.");
+        }
+
+        var addendum = contractAddendumRepository.findByCode(ref).orElse(null);
+        if (addendum != null) {
+            contractService.signAddendum(
+                    currentUserEmail,
+                    addendum.getAddendumId(),
+                    new com.storagehub.dto.contract.ContractAddendumSignRequest(
+                            request.contractPhotoUrl(), request.notes()));
+        } else {
+            com.storagehub.entity.Contract contract = contractRepository.findByCode(ref)
+                    .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
+                            "Không tìm thấy hợp đồng/phụ lục " + ref + "."));
+            contractService.signContractAtCheckIn(
+                    staff, contract.getReservation(), request.contractPhotoUrl());
+        }
+
+        task.setStatus(Task.Status.DONE);
+        task.setContractPhoto(request.contractPhotoUrl());
+        Task saved = taskRepository.save(task);
+        logService.log(staff, "TASK", saved.getTaskId(), "STATUS_CHANGED",
+                "IN_PROGRESS", "DONE",
+                "Ký hợp đồng/phụ lục " + ref + " tại quầy");
+        return toTaskResponse(saved, getCurrentShift(), null, null, null, null, true);
     }
 
     @Override
@@ -703,6 +793,7 @@ public class TaskServiceImpl implements TaskService {
 
         // 7. Task DONE + báo khách
         task.setStatus(Task.Status.DONE);
+        task.setSettlementPhoto(request.settlementPhotoUrl());
         Task saved = taskRepository.save(task);
         notificationService.notifySettlementCompleted(reservation, refundAmount);
 
@@ -810,6 +901,8 @@ public class TaskServiceImpl implements TaskService {
                     .orElseThrow(() -> new TaskNotFoundException(taskId));
             String oldStatus = current.getStatus().name();
             current.setStatus(Task.Status.DONE);
+            current.setPaymentProofPhoto(request.paymentProofPhoto());
+            current.setContractPhoto(request.contractPhotoUrl());
             Task done = taskRepository.save(current);
             logService.log(staff, "TASK", done.getTaskId(),
                     "STATUS_CHANGED", oldStatus, "DONE",

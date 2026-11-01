@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Plus, ArrowClockwise, WarningCircle, CreditCard } from "@phosphor-icons/react";
+import { Plus, ArrowClockwise, WarningCircle } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
   useMyRentals,
@@ -54,14 +54,6 @@ export default function MyRentalsPage() {
           </div>
 
           <div className="my-rentals-page__header-actions">
-            <Link
-              to="/payment"
-              className="rental-btn rental-btn--secondary"
-            >
-              <CreditCard size={15} weight="bold" />
-              Thanh toán & Hóa đơn
-            </Link>
-
             <Link
               to="/browse"
               className="rental-btn rental-btn--primary"
