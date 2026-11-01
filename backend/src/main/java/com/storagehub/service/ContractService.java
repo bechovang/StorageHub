@@ -149,6 +149,16 @@ public class ContractService {
                 .orElseThrow(() -> new IllegalStateException(
                         "Không tìm thấy hợp đồng hiện hành của " + reservation.getCode()));
 
+        // Idempotent cho retry: lần ritual trước có thể đã ký xong rồi thất bại
+        // ở bước sau — ký lại là no-op thay vì 409 vĩnh viễn chặn check-in.
+        if (latest.getStatus() == Contract.Status.SIGNED) {
+            if (signedPhotoUrl != null && !signedPhotoUrl.isBlank()
+                    && !signedPhotoUrl.equals(latest.getSignedPhotoUrl())) {
+                latest.setSignedPhotoUrl(signedPhotoUrl);
+                contractRepository.save(latest);
+            }
+            return latest;
+        }
         if (latest.getStatus() != Contract.Status.DRAFT
                 && latest.getStatus() != Contract.Status.PRINTED) {
             throw new IllegalStateException(
