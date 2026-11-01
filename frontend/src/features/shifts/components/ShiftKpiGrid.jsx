@@ -18,7 +18,11 @@ export default function ShiftKpiGrid({
   const shiftCount = allShifts.length;
   const coveragePercent = Math.min(100, Math.round((shiftCount / 21) * 100));
 
-  const countType = (name) => allShifts.filter((s) => (s.typeName || "").includes(name)).length;
+  const typeKey = (shift) => {
+    const name = String(shift.typeName || "").toUpperCase();
+    return name === "LOCKER" ? "LOCK" : name;
+  };
+  const countType = (key) => allShifts.filter((s) => typeKey(s) === key).length;
   const countLock = countType("LOCK");
   const countS = countType("S");
   const countM = countType("M");
