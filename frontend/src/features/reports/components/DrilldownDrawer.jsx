@@ -3,10 +3,14 @@ import {
   MagnifyingGlass,
   X,
   DownloadSimple,
+  CaretUp,
+  CaretDown,
+  CaretUpDown,
 } from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import { formatVND } from "../../../utils/formatters.js";
 import { getUnitStatusLabel } from "../../../utils/statusLabels.js";
+import { useTableSort } from "../../../hooks/useTableSort.js";
 
 export function DrilldownDrawer({
   drilldownData,
@@ -14,9 +18,11 @@ export function DrilldownDrawer({
   onClose,
   drilldownSearch,
   setDrilldownSearch,
-  filteredDrilldownRows,
+  filteredDrilldownRows = [],
   onExportCSV,
 }) {
+  const { sortedItems, sortConfig, requestSort } = useTableSort(filteredDrilldownRows);
+
   return (
     <Drawer
       open={Boolean(activeDrilldownKey)}
@@ -27,6 +33,7 @@ export function DrilldownDrawer({
     >
       {drilldownData && (
         <div className="drilldown-drawer-content">
+          {/* Alert nếu xem Tiền cọc */}
           {drilldownData.warningNotice && (
             <div className="drilldown-warning-banner">
               <ShieldCheck size={22} weight="duotone" className="text-primary flex-shrink-0" />
@@ -57,7 +64,7 @@ export function DrilldownDrawer({
               )}
             </div>
             <div className="drilldown-count">
-              Hiển thị <strong>{filteredDrilldownRows.length}</strong> / {drilldownData.rows?.length || filteredDrilldownRows.length} chứng từ
+              Hiển thị <strong>{sortedItems.length}</strong> / {drilldownData.rows?.length || sortedItems.length} chứng từ
             </div>
           </div>
 
@@ -65,18 +72,34 @@ export function DrilldownDrawer({
             <table className="drilldown-table">
               <thead>
                 <tr>
-                  {drilldownData.columns.map((col) => (
-                    <th
-                      key={col.key}
-                      className={col.isMoney ? "text-right" : "text-left"}
-                    >
-                      {col.label}
-                    </th>
-                  ))}
+                  {drilldownData.columns.map((col) => {
+                    const isSorted = sortConfig.key === col.key;
+                    return (
+                      <th
+                        key={col.key}
+                        className={`${col.isMoney ? "text-right" : "text-left"} is-sortable ${isSorted ? "is-sorted" : ""}`}
+                        onClick={() => requestSort(col.key)}
+                        title={`Nhấn để sắp xếp theo ${col.label}`}
+                      >
+                        <span className="drilldown-th-content">
+                          <span>{col.label}</span>
+                          {isSorted ? (
+                            sortConfig.direction === "asc" ? (
+                              <CaretUp size={13} weight="bold" className="drilldown-sort-icon" />
+                            ) : (
+                              <CaretDown size={13} weight="bold" className="drilldown-sort-icon" />
+                            )
+                          ) : (
+                            <CaretUpDown size={13} className="drilldown-sort-icon" />
+                          )}
+                        </span>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
-                {filteredDrilldownRows.length === 0 ? (
+                {sortedItems.length === 0 ? (
                   <tr>
                     <td
                       colSpan={drilldownData.columns.length}
@@ -91,7 +114,7 @@ export function DrilldownDrawer({
                     </td>
                   </tr>
                 ) : (
-                  filteredDrilldownRows.map((row, idx) => (
+                  sortedItems.map((row, idx) => (
                     <tr key={row.id || row.unitCode || idx}>
                       {drilldownData.columns.map((col) => {
                         const val = row[col.key];

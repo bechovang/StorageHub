@@ -1,25 +1,45 @@
-import { MagnifyingGlass, X, DownloadSimple, ArrowSquareOut } from "@phosphor-icons/react";
+import {
+  MagnifyingGlass,
+  X,
+  DownloadSimple,
+  ArrowSquareOut,
+  CaretUp,
+  CaretDown,
+  CaretUpDown,
+} from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import { formatVND } from "../../../utils/formatters.js";
 import { getUnitStatusLabel } from "../../../utils/statusLabels.js";
+import { useTableSort } from "../../../hooks/useTableSort.js";
+
+const FACILITY_COLUMNS = [
+  { key: "code", label: "Mã kho", align: "text-left" },
+  { key: "type", label: "Loại kho", align: "text-left" },
+  { key: "zone", label: "Khu vực", align: "text-left" },
+  { key: "status", label: "Trạng thái", align: "text-left" },
+  { key: "rentPrice", label: "Giá thuê/tháng", align: "text-right" },
+  { key: "tenant", label: "Khách thuê & Diễn biến", align: "text-left" },
+];
 
 export default function FacilityDrilldownDrawer({
   drilldownStatus,
   onClose,
   searchUnitTerm,
   setSearchUnitTerm,
-  drilldownUnits,
+  drilldownUnits = [],
   statusConfigs,
   onNavigateUnits,
   onExportCSV,
 }) {
+  const { sortedItems, sortConfig, requestSort } = useTableSort(drilldownUnits);
+
   const handleExportUnits = () => {
     if (onExportCSV) {
       onExportCSV();
       return;
     }
     const headers = ["Mã kho", "Loại kho", "Khu vực", "Trạng thái", "Giá thuê", "Khách thuê", "Diễn biến"];
-    const rows = drilldownUnits.map((u) => [
+    const rows = sortedItems.map((u) => [
       u.code,
       `"${u.type || ""}"`,
       `"${u.zone || ""}"`,
@@ -73,27 +93,45 @@ export default function FacilityDrilldownDrawer({
             )}
           </div>
           <div className="drilldown-count">
-            Hiển thị <strong>{drilldownUnits.length}</strong> kho
+            Hiển thị <strong>{sortedItems.length}</strong> kho
           </div>
         </div>
 
-        {/* Bảng dữ liệu chi tiết với Sticky Header */}
+        {/* Bảng dữ liệu chi tiết với Sticky Header & Cột có thể Sort */}
         <div className="drilldown-table-wrapper">
           <table className="drilldown-table">
             <thead>
               <tr>
-                <th className="text-left">Mã kho</th>
-                <th className="text-left">Loại kho</th>
-                <th className="text-left">Khu vực</th>
-                <th className="text-left">Trạng thái</th>
-                <th className="text-right">Giá thuê/tháng</th>
-                <th className="text-left">Khách thuê &amp; Diễn biến</th>
+                {FACILITY_COLUMNS.map((col) => {
+                  const isSorted = sortConfig.key === col.key;
+                  return (
+                    <th
+                      key={col.key}
+                      className={`${col.align} is-sortable ${isSorted ? "is-sorted" : ""}`}
+                      onClick={() => requestSort(col.key)}
+                      title={`Nhấn để sắp xếp theo ${col.label}`}
+                    >
+                      <span className="drilldown-th-content">
+                        <span>{col.label}</span>
+                        {isSorted ? (
+                          sortConfig.direction === "asc" ? (
+                            <CaretUp size={13} weight="bold" className="drilldown-sort-icon" />
+                          ) : (
+                            <CaretDown size={13} weight="bold" className="drilldown-sort-icon" />
+                          )
+                        ) : (
+                          <CaretUpDown size={13} className="drilldown-sort-icon" />
+                        )}
+                      </span>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {drilldownUnits.length === 0 ? (
+              {sortedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "48px 16px" }}>
+                  <td colSpan={FACILITY_COLUMNS.length} style={{ textAlign: "center", padding: "48px 16px" }}>
                     <div style={{ color: "var(--color-ink, #000)", fontWeight: 700, fontSize: "0.95rem" }}>
                       Không tìm thấy kho nào
                     </div>
@@ -103,7 +141,7 @@ export default function FacilityDrilldownDrawer({
                   </td>
                 </tr>
               ) : (
-                drilldownUnits.map((u) => (
+                sortedItems.map((u) => (
                   <tr key={u.id}>
                     <td>
                       <span className="unit-code-box font-mono">{u.code}</span>

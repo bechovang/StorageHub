@@ -382,6 +382,52 @@
   border-right: none;
 }
 
+/* ── Interactive Sortable Table Headers (Swiss Minimalist) ── */
+.drilldown-table thead tr th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.drilldown-table thead tr th.is-sortable:hover {
+  background: var(--color-neutral, #e4e4e7);
+  color: var(--color-ink, #000000);
+}
+
+.drilldown-table thead tr th.is-sorted {
+  background: #e9e9eb;
+  color: var(--color-ink, #000000);
+}
+
+.drilldown-th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.drilldown-table thead tr th.text-right .drilldown-th-content {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.drilldown-sort-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-secondary, #71717a);
+  opacity: 0.35;
+  transition: opacity 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.drilldown-table thead tr th.is-sortable:hover .drilldown-sort-icon {
+  opacity: 0.85;
+  color: var(--color-ink, #000000);
+}
+
+.drilldown-table thead tr th.is-sorted .drilldown-sort-icon {
+  opacity: 1;
+  color: var(--color-ink, #000000);
+}
+
 .drilldown-table tbody tr {
   transition: background-color 100ms ease;
 }

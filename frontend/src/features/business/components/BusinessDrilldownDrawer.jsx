@@ -1,7 +1,16 @@
-import { ShieldCheck, MagnifyingGlass, X, DownloadSimple } from "@phosphor-icons/react";
+import {
+  ShieldCheck,
+  MagnifyingGlass,
+  X,
+  DownloadSimple,
+  CaretUp,
+  CaretDown,
+  CaretUpDown,
+} from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import { formatVND } from "../../../utils/formatters.js";
 import { getUnitStatusLabel } from "../../../utils/statusLabels.js";
+import { useTableSort } from "../../../hooks/useTableSort.js";
 
 export default function BusinessDrilldownDrawer({
   activeDrilldownKey,
@@ -9,9 +18,11 @@ export default function BusinessDrilldownDrawer({
   drilldownData,
   drilldownSearch,
   setDrilldownSearch,
-  filteredDrilldownRows,
+  filteredDrilldownRows = [],
   onExportCSV,
 }) {
+  const { sortedItems, sortConfig, requestSort } = useTableSort(filteredDrilldownRows);
+
   return (
     <Drawer
       open={Boolean(activeDrilldownKey)}
@@ -54,27 +65,43 @@ export default function BusinessDrilldownDrawer({
               )}
             </div>
             <div className="drilldown-count">
-              Hiển thị <strong>{filteredDrilldownRows.length}</strong> / {drilldownData.rows?.length || filteredDrilldownRows.length} chứng từ
+              Hiển thị <strong>{sortedItems.length}</strong> / {drilldownData.rows?.length || sortedItems.length} chứng từ
             </div>
           </div>
 
-          {/* Bảng dữ liệu chi tiết với Sticky Header */}
+          {/* Bảng dữ liệu chi tiết với Sticky Header & Cột có thể Sort */}
           <div className="drilldown-table-wrapper">
             <table className="drilldown-table">
               <thead>
                 <tr>
-                  {drilldownData.columns.map((col) => (
-                    <th
-                      key={col.key}
-                      className={col.isMoney ? "text-right" : "text-left"}
-                    >
-                      {col.label}
-                    </th>
-                  ))}
+                  {drilldownData.columns.map((col) => {
+                    const isSorted = sortConfig.key === col.key;
+                    return (
+                      <th
+                        key={col.key}
+                        className={`${col.isMoney ? "text-right" : "text-left"} is-sortable ${isSorted ? "is-sorted" : ""}`}
+                        onClick={() => requestSort(col.key)}
+                        title={`Nhấn để sắp xếp theo ${col.label}`}
+                      >
+                        <span className="drilldown-th-content">
+                          <span>{col.label}</span>
+                          {isSorted ? (
+                            sortConfig.direction === "asc" ? (
+                              <CaretUp size={13} weight="bold" className="drilldown-sort-icon" />
+                            ) : (
+                              <CaretDown size={13} weight="bold" className="drilldown-sort-icon" />
+                            )
+                          ) : (
+                            <CaretUpDown size={13} className="drilldown-sort-icon" />
+                          )}
+                        </span>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
-                {filteredDrilldownRows.length === 0 ? (
+                {sortedItems.length === 0 ? (
                   <tr>
                     <td
                       colSpan={drilldownData.columns.length}
@@ -89,7 +116,7 @@ export default function BusinessDrilldownDrawer({
                     </td>
                   </tr>
                 ) : (
-                  filteredDrilldownRows.map((row, idx) => (
+                  sortedItems.map((row, idx) => (
                     <tr key={row.id || row.unitCode || idx}>
                       {drilldownData.columns.map((col) => {
                         const val = row[col.key];
