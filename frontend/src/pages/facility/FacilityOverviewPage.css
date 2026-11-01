@@ -185,6 +185,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  min-height: 20px;
 }
 
 .kpi-card__label {
@@ -193,6 +195,52 @@
   letter-spacing: 0.06em;
   color: var(--color-muted);
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-card__trend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 2px 0;
+  flex-wrap: wrap;
+}
+
+.kpi-card__trend-context {
+  font-size: 0.76rem;
+  color: var(--color-secondary, #555555);
+}
+
+.kpi-card .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-none, 0px);
+  line-height: 1.2;
+}
+
+.kpi-card .badge--success {
+  background-color: var(--color-status-success-tint, #ecfdf5);
+  color: var(--color-status-success, #059669);
+  border: 1px solid var(--color-status-success-border, #a7f3d0);
+}
+
+.kpi-card .badge--danger {
+  background-color: var(--color-status-danger-tint, #fef2f2);
+  color: var(--color-status-danger, #dc2626);
+  border: 1px solid var(--color-status-danger-border, #fca5a5);
+}
+
+.kpi-card .badge--neutral {
+  background-color: var(--color-neutral, #f4f4f5);
+  color: var(--color-secondary, #555555);
+  border: 1px solid var(--color-line, #e4e4e7);
 }
 
 .kpi-card__main-metric {
