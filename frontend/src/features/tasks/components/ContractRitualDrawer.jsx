@@ -1,21 +1,20 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FileText, UploadSimple } from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import Button from "../../../components/Button/Button.jsx";
 import { completeContractRitual } from "../../../services/taskService.js";
-import { PLACEHOLDER_UNIT_IMAGE } from "../../../utils/formatters.js";
 
 export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [photoUrl, setPhotoUrl] = useState(task.ritual?.contractPhotoUrl || "");
-  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
-  const handleCapturePhoto = () => {
-    setIsUploading(true);
-    setTimeout(() => {
-      setPhotoUrl(PLACEHOLDER_UNIT_IMAGE);
-      setIsUploading(false);
-    }, 400);
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPhotoUrl(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const handleConfirmSignature = async () => {
@@ -85,9 +84,17 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
 
           <div
             className="ritual-photo-dropzone"
-            onClick={handleCapturePhoto}
+            onClick={() => fileInputRef.current?.click()}
             title="Bấm để chụp hoặc tải ảnh bản ký"
           >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onClick={(e) => e.stopPropagation()}
+              onChange={handleFileSelect}
+            />
             {photoUrl ? (
               <div className="ritual-photo-preview">
                 <img src={photoUrl} alt="Hợp đồng đã ký" />
@@ -97,7 +104,7 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
               <div style={{ textAlign: "center", padding: "24px 12px" }}>
                 <UploadSimple size={32} weight="bold" color="#64748b" />
                 <p style={{ margin: "6px 0 0 0", fontWeight: 600 }}>
-                  {isUploading ? "Đang tải ảnh lên..." : "Chụp ảnh bản hợp đồng đã ký tên"}
+                  Chụp ảnh bản hợp đồng đã ký tên
                 </p>
                 <small style={{ color: "#94a3b8" }}>Hỗ trợ camera quầy hoặc tệp ảnh JPG/PNG</small>
               </div>

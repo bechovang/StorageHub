@@ -464,6 +464,10 @@ public class ContractService {
         if (request == null || request.signedPhotoUrl() == null || request.signedPhotoUrl().isBlank()) {
             throw new IllegalArgumentException("Ảnh chụp bản ký phụ lục (signedPhotoUrl) là bắt buộc.");
         }
+        if (actor.getRole().getName() == com.storagehub.entity.Role.Name.CUSTOMER) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Chỉ nhân viên mới được ký phụ lục tại quầy.");
+        }
 
         ContractAddendum addendum = contractAddendumRepository.findById(addendumId)
                 .orElseThrow(() -> new ContractAddendumNotFoundException(

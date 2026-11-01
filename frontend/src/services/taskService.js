@@ -174,10 +174,17 @@ export function checkSnapBackViolation(task) {
 /**
  * Thực hiện ký hợp đồng / phụ lục tại quầy (US-19)
  */
-export async function completeContractRitual(taskId, { contractPhotoUrl }) {
-  // Backend chưa có endpoint lưu chi tiết ritual — chỉ đồng bộ trạng thái qua API
-  void contractPhotoUrl;
-  return updateTaskStatus(taskId, "DONE");
+export async function completeContractRitual(taskId, { contractPhotoUrl, notes = "" }) {
+  // POST /api/v1/tasks/{id}/rituals/contract — lưu ảnh bản ký + SIGNED addendum/contract.
+  const res = await apiClient(`/api/v1/tasks/${taskId}/rituals/contract`, {
+    method: "POST",
+    body: JSON.stringify({ contractPhotoUrl, notes }),
+  });
+  const data = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || "Không thể lưu hồ sơ hợp đồng/phụ lục.");
+  }
+  return data;
 }
 
 /**
