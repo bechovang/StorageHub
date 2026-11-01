@@ -17,8 +17,8 @@ export function useStaffShifts() {
 
   // Form phân công mới
   const [selectedStaffId, setSelectedStaffId] = useState([0].id);
-  const [selectedType, setSelectedType] = useState(UNIT_TYPES[0].id);
-  const [selectedWindow, setSelectedWindow] = useState("MORNING");
+  const [selectedTypeIds, setSelectedTypeIds] = useState([UNIT_TYPES[0].id]);
+  const [selectedShifts, setSelectedShifts] = useState(["MORNING"]);
   const [selectedDate, setSelectedDate] = useState(DAYS_OF_WEEK[0].key);
 
   // Bộ lọc danh sách Roster
@@ -84,8 +84,9 @@ export function useStaffShifts() {
           staffId: s.staffId || member.staffId,
           date: s.workDate,
           shiftWindow: s.shift,
-          typeName: s.unitTypeName || s.unitTypeLabel || "Kho",
-          unitTypeId: s.unitTypeId,
+          typeName: (s.unitTypeNames || []).join(", ") || "Kho",
+          typeNames: s.unitTypeNames || [],
+          unitTypeIds: s.unitTypeIds || [],
           isConflict: false,
         };
         collectedShifts.push(item);
@@ -155,11 +156,11 @@ export function useStaffShifts() {
     return detectShiftConflict({
       staffId: selectedStaffId,
       date: selectedDate,
-      shiftWindow: selectedWindow,
+      shiftWindows: selectedShifts,
       shifts: allShifts,
       staffList,
     });
-  }, [selectedStaffId, selectedDate, selectedWindow, allShifts, staffList]);
+  }, [selectedStaffId, selectedDate, selectedShifts, allShifts, staffList]);
 
   // Xử lý lưu phân công mới
   const handleSaveAssignment = async (e) => {
@@ -167,8 +168,8 @@ export function useStaffShifts() {
     try {
       await createShiftAssignment({
         staffId: selectedStaffId,
-        unitTypeId: selectedType,
-        shift: selectedWindow,
+        unitTypeIds: selectedTypeIds,
+        shifts: selectedShifts,
         workDate: selectedDate,
       });
 
@@ -226,10 +227,10 @@ export function useStaffShifts() {
     refreshRoster: fetchRoster,
     selectedStaffId,
     setSelectedStaffId,
-    selectedType,
-    setSelectedType,
-    selectedWindow,
-    setSelectedWindow,
+    selectedTypeIds,
+    setSelectedTypeIds,
+    selectedShifts,
+    setSelectedShifts,
     selectedDate,
     setSelectedDate,
     searchTerm,

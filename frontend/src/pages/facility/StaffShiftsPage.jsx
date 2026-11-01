@@ -22,10 +22,10 @@ export default function StaffShiftsPage() {
   const {
     selectedStaffId,
     setSelectedStaffId,
-    selectedType,
-    setSelectedType,
-    selectedWindow,
-    setSelectedWindow,
+    selectedTypeIds,
+    setSelectedTypeIds,
+    selectedShifts,
+    setSelectedShifts,
     selectedDate,
     setSelectedDate,
     searchTerm,
@@ -94,10 +94,10 @@ export default function StaffShiftsPage() {
           <ShiftAssignmentForm
             selectedStaffId={selectedStaffId}
             setSelectedStaffId={setSelectedStaffId}
-            selectedType={selectedType}
-            setSelectedType={setSelectedType}
-            selectedWindow={selectedWindow}
-            setSelectedWindow={setSelectedWindow}
+            selectedTypeIds={selectedTypeIds}
+            setSelectedTypeIds={setSelectedTypeIds}
+            selectedShifts={selectedShifts}
+            setSelectedShifts={setSelectedShifts}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
             liveConflict={liveConflict}
@@ -105,8 +105,8 @@ export default function StaffShiftsPage() {
             onSaveAssignment={handleSaveAssignment}
             onResetDefaults={() => {
               if (staffList && staffList.length > 0) setSelectedStaffId(staffList[0].id);
-              setSelectedType(UNIT_TYPES[0].id);
-              setSelectedWindow("MORNING");
+              setSelectedTypeIds([UNIT_TYPES[0].id]);
+              setSelectedShifts(["MORNING"]);
               setSelectedDate(DAYS_OF_WEEK[0].key);
             }}
           />

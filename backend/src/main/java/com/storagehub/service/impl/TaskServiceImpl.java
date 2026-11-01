@@ -270,10 +270,10 @@ public class TaskServiceImpl implements TaskService {
         // Ưu tiên staff được phân ca đúng LOẠI KHO (LOCK/S/M/L).
         if (unit != null && unit.getType() != null) {
             Integer typeId = unit.getType().getTypeId();
-            Optional<StaffAssignment> assignment = staffAssignmentRepository
+            List<StaffAssignment> assignments = staffAssignmentRepository
                     .findByUnitType_TypeIdAndWorkDateAndShift(typeId, workDate, shift);
-            if (assignment.isPresent()) {
-                return assignment.get().getStaff();
+            if (!assignments.isEmpty()) {
+                return assignments.get(0).getStaff();
             }
         }
 

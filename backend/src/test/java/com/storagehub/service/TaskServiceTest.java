@@ -179,7 +179,7 @@ class TaskServiceTest {
 
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
         when(staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(eq(2), eq(today), eq(StaffAssignment.Shift.MORNING)))
-                .thenReturn(Optional.of(assignment));
+                .thenReturn(List.of(assignment));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
             t.setTaskId(99L);
@@ -213,7 +213,7 @@ class TaskServiceTest {
     void testAutoCreateTask_FallbackStaff() {
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
         when(staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(eq(2), eq(today), eq(StaffAssignment.Shift.MORNING)))
-                .thenReturn(Optional.empty());
+                .thenReturn(List.of());
         when(staffAssignmentRepository.findByWorkDateAndShift(eq(today), eq(StaffAssignment.Shift.MORNING)))
                 .thenReturn(List.of());
         when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))

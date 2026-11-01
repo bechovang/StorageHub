@@ -74,7 +74,7 @@ class StaffingControllerTest {
                 .andExpect(jsonPath("$[0].assignmentId").value(101))
                 .andExpect(jsonPath("$[0].staffName").value("Minh Nguyễn"))
                 .andExpect(jsonPath("$[0].shift").value("MORNING"))
-                .andExpect(jsonPath("$[0].unitTypeName").value("B"));
+                .andExpect(jsonPath("$[0].unitTypeNames[0]").value("B"));
     }
 
     @Test
@@ -100,15 +100,15 @@ class StaffingControllerTest {
                 LocalDateTime.now()
         );
 
-        when(staffingService.createShiftAssignment(any(), any())).thenReturn(created);
+        when(staffingService.createShiftAssignments(any(), any())).thenReturn(List.of(created));
 
         mockMvc.perform(post("/api/v1/shifts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.assignmentId").value(101))
-                .andExpect(jsonPath("$.staffName").value("Minh Nguyễn"))
-                .andExpect(jsonPath("$.shift").value("MORNING"));
+                .andExpect(jsonPath("$[0].assignmentId").value(101))
+                .andExpect(jsonPath("$[0].staffName").value("Minh Nguyễn"))
+                .andExpect(jsonPath("$[0].shift").value("MORNING"));
     }
 
     @Test
@@ -121,7 +121,7 @@ class StaffingControllerTest {
                 LocalDate.of(2026, 10, 12)
         );
 
-        when(staffingService.createShiftAssignment(any(), any())).thenThrow(
+        when(staffingService.createShiftAssignments(any(), any())).thenThrow(
                 new ShiftConflictException(2L, "Minh Nguyễn", StaffAssignment.Shift.MORNING, "B", LocalDate.of(2026, 10, 12))
         );
 

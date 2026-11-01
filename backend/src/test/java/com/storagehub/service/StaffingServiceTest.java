@@ -90,7 +90,7 @@ class StaffingServiceTest {
 
         when(userRepository.findByEmailIgnoreCase("tuan@demo.storagehub.vn")).thenReturn(Optional.of(manager));
         when(userRepository.findById(2L)).thenReturn(Optional.of(staffMinh));
-        when(unitTypeRepository.findById(2)).thenReturn(Optional.of(typeS));
+        when(unitTypeRepository.findAllById(any())).thenReturn(List.of(typeS));
         when(staffAssignmentRepository.findByStaff_UserIdAndWorkDateAndShift(2L, workDate, StaffAssignment.Shift.MORNING))
                 .thenReturn(Optional.empty());
 
@@ -135,7 +135,7 @@ class StaffingServiceTest {
         );
 
         when(userRepository.findById(2L)).thenReturn(Optional.of(staffMinh));
-        when(unitTypeRepository.findById(2)).thenReturn(Optional.of(typeS));
+        when(unitTypeRepository.findAllById(any())).thenReturn(List.of(typeS));
 
         StaffAssignment existingConflict = new StaffAssignment();
         existingConflict.setAssignmentId(99L);

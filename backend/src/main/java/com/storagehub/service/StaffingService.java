@@ -20,10 +20,17 @@ public interface StaffingService {
             Integer typeId
     );
 
-    ShiftAssignmentResponse createShiftAssignment(
+    List<ShiftAssignmentResponse> createShiftAssignments(
             String actorEmail,
             CreateShiftAssignmentRequest request
     );
+
+    /** Backward-compatible single assignment (tests/legacy FE). */
+    default ShiftAssignmentResponse createShiftAssignment(
+            String actorEmail, CreateShiftAssignmentRequest request) {
+        List<ShiftAssignmentResponse> created = createShiftAssignments(actorEmail, request);
+        return created.isEmpty() ? null : created.get(0);
+    }
 
     void deleteShiftAssignment(
             String actorEmail,
