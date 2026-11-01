@@ -1,6 +1,22 @@
 import { WarningCircle, Trash } from "@phosphor-icons/react";
 import { getWeekDays } from "../../../services/shiftService.js";
 
+const TYPE_COLORS = {
+  LOCK: "#7c3aed",
+  S: "#0284c7",
+  M: "#ea580c",
+  L: "#16a34a",
+  LOCKER: "#7c3aed",
+};
+const SHIFT_LABEL = {
+  MORNING: "Sáng",
+  AFTERNOON: "Tối",
+  FULL_DAY: "Full",
+  EVENING: "Tối",
+};
+const typeColor = (name) => TYPE_COLORS[String(name || "").toUpperCase()] || "#64748b";
+const typeNamesOf = (s) => (s.typeNames?.length ? s.typeNames : String(s.typeName || "Kho").split(", "));
+
 export default function WeeklyScheduleTable({
   staffRoster,
   totalConflicts,
@@ -67,57 +83,45 @@ export default function WeeklyScheduleTable({
 
                   return (
                     <td key={day.key} className="td-day">
-                      <div className="shifts-cell-stack">
+                      {/* Một ô / nhân viên / ngày: các vạch màu = loại kho,
+                          nhãn ngắn = Sáng / Tối / Full. */}
+                      <div className="shift-day-box">
                         {dayShifts.map((s) => {
-                          const isMorning = s.shiftWindow === "MORNING";
-                          const isAfternoon = s.shiftWindow === "AFTERNOON";
-                          const isFullDay = s.shiftWindow === "FULL_DAY";
-
-                          let badgeType = "badge--neutral";
-                          if (isMorning) badgeType = "badge--morning";
-                          if (isAfternoon) badgeType = "badge--afternoon";
-                          if (isFullDay) badgeType = "badge--fullday";
-                          if (s.hasConflict) badgeType = "badge--conflict";
-
+                          const names = typeNamesOf(s);
                           return (
                             <div
                               key={s.id}
-                              className={`shift-pill ${badgeType}`}
+                              className={`shift-day-row ${s.hasConflict ? "is-conflict" : ""}`}
                               title={
                                 s.hasConflict
                                   ? `Trùng lịch trực: ${s.conflictReason}`
-                                  : `${s.typeName || "Kho"} · ${s.timeWindow || s.shiftWindow}`
+                                  : `${names.join(", ")} · ${SHIFT_LABEL[s.shiftWindow] || s.shiftWindow}`
                               }
                             >
-                              <div className="shift-pill__meta">
-                                <span className="shift-pill__zone">
-                                  {s.typeName || "Kho"}
-                                </span>
-                                <span className="shift-pill__time">
-                                  {s.shiftWindow === "MORNING"
-                                    ? "Sáng"
-                                    : s.shiftWindow === "AFTERNOON"
-                                    ? "Chiều"
-                                    : "Cả ngày"}
-                                </span>
+                              <div className="shift-day-bars">
+                                {names.map((name) => (
+                                  <span
+                                    key={name}
+                                    className="shift-type-bar"
+                                    style={{ backgroundColor: typeColor(name) }}
+                                    title={name}
+                                  />
+                                ))}
                               </div>
-
+                              <span className="shift-day-shift">
+                                {SHIFT_LABEL[s.shiftWindow] || s.shiftWindow}
+                              </span>
                               {s.hasConflict && (
-                                <WarningCircle
-                                  size={14}
-                                  weight="fill"
-                                  className="shift-pill__conflict-icon"
-                                />
+                                <WarningCircle size={13} weight="fill" className="text-error" />
                               )}
-
                               <button
                                 type="button"
-                                className="shift-pill__remove-btn"
+                                className="shift-day-remove"
                                 onClick={() => onRemoveShift(s.id)}
                                 title="Xóa ca này"
                                 aria-label="Xóa ca trực"
                               >
-                                <Trash size={12} />
+                                <Trash size={11} />
                               </button>
                             </div>
                           );
@@ -140,11 +144,11 @@ export default function WeeklyScheduleTable({
         </div>
         <div className="legend-item">
           <span className="legend-box legend-box--afternoon" />
-          <span>Ca chiều (15:00 – 23:00)</span>
+          <span>Ca tối (15:00 – 23:00)</span>
         </div>
         <div className="legend-item">
           <span className="legend-box legend-box--fullday" />
-          <span>Cả ngày / Giám sát</span>
+          <span>Full (07:00 – 23:00)</span>
         </div>
         <div className="legend-item">
           <span className="legend-box legend-box--conflict" />

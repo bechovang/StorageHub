@@ -275,12 +275,27 @@ public class TaskServiceImpl implements TaskService {
             if (!assignments.isEmpty()) {
                 return assignments.get(0).getStaff();
             }
+            // Staff trực FULL_DAY phủ cả ca sáng/chiều.
+            if (shift == StaffAssignment.Shift.MORNING || shift == StaffAssignment.Shift.AFTERNOON) {
+                List<StaffAssignment> fullDay = staffAssignmentRepository
+                        .findByUnitType_TypeIdAndWorkDateAndShift(typeId, workDate, StaffAssignment.Shift.FULL_DAY);
+                if (!fullDay.isEmpty()) {
+                    return fullDay.get(0).getStaff();
+                }
+            }
         }
 
         // Fallback: bất kỳ staff nào trực cùng ca.
         List<StaffAssignment> shiftAssignments = staffAssignmentRepository.findByWorkDateAndShift(workDate, shift);
         if (!shiftAssignments.isEmpty()) {
             return shiftAssignments.get(0).getStaff();
+        }
+        if (shift != StaffAssignment.Shift.FULL_DAY) {
+            List<StaffAssignment> fullDay = staffAssignmentRepository
+                    .findByWorkDateAndShift(workDate, StaffAssignment.Shift.FULL_DAY);
+            if (!fullDay.isEmpty()) {
+                return fullDay.get(0).getStaff();
+            }
         }
 
         // Fallback cuối: staff đầu tiên đang active.

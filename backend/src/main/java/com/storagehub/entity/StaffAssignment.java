@@ -27,6 +27,7 @@ public class StaffAssignment {
     public enum Shift {
         MORNING,
         AFTERNOON,
+        FULL_DAY,
         EVENING
     }
 
