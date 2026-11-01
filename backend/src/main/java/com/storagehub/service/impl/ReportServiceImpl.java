@@ -150,6 +150,10 @@ public class ReportServiceImpl implements ReportService {
                 : 0.0;
         String occupancyBreakdown = rentedUnits + " / " + totalUnits + " kho đang cho thuê";
 
+        long grossDiff = current.gross() - previous.gross();
+        long escrowDiff = current.escrowDeposit() - previous.escrowDeposit();
+        long surchargeDiff = current.surchargeRevenue() - previous.surchargeRevenue();
+
         return new FinancialSummaryResponse(
                 periodLabel,
                 current.gross(),
@@ -161,7 +165,13 @@ public class ReportServiceImpl implements ReportService {
                 "Bao gồm phí quá giờ, hư hại và xử lý phát sinh",
                 occupancyRate,
                 occupancyBreakdown,
-                "So sánh theo dữ liệu thực tế trong kỳ"
+                "So sánh theo dữ liệu thực tế trong kỳ",
+                grossDiff,
+                previous.gross(),
+                escrowDiff,
+                growthText(current.escrowDeposit(), previous.escrowDeposit()),
+                surchargeDiff,
+                growthText(current.surchargeRevenue(), previous.surchargeRevenue())
         );
     }
 

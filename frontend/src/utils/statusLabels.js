@@ -210,14 +210,25 @@ export function translateBackendMessage(raw = "") {
     return "Tài khoản hiện đang tạm khóa. Vui lòng liên hệ Quản trị hệ thống.";
   }
 
+  // Fix currency symbols & corrupted chars
+  text = text.replace(/â‚«/g, "₫");
+
   // Notification translations
   text = text
+    .replace(/^Unit\s+([A-Z0-9-]+)\s+reserved\.\s*Deposit\s+([0-9.,\s₫]+)\s+received\.?$/i, "Đặt chỗ kho $1 thành công. Đã nhận tiền cọc: $2.")
+    .replace(/^Rental active\.\s*Your access code is ready\.?$/i, "Kho đang hoạt động. Mã truy cập của bạn đã sẵn sàng.")
+    .replace(/^Addendum\s+([A-Z0-9-]+)\s+signed\.?$/i, "Phụ lục hợp đồng $1 đã được ký kết.")
+    .replace(/^New checkout:\s*([A-Za-z0-9\s]+)\.\s*Receipt\s+([0-9.,\s₫]+)\s*\+\s*([0-9.,\s₫]+)\s*deposit top-up\.?$/i, "Gia hạn trả kho mới: $1. Biên lai $2 + bổ sung cọc $3.")
+    .replace(/^Checkout closed\.\s*Refund\s+(.+)$/i, (_, p1) => {
+      const cleaned = p1.replace(/after damage fee\s+(.+)$/i, "(sau khi trừ phí hư hại: $1)");
+      return `Đã tất toán trả kho. Hoàn trả tiền cọc: ${cleaned}`;
+    })
     .replace(/^Booking confirmed\s*[—–-]\s*([A-Z0-9-]+)\s+reserved\.?$/i, "Đặt chỗ thành công — Kho $1 đã được giữ chỗ.")
     .replace(/^Reservation\s+([A-Z0-9-]+)\s+confirmed\.?$/i, "Đơn giữ chỗ $1 đã được xác nhận.")
     .replace(/^Deposit paid\s*[—–-]\s*(.+)$/i, "Đã nhận tiền cọc giữ chỗ — $1")
     .replace(/^Check-in completed\s*[—–-]\s*(.+)$/i, "Hoàn tất bàn giao nhận kho — $1")
     .replace(/^Checkout requested\s*[—–-]\s*(.+)$/i, "Đã ghi nhận yêu cầu trả kho — $1")
-    .replace(/^Checkout closed\.\s*Refund\s+(.+)$/i, "Đã tất toán trả kho. Hoàn trả tiền cọc: $1")
+
     .replace(/^Checkout closed\.?$/i, "Đã hoàn tất thủ tục trả kho và đóng hợp đồng.")
     .replace(/^(SR-\d+)\s+resolved\s*[—–-]\s*(.+)$/i, "Yêu cầu hỗ trợ $1 đã xử lý xong — $2")
     .replace(/^(SR-\d+)\s+escalated\s*[—–-]\s*(.+)$/i, "Yêu cầu hỗ trợ $1 đã chuyển lên Quản lý cơ sở — $2")

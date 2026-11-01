@@ -38,7 +38,7 @@ export default function CheckoutRequestModal({
 
     if (!isOpen || !reservation) return null;
 
-    const depositAmount = reservation.depositAmount || 103500;
+    const depositAmount = reservation.depositAmount || 0;
 
     const handleSubmit = async (e) => {
         e.preventDefault();

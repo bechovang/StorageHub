@@ -1008,3 +1008,129 @@
   line-height: 1.45;
   text-wrap: pretty;
 }
+
+
+/* ── 6. Văn bản Pháp lý & Quy chế Dịch vụ (Terms & Privacy) ── */
+.policy-legal-card {
+  margin-top: 24px;
+  background-color: var(--color-surface, #ffffff);
+  border: var(--border-strong, 2px solid #000000);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.policy-legal-card__header {
+  padding: 16px 20px;
+  border-bottom: var(--border, 1px solid #cbd5e1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background-color: #f8fafc;
+}
+
+.policy-legal-card__title {
+  font-family: var(--font-display, inherit);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  color: var(--color-ink, #000000);
+}
+
+.policy-legal-card__subtitle {
+  font-size: 0.82rem;
+  color: var(--color-secondary, #64748b);
+  margin: 0;
+}
+
+.policy-legal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.policy-legal-box {
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-top: 3px solid var(--color-ink, #000000);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.policy-legal-box__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.policy-legal-box__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.policy-legal-box__title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-ink, #000000);
+}
+
+.policy-legal-box__url {
+  font-size: 0.72rem;
+  color: var(--color-accent, #ea580c);
+  font-weight: 700;
+}
+
+.policy-legal-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.policy-legal-box__desc {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+  flex: 1;
+}
+
+.policy-legal-box__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.policy-legal-view-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+  color: var(--color-secondary, #64748b);
+  text-decoration: none;
+}
+
+.policy-legal-view-link:hover {
+  color: var(--color-ink, #000000);
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .policy-legal-grid {
+    grid-template-columns: 1fr;
+  }
+}

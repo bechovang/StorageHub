@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router";
 import { CheckCircle, ArrowLeft, PaperPlaneTilt } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
-import { AuthLayout, AuthField, AuthSubmitButton } from "./components";
+import { AuthCard, AuthLink, AuthField, AuthSubmitButton } from "./components";
 import "./ForgotPasswordPage.css";
 
 export default function ForgotPasswordPage() {
@@ -49,18 +48,18 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <AuthLayout
-            pageClass="login-page forgot-password-page"
+        <AuthCard
             title="Quên mật khẩu"
             error={generalError}
             errorId="forgot-error-banner"
+            maxWidth={440}
             footer={
                 !success && (
                     <>
                         <span className="login-card__footer-text">Đã nhớ mật khẩu?</span>
-                        <Link to="/login" className="login-link login-link--strong">
+                        <AuthLink to="/login" direction="backward" className="login-link login-link--strong">
                             Quay lại Đăng nhập
-                        </Link>
+                        </AuthLink>
                     </>
                 )
             }
@@ -94,10 +93,10 @@ export default function ForgotPasswordPage() {
                     </div>
 
                     <div className="forgot-actions">
-                        <Link to="/login" className="forgot-btn-primary">
+                        <AuthLink to="/login" direction="backward" className="forgot-btn-primary">
                             <ArrowLeft size={16} weight="bold" aria-hidden="true" />
                             <span>Quay lại Đăng nhập</span>
-                        </Link>
+                        </AuthLink>
                         <button
                             type="button"
                             onClick={handleRetry}
@@ -144,6 +143,6 @@ export default function ForgotPasswordPage() {
                     </form>
                 </>
             )}
-        </AuthLayout>
+        </AuthCard>
     );
 }

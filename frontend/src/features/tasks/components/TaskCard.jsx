@@ -100,7 +100,7 @@ export function TaskCard({
             className="task-card__extra-badge"
             style={{ backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" }}
           >
-            ✓ Đã lưu ảnh HĐ
+            ✓ Đã lưu ảnh HĐ
           </span>
         )}
         {task.ritual?.settlementPhotoUrl && (

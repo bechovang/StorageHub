@@ -167,7 +167,7 @@ export default function BrowsePage() {
             <Funnel size={36} color="var(--color-muted)" aria-hidden="true" />
             <h2 className="browse-empty__title">Không tìm thấy kho phù hợp</h2>
             <p className="browse-empty__desc">
-              "Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc ngày bắt đầu thuê."
+              Không có kho nào khớp với tiêu chí tìm kiếm hiện tại. Vui lòng thử thay đổi loại kho, kích thước hoặc bấm nút bên dưới để xem tất cả kho.
             </p>
             <button
               type="button"

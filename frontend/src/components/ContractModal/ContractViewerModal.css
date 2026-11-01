@@ -261,11 +261,11 @@
 }
 
 @media print {
-  body * {
+  body:has(#printable-contract) * {
     visibility: hidden;
   }
-  #printable-contract,
-  #printable-contract * {
+  body:has(#printable-contract) #printable-contract,
+  body:has(#printable-contract) #printable-contract * {
     visibility: visible;
   }
   #printable-contract {

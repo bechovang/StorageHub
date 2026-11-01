@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 export default function PolicyVersionsTable({
   policyVersions,
   onNavigatePolicy,
@@ -12,13 +14,22 @@ export default function PolicyVersionsTable({
             Lịch sử các phiên bản chính sách thuê, mức cọc và biểu phí quy định
           </p>
         </div>
-        <button
-          type="button"
-          className="biz-btn biz-btn--secondary biz-btn--sm"
-          onClick={onNavigatePolicy}
-        >
-          Quản lý chính sách →
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Link
+            to="/legal-management"
+            className="biz-btn biz-btn--secondary biz-btn--sm"
+            title="Quản trị nội dung Điều khoản Dịch vụ & Chính sách Bảo mật"
+          >
+            Văn bản pháp lý →
+          </Link>
+          <button
+            type="button"
+            className="biz-btn biz-btn--primary biz-btn--sm"
+            onClick={onNavigatePolicy}
+          >
+            Quản lý chính sách →
+          </button>
+        </div>
       </div>
 
       <div className="biz-table-responsive">
@@ -48,32 +59,27 @@ export default function PolicyVersionsTable({
                 </td>
                 <td className="td-status">
                   {pv.status === "ACTIVE" && (
-                    <span className="badge-status-active">
-                      <span className="status-dot status-dot--active" />
+                    <span className="badge-status badge-status--active">
+                      <span className="dot dot-active" />
                       Đang áp dụng
                     </span>
                   )}
-                  {pv.status === "SUPERSEDED" && (
-                    <span className="badge-status-superseded">
-                      <span className="status-dot status-dot--superseded" />
-                      Đã thay thế
-                    </span>
-                  )}
-                  {pv.status === "ARCHIVED" && (
-                    <span className="badge-status-archived">
-                      <span className="status-dot status-dot--archived" />
-                      Lưu trữ
+                  {pv.status === "DEPRECATED" && (
+                    <span className="badge-status badge-status--deprecated">
+                      Hết hiệu lực
                     </span>
                   )}
                 </td>
-                <td className="text-secondary">{pv.scope}</td>
-                <td className="text-right">
+                <td className="td-scope">
+                  <span className="text-secondary text-xs">{pv.scope}</span>
+                </td>
+                <td className="td-action text-right">
                   <button
                     type="button"
-                    className="biz-btn-diff"
+                    className="biz-link-diff"
                     onClick={() => onOpenDiff(pv)}
                   >
-                    So sánh thay đổi
+                    Xem thay đổi →
                   </button>
                 </td>
               </tr>

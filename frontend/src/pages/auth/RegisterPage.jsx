@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { Check, Square } from "@phosphor-icons/react";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
-import { AuthLayout, AuthField, PasswordField, AuthSubmitButton } from "./components";
+import { AuthCard, AuthLink, AuthField, PasswordField, AuthSubmitButton } from "./components";
 import "./RegisterPage.css";
 
 export default function RegisterPage() {
@@ -91,17 +91,17 @@ export default function RegisterPage() {
     };
 
     return (
-        <AuthLayout
-            pageClass="login-page register-page"
+        <AuthCard
             title="Đăng ký"
             error={generalError}
             errorId="register-error-banner"
+            maxWidth={440}
             footer={
                 <>
                     <span className="login-card__footer-text">Đã có tài khoản?</span>
-                    <Link to="/login" className="login-link login-link--strong">
+                    <AuthLink to="/login" direction="backward" className="login-link login-link--strong">
                         Đăng nhập ngay
-                    </Link>
+                    </AuthLink>
                 </>
             }
         >
@@ -231,6 +231,6 @@ export default function RegisterPage() {
                     loadingText="Đang khởi tạo tài khoản..."
                 />
             </form>
-        </AuthLayout>
+        </AuthCard>
     );
 }

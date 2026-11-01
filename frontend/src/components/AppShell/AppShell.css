@@ -1,3 +1,8 @@
+/* ==========================================================================
+   STORAGEHUB APP SHELL (ADAPTIVE INTERNAL & PUBLIC LAYOUTS)
+   ========================================================================== */
+
+/* ── 1. Public & Customer Shell (Classic Top Header) ── */
 .app-shell {
   min-height: 100vh;
   display: flex;
@@ -9,4 +14,31 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+/* ── 2. Internal Operations Shell (Sidebar + Slim Topbar) ── */
+.internal-app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: var(--color-surface, #ffffff);
+  width: 100%;
+  position: relative;
+}
+
+.internal-app-shell__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--color-surface, #ffffff);
+  overflow-x: hidden;
+}
+
+.internal-app-shell__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--color-surface, #ffffff);
 }

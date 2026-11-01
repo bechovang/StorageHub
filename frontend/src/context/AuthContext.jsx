@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState } from "react";
 import { apiClient, tokenStorage, safeParseJson } from "../services/apiClient";
+import { resetNotificationCache } from "../services/notificationService";
 import { translateBackendMessage } from "../utils/statusLabels";
 
 const AuthContext = createContext(null);
@@ -94,6 +95,7 @@ export function AuthProvider({ children }) {
 
       const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/";
 
+      resetNotificationCache();
       tokenStorage.set(data.token);
       if (userObj) {
         localStorage.setItem("storagehub_user", JSON.stringify(userObj));
@@ -159,6 +161,7 @@ export function AuthProvider({ children }) {
 
       const landing = data.landingRoute || ROLE_LANDINGS[userObj?.role] || "/";
 
+      resetNotificationCache();
       tokenStorage.set(data.token);
       if (userObj) {
         localStorage.setItem("storagehub_user", JSON.stringify(userObj));
@@ -216,9 +219,10 @@ export function AuthProvider({ children }) {
       };
     } catch (err) {
       if (err.name === "TypeError" || !err.status) {
-        return {
-          message:
-            "Nếu email tồn tại trên hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi tới hộp thư của bạn.",
+        throw {
+          status: 0,
+          code: "NETWORK_ERROR",
+          message: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.",
         };
       }
       throw err;
@@ -228,6 +232,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    resetNotificationCache();
     tokenStorage.clear();
     setToken(null);
     setUser(null);

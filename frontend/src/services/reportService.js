@@ -60,7 +60,12 @@ export async function getFinancialSummary(periodId = "THIS_QUARTER", customRange
       occupiedUnits,
       totalUnits,
       revenueGrowth: data.grossRevenueGrowth || "",
-      surchargeGrowth: data.surchargeNote || "",
+      grossRevenueDiff: data.grossRevenueDiff != null ? Number(data.grossRevenueDiff) : null,
+      previousGrossRevenue: data.previousGrossRevenue != null ? Number(data.previousGrossRevenue) : null,
+      escrowDepositDiff: data.escrowDepositDiff != null ? Number(data.escrowDepositDiff) : null,
+      escrowDepositGrowth: data.escrowDepositGrowth || "",
+      surchargesDiff: data.surchargeDiff != null ? Number(data.surchargeDiff) : null,
+      surchargeGrowth: data.surchargeGrowth || data.surchargeNote || "",
       occupancyStatus: data.occupancyGrowth || "",
       occupancyBreakdown: data.occupancyBreakdown || "",
     };

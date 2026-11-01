@@ -11,7 +11,15 @@ export default function FacilityKpiGrid({
   onOpenDrilldown,
   onNavigateShifts,
 }) {
-  const trend = overview?.occupancy?.trend || "+1.4%";
+  const rawTrend = overview?.occupancy?.trend || "+1.4%";
+  const trendMatch = String(rawTrend).match(/([+-]?\d+(?:\.\d+)?%)/);
+  const trendRate = trendMatch
+    ? trendMatch[1]
+    : rawTrend.startsWith("+") || rawTrend.startsWith("-")
+    ? rawTrend
+    : `+${rawTrend}`;
+  const trendContext = String(rawTrend).replace(trendRate, "").trim() || "so với tuần trước";
+
   const unitsInService = overview?.unitsInService;
   const operationalUnits = unitsInService
     ? unitsInService.operationalUnits
@@ -48,15 +56,18 @@ export default function FacilityKpiGrid({
       >
         <div className="kpi-card__head">
           <span className="kpi-card__label">TỶ LỆ LẤP ĐẦY KHO</span>
-          <span className="badge badge--success">
-            <TrendUp size={12} weight="bold" /> {trend}
-          </span>
         </div>
         <div className="kpi-card__main-metric">
           <span className="kpi-card__val">{occupancyRate}%</span>
           <span className="kpi-card__meta">
             {statusStats.RENTED} / {statusStats.TOTAL} kho đã thuê
           </span>
+        </div>
+        <div className="kpi-card__trend-row">
+          <span className="badge badge--success">
+            <TrendUp size={12} weight="bold" /> {trendRate}
+          </span>
+          <span className="kpi-card__trend-context">{trendContext}</span>
         </div>
         <div className="progress-bar-wrap">
           <div
@@ -106,7 +117,6 @@ export default function FacilityKpiGrid({
       >
         <div className="kpi-card__head">
           <span className="kpi-card__label">NHIỆM VỤ CA TRỰC HÔM NAY</span>
-          <span className="badge badge--primary">Tổng việc: {tasksToday.totalTasks}</span>
         </div>
         <div className="kpi-card__main-metric">
           <span className="kpi-card__val">{tasksToday.totalTasks}</span>
@@ -132,7 +142,7 @@ export default function FacilityKpiGrid({
       >
         <div className="kpi-card__head">
           <span className="kpi-card__label text-error">SỰ CỐ KHẨN CẤP</span>
-          <span className="badge badge--danger">
+          <span className={`badge ${escalations.highPriorityCount > 0 ? "badge--danger" : "badge--neutral"}`}>
             {escalations.highPriorityCount > 0 ? "Ưu tiên cao" : "Bình thường"}
           </span>
         </div>

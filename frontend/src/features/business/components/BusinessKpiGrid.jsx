@@ -1,59 +1,130 @@
 import { ArrowRight, TrendUp, TrendDown, Minus } from "@phosphor-icons/react";
 import { formatVND } from "../../../utils/formatters.js";
 
-// Helper lấy số liệu so sánh thông minh theo kỳ báo cáo
+function formatSignedDiff(diffNumber) {
+  if (diffNumber == null || isNaN(diffNumber)) return "";
+  if (diffNumber > 0) return `+${formatVND(diffNumber)}`;
+  if (diffNumber < 0) return `-${formatVND(Math.abs(diffNumber))}`;
+  return "0 đ";
+}
+
+// Helper lấy số liệu so sánh thông minh & chính xác 100% theo kỳ báo cáo
 function getKpiComparison(summary) {
   const period = summary.periodId || "THIS_QUARTER";
 
-  const COMPARISONS = {
-    THIS_MONTH: {
-      revenue: { rate: "+8.4%", diff: "+1.050.000 đ", context: "so với tháng trước", status: "positive" },
-      deposits: { rate: "+33.3%", diff: "+170.000 đ", context: "so với tháng trước", status: "positive" },
-      surcharges: { rate: "+50.0%", diff: "+140.000 đ", context: "so với tháng trước", status: "positive" },
-      occupancy: { rate: "+4.8%", diff: "+2 kho", context: "so với tháng trước", status: "positive" },
-    },
-    LAST_MONTH: {
-      revenue: { rate: "+5.1%", diff: "+490.000 đ", context: "so với tháng trước", status: "positive" },
-      deposits: { rate: "+6.3%", diff: "+30.000 đ", context: "so với tháng trước", status: "positive" },
-      surcharges: { rate: "+12.0%", diff: "+30.000 đ", context: "so với tháng trước", status: "positive" },
-      occupancy: { rate: "+2.3%", diff: "+1 kho", context: "so với tháng trước", status: "positive" },
-    },
-    THIS_QUARTER: {
-      revenue: { rate: "+12.4%", diff: "+4.140.000 đ", context: "so với quý trước", status: "positive" },
-      deposits: { rate: "+12.4%", diff: "+540.000 đ", context: "so với quý trước", status: "positive" },
-      surcharges: { rate: "+17.0%", diff: "+180.000 đ", context: "so với quý trước", status: "positive" },
-      occupancy: { rate: "+5.0%", diff: "+2 kho", context: "so với quý trước", status: "positive" },
-    },
-    YTD: {
-      revenue: { rate: "+19.8%", diff: "+14.600.000 đ", context: "so với cùng kỳ", status: "positive" },
-      deposits: { rate: "+17.4%", diff: "+1.250.000 đ", context: "so với cùng kỳ", status: "positive" },
-      surcharges: { rate: "+19.4%", diff: "+620.000 đ", context: "so với cùng kỳ", status: "positive" },
-      occupancy: { rate: "+15.2%", diff: "+5 kho", context: "so với cùng kỳ", status: "positive" },
-    },
-    CUSTOM: {
-      revenue: { rate: "+6.5%", diff: "+940.000 đ", context: "so với kỳ đối soát", status: "positive" },
-      deposits: { rate: "+8.0%", diff: "+90.000 đ", context: "so với kỳ đối soát", status: "positive" },
-      surcharges: { rate: "+5.2%", diff: "+30.000 đ", context: "so với kỳ đối soát", status: "positive" },
-      occupancy: { rate: "+3.2%", diff: "+1 kho", context: "so với kỳ đối soát", status: "positive" },
-    },
+  const contextMap = {
+    THIS_MONTH: "so với tháng trước",
+    LAST_MONTH: "so với tháng trước",
+    THIS_QUARTER: "so với quý trước",
+    YTD: "so với cùng kỳ",
+    CUSTOM: "so với kỳ đối soát",
   };
+  const context = contextMap[period] || "so với quý trước";
 
-  const current = { ...(COMPARISONS[period] || COMPARISONS.THIS_QUARTER) };
-
-  // Ưu tiên chuỗi tăng trưởng thực tế nếu backend có trả về
-  if (summary.revenueGrowth && summary.revenueGrowth.includes("%")) {
-    const match = summary.revenueGrowth.match(/([+-]?\d+(?:\.\d+)?%)/);
+  // 1. Doanh thu kinh doanh (Gross Revenue)
+  let revRate = "0%";
+  let revStatus = "neutral";
+  if (summary.revenueGrowth) {
+    const match = String(summary.revenueGrowth).match(/([+-]?\d+(?:\.\d+)?%)/);
     if (match) {
-      const parsedRate = match[1].startsWith("+") || match[1].startsWith("-") ? match[1] : `+${match[1]}`;
-      current.revenue = {
-        ...current.revenue,
-        rate: parsedRate,
-        status: parsedRate.startsWith("-") ? "negative" : parsedRate === "0%" || parsedRate === "0.0%" ? "neutral" : "positive",
-      };
+      revRate = match[1].startsWith("+") || match[1].startsWith("-") ? match[1] : `+${match[1]}`;
+      revStatus = revRate.startsWith("-")
+        ? "negative"
+        : revRate === "0%" || revRate === "0.0%"
+        ? "neutral"
+        : "positive";
     }
   }
 
-  return current;
+  let revDiffStr = "";
+  if (summary.grossRevenueDiff != null) {
+    revDiffStr = formatSignedDiff(summary.grossRevenueDiff);
+  } else if (revRate.includes("%") && summary.grossRevenue != null) {
+    const pct = parseFloat(revRate) / 100;
+    if (!isNaN(pct) && 1 + pct > 0) {
+      const prevGross = summary.grossRevenue / (1 + pct);
+      const computedDiff = Math.round(summary.grossRevenue - prevGross);
+      revDiffStr = formatSignedDiff(computedDiff);
+    }
+  }
+
+  // 2. Tiền cọc an ninh Escrow (Deposits Held)
+  let depRate = "0%";
+  let depStatus = "neutral";
+  if (summary.escrowDepositGrowth) {
+    const match = String(summary.escrowDepositGrowth).match(/([+-]?\d+(?:\.\d+)?%)/);
+    if (match) {
+      depRate = match[1].startsWith("+") || match[1].startsWith("-") ? match[1] : `+${match[1]}`;
+      depStatus = depRate.startsWith("-")
+        ? "negative"
+        : depRate === "0%" || depRate === "0.0%"
+        ? "neutral"
+        : "positive";
+    }
+  }
+
+  let depDiffStr = "";
+  if (summary.escrowDepositDiff != null) {
+    depDiffStr = formatSignedDiff(summary.escrowDepositDiff);
+  } else if (depRate.includes("%") && summary.depositsHeld != null) {
+    const pct = parseFloat(depRate) / 100;
+    if (!isNaN(pct) && 1 + pct > 0) {
+      const prevDep = summary.depositsHeld / (1 + pct);
+      const computedDiff = Math.round(summary.depositsHeld - prevDep);
+      depDiffStr = formatSignedDiff(computedDiff);
+    }
+  }
+
+  // 3. Phụ thu & Phí dịch vụ (Surcharges)
+  let surchRate = "0%";
+  let surchStatus = "neutral";
+  if (summary.surchargeGrowth) {
+    const match = String(summary.surchargeGrowth).match(/([+-]?\d+(?:\.\d+)?%)/);
+    if (match) {
+      surchRate = match[1].startsWith("+") || match[1].startsWith("-") ? match[1] : `+${match[1]}`;
+      surchStatus = surchRate.startsWith("-")
+        ? "negative"
+        : surchRate === "0%" || surchRate === "0.0%"
+        ? "neutral"
+        : "positive";
+    }
+  }
+
+  let surchDiffStr = "";
+  if (summary.surchargesDiff != null) {
+    surchDiffStr = formatSignedDiff(summary.surchargesDiff);
+  } else if (summary.surcharges === 0) {
+    surchDiffStr = "0 đ";
+    surchRate = "0%";
+    surchStatus = "neutral";
+  }
+
+  // 4. Tỷ lệ lấp đầy kho (Occupancy)
+  let occRate = "+0.0%";
+  let occStatus = "neutral";
+  if (summary.occupancyStatus) {
+    const match = String(summary.occupancyStatus).match(/([+-]?\d+(?:\.\d+)?%)/);
+    if (match) {
+      occRate = match[1].startsWith("+") || match[1].startsWith("-") ? match[1] : `+${match[1]}`;
+      occStatus = occRate.startsWith("-")
+        ? "negative"
+        : occRate === "0%" || occRate === "0.0%"
+        ? "neutral"
+        : "positive";
+    }
+  }
+
+  return {
+    revenue: { rate: revRate, diff: revDiffStr, context, status: revStatus },
+    deposits: { rate: depRate, diff: depDiffStr, context, status: depStatus },
+    surcharges: { rate: surchRate, diff: surchDiffStr, context, status: surchStatus },
+    occupancy: {
+      rate: occRate,
+      diff: summary.occupiedUnits > 0 ? `${summary.occupiedUnits} kho đang thuê` : "0 kho",
+      context,
+      status: occStatus,
+    },
+  };
 }
 
 function KpiTrendLine({ metric }) {
@@ -123,7 +194,7 @@ export default function BusinessKpiGrid({
         <div className="biz-kpi-value">{formatVND(summary.depositsHeld)}</div>
         <KpiTrendLine metric={comparison.deposits} />
         <div className="biz-kpi-footer">
-          <span className="kpi-escrow-highlight" title="Ký quỹ phong tỏa · Không tính vào doanh thu">
+          <span className="kpi-escrow-highlight" title="100% Escrow · Ký quỹ phong tỏa (Không tính vào doanh thu)">
             100% Escrow
           </span>
           <span className="kpi-drill-hint">
@@ -139,44 +210,44 @@ export default function BusinessKpiGrid({
         tabIndex={0}
         onClick={() => onSelectDrilldown("surcharges")}
         onKeyDown={(e) => e.key === "Enter" && onSelectDrilldown("surcharges")}
-        title="Nhấn để xem chi tiết từng khoản phụ thu phát sinh"
+        title="Nhấn để xem bảng chi tiết các khoản phụ thu phát sinh"
       >
-        <div className="kpi-indicator kpi-indicator--blue" />
+        <div className="kpi-indicator kpi-indicator--amber" />
         <div className="biz-kpi-header">
           <span className="kpi-label">Phụ thu & Phí dịch vụ</span>
         </div>
         <div className="biz-kpi-value">{formatVND(summary.surcharges)}</div>
         <KpiTrendLine metric={comparison.surcharges} />
         <div className="biz-kpi-footer">
-          <span className="biz-kpi-footer-text">Phí quá hạn &amp; Hư hại</span>
+          <span className="biz-kpi-footer-text">Phí quá hạn & Hư hại</span>
           <span className="kpi-drill-hint">
             Chi tiết <ArrowRight size={12} weight="bold" />
           </span>
         </div>
       </div>
 
-      {/* Card 4: Utilization / Occupancy (Tỷ lệ lấp đầy kho) */}
+      {/* Card 4: Occupancy Rate (Tỷ lệ lấp đầy) */}
       <div
-        className="biz-kpi-card biz-kpi-card--utilization"
+        className="biz-kpi-card biz-kpi-card--occupancy"
         role="button"
         tabIndex={0}
         onClick={() => onSelectDrilldown("occupancy")}
         onKeyDown={(e) => e.key === "Enter" && onSelectDrilldown("occupancy")}
-        title="Nhấn để xem danh sách 37 kho đang cho thuê"
+        title="Nhấn để xem sơ đồ tỷ lệ lấp đầy toàn bộ kho cơ sở"
       >
-        <div className="kpi-indicator kpi-indicator--amber" />
+        <div className="kpi-indicator kpi-indicator--orange" />
         <div className="biz-kpi-header">
           <span className="kpi-label">Tỷ lệ lấp đầy kho</span>
         </div>
         <div className="biz-kpi-value">
-          {summary.occupancyRate}%{" "}
-          <span className="text-muted font-normal text-sm">
-            ({summary.occupiedUnits}/{summary.totalUnits})
-          </span>
+          {summary.occupancyRate}%
+          <span className="kpi-occupancy-ratio"> ({summary.occupiedUnits}/{summary.totalUnits})</span>
         </div>
         <KpiTrendLine metric={comparison.occupancy} />
         <div className="biz-kpi-footer">
-          <span className="biz-kpi-footer-text">{summary.occupiedUnits} / {summary.totalUnits} kho đang thuê</span>
+          <span className="biz-kpi-footer-text">
+            {summary.occupancyBreakdown || `${summary.occupiedUnits} / ${summary.totalUnits} kho đang thuê`}
+          </span>
           <span className="kpi-drill-hint">
             Chi tiết <ArrowRight size={12} weight="bold" />
           </span>

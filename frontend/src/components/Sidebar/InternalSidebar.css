@@ -1,0 +1,376 @@
+/* ==========================================================================
+   STORAGEHUB INTERNAL SIDEBAR (SWISS MINIMALIST COLLAPSIBLE RAIL)
+   ========================================================================== */
+
+:root {
+  --sidebar-expanded-width: 240px;
+  --sidebar-collapsed-width: 64px;
+}
+
+.internal-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .internal-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+
+  .internal-sidebar-backdrop.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.internal-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: var(--sidebar-expanded-width);
+  min-width: var(--sidebar-expanded-width);
+  background: var(--color-surface, #ffffff);
+  border-right: var(--border-strong);
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Chế độ thu gọn (64px Slim Rail) */
+.internal-sidebar.is-collapsed {
+  width: var(--sidebar-collapsed-width);
+  min-width: var(--sidebar-collapsed-width);
+  cursor: pointer;
+}
+
+/* ── Header của Sidebar ── */
+.internal-sidebar__header {
+  height: 54px;
+  min-height: 54px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: var(--border);
+  background: var(--color-surface);
+  gap: 8px;
+}
+
+.internal-sidebar.is-collapsed .internal-sidebar__header {
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+}
+
+/* ── Khi thu gọn (64px): Nút Logo với hiệu ứng Hover thành nút bung ra ── */
+.internal-sidebar__collapsed-logo-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  border-radius: var(--radius);
+  transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.internal-sidebar__collapsed-logo-btn .internal-sidebar__mark {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.internal-sidebar__collapsed-logo-btn .internal-sidebar__expand-cue {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ink, #000000);
+  color: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-ink, #000000);
+  border-radius: var(--radius);
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.internal-sidebar__collapsed-logo-btn:hover {
+  border-color: var(--color-line-strong);
+}
+
+.internal-sidebar__collapsed-logo-btn:hover .internal-sidebar__mark {
+  opacity: 0;
+  transform: scale(0.75);
+}
+
+.internal-sidebar__collapsed-logo-btn:hover .internal-sidebar__expand-cue {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Khi mở rộng (240px) ── */
+.internal-sidebar__header-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.internal-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--color-ink);
+  overflow: hidden;
+}
+
+.internal-sidebar__mark {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: var(--border-strong);
+  flex-shrink: 0;
+}
+
+.internal-sidebar__mark i {
+  background: var(--color-ink);
+  border-right: 1px solid var(--color-surface);
+}
+
+.internal-sidebar__mark i:last-child {
+  background: var(--color-accent);
+  border: 0;
+}
+
+.internal-sidebar__brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.internal-sidebar__title {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--color-ink);
+}
+
+.internal-sidebar__badge {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.internal-sidebar__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Nút thu gọn ở header khi mở rộng (không viền, không nền) */
+.internal-sidebar__collapse-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-secondary);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: color 0.14s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.internal-sidebar__collapse-btn:hover {
+  background: transparent;
+  color: var(--color-ink);
+  border: none;
+}
+
+.internal-sidebar__close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink);
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ── Thân Sidebar: Danh sách điều hướng ── */
+.internal-sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.internal-sidebar.is-collapsed .internal-sidebar__nav {
+  padding: 14px 8px;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.internal-sidebar__group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.internal-sidebar__group-title {
+  padding: 0 8px 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.internal-sidebar__group-divider {
+  height: 1px;
+  background: var(--color-line);
+  margin: 6px 4px;
+}
+
+.internal-sidebar__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.internal-sidebar__item {
+  position: relative;
+}
+
+.internal-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 38px;
+  padding: 0 10px;
+  text-decoration: none;
+  color: var(--color-ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.internal-sidebar.is-collapsed .internal-sidebar__link {
+  padding: 0;
+  justify-content: center;
+  width: 46px;
+  height: 38px;
+  margin: 0 auto;
+}
+
+.internal-sidebar__icon-wrap {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+}
+
+.internal-sidebar__icon {
+  color: var(--color-secondary);
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.internal-sidebar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* Hover & Active States */
+.internal-sidebar__link:hover:not(.is-active) {
+  background: var(--color-neutral);
+  color: var(--color-ink);
+}
+
+.internal-sidebar__link:hover:not(.is-active) .internal-sidebar__icon {
+  color: var(--color-ink);
+}
+
+.internal-sidebar__link.is-active {
+  background: var(--color-ink);
+  color: var(--color-surface);
+  border-color: var(--color-ink);
+  font-weight: 600;
+}
+
+.internal-sidebar__link.is-active .internal-sidebar__icon {
+  color: var(--color-surface);
+}
+
+/* ── Di động & Tablet (< 1024px): Slide-over Drawer ── */
+@media (max-width: 1023px) {
+  .internal-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 270px !important;
+    min-width: 270px !important;
+    height: 100vh;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .internal-sidebar.is-open-mobile {
+    transform: translateX(0);
+  }
+
+  .internal-sidebar__close-btn {
+    display: flex;
+  }
+
+  .internal-sidebar__collapse-btn {
+    display: none;
+  }
+}

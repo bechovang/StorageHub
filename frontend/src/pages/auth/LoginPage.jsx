@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { AuthValidator } from "../../validation";
-import { AuthLayout, AuthField, PasswordField, AuthSubmitButton } from "./components";
+import { AuthCard, AuthLink, AuthField, PasswordField, AuthSubmitButton } from "./components";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -48,17 +48,17 @@ export default function LoginPage() {
     };
 
     return (
-        <AuthLayout
-            pageClass="login-page"
+        <AuthCard
             title="Đăng nhập"
             error={generalError}
             errorId="login-error-banner"
+            maxWidth={400}
             footer={
                 <>
                     <span className="login-card__footer-text">Chưa có tài khoản?</span>
-                    <Link to="/register" className="login-link login-link--strong">
+                    <AuthLink to="/register" direction="forward" className="login-link login-link--strong">
                         Đăng ký ngay
-                    </Link>
+                    </AuthLink>
                 </>
             }
         >
@@ -93,9 +93,9 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     extraHeader={
                         <div className="login-field__header">
-                            <Link to="/forgot-password" className="login-link login-link--forgot">
+                            <AuthLink to="/forgot-password" direction="forward" className="login-link login-link--forgot">
                                 Quên mật khẩu?
-                            </Link>
+                            </AuthLink>
                         </div>
                     }
                 />
@@ -108,6 +108,6 @@ export default function LoginPage() {
                     loadingText="Đang đăng nhập..."
                 />
             </form>
-        </AuthLayout>
+        </AuthCard>
     );
 }
