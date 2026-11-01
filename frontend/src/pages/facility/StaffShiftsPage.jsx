@@ -13,7 +13,6 @@ import {
   useStaffShifts,
   ShiftKpiGrid,
   ShiftAssignmentForm,
-  ShiftRosterList,
   WeeklyScheduleTable,
 } from "../../features/shifts/index.js";
 import "./StaffShiftsPage.css";
@@ -37,7 +36,6 @@ export default function StaffShiftsPage() {
     allShifts,
     totalConflicts,
     liveConflict,
-    filteredRoster,
     handleSaveAssignment,
     handleRemoveShift,
   } = useStaffShifts();
@@ -130,22 +128,12 @@ export default function StaffShiftsPage() {
             </div>
           )}
 
-          {/* ── Two-Zone Split Layout ── */}
-          <div className="shifts-split-layout">
-            {/* Cột trái (40%): Roster nhân sự */}
-            <ShiftRosterList
-              filteredRoster={filteredRoster}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-            />
-
-            {/* Cột phải (60%): Weekly Schedule Table */}
-            <WeeklyScheduleTable
-              staffRoster={staffRoster}
-              totalConflicts={totalConflicts}
-              onRemoveShift={handleRemoveShift}
-            />
-          </div>
+          {/* ── Weekly Schedule (full width) ── */}
+          <WeeklyScheduleTable
+            staffRoster={staffRoster}
+            totalConflicts={totalConflicts}
+            onRemoveShift={handleRemoveShift}
+          />
         </div>
       </div>
     </AppShell>
