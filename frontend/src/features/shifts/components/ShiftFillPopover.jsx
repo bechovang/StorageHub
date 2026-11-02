@@ -38,7 +38,6 @@ export default function ShiftFillPopover({
   } = activePopover;
 
   const isEditMode = Boolean(existingAssignment);
-  const isMaxCapacity = !isEditMode && currentSlotStaffIds.length >= 4;
 
   // Lọc ra các nhân viên chưa có trong slot này để chọn mặc định
   const availableCandidate = staffList.find(
@@ -101,11 +100,6 @@ export default function ShiftFillPopover({
       return;
     }
 
-    if (isMaxCapacity) {
-      setErrorMsg("Ca trực này đã đạt giới hạn tối đa 4 nhân viên/ca.");
-      return;
-    }
-
     const staffId = isEditMode
       ? existingAssignment.staffId
       : Number(selectedStaffId);
@@ -140,9 +134,6 @@ export default function ShiftFillPopover({
               <span className="shift-popover-badge">
                 {isEditMode ? "Chỉnh sửa phân công" : "Phân công nhân sự vào ca"}
               </span>
-              <span className="shift-popover-guideline">
-                Tối đa 4 nhân viên/ca
-              </span>
             </div>
             <h3 className="shift-popover-title">
               {shiftInfo.name} ({shiftInfo.hours})
@@ -167,15 +158,6 @@ export default function ShiftFillPopover({
           <div className="shift-popover-error" role="alert">
             <WarningCircle size={16} weight="fill" />
             <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {isMaxCapacity && (
-          <div className="shift-popover-error" role="alert">
-            <WarningCircle size={16} weight="fill" />
-            <span>
-              Ca trực này đã đủ tối đa 4 nhân viên/ca. Vui lòng gỡ bớt nhân sự trước khi phân công thêm.
-            </span>
           </div>
         )}
 
@@ -286,7 +268,7 @@ export default function ShiftFillPopover({
             {/* Bước 1: Chọn nhân viên */}
             <div className="form-group">
               <label className="form-label" htmlFor="popover-select-staff">
-                Chọn nhân viên trực ca (Hiện có {currentSlotStaffIds.length}/4 người)
+                Chọn nhân viên trực ca (Hiện có {currentSlotStaffIds.length} người)
               </label>
               <div className="staff-selection-list">
                 {staffAvailability.map((staff) => (
@@ -301,7 +283,7 @@ export default function ShiftFillPopover({
                       name="shift-staff"
                       value={staff.id}
                       checked={Number(selectedStaffId) === staff.id}
-                      disabled={staff.isBlocked || isMaxCapacity}
+                      disabled={staff.isBlocked}
                       onChange={() => setSelectedStaffId(staff.id)}
                     />
                     <div className="staff-radio-content">
@@ -342,7 +324,6 @@ export default function ShiftFillPopover({
                       <input
                         type="checkbox"
                         checked={checked}
-                        disabled={isMaxCapacity}
                         onChange={() => {
                           setSelectedTypeIds((prev) =>
                             prev.includes(t.id)
@@ -372,17 +353,10 @@ export default function ShiftFillPopover({
 
             {/* Trạng thái xác thực */}
             <div className="shift-popover-conflict-status">
-              {isMaxCapacity ? (
-                <div className="conflict-badge-inline">
-                  <WarningCircle size={16} weight="fill" />
-                  <span>Đã đạt tối đa 4 nhân viên/ca</span>
-                </div>
-              ) : (
-                <div className="valid-badge-inline">
-                  <CheckCircle size={16} weight="fill" />
-                  <span>Sẵn sàng thêm nhân viên vào ca (Bản nháp)</span>
-                </div>
-              )}
+              <div className="valid-badge-inline">
+              <CheckCircle size={16} weight="fill" />
+              <span>Sẵn sàng thêm nhân viên vào ca (Bản nháp)</span>
+            </div>
             </div>
 
             {/* Footer Buttons */}
@@ -397,11 +371,11 @@ export default function ShiftFillPopover({
               <button
                 type="submit"
                 className={`btn ${
-                  isMaxCapacity || selectedTypeIds.length === 0 || !selectedStaffId
+                  selectedTypeIds.length === 0 || !selectedStaffId
                     ? "btn--disabled"
                     : "btn--primary"
                 }`}
-                disabled={isMaxCapacity || selectedTypeIds.length === 0 || !selectedStaffId}
+                disabled={selectedTypeIds.length === 0 || !selectedStaffId}
               >
                 <Plus size={16} weight="bold" />
                 <span>Thêm vào ca</span>

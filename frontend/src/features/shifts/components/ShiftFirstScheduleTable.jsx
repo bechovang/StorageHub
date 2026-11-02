@@ -67,7 +67,6 @@ export default function ShiftFirstScheduleTable({
                 {weekDays.map((day) => {
                   const assignments = shiftGrid[shift.key]?.[day.key] || [];
                   const isEmpty = assignments.length === 0;
-                  const isMaxStaff = assignments.length >= 4;
 
                   // Ô CA CHƯA CÓ NGƯỜI TRỰC
                   if (isEmpty) {
@@ -175,22 +174,15 @@ export default function ShiftFirstScheduleTable({
                           );
                         })}
 
-                        {/* Ràng buộc: Tối đa 4 nhân viên/ca */}
-                        {isMaxStaff ? (
-                          <div className="slot-max-cap-badge" title="Đã đạt giới hạn tối đa 4 nhân viên/ca">
-                            Tối đa 4 nhân viên/ca
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn-add-extra-worker"
-                            onClick={() => onOpenFillPopover(shift.key, day, null)}
-                            title="Phân công thêm nhân viên cùng trực ca này (Tối đa 4 nhân viên/ca)"
-                          >
-                            <Plus size={11} weight="bold" />
-                            <span>Thêm người</span>
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="btn-add-extra-worker"
+                          onClick={() => onOpenFillPopover(shift.key, day, null)}
+                          title="Phân công thêm nhân viên cùng trực ca này"
+                        >
+                          <Plus size={11} weight="bold" />
+                          <span>Thêm người</span>
+                        </button>
                       </div>
                     </td>
                   );
@@ -217,10 +209,6 @@ export default function ShiftFirstScheduleTable({
 
         <div className="legend-group">
           <span className="legend-label">Quy định & Độ phủ:</span>
-          <div className="legend-pill">
-            <span className="legend-dot" style={{ backgroundColor: "#0284c7" }} />
-            <span>Tối đa 4 nhân viên/ca</span>
-          </div>
           <div className="legend-pill">
             <span className="legend-box-empty" />
             <span>Chưa có người trực (Cần fill)</span>

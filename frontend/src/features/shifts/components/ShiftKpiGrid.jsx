@@ -41,7 +41,7 @@ export default function ShiftKpiGrid({
           <span className="stats-item__label">Nhân sự vận hành</span>
           <div className="stats-item__value-row">
             <strong className="stats-item__val">{staffCount}</strong>
-            <span className="stats-item__sub">Tối đa 4 nhân viên/ca</span>
+            <span className="stats-item__sub">Theo lịch tuần</span>
           </div>
         </div>
       </div>

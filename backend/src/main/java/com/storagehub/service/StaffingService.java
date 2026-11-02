@@ -1,5 +1,6 @@
 package com.storagehub.service;
 
+import com.storagehub.dto.shift.BatchShiftUpdateRequest;
 import com.storagehub.dto.shift.CreateShiftAssignmentRequest;
 import com.storagehub.dto.shift.ShiftAssignmentResponse;
 import com.storagehub.dto.shift.StaffRosterMember;
@@ -23,6 +24,12 @@ public interface StaffingService {
     List<ShiftAssignmentResponse> createShiftAssignments(
             String actorEmail,
             CreateShiftAssignmentRequest request
+    );
+
+    /** Xoá + tạo nhiều assignment trong 1 transaction (draft save). */
+    List<ShiftAssignmentResponse> batchUpdateShifts(
+            String actorEmail,
+            BatchShiftUpdateRequest request
     );
 
     /** Backward-compatible single assignment (tests/legacy FE). */
