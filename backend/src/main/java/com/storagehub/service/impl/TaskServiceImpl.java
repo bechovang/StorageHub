@@ -456,7 +456,7 @@ public class TaskServiceImpl implements TaskService {
 
         String typeName = (unit != null && unit.getType() != null) ? unit.getType().getName() : "Chung";
         logService.log(
-                null,
+                defaultActor(),
                 "TASK",
                 saved.getTaskId(),
                 "TASK_CREATED",
@@ -489,6 +489,12 @@ public class TaskServiceImpl implements TaskService {
         }
 
         return unitRepository.findByCode(refCode).orElse(null);
+    }
+
+    private User defaultActor() {
+        return userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Không có user để ghi activity log cho task hệ thống."));
     }
 
     private void notifyEligibleStaffForTask(Task task) {
@@ -868,7 +874,8 @@ public class TaskServiceImpl implements TaskService {
         Task saved = taskRepository.save(task);
         notifyEligibleStaffForTask(saved);
 
-        logService.log(actor, "TASK", saved.getTaskId(),
+        logService.log(actor != null ? actor : reservation.getCustomer(),
+                "TASK", saved.getTaskId(),
                 "CREATED", null, "TODO",
                 "Tạo task pool check-in cho " + reservation.getCode());
         return saved;
@@ -1215,7 +1222,7 @@ public class TaskServiceImpl implements TaskService {
             existing.setClaimedAt(null);
             Task reopened = taskRepository.save(existing);
             notifyEligibleStaffForTask(reopened);
-            logService.log(null, "TASK", reopened.getTaskId(),
+            logService.log(ticket.getCustomer(), "TASK", reopened.getTaskId(),
                     "REOPENED", "DONE", Task.Status.TODO.name(),
                     "Manager trả ticket " + ticket.getCode() + " về pool");
             return reopened;
@@ -1232,7 +1239,7 @@ public class TaskServiceImpl implements TaskService {
         Task saved = taskRepository.save(task);
         notifyEligibleStaffForTask(saved);
 
-        logService.log(null, "TASK", saved.getTaskId(),
+        logService.log(ticket.getCustomer(), "TASK", saved.getTaskId(),
                 "CREATED", null, Task.Status.TODO.name(),
                 "Tạo task pool support cho ticket " + ticket.getCode());
         return saved;
@@ -1312,7 +1319,8 @@ public class TaskServiceImpl implements TaskService {
         Task saved = taskRepository.save(task);
         notifyEligibleStaffForTask(saved);
 
-        logService.log(actor, "TASK", saved.getTaskId(),
+        logService.log(actor != null ? actor : reservation.getCustomer(),
+                "TASK", saved.getTaskId(),
                 "CREATED", null, Task.Status.TODO.name(),
                 "Tạo task pool checkout cho " + reservation.getCode() + " ngày " + requestedDate);
         return saved;

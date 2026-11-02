@@ -173,6 +173,8 @@ class TaskServiceTest {
     @Test
     @DisplayName("autoCreateTask tạo task pool chưa giao người (FR-21)")
     void testAutoCreateTask_AutoAssignByZoneAndShift() {
+        when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))
+                .thenReturn(Optional.of(staffUser));
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
@@ -199,12 +201,14 @@ class TaskServiceTest {
         assertThat(res.shift()).isEqualTo(StaffAssignment.Shift.MORNING);
         assertThat(res.status()).isEqualTo(Task.Status.TODO);
 
-        verify(logService).log(eq(null), eq("TASK"), eq(99L), eq("TASK_CREATED"), eq(null), eq("TODO"), any());
+        verify(logService).log(eq(staffUser), eq("TASK"), eq(99L), eq("TASK_CREATED"), eq(null), eq("TODO"), any());
     }
 
     @Test
     @DisplayName("autoCreateTask không fallback gán người khi không có staff trực")
     void testAutoCreateTask_FallbackStaff() {
+        when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))
+                .thenReturn(Optional.of(staffUser));
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
