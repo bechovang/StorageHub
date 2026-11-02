@@ -1206,7 +1206,19 @@ public class TaskServiceImpl implements TaskService {
                         Task.Type.SUPPORT, ticket.getCode())
                 .orElse(null);
         if (existing != null) {
-            return existing;
+            // Manager trả ticket về staff: mở lại task cũ trong pool.
+            existing.setAssignedStaff(null);
+            existing.setStatus(Task.Status.TODO);
+            existing.setWorkDate(java.time.LocalDate.now());
+            existing.setShift(getCurrentShift());
+            existing.setUnitType(ticket.getUnit().getType());
+            existing.setClaimedAt(null);
+            Task reopened = taskRepository.save(existing);
+            notifyEligibleStaffForTask(reopened);
+            logService.log(null, "TASK", reopened.getTaskId(),
+                    "REOPENED", "DONE", Task.Status.TODO.name(),
+                    "Manager trả ticket " + ticket.getCode() + " về pool");
+            return reopened;
         }
 
         Task task = new Task();

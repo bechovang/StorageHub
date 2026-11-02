@@ -4,3 +4,5 @@ export { default as TicketDetailModal } from "./components/TicketDetailModal.jsx
 export { default as CreateTicketModal } from "./components/CreateTicketModal.jsx";
 export { default as ResolveTicketModal } from "./components/ResolveTicketModal.jsx";
 export { default as EscalateTicketModal } from "./components/EscalateTicketModal.jsx";
+
+export { default as ManagerDispatchModal } from "./components/ManagerDispatchModal.jsx";

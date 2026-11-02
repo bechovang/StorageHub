@@ -17,4 +17,11 @@ public interface TicketService {
     TicketResponse createTicket(String actorEmail, CreateTicketRequest request);
 
     TicketResponse updateStatus(String actorEmail, Long ticketId, UpdateTicketStatusRequest request);
+
+    /** Manager gửi chỉ đạo / đổi kho / checkout hoàn tiền cho ticket ESCALATED. */
+    TicketResponse dispatchTicket(
+            String actorEmail,
+            Long ticketId,
+            com.storagehub.dto.ticket.DispatchTicketRequest request
+    );
 }

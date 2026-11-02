@@ -82,8 +82,20 @@ export default function TicketCard({
           </div>
         </div>
 
-        {/* Staff actions */}
-        {isStaffOrAdmin && t.status !== "RESOLVED" && (
+        {/* Manager / Staff actions */}
+        {isManager && t.status === "ESCALATED" && (
+          <div className="ticket-card__actions" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              onClick={() => onDispatch(t)}
+            >
+              <ShieldWarning size={15} weight="bold" />
+              <span>Điều phối xử lý</span>
+            </button>
+          </div>
+        )}
+        {!isManager && isStaffOrAdmin && t.status !== "RESOLVED" && t.status !== "ESCALATED" && (
           <div className="ticket-card__actions" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
@@ -93,16 +105,14 @@ export default function TicketCard({
               <CheckCircle size={15} weight="bold" />
               <span>Đã xử lý xong</span>
             </button>
-            {t.status !== "ESCALATED" && (
-              <button
-                type="button"
-                className="btn btn--danger btn--sm"
-                onClick={() => onEscalate(t)}
-              >
-                <ShieldWarning size={15} weight="bold" />
-                <span>Chuyển cấp Quản lý</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn btn--danger btn--sm"
+              onClick={() => onEscalate(t)}
+            >
+              <ShieldWarning size={15} weight="bold" />
+              <span>Chuyển cấp Quản lý</span>
+            </button>
           </div>
         )}
       </div>

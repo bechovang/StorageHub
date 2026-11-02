@@ -22,6 +22,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -42,6 +43,8 @@ public class TicketServiceImpl implements TicketService {
     private final NotificationService notificationService;
     private final LogService logService;
     private final com.storagehub.service.TaskService taskService;
+    private final com.storagehub.service.EarlyCheckoutService earlyCheckoutService;
+    private final com.storagehub.service.PricingEngine pricingEngine;
 
     @Override
     @Transactional(readOnly = true)
@@ -117,6 +120,137 @@ public class TicketServiceImpl implements TicketService {
         taskService.createSupportTask(saved);
 
         return TicketResponse.from(saved);
+    }
+
+    @Override
+    @Transactional
+    public TicketResponse dispatchTicket(
+            String actorEmail,
+            Long ticketId,
+            com.storagehub.dto.ticket.DispatchTicketRequest request
+    ) {
+        User actor = requireUser(actorEmail);
+        if (actor.getRole() == null
+                || (actor.getRole().getName() != Role.Name.FACILITY_MANAGER
+                    && actor.getRole().getName() != Role.Name.SYSTEM_ADMIN)) {
+            throw new AccessDeniedException("Chỉ quản lý cơ sở mới được điều phối ticket.");
+        }
+        SupportTicket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new BusinessRuleException("Ticket không tồn tại."));
+        if (ticket.getStatus() != SupportTicket.Status.ESCALATED) {
+            throw new BusinessRuleException("Chỉ ticket ESCALATED mới được quản lý điều phối.");
+        }
+
+        String mode = request.mode() == null ? "" : request.mode().trim().toUpperCase(Locale.ROOT);
+        String oldStatus = ticket.getStatus().name();
+        Reservation oldReservation = ticket.getReservation();
+        if (oldReservation == null) {
+            List<Reservation> active = reservationRepository.findActiveReservationsForUnit(
+                    ticket.getUnit().getUnitId(),
+                    List.of(Reservation.Status.CHECKED_IN, Reservation.Status.CHECKOUT_REQUESTED));
+            oldReservation = active.isEmpty() ? null : active.get(0);
+        }
+
+        if ("INSTRUCT".equals(mode)) {
+            String plan = request.managerPlan() == null ? "" : request.managerPlan().trim();
+            if (plan.isEmpty()) {
+                throw new BusinessRuleException("Vui lòng nhập chỉ đạo xử lý cho nhân viên.");
+            }
+            ticket.setStatus(SupportTicket.Status.IN_PROGRESS);
+            ticket.setManagerPlan(plan);
+            ticket.setSeverityMode("NORMAL");
+            ticket.setAssignedStaff(null);
+            SupportTicket saved = ticketRepository.save(ticket);
+            taskService.createSupportTask(saved);
+            notificationService.notifyTicketStatusChanged(saved, oldStatus);
+            logService.log(actor, "TICKET", saved.getTicketId(), "MANAGER_INSTRUCT",
+                    oldStatus, saved.getStatus().name(), plan);
+            return TicketResponse.from(saved);
+        }
+
+        if (oldReservation == null) {
+            throw new BusinessRuleException("Ticket không gắn với đơn thuê đang hoạt động.");
+        }
+
+        if ("RELOCATE".equals(mode)) {
+            if (request.newUnitId() == null || request.newStartDate() == null || request.newEndDate() == null) {
+                throw new BusinessRuleException("Thiếu kho mới hoặc khoảng ngày thuê.");
+            }
+            Unit newUnit = unitRepository.findWithDetailsById(request.newUnitId())
+                    .orElseThrow(() -> new UnitNotFoundException("Kho mới không tồn tại."));
+            LocalDate today = LocalDate.now(ICT_ZONE);
+            var oldQuote = pricingEngine.calculateQuote(
+                    oldReservation.getUnit(), today, oldReservation.getEndDate());
+            var newQuote = pricingEngine.calculateQuote(
+                    newUnit, request.newStartDate(), request.newEndDate());
+            int oldDays = Math.max(1, oldQuote.durationDays());
+            int newDays = Math.max(1, newQuote.durationDays());
+            long oldDaily = oldQuote.totalRent() / oldDays;
+            long newDaily = newQuote.totalRent() / newDays;
+            if (newDaily < oldDaily) {
+                throw new BusinessRuleException(
+                        "Chỉ chọn kho cùng giá hoặc cao hơn. Kho mới rẻ hơn không hợp lệ.");
+            }
+
+            earlyCheckoutService.relocateForTicket(
+                    actor,
+                    new com.storagehub.dto.checkout.TransferRequest(
+                            oldReservation.getReservationId(),
+                            newUnit.getUnitId(),
+                            request.newStartDate(),
+                            request.newEndDate()
+                    ),
+                    request.managerPlan()
+            );
+
+            long absorbed = Math.max(0L, newQuote.totalRent() - oldQuote.totalRent());
+            String plan = request.managerPlan() != null && !request.managerPlan().isBlank()
+                    ? request.managerPlan().trim()
+                    : "Đổi kho do sự cố";
+            ticket.setStatus(SupportTicket.Status.RESOLVED);
+            ticket.setManagerPlan(plan);
+            ticket.setSeverityMode("SEVERE");
+            ticket.setRelocatedUnitCode(newUnit.getCode());
+            ticket.setRelocationCompensation(0L);
+            ticket.setRelocationAbsorbed(absorbed);
+            ticket.setResolutionNote("Đổi kho " + oldReservation.getUnit().getCode()
+                    + " → " + newUnit.getCode()
+                    + ". Công ty chịu chênh lệch " + absorbed
+                    + " ₫. Không thu thêm tiền của khách.");
+            ticket.setResolvedAt(LocalDateTime.now(ICT_ZONE));
+            SupportTicket saved = ticketRepository.save(ticket);
+            notificationService.notifyTicketStatusChanged(saved, oldStatus);
+            logService.log(actor, "TICKET", saved.getTicketId(), "MANAGER_RELOCATE",
+                    oldStatus, saved.getStatus().name(),
+                    "Đổi kho " + oldReservation.getUnit().getCode() + " → " + newUnit.getCode());
+            return TicketResponse.from(saved);
+        }
+
+        if ("CHECKOUT_REFUND".equals(mode)) {
+            String reason = request.managerPlan() != null && !request.managerPlan().isBlank()
+                    ? request.managerPlan().trim()
+                    : "Không có kho phù hợp — trả kho và hoàn tiền ngay";
+            earlyCheckoutService.forcedCheckout(
+                    actor,
+                    oldReservation.getReservationId(),
+                    new com.storagehub.dto.checkout.ForcedCheckoutRequest("TRANSFER", reason)
+            );
+            taskService.createOrUpdateCheckoutTask(
+                    actor, oldReservation, LocalDate.now(ICT_ZONE), null, reason);
+
+            ticket.setStatus(SupportTicket.Status.RESOLVED);
+            ticket.setManagerPlan(reason);
+            ticket.setSeverityMode("SEVERE");
+            ticket.setResolutionNote("Không có kho phù hợp. Checkout và hoàn tiền ngay cho khách; không thu thêm tiền.");
+            ticket.setResolvedAt(LocalDateTime.now(ICT_ZONE));
+            SupportTicket saved = ticketRepository.save(ticket);
+            notificationService.notifyTicketStatusChanged(saved, oldStatus);
+            logService.log(actor, "TICKET", saved.getTicketId(), "MANAGER_CHECKOUT_REFUND",
+                    oldStatus, saved.getStatus().name(), reason);
+            return TicketResponse.from(saved);
+        }
+
+        throw new BusinessRuleException("Mode điều phối không hợp lệ: " + request.mode());
     }
 
     @Override

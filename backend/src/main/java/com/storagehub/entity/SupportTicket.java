@@ -76,6 +76,12 @@ public class SupportTicket {
     /** Kho thay thế khi di dời khẩn cấp SEVERE (V20). */
     private String relocatedUnitCode;
 
+    /** Công ty bù khách khi kho mới rẻ hơn (V34). */
+    private Long relocationCompensation;
+
+    /** Công ty chịu phần chênh khi kho mới đắt hơn (V34). */
+    private Long relocationAbsorbed;
+
     /** Ghi chú kết quả xử lý (V20). */
     private String resolutionNote;
 
