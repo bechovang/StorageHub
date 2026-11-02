@@ -4,6 +4,7 @@ import com.storagehub.dto.task.CreateTaskRequest;
 import com.storagehub.dto.task.TaskResponse;
 import com.storagehub.dto.task.UpdateTaskStatusRequest;
 import com.storagehub.dto.task.SupportRitualRequest;
+import com.storagehub.dto.task.TaskHandoffRequest;
 import com.storagehub.entity.StaffAssignment;
 import com.storagehub.entity.Task;
 import com.storagehub.service.TaskService;
@@ -72,6 +73,25 @@ public class TaskController {
             @PathVariable("taskId") Long taskId
     ) {
         return ResponseEntity.ok(taskService.getContractPreview(taskId));
+    }
+
+    /** Staff nhận task từ pool. */
+    @PostMapping("/{taskId}/claim")
+    public ResponseEntity<TaskResponse> claimTask(
+            @PathVariable("taskId") Long taskId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(taskService.claimTask(authentication.getName(), taskId));
+    }
+
+    /** Owner/manager chuyển task cho staff khác. */
+    @PostMapping("/{taskId}/handoff")
+    public ResponseEntity<TaskResponse> handoffTask(
+            @PathVariable("taskId") Long taskId,
+            @Valid @RequestBody TaskHandoffRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(taskService.handoffTask(authentication.getName(), taskId, request));
     }
 
     /** Staff hoàn tất hoặc chuyển cấp sự cố support từ Task Board. */

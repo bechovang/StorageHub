@@ -52,9 +52,18 @@ public class Task {
     /** Mã nghiệp vụ tham chiếu (BK-..., CT-..., SR-...) — nullable, đa hình. */
     private String refCode;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_staff_id")
     private User assignedStaff;
+
+    @Enumerated(EnumType.STRING)
+    private StaffAssignment.Shift shift;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_type_id")
+    private UnitType unitType;
+
+    private LocalDateTime claimedAt;
 
     private LocalDate workDate;
 

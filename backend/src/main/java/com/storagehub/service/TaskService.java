@@ -38,6 +38,16 @@ public interface TaskService {
     /** Dữ liệu hợp đồng tại quầy cho task check-in/check-out. */
     com.storagehub.dto.task.ContractPreviewResponse getContractPreview(Long taskId);
 
+    /** Staff nhận task từ pool. */
+    TaskResponse claimTask(String currentUserEmail, Long taskId);
+
+    /** Owner/manager chuyển task cho staff khác. */
+    TaskResponse handoffTask(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.TaskHandoffRequest request
+    );
+
     /** Staff xử lý hoàn tất hoặc chuyển cấp support ticket từ Task Board. */
     TaskResponse completeSupportRitual(
             String currentUserEmail,

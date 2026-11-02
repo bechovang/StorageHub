@@ -5,6 +5,8 @@ import com.storagehub.dto.notification.NotificationPageResponse;
 import com.storagehub.dto.notification.UnreadCountResponse;
 import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
+import com.storagehub.entity.Task;
+import com.storagehub.entity.User;
 
 import java.time.LocalDate;
 
@@ -65,4 +67,10 @@ public interface NotificationService {
 
     /** US-21: tất toán trả kho xong → báo khách số tiền hoàn cọc. */
     void notifySettlementCompleted(com.storagehub.entity.Reservation reservation, long refundAmount);
+
+    /** Task pool mới → bell cho staff đủ điều kiện ca/loại kho. */
+    void notifyTaskPool(Task task, java.util.List<User> recipients);
+
+    /** Chuyển task → báo người nhận mới. */
+    void notifyTaskHandoff(Task task, User recipient, String reason);
 }

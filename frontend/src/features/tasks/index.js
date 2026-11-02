@@ -6,6 +6,7 @@ export { CheckinRitualDrawer } from "./components/CheckinRitualDrawer.jsx";
 export { CheckoutRitualDrawer } from "./components/CheckoutRitualDrawer.jsx";
 export { CleaningRitualDrawer } from "./components/CleaningRitualDrawer.jsx";
 export { SupportTicketDrawer } from "./components/SupportTicketDrawer.jsx";
+export { default as HandoffTaskModal } from "./components/HandoffTaskModal.jsx";
 export { ContractRitualDrawer } from "./components/ContractRitualDrawer.jsx";
 export { TaskDetailModal } from "./components/TaskDetailModal.jsx";
 export { SnapbackToast } from "./components/SnapbackToast.jsx";
