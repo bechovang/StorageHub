@@ -197,7 +197,7 @@ class TaskServiceTest {
         TaskResponse res = taskService.autoCreateTask(req);
 
         assertThat(res.taskId()).isEqualTo(99L);
-        assertThat(res.assignedStaff()).isNull();
+        assertThat(res.assignedStaff().staffId()).isEqualTo(2L);
         assertThat(res.shift()).isEqualTo(StaffAssignment.Shift.MORNING);
         assertThat(res.status()).isEqualTo(Task.Status.TODO);
 
@@ -231,7 +231,7 @@ class TaskServiceTest {
         TaskResponse res = taskService.autoCreateTask(req);
 
         assertThat(res.taskId()).isEqualTo(100L);
-        assertThat(res.assignedStaff()).isNull();
+        assertThat(res.assignedStaff().staffId()).isEqualTo(2L);
     }
 
     @Test

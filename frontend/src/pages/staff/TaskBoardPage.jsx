@@ -19,7 +19,6 @@ import {
   ContractRitualDrawer,
   SnapbackToast,
   TaskDetailModal,
-  HandoffTaskModal,
 } from "../../features/tasks/index.js";
 import "./TaskBoardPage.css";
 
@@ -29,12 +28,8 @@ export default function TaskBoardPage() {
     user?.role === "FACILITY_MANAGER" || user?.role === "SYSTEM_ADMIN";
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [staffList, setStaffList] = useState([]);
-  const [handoffTarget, setHandoffTarget] = useState(null);
-  const [handoffError, setHandoffError] = useState("");
-  const [handoffSubmitting, setHandoffSubmitting] = useState(false);
-
   useEffect(() => {
-    if (!user?.role) return;
+    if (!isSupervisor) return;
     getStaffRoster()
       .then((rows) =>
         setStaffList(
@@ -44,7 +39,7 @@ export default function TaskBoardPage() {
         )
       )
       .catch((err) => console.error("Failed to fetch staff roster:", err));
-  }, [user?.role]);
+  }, [isSupervisor]);
 
   // Task đang xem chi tiết read-only (mở được cả khi DONE)
   const [detailTask, setDetailTask] = useState(null);
@@ -72,7 +67,6 @@ export default function TaskBoardPage() {
     dragOverCol,
     reloadTasks,
     handleMoveStatus,
-    handleHandoff,
     handleDragStart,
     handleDragEnd,
     handleDragOver,
@@ -182,10 +176,6 @@ export default function TaskBoardPage() {
                     onOpenCleaning={setActiveCleaningTask}
                     onOpenSupport={setActiveSupportTask}
                     onOpenContract={setActiveContractTask}
-                    onHandoff={(task) => {
-                      setHandoffError("");
-                      setHandoffTarget(task);
-                    }}
                     showAssignee={isSupervisor && !selectedStaffId}
                   />
                 );
@@ -244,31 +234,6 @@ export default function TaskBoardPage() {
           onSuccess={async () => {
             setActiveCleaningTask(null);
             await reloadTasks();
-          }}
-        />
-      )}
-
-      {handoffTarget && (
-        <HandoffTaskModal
-          task={handoffTarget}
-          staffList={staffList}
-          submitting={handoffSubmitting}
-          error={handoffError}
-          onClose={() => {
-            setHandoffTarget(null);
-            setHandoffError("");
-          }}
-          onConfirm={async ({ staffId, reason }) => {
-            try {
-              setHandoffSubmitting(true);
-              setHandoffError("");
-              await handleHandoff(handoffTarget, staffId, reason);
-              setHandoffTarget(null);
-            } catch (err) {
-              setHandoffError(err.message || "Không thể chuyển task.");
-            } finally {
-              setHandoffSubmitting(false);
-            }
           }}
         />
       )}
