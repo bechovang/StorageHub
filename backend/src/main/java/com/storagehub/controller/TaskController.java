@@ -3,6 +3,7 @@ package com.storagehub.controller;
 import com.storagehub.dto.task.CreateTaskRequest;
 import com.storagehub.dto.task.TaskResponse;
 import com.storagehub.dto.task.UpdateTaskStatusRequest;
+import com.storagehub.dto.task.SupportRitualRequest;
 import com.storagehub.entity.StaffAssignment;
 import com.storagehub.entity.Task;
 import com.storagehub.service.TaskService;
@@ -71,6 +72,17 @@ public class TaskController {
             @PathVariable("taskId") Long taskId
     ) {
         return ResponseEntity.ok(taskService.getContractPreview(taskId));
+    }
+
+    /** Staff hoàn tất hoặc chuyển cấp sự cố support từ Task Board. */
+    @PostMapping("/{taskId}/rituals/support")
+    public ResponseEntity<TaskResponse> completeSupportRitual(
+            @PathVariable("taskId") Long taskId,
+            @Valid @RequestBody SupportRitualRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(taskService.completeSupportRitual(
+                authentication.getName(), taskId, request));
     }
 
     /**

@@ -263,6 +263,78 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public TaskResponse completeSupportRitual(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.SupportRitualRequest request
+    ) {
+        User currentUser = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new AccessDeniedException("Người dùng không tồn tại"));
+        Task task = taskRepository.findWithStaffById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        Role.Name roleName = currentUser.getRole().getName();
+        if (roleName == Role.Name.STAFF
+                && !currentUser.getUserId().equals(task.getAssignedStaff().getUserId())) {
+            throw new AccessDeniedException("Bạn không được phân công xử lý nhiệm vụ này.");
+        }
+        if (task.getType() != Task.Type.SUPPORT) {
+            throw new com.storagehub.exception.BusinessRuleException("Task không phải loại SUPPORT.");
+        }
+
+        String refCode = task.getRefCode();
+        SupportTicket ticket = refCode != null && refCode.startsWith("SR-")
+                ? supportTicketRepository.findByCode(refCode).orElse(null)
+                : null;
+        if (ticket == null) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Không tìm thấy yêu cầu hỗ trợ gắn với nhiệm vụ.");
+        }
+
+        boolean escalate = Boolean.TRUE.equals(request.escalated());
+        String oldStatus = ticket.getStatus().name();
+
+        if (escalate) {
+            String reason = request.escalationReason() == null ? "" : request.escalationReason().trim();
+            if (reason.isEmpty()) {
+                throw new com.storagehub.exception.BusinessRuleException(
+                        "Lý do chuyển cấp lên Quản lý là bắt buộc.");
+            }
+            ticket.setStatus(SupportTicket.Status.ESCALATED);
+            ticket.setEscalationReason(reason);
+        } else {
+            String note = request.resolutionNote() == null ? "" : request.resolutionNote().trim();
+            if (note.isEmpty()) {
+                throw new com.storagehub.exception.BusinessRuleException(
+                        "Ghi chú giải quyết cho khách hàng là bắt buộc.");
+            }
+            ticket.setStatus(SupportTicket.Status.RESOLVED);
+            ticket.setResolutionNote(note);
+            ticket.setResolvedAt(java.time.LocalDateTime.now());
+        }
+        if (ticket.getAssignedStaff() == null) {
+            ticket.setAssignedStaff(currentUser);
+        }
+        supportTicketRepository.save(ticket);
+
+        task.setStatus(Task.Status.DONE);
+        Task saved = taskRepository.save(task);
+
+        notificationService.notifyTicketStatusChanged(ticket, oldStatus);
+        logService.log(
+                currentUser,
+                "TASK",
+                task.getTaskId(),
+                escalate ? "ESCALATED" : "RESOLVED",
+                oldStatus,
+                ticket.getStatus().name(),
+                "Xử lý support ticket " + ticket.getCode() + " từ Task Board"
+        );
+
+        return toTaskResponse(saved, getCurrentShift(), null, null, null, null, true);
+    }
+
+    @Override
     public TaskResponse autoCreateTask(CreateTaskRequest request) {
         // 1. Xác định Unit liên kết
         Unit unit = resolveUnit(request);
@@ -538,6 +610,9 @@ public class TaskServiceImpl implements TaskService {
                 customerPhone = "0912 888 999";
                 priority = customPriority != null ? customPriority : "Medium";
                 issueDesc = customIssueDesc != null ? customIssueDesc : "Cửa cuốn bị kẹt rãnh dưới góc phải, khó kéo hết hành trình.";
+                String resolvedNote = "";
+                boolean escalated = false;
+                String escalationReason = "";
                 if (refCode != null && refCode.startsWith("SR-")) {
                     SupportTicket ticket = supportTicketRepository.findByCode(refCode).orElse(null);
                     if (ticket != null) {
@@ -545,13 +620,16 @@ public class TaskServiceImpl implements TaskService {
                         customerName = ticket.getCustomer().getFullName();
                         customerPhone = ticket.getCustomer().getPhone();
                         issueDesc = ticket.getIncidentType() != null ? ticket.getIncidentType().name() : issueDesc;
+                        resolvedNote = ticket.getResolutionNote() != null ? ticket.getResolutionNote() : "";
+                        escalated = ticket.getStatus() == SupportTicket.Status.ESCALATED;
+                        escalationReason = ticket.getEscalationReason() != null ? ticket.getEscalationReason() : "";
                     }
                 }
                 ritual = new TaskRitualDto(
                         null, null, null, null, null, null, null, null,
-                        isDone ? "Đã xử lý sự cố" : "",
-                        false,
-                        ""
+                        resolvedNote.isEmpty() && isDone ? "Đã xử lý sự cố" : resolvedNote,
+                        escalated,
+                        escalationReason
                 );
             }
             case CONTRACT -> {

@@ -270,16 +270,32 @@ export async function completeCleaningRitual(taskId, checklistState) {
 }
 
 /**
- * Xử lý hoặc chuyển tiếp Ticket Support
+ * Xử lý hoặc chuyển tiếp Ticket Support từ Task Board.
+ * Backend lưu ghi chú/lý do + cập nhật ticket và task trong một transaction.
  */
-export async function resolveSupportTicket(taskId, { note, escalate = false, escalateReason = "" }) {
+export async function resolveSupportTicket(
+  taskId,
+  { note, escalate = false, escalateReason = "" }
+) {
   if (escalate) {
     if (!escalateReason.trim()) {
       throw new Error("Lý do báo cáo sự cố lên Quản lý (Escalate) là bắt buộc!");
     }
-    return updateTaskStatus(taskId, "ESCALATED");
+  } else if (!note || !note.trim()) {
+    throw new Error("Ghi chú giải quyết cho khách hàng là bắt buộc!");
   }
 
-  void note;
-  return updateTaskStatus(taskId, "DONE");
+  const res = await apiClient(`/api/v1/tasks/${taskId}/rituals/support`, {
+    method: "POST",
+    body: JSON.stringify({
+      escalated: Boolean(escalate),
+      resolutionNote: escalate ? null : note.trim(),
+      escalationReason: escalate ? escalateReason.trim() : null,
+    }),
+  });
+  const data = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || "Không thể xử lý yêu cầu hỗ trợ.");
+  }
+  return data;
 }
