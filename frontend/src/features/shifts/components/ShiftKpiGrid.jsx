@@ -2,9 +2,7 @@ import {
   Users,
   CalendarCheck,
   WarningCircle,
-  Clock,
-  Check,
-  ShieldCheck,
+  CheckCircle,
   Warehouse,
 } from "@phosphor-icons/react";
 
@@ -13,10 +11,9 @@ export default function ShiftKpiGrid({
   staffRoster = [],
   allShifts = [],
 }) {
-  const staffNames = staffRoster.map((s) => s.fullName).filter(Boolean);
   const staffCount = staffRoster.length;
   const shiftCount = allShifts.length;
-  const coveragePercent = Math.min(100, Math.round((shiftCount / 21) * 100));
+  const coveragePercent = Math.min(100, Math.round((shiftCount / 14) * 100)); // 2 ca x 7 ngày = 14 ca chuẩn
 
   const typeKey = (name) => {
     const normalized = String(name || "").toUpperCase();
@@ -34,101 +31,92 @@ export default function ShiftKpiGrid({
   const countL = countType("L");
 
   return (
-    <div className="shifts-kpi-grid">
-      {/* KPI 1 */}
-      <article className="shifts-kpi-card">
-        <div className="shifts-kpi-card__head">
-          <span className="shifts-kpi-card__label">NHÂN SỰ VẬN HÀNH</span>
-          <Users size={20} className="shifts-kpi-card__icon" />
+    <div className="shifts-stats-strip">
+      {/* Stat 1: Nhân sự */}
+      <div className="stats-item">
+        <div className="stats-item__icon-wrap">
+          <Users size={18} weight="duotone" />
         </div>
-        <div className="shifts-kpi-card__val">{staffCount} Nhân sự</div>
-        <p className="shifts-kpi-card__desc">
-          {staffNames.length > 0 ? staffNames.join(", ") : "Đang tải dữ liệu nhân sự..."}
-        </p>
-        <div className="shifts-kpi-card__badge-row">
-          <span className="badge badge--success">
-            <Check size={12} weight="bold" /> 100% tài khoản đã kích hoạt
-          </span>
+        <div className="stats-item__content">
+          <span className="stats-item__label">Nhân sự vận hành</span>
+          <div className="stats-item__value-row">
+            <strong className="stats-item__val">{staffCount}</strong>
+            <span className="stats-item__sub">Tối đa 4 nhân viên/ca</span>
+          </div>
         </div>
-      </article>
+      </div>
 
-      {/* KPI 2 */}
-      <article className="shifts-kpi-card">
-        <div className="shifts-kpi-card__head">
-          <span className="shifts-kpi-card__label">ĐỘ PHỦ CA TUẦN NÀY</span>
-          <CalendarCheck size={20} className="shifts-kpi-card__icon" />
-        </div>
-        <div className="shifts-kpi-card__val">{shiftCount} Ca trực</div>
-        <p className="shifts-kpi-card__desc">
-          {coveragePercent}% độ phủ khung giờ tiêu chuẩn trong tuần
-        </p>
-        <div className="shifts-kpi-card__badge-row">
-          <span className="badge badge--warning">
-            {shiftCount >= 7 ? "Đã bố trí ca các ngày" : "Đang hoàn thiện ca tuần"}
-          </span>
-        </div>
-      </article>
+      <div className="stats-strip-divider" />
 
-      {/* KPI 3: Conflict */}
-      <article
-        className={`shifts-kpi-card ${
-          totalConflicts > 0 ? "shifts-kpi-card--conflict" : ""
-        }`}
-      >
-        <div className="shifts-kpi-card__head">
-          <span
-            className={`shifts-kpi-card__label ${
-              totalConflicts > 0 ? "text-error" : ""
-            }`}
-          >
-            XUNG ĐỘT PHÂN CÔNG
-          </span>
-          <WarningCircle
-            size={20}
-            className={`shifts-kpi-card__icon ${
-              totalConflicts > 0 ? "text-error" : ""
-            }`}
-          />
+      {/* Stat 2: Ca trực & Độ phủ */}
+      <div className="stats-item">
+        <div className="stats-item__icon-wrap">
+          <CalendarCheck size={18} weight="duotone" />
         </div>
-        <div
-          className={`shifts-kpi-card__val ${
-            totalConflicts > 0 ? "text-error" : "text-success"
-          }`}
-        >
-          {totalConflicts > 0 ? `${totalConflicts} Xung đột` : "0 Xung đột"}
+        <div className="stats-item__content">
+          <span className="stats-item__label">Tổng ca phân công</span>
+          <div className="stats-item__value-row">
+            <strong className="stats-item__val">{shiftCount} ca</strong>
+            <span className="stats-item__badge stats-item__badge--info">
+              {coveragePercent}% độ phủ
+            </span>
+          </div>
         </div>
-        <p className="shifts-kpi-card__desc">
-          {totalConflicts > 0
-            ? `Phát hiện ${totalConflicts} ca trực bị chồng lấn khung giờ`
-            : "Toàn bộ lịch trực đạt chuẩn không trùng lặp"}
-        </p>
-        <div className="shifts-kpi-card__badge-row">
+      </div>
+
+      <div className="stats-strip-divider" />
+
+      {/* Stat 3: Phân bổ Loại kho */}
+      <div className="stats-item">
+        <div className="stats-item__icon-wrap">
+          <Warehouse size={18} weight="duotone" />
+        </div>
+        <div className="stats-item__content">
+          <span className="stats-item__label">Phân bổ 4 nhóm kho</span>
+          <div className="stats-item__zones">
+            <span className="zone-pill">LOCK: <strong>{countLock}</strong></span>
+            <span className="zone-pill">S: <strong>{countS}</strong></span>
+            <span className="zone-pill">M: <strong>{countM}</strong></span>
+            <span className="zone-pill">L: <strong>{countL}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div className="stats-strip-divider" />
+
+      {/* Stat 4: Phân công (Rà soát xung đột) */}
+      <div className={`stats-item ${totalConflicts > 0 ? "stats-item--conflict" : ""}`}>
+        <div className="stats-item__icon-wrap">
           {totalConflicts > 0 ? (
-            <span className="badge badge--danger">
-              Phát hiện phân công trùng giờ
-            </span>
+            <WarningCircle size={18} weight="fill" className="text-error" />
           ) : (
-            <span className="badge badge--success">
-              <ShieldCheck size={12} weight="bold" /> Lịch trực an toàn
-            </span>
+            <CheckCircle size={18} weight="fill" className="text-success" />
           )}
         </div>
-      </article>
-
-      {/* KPI 4 */}
-      <article className="shifts-kpi-card">
-        <div className="shifts-kpi-card__head">
-          <span className="shifts-kpi-card__label">PHÂN BỔ THEO LOẠI KHO</span>
-          <Warehouse size={20} className="shifts-kpi-card__icon" />
+        <div className="stats-item__content">
+          <span className="stats-item__label">Phân công</span>
+          <div className="stats-item__value-row">
+            {totalConflicts > 0 ? (
+              <strong className="stats-item__val text-error">
+                {totalConflicts} ca trùng lịch
+              </strong>
+            ) : (
+              <strong className="stats-item__val text-success">
+                Lịch trực an toàn
+              </strong>
+            )}
+            <span
+              className={`stats-item__badge ${
+                totalConflicts > 0
+                  ? "stats-item__badge--error"
+                  : "stats-item__badge--success"
+              }`}
+            >
+              {totalConflicts > 0 ? "Cần điều chỉnh" : "Không xung đột"}
+            </span>
+          </div>
         </div>
-        <div className="shifts-kpi-card__val">4 nhóm kho</div>
-        <p className="shifts-kpi-card__desc">
-          LOCK: {countLock} ca · S: {countS} ca · M: {countM} ca · L: {countL} ca
-        </p>
-        <div className="shifts-kpi-card__badge-row">
-          <span className="badge badge--neutral">Cơ sở Tân Bình</span>
-        </div>
-      </article>
+      </div>
     </div>
   );
 }

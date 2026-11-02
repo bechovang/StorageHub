@@ -1,5 +1,6 @@
-export { useStaffShifts } from "./hooks/useStaffShifts.js";
+export { useStaffShifts, STANDARD_SHIFTS } from "./hooks/useStaffShifts.js";
 export { default as ShiftKpiGrid } from "./components/ShiftKpiGrid.jsx";
-export { default as ShiftAssignmentForm } from "./components/ShiftAssignmentForm.jsx";
-export { default as ShiftRosterList } from "./components/ShiftRosterList.jsx";
-export { default as WeeklyScheduleTable } from "./components/WeeklyScheduleTable.jsx";
+export { default as ShiftToolbar } from "./components/ShiftToolbar.jsx";
+export { default as ShiftFirstScheduleTable } from "./components/ShiftFirstScheduleTable.jsx";
+export { default as ShiftFillPopover } from "./components/ShiftFillPopover.jsx";
+export { default as StaffWorkloadBar } from "./components/StaffWorkloadBar.jsx";
