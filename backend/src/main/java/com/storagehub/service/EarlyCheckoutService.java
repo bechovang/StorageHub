@@ -102,6 +102,21 @@ public class EarlyCheckoutService {
 
     @Transactional
     public TransferResponse transfer(User actor, TransferRequest request) {
+        return transferInternal(actor, request, false, "Đổi kho");
+    }
+
+    /** Đổi kho do sự cố: giữ đơn cũ CHECKOUT_REQUESTED + tạo task checkout, không đóng ngay. */
+    @Transactional
+    public TransferResponse relocateForTicket(User actor, TransferRequest request, String reason) {
+        return transferInternal(actor, request, true, reason);
+    }
+
+    private TransferResponse transferInternal(
+            User actor,
+            TransferRequest request,
+            boolean deferOldCheckout,
+            String relocationReason
+    ) {
         if (!isManager(actor)) {
             throw new AccessDeniedException("Chỉ quản lý cơ sở mới được đổi kho cho khách.");
         }
@@ -150,27 +165,38 @@ public class EarlyCheckoutService {
                     new ForcedCheckoutRequest("TRANSFER", "Đổi kho sang " + newUnit.getCode()));
         }
 
-        // 2. Đóng đơn cũ + kho cũ về PREPARING (dọn dẹp)
-        oldReservation.setStatus(Reservation.Status.CLOSED);
-        reservationRepository.save(oldReservation);
+        // 2. Đơn cũ: đổi kho thường đóng ngay; relocation do sự cố giữ lại
+        //    CHECKOUT_REQUESTED + tạo task checkout để staff tất toán.
         Unit oldUnit = oldReservation.getUnit();
-        oldUnit.setStatus(Unit.Status.PREPARING);
-        unitRepository.save(oldUnit);
-        checkoutRequestRepository.findByReservation_ReservationIdOrderByCreatedAtDesc(
-                        oldReservation.getReservationId()).stream()
-                .filter(cr -> cr.getStatus() == CheckoutRequest.Status.PENDING)
-                .forEach(cr -> {
-                    cr.setStatus(CheckoutRequest.Status.DONE);
-                    checkoutRequestRepository.save(cr);
-                });
-        contractRepository.findByReservation_ReservationId(oldReservation.getReservationId())
-                .forEach(c -> {
-                    if (c.getStatus() != Contract.Status.CLOSED
-                            && c.getStatus() != Contract.Status.SUPERSEDED) {
-                        c.setStatus(Contract.Status.CLOSED);
-                        contractRepository.save(c);
-                    }
-                });
+        if (deferOldCheckout) {
+            taskService.createOrUpdateCheckoutTask(
+                    actor,
+                    oldReservation,
+                    LocalDate.now(ICT_ZONE),
+                    null,
+                    relocationReason != null ? relocationReason : "Đổi kho do sự cố"
+            );
+        } else {
+            oldReservation.setStatus(Reservation.Status.CLOSED);
+            reservationRepository.save(oldReservation);
+            oldUnit.setStatus(Unit.Status.PREPARING);
+            unitRepository.save(oldUnit);
+            checkoutRequestRepository.findByReservation_ReservationIdOrderByCreatedAtDesc(
+                            oldReservation.getReservationId()).stream()
+                    .filter(cr -> cr.getStatus() == CheckoutRequest.Status.PENDING)
+                    .forEach(cr -> {
+                        cr.setStatus(CheckoutRequest.Status.DONE);
+                        checkoutRequestRepository.save(cr);
+                    });
+            contractRepository.findByReservation_ReservationId(oldReservation.getReservationId())
+                    .forEach(c -> {
+                        if (c.getStatus() != Contract.Status.CLOSED
+                                && c.getStatus() != Contract.Status.SUPERSEDED) {
+                            c.setStatus(Contract.Status.CLOSED);
+                            contractRepository.save(c);
+                        }
+                    });
+        }
 
         // 3. Tạo đơn mới RESERVED, cọc chuyển thẳng từ đơn cũ
         var quote = pricingEngine.calculateQuote(newUnit, newStart, newEnd);

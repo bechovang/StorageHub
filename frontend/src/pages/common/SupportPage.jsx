@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PlusCircle, CheckCircle } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import { TICKET_STATUSES } from "../../services/ticketService.js";
@@ -8,11 +9,13 @@ import {
   TicketDetailModal,
   ResolveTicketModal,
   EscalateTicketModal,
+  ManagerDispatchModal,
 } from "../../features/support/index.js";
 import "./SupportPage.css";
 
 export default function SupportPage() {
   const {
+    user,
     isCustomer,
     isStaffOrAdmin,
     statusFilter,
@@ -21,6 +24,7 @@ export default function SupportPage() {
     ticketsLoading,
     ticketsError,
     filteredTickets,
+    reloadTickets,
     rentedUnits,
     showCreateModal,
     setShowCreateModal,
@@ -50,6 +54,9 @@ export default function SupportPage() {
     handleResolveSubmit,
     handleEscalateSubmit,
   } = useSupportTickets();
+
+  const [dispatchTicket, setDispatchTicket] = useState(null);
+  const isManager = user?.role === "FACILITY_MANAGER" || user?.role === "SYSTEM_ADMIN";
 
   return (
     <AppShell>
@@ -157,6 +164,8 @@ export default function SupportPage() {
                   key={t.ticketId || t.id || t.code || idx}
                   ticket={t}
                   isStaffOrAdmin={isStaffOrAdmin}
+                  isManager={isManager}
+                  onDispatch={setDispatchTicket}
                   onResolve={(ticket) => {
                     setResolveTargetTicket(ticket);
                     setResolutionNote("");
@@ -207,6 +216,17 @@ export default function SupportPage() {
         />
 
         {/* Modal Escalate Ticket */}
+        {dispatchTicket && (
+          <ManagerDispatchModal
+            ticket={dispatchTicket}
+            onClose={() => setDispatchTicket(null)}
+            onSuccess={() => {
+              setDispatchTicket(null);
+              reloadTickets();
+            }}
+          />
+        )}
+
         <EscalateTicketModal
           ticket={escalateTargetTicket}
           onClose={() => setEscalateTargetTicket(null)}

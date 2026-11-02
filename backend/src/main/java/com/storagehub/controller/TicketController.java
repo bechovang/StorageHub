@@ -3,6 +3,7 @@ package com.storagehub.controller;
 import com.storagehub.dto.ticket.CreateTicketRequest;
 import com.storagehub.dto.ticket.TicketResponse;
 import com.storagehub.dto.ticket.UpdateTicketStatusRequest;
+import com.storagehub.dto.ticket.DispatchTicketRequest;
 import com.storagehub.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,16 @@ public class TicketController {
             @Valid @RequestBody CreateTicketRequest request
     ) {
         return ResponseEntity.ok(ticketService.createTicket(authentication.getName(), request));
+    }
+
+    @PostMapping("/{ticketId}/dispatch")
+    public ResponseEntity<TicketResponse> dispatchTicket(
+            Authentication authentication,
+            @PathVariable Long ticketId,
+            @Valid @RequestBody DispatchTicketRequest request
+    ) {
+        return ResponseEntity.ok(ticketService.dispatchTicket(
+                authentication.getName(), ticketId, request));
     }
 
     @PatchMapping("/{ticketId}/status")

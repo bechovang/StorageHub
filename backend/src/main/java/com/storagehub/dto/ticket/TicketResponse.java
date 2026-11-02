@@ -27,6 +27,8 @@ public record TicketResponse(
         String managerPlan,
         String severityMode,
         String relocatedToUnit,
+        Long relocationCompensation,
+        Long relocationAbsorbed,
         String resolutionNote,
         String escalationReason,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -52,6 +54,8 @@ public record TicketResponse(
                 t.getManagerPlan(),
                 t.getSeverityMode(),
                 t.getRelocatedUnitCode(),
+                t.getRelocationCompensation(),
+                t.getRelocationAbsorbed(),
                 t.getResolutionNote(),
                 t.getEscalationReason(),
                 t.getResolvedAt()

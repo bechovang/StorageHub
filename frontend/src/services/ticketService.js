@@ -179,6 +179,15 @@ export async function createSupportTicket({
   return handleTicketResponse(res, "Không thể tạo yêu cầu hỗ trợ.");
 }
 
+/** Manager điều phối ticket ESCALATED. */
+export async function dispatchSupportTicket({ ticketId, mode, managerPlan, newUnitId, newStartDate, newEndDate }) {
+  const res = await apiClient(`/api/v1/tickets/${ticketId}/dispatch`, {
+    method: "POST",
+    body: JSON.stringify({ mode, managerPlan, newUnitId, newStartDate, newEndDate }),
+  });
+  return handleTicketResponse(res, "Không thể điều phối yêu cầu hỗ trợ.");
+}
+
 /**
  * PATCH /api/v1/tickets/{ticketId}/status — Nhân viên tiếp nhận xử lý (OPEN -> IN_PROGRESS)
  */
