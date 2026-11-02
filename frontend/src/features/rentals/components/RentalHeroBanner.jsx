@@ -5,7 +5,13 @@ import {
   QrCode,
   CalendarPlus,
   SignOut,
+  Calendar,
 } from "@phosphor-icons/react";
+import {
+  fmtDate,
+  checkoutDaysLeft,
+  checkoutDeadlineLabel,
+} from "../../../utils/rentalConstants.js";
 
 export function RentalHeroBanner({
   reservation,
@@ -67,6 +73,24 @@ export function RentalHeroBanner({
               <> · Phân khu {reservation.unit.zoneCode}</>
             )}
           </p>
+
+          {isCheckedIn && (
+            <p
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                margin: "8px 0 0",
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                color: checkoutDaysLeft(reservation.endDate) < 0 ? "#b91c1c" : "#334155",
+              }}
+            >
+              <Calendar size={15} weight="bold" />
+              Hạn trả kho: {fmtDate(reservation.endDate)} ·{" "}
+              {checkoutDeadlineLabel(checkoutDaysLeft(reservation.endDate))}
+            </p>
+          )}
         </div>
 
         <div className="rd-hero__actions">

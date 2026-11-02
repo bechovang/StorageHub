@@ -49,6 +49,7 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String TYPE_SETTLEMENT_COMPLETED = "SETTLEMENT_COMPLETED";
     private static final String TYPE_TASK_POOL = "TASK_POOL";
     private static final String TYPE_TASK_HANDOFF = "TASK_HANDOFF";
+    private static final String TYPE_CHECKOUT_REMINDER = "CHECKOUT_REMINDER";
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -437,6 +438,30 @@ public class NotificationServiceImpl implements NotificationService {
         row.setTitle("Task được chuyển cho bạn — " + task.getType()
                 + (reason != null && !reason.isBlank() ? " · " + reason : ""));
         row.setDeepLink("/tasks");
+        row.setIsRead(false);
+        notificationRepository.save(row);
+    }
+
+    @Override
+    @Transactional
+    public void notifyCheckoutReminder(Reservation reservation, int daysLeft, boolean overdue) {
+        String title;
+        if (overdue) {
+            title = "Kho " + reservation.getUnit().getCode() + " đã quá hạn trả kho";
+        } else if (daysLeft == 0) {
+            title = "Kho " + reservation.getUnit().getCode() + " đến hạn trả hôm nay";
+        } else {
+            title = "Kho " + reservation.getUnit().getCode() + " còn " + daysLeft + " ngày đến hạn trả";
+        }
+        if (notificationRepository.existsByUserAndTypeAndTitle(
+                reservation.getCustomer(), TYPE_CHECKOUT_REMINDER, title)) {
+            return;
+        }
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_CHECKOUT_REMINDER);
+        row.setTitle(title);
+        row.setDeepLink("/rentals/" + reservation.getReservationId());
         row.setIsRead(false);
         notificationRepository.save(row);
     }

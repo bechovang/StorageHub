@@ -16,6 +16,7 @@ import com.storagehub.entity.Zone;
 import com.storagehub.exception.BookingUnitTakenException;
 import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.exception.UnitNotFoundException;
+import com.storagehub.repository.CheckoutRequestRepository;
 import com.storagehub.repository.ContractAddendumRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
@@ -74,6 +75,9 @@ class ReservationServiceTest {
 
     @Mock
     private ContractAddendumRepository contractAddendumRepository;
+
+    @Mock
+    private CheckoutRequestRepository checkoutRequestRepository;
 
     @Mock
     private ExtensionService extensionService;

@@ -14,6 +14,8 @@ import {
   DEPOSIT_STATUS_LABEL,
   fmtDate,
   fmtMoney,
+  checkoutDaysLeft,
+  checkoutDeadlineLabel,
 } from "../../../utils/rentalConstants.js";
 
 export default function RentalCard({ item }) {
@@ -29,6 +31,8 @@ export default function RentalCard({ item }) {
   const isReserved = item.status === "RESERVED";
   const isCheckedIn =
     item.status === "CHECKED_IN" || item.status === "CHECKOUT_REQUESTED";
+  const daysLeft = checkoutDaysLeft(item.endDate);
+  const deadlineLabel = checkoutDeadlineLabel(daysLeft);
 
   return (
     <article className={`rental-card rental-card--${statusColor}`}>
@@ -93,6 +97,32 @@ export default function RentalCard({ item }) {
                 </strong>
               </span>
             </div>
+
+            <span className="rental-card__meta-sep">|</span>
+
+            {isCheckedIn && (
+              <>
+                <div className="rental-card__meta-item">
+                  <Calendar size={15} weight="bold" className="rental-card__meta-icon" />
+                  <span>
+                    Hạn trả kho: <strong>{fmtDate(item.endDate)}</strong>{" "}
+                    <span
+                      style={{
+                        color:
+                          daysLeft != null && daysLeft < 0
+                            ? "#b91c1c"
+                            : daysLeft != null && daysLeft <= 3
+                            ? "#c2410c"
+                            : "#047857",
+                        fontWeight: 700,
+                      }}
+                    >
+                      ({deadlineLabel})
+                    </span>
+                  </span>
+                </div>
+              </>
+            )}
 
             <span className="rental-card__meta-sep">|</span>
 

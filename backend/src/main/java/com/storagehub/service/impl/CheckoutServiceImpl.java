@@ -132,6 +132,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         CheckoutRequest newReq = new CheckoutRequest();
         newReq.setReservation(reservation);
         newReq.setRequestedDate(requestedDate);
+        newReq.setTimeSlot(request.timeSlot());
         newReq.setStatus(CheckoutRequest.Status.PENDING);
         CheckoutRequest savedReq = checkoutRequestRepository.save(newReq);
 

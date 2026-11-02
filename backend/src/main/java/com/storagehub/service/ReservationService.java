@@ -27,6 +27,7 @@ import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.exception.UnitNotFoundException;
 import com.storagehub.repository.ActivityLogRepository;
 import com.storagehub.repository.ContractAddendumRepository;
+import com.storagehub.repository.CheckoutRequestRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
 import com.storagehub.repository.PolicyRuleRepository;
@@ -74,6 +75,7 @@ public class ReservationService {
     private final ActivityLogRepository activityLogRepository;
     private final PlatformTransactionManager transactionManager;
     private final ContractAddendumRepository contractAddendumRepository;
+    private final CheckoutRequestRepository checkoutRequestRepository;
     private final TaskService taskService;
     private final ExtensionService extensionService;
 
@@ -447,6 +449,13 @@ public class ReservationService {
                 ? reservation.getAccessCode()
                 : null;
 
+        com.storagehub.entity.CheckoutRequest pendingCheckout =
+                checkoutRequestRepository
+                        .findFirstByReservation_ReservationIdAndStatusOrderByCreatedAtDesc(
+                                reservationId,
+                                com.storagehub.entity.CheckoutRequest.Status.PENDING)
+                        .orElse(null);
+
         return new ReservationDetailResponse(
                 reservation.getReservationId(),
                 reservation.getCode(),
@@ -467,7 +476,9 @@ public class ReservationService {
                 // không CHECKED_IN hoặc unit trống phía sau.
                 effectiveStatus == Reservation.Status.CHECKED_IN
                         ? extensionService.latestAllowedCheckout(reservation)
-                        : null
+                        : null,
+                pendingCheckout != null ? pendingCheckout.getRequestedDate() : null,
+                pendingCheckout != null ? pendingCheckout.getTimeSlot() : null
         );
     }
 

@@ -34,7 +34,10 @@ public record ReservationDetailResponse(
         List<PaymentRecordResponse> payments,
         List<ContractChainItemResponse> contracts,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-        LocalDate latestNewCheckout
+        LocalDate latestNewCheckout,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        LocalDate checkoutRequestedDate,
+        String checkoutTimeSlot
 ) {
 
     /**
@@ -79,7 +82,9 @@ public record ReservationDetailResponse(
                 null,
                 payments.stream().map(PaymentRecordResponse::from).toList(),
                 List.of(),
-                latestNewCheckout
+                latestNewCheckout,
+                null,
+                null
         );
     }
 }
