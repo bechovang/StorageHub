@@ -195,7 +195,7 @@ export function usePayment() {
           const u = await getUnitDetail(paramUnitId);
           const start =
             searchParams.get("startDate") || new Date().toISOString().split("T")[0];
-          const end = searchParams.get("endDate") || addDays(start, 1);
+          const end = searchParams.get("endDate") || start;
           // Chỉ lấy quote để hiển thị — KHÔNG tạo booking/draft. Payment PENDING
           // mới là thứ tồn tại trước khi PayOS SUCCEEDED.
           const quote = await getUnitQuote(paramUnitId, { startDate: start, endDate: end });
