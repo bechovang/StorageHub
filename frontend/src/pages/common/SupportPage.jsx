@@ -121,7 +121,9 @@ export default function SupportPage() {
               >
                 Tất cả ({tickets.length})
               </button>
-              {Object.values(TICKET_STATUSES).map((st) => (
+              {Object.values(TICKET_STATUSES)
+                .filter((st) => !(user?.role === "STAFF" && st.key === "IN_PROGRESS"))
+                .map((st) => (
                 <button
                   key={st.key}
                   type="button"
