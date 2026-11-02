@@ -92,7 +92,7 @@ export default function StaffShiftsPage() {
               </div>
               <h1 className="shifts-title">Phân công ca trực & Rà soát xung đột</h1>
               <p className="shifts-subtitle">
-                Điều phối ca làm việc cơ sở theo tuần, đảm bảo tối đa 4 nhân viên/ca trông coi các nhóm kho và rà soát chồng chéo lịch trực.
+                Điều phối ca làm việc cơ sở theo tuần, phân công nhân sự trông coi các nhóm kho và rà soát chồng chéo lịch trực.
               </p>
             </div>
           </header>

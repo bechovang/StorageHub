@@ -1,5 +1,6 @@
 package com.storagehub.controller;
 
+import com.storagehub.dto.shift.BatchShiftUpdateRequest;
 import com.storagehub.dto.shift.CreateShiftAssignmentRequest;
 import com.storagehub.dto.shift.ShiftAssignmentResponse;
 import com.storagehub.dto.shift.StaffRosterMember;
@@ -56,6 +57,16 @@ public class StaffingController {
         String actorEmail = authentication != null ? authentication.getName() : null;
         List<ShiftAssignmentResponse> created = staffingService.createShiftAssignments(actorEmail, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    /** Lưu nháp: xoá + tạo nhiều assignment trong 1 transaction. */
+    @PostMapping("/batch")
+    public ResponseEntity<List<ShiftAssignmentResponse>> batchUpdateShifts(
+            @Valid @RequestBody BatchShiftUpdateRequest request,
+            Authentication authentication
+    ) {
+        String actorEmail = authentication != null ? authentication.getName() : null;
+        return ResponseEntity.ok(staffingService.batchUpdateShifts(actorEmail, request));
     }
 
     /**

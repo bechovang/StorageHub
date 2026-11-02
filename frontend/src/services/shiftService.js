@@ -161,7 +161,7 @@ export async function createShiftAssignment({ staffId, unitTypeIds, shifts, work
     body: JSON.stringify({
       staffId: Number(staffId),
       unitTypeIds: (unitTypeIds || []).map(Number),
-      shifts: (shifts || []).filter((s) => s !== "FULL_DAY" && s !== "ON_CALL"),
+      shifts: (shifts || []).filter((s) => s !== "ON_CALL"),
       workDate,
     }),
   });
@@ -174,6 +174,29 @@ export async function createShiftAssignment({ staffId, unitTypeIds, shifts, work
     throw new Error(msg);
   }
 
+  return await safeParseJson(response);
+}
+
+/**
+ * Lưu nháp phân ca theo lô: xoá + tạo trong 1 transaction backend.
+ */
+export async function batchUpdateShiftAssignments({ deleteIds = [], creates = [] } = {}) {
+  const response = await apiClient("/api/v1/shifts/batch", {
+    method: "POST",
+    body: JSON.stringify({
+      deleteIds: deleteIds.map(Number),
+      creates: creates.map((item) => ({
+        staffId: Number(item.staffId),
+        unitTypeIds: (item.unitTypeIds || []).map(Number),
+        shifts: (item.shifts || []).filter((s) => s !== "ON_CALL"),
+        workDate: item.workDate,
+      })),
+    }),
+  });
+  if (!response.ok) {
+    const errorData = await safeParseJson(response);
+    throw new Error(errorData.message || "Không thể lưu thay đổi ca trực.");
+  }
   return await safeParseJson(response);
 }
 

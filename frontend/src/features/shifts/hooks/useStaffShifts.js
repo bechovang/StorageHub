@@ -5,8 +5,7 @@ import {
   getWeekRange,
   getStaffRoster,
   getShifts,
-  createShiftAssignment,
-  deleteShiftAssignment,
+  batchUpdateShiftAssignments,
   UNIT_TYPES,
 } from "../../../services/shiftService.js";
 
@@ -21,11 +20,27 @@ export const STANDARD_SHIFTS = [
   },
   {
     key: "AFTERNOON",
-    name: "Ca tối",
+    name: "Ca chiều",
     hours: "15:00 – 23:00",
     color: "#0284c7",
     bg: "#f0f9ff",
     border: "#bae6fd",
+  },
+  {
+    key: "EVENING",
+    name: "Ca đêm",
+    hours: "19:00 – 07:00",
+    color: "#b45309",
+    bg: "#fffbeb",
+    border: "#fde68a",
+  },
+  {
+    key: "FULL_DAY",
+    name: "Cả ngày",
+    hours: "07:00 – 23:00",
+    color: "#334155",
+    bg: "#f1f5f9",
+    border: "#cbd5e1",
   },
 ];
 
@@ -223,14 +238,12 @@ export function useStaffShifts() {
   // Cấu trúc ma trận theo Ca làm việc (Shift-First Matrix)
   // Gom các thẻ nhân viên trong cùng 1 ô ca làm việc (1 nhân viên = 1 thẻ duy nhất)
   const shiftGrid = useMemo(() => {
-    const grid = {
-      MORNING: {},
-      AFTERNOON: {},
-    };
-
-    for (const day of weekDays) {
-      grid.MORNING[day.key] = [];
-      grid.AFTERNOON[day.key] = [];
+    const grid = {};
+    for (const shift of STANDARD_SHIFTS) {
+      grid[shift.key] = {};
+      for (const day of weekDays) {
+        grid[shift.key][day.key] = [];
+      }
     }
 
     const addToSlot = (shiftWindow, shift) => {
@@ -280,32 +293,27 @@ export function useStaffShifts() {
         if (!hasType) continue;
       }
 
-      if (shift.shiftWindow === "MORNING" || shift.shiftWindow === "FULL_DAY") {
-        addToSlot("MORNING", shift);
-      }
-
-      if (shift.shiftWindow === "AFTERNOON" || shift.shiftWindow === "FULL_DAY") {
-        addToSlot("AFTERNOON", shift);
-      }
+      addToSlot(shift.shiftWindow, shift);
     }
 
     return grid;
   }, [workingShifts, weekDays, searchTerm, selectedTypeFilter]);
 
-  // Kiểm tra va chạm (Phân công): Phát hiện nhân viên trực 2 ca trùng nhau trong cùng 1 ngày
+  // Kiểm tra va chạm: 1 nhân viên chỉ được 1 ca/ngày.
   const totalConflicts = useMemo(() => {
     let conflicts = 0;
     for (const day of weekDays) {
-      const morningStaff = (shiftGrid.MORNING[day.key] || []).map((s) => s.staffId);
-      const afternoonStaff = (shiftGrid.AFTERNOON[day.key] || []).map((s) => s.staffId);
-
-      for (const staffId of morningStaff) {
-        if (afternoonStaff.includes(staffId)) {
+      const byStaff = new Map();
+      for (const shift of STANDARD_SHIFTS) {
+        for (const item of shiftGrid[shift.key]?.[day.key] || []) {
+          if (!byStaff.has(item.staffId)) byStaff.set(item.staffId, []);
+          byStaff.get(item.staffId).push(item);
+        }
+      }
+      for (const items of byStaff.values()) {
+        if (items.length > 1) {
           conflicts++;
-          const mItem = (shiftGrid.MORNING[day.key] || []).find((s) => s.staffId === staffId);
-          const aItem = (shiftGrid.AFTERNOON[day.key] || []).find((s) => s.staffId === staffId);
-          if (mItem) mItem.isConflict = true;
-          if (aItem) aItem.isConflict = true;
+          for (const item of items) item.isConflict = true;
         }
       }
     }
@@ -427,32 +435,28 @@ export function useStaffShifts() {
       setSaving(true);
       const { toDelete, toAdd, toModify } = pendingDiff;
 
-      // 1. Xóa các ca bị xóa hoặc ca cần cập nhật lại loại kho
       const idsToDelete = [
-        ...toDelete.flatMap((d) => d.serverIds),
-        ...toModify.flatMap((m) => m.serverIds),
+        ...new Set([
+          ...toDelete.flatMap((d) => d.serverIds),
+          ...toModify.flatMap((m) => m.serverIds),
+        ]),
       ];
-
-      for (const id of idsToDelete) {
-        await deleteShiftAssignment(id);
-      }
-
-      // 2. Tạo mới các ca phân công và các ca đã sửa
       const itemsToCreate = [
         ...toAdd,
         ...toModify.map((m) => m.create),
       ];
 
-      for (const item of itemsToCreate) {
-        await createShiftAssignment({
+      // Một request transaction: xoá + tạo; lỗi giữa chừng sẽ rollback toàn bộ.
+      await batchUpdateShiftAssignments({
+        deleteIds: idsToDelete,
+        creates: itemsToCreate.map((item) => ({
           staffId: item.staffId,
           unitTypeIds: Array.from(item.unitTypeIds),
           shifts: [item.shiftWindow],
           workDate: item.date,
-        });
-      }
+        })),
+      });
 
-      // 3. Tải lại danh sách từ backend
       await fetchRoster();
 
       setToast({

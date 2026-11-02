@@ -1,5 +1,6 @@
 package com.storagehub.service.impl;
 
+import com.storagehub.dto.shift.BatchShiftUpdateRequest;
 import com.storagehub.dto.shift.CreateShiftAssignmentRequest;
 import com.storagehub.dto.shift.ShiftAssignmentResponse;
 import com.storagehub.dto.shift.StaffRosterMember;
@@ -122,6 +123,30 @@ public class StaffingServiceImpl implements StaffingService {
         }
 
         return result;
+    }
+
+    @Override
+    public List<ShiftAssignmentResponse> batchUpdateShifts(
+            String actorEmail,
+            BatchShiftUpdateRequest request
+    ) {
+        // Xoá trước trong transaction; nếu bất kỳ create nào lỗi, toàn bộ rollback.
+        if (request.deleteIds() != null) {
+            for (Long id : new LinkedHashSet<>(request.deleteIds())) {
+                if (id == null) continue;
+                // Idempotent: assignment đã bị xoá trước đó thì bỏ qua.
+                staffAssignmentRepository.findById(id)
+                        .ifPresent(existing -> deleteShiftAssignment(actorEmail, id));
+            }
+        }
+
+        List<ShiftAssignmentResponse> created = new ArrayList<>();
+        if (request.creates() != null) {
+            for (CreateShiftAssignmentRequest create : request.creates()) {
+                created.addAll(createShiftAssignments(actorEmail, create));
+            }
+        }
+        return created;
     }
 
     @Override
