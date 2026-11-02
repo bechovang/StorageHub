@@ -107,7 +107,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<TaskResponse> getTasks(
             String currentUserEmail,
             LocalDate workDate,
@@ -125,6 +125,8 @@ public class TaskServiceImpl implements TaskService {
                 roleName != Role.Name.SYSTEM_ADMIN) {
             throw new AccessDeniedException("Chỉ Staff hoặc Quản lý mới có quyền truy cập Task Board");
         }
+
+        carryOverStaleTasks();
 
         boolean isDefaultDate = (workDate == null);
         LocalDate targetDate = isDefaultDate ? getToday() : workDate;
@@ -400,6 +402,79 @@ public class TaskServiceImpl implements TaskService {
         }
 
         return unitRepository.findByCode(refCode).orElse(null);
+    }
+
+    /** Chuyển task chưa xong sang staff ca kế tiếp cùng loại kho. */
+    private void carryOverStaleTasks() {
+        LocalTime now = LocalTime.now(clock.withZone(ICT_ZONE));
+        LocalDate today = getToday();
+        for (Task task : taskRepository.findOpenTasksWithStaff()) {
+            if (task.getShift() == null || task.getWorkDate() == null
+                    || task.getWorkDate().isAfter(today)) {
+                continue;
+            }
+            LocalDate targetDate = today;
+            StaffAssignment.Shift targetShift;
+            switch (task.getShift()) {
+                case MORNING -> {
+                    if (now.isBefore(LocalTime.of(15, 0))) targetShift = StaffAssignment.Shift.MORNING;
+                    else targetShift = StaffAssignment.Shift.AFTERNOON;
+                }
+                case AFTERNOON -> {
+                    if (now.isBefore(LocalTime.of(23, 0))) targetShift = StaffAssignment.Shift.AFTERNOON;
+                    else {
+                        targetShift = StaffAssignment.Shift.MORNING;
+                        targetDate = today.plusDays(1);
+                    }
+                }
+                case FULL_DAY -> {
+                    if (now.isBefore(LocalTime.of(23, 0))) targetShift = StaffAssignment.Shift.FULL_DAY;
+                    else {
+                        targetShift = StaffAssignment.Shift.MORNING;
+                        targetDate = today.plusDays(1);
+                    }
+                }
+                default -> {
+                    continue;
+                }
+            }
+
+            Integer typeId = task.getUnitType() != null ? task.getUnitType().getTypeId() : null;
+            List<StaffAssignment> candidates = typeId == null
+                    ? staffAssignmentRepository.findByWorkDateAndShift(targetDate, targetShift)
+                    : staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(
+                            typeId, targetDate, targetShift);
+            if (candidates.isEmpty()
+                    && (targetShift == StaffAssignment.Shift.MORNING
+                        || targetShift == StaffAssignment.Shift.AFTERNOON)) {
+                candidates = typeId == null
+                        ? staffAssignmentRepository.findByWorkDateAndShift(
+                                targetDate, StaffAssignment.Shift.FULL_DAY)
+                        : staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(
+                                typeId, targetDate, StaffAssignment.Shift.FULL_DAY);
+            }
+            if (candidates.isEmpty()) continue;
+
+            User currentOwner = task.getAssignedStaff();
+            boolean currentStillOnShift = candidates.stream()
+                    .anyMatch(a -> a.getStaff() != null
+                            && currentOwner != null
+                            && a.getStaff().getUserId().equals(currentOwner.getUserId()));
+            if (currentStillOnShift) continue;
+
+            User nextOwner = candidates.get(0).getStaff();
+            if (nextOwner == null) continue;
+
+            String oldOwner = currentOwner != null ? currentOwner.getFullName() : "—";
+            task.setAssignedStaff(nextOwner);
+            task.setShift(targetShift);
+            task.setWorkDate(targetDate);
+            taskRepository.save(task);
+            logService.log(nextOwner, "TASK", task.getTaskId(), "AUTO_HANDOFF",
+                    oldOwner, nextOwner.getFullName(),
+                    "Hết ca — chuyển task sang ca " + targetShift);
+            notificationService.notifyTaskHandoff(task, nextOwner, "Task chuyển từ ca trước");
+        }
     }
 
     private User defaultActor() {
