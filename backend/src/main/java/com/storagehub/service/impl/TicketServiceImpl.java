@@ -161,7 +161,12 @@ public class TicketServiceImpl implements TicketService {
             ticket.setSeverityMode("NORMAL");
             ticket.setAssignedStaff(null);
             SupportTicket saved = ticketRepository.save(ticket);
-            taskService.createSupportTask(saved);
+            var task = taskService.createSupportTask(saved);
+            if (task != null && task.getAssignedStaff() != null) {
+                saved.setAssignedStaff(task.getAssignedStaff());
+                saved = ticketRepository.save(saved);
+                notificationService.notifyTaskHandoff(task, task.getAssignedStaff(), plan);
+            }
             notificationService.notifyTicketStatusChanged(saved, oldStatus);
             logService.log(actor, "TICKET", saved.getTicketId(), "MANAGER_INSTRUCT",
                     oldStatus, saved.getStatus().name(), plan);

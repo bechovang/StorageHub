@@ -65,6 +65,9 @@ public class Task {
 
     private LocalDateTime claimedAt;
 
+    /** Ghi chú hiển thị trên card (managerPlan / không thu tiền...). */
+    private String note;
+
     private LocalDate workDate;
 
     @Enumerated(EnumType.STRING)
