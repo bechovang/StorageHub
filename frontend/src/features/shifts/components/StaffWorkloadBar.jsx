@@ -29,7 +29,7 @@ export default function StaffWorkloadBar({
       <div className="workload-staff-grid">
         {staffRoster.map((staff) => {
           const count = staff.shiftCount || 0;
-          const target = 5; // Định mức chuẩn 5 ca / tuần
+          const target = 14; // Định mức tuần: 7 ngày × 2 ca; FULL_DAY tính 2 ca
           const percent = Math.min(100, Math.round((count / target) * 100));
           const isSelected = highlightedStaffId && Number(highlightedStaffId) === staff.id;
 
@@ -39,15 +39,15 @@ export default function StaffWorkloadBar({
           if (count === 0) {
             statusBadgeClass = "badge--warning-subtle";
             statusLabel = "0 ca (Rảnh)";
-          } else if (count >= 1 && count <= 4) {
+          } else if (count < 14) {
             statusBadgeClass = "badge--info-subtle";
-            statusLabel = `${count}/5 ca (Đang xếp)`;
-          } else if (count === 5) {
+            statusLabel = `${count}/14 ca (Đang xếp)`;
+          } else if (count === 14) {
             statusBadgeClass = "badge--success-subtle";
-            statusLabel = "5/5 ca (Đủ chuẩn)";
-          } else if (count > 5) {
+            statusLabel = "14/14 ca (Đủ chuẩn)";
+          } else if (count > 14) {
             statusBadgeClass = "badge--danger-subtle";
-            statusLabel = `${count}/5 ca (Quá tải)`;
+            statusLabel = `${count}/14 ca (Quá tải)`;
           }
 
           return (
@@ -76,9 +76,9 @@ export default function StaffWorkloadBar({
               <div className="workload-progress-wrap">
                 <div
                   className={`workload-progress-bar ${
-                    count > 5
+                    count > 14
                       ? "workload-progress-bar--overload"
-                      : count === 5
+                      : count === 14
                       ? "workload-progress-bar--full"
                       : ""
                   }`}

@@ -324,12 +324,16 @@ export function useStaffShifts() {
   const staffRoster = useMemo(() => {
     return staffList.map((member) => {
       const memberShifts = workingShifts.filter((s) => s.staffId === member.id);
+      const shiftCount = memberShifts.reduce(
+        (sum, s) => sum + (s.shiftWindow === "FULL_DAY" ? 2 : 1),
+        0
+      );
       return {
         id: member.id,
         fullName: member.fullName,
         code: member.code,
         roleLabel: "Nhân viên vận hành",
-        shiftCount: memberShifts.length,
+        shiftCount,
         shifts: memberShifts,
       };
     });
