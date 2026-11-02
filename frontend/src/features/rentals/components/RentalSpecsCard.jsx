@@ -1,5 +1,9 @@
 import { ClockCountdown, Key } from "@phosphor-icons/react";
-import { fmtDate } from "../../../utils/rentalConstants.js";
+import {
+  fmtDate,
+  checkoutDaysLeft,
+  checkoutDeadlineLabel,
+} from "../../../utils/rentalConstants.js";
 
 export function RentalSpecsCard({ reservation }) {
   return (
@@ -46,9 +50,21 @@ export function RentalSpecsCard({ reservation }) {
             </div>
 
             <div className="rd-meta-row">
-              <span className="rd-meta-row__label">Ngày kết thúc</span>
+              <span className="rd-meta-row__label">Hạn trả kho (Checkout)</span>
               <span className="rd-meta-row__value">
-                {fmtDate(reservation.endDate)}
+                {fmtDate(reservation.endDate)}{" "}
+                <strong
+                  style={{
+                    color:
+                      checkoutDaysLeft(reservation.endDate) < 0
+                        ? "#b91c1c"
+                        : checkoutDaysLeft(reservation.endDate) <= 3
+                        ? "#c2410c"
+                        : "#047857",
+                  }}
+                >
+                  ({checkoutDeadlineLabel(checkoutDaysLeft(reservation.endDate))})
+                </strong>
               </span>
             </div>
 

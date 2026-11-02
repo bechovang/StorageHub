@@ -68,6 +68,8 @@ class ReservationControllerTest {
                 null,
                 List.of(),
                 List.of(),
+                null,
+                null,
                 null
         );
 

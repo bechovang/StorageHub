@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * rời backend — API chỉ trả DTO.</p>
  */
 @SpringBootApplication
+@org.springframework.scheduling.annotation.EnableScheduling
 public class StorageHubApplication {
 
     public static void main(String[] args) {

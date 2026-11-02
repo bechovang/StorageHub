@@ -40,6 +40,9 @@ public class CheckoutRequest {
 
     private LocalDate requestedDate;
 
+    /** MORNING / AFTERNOON / EVENING. */
+    private String timeSlot;
+
     @Enumerated(EnumType.STRING)
     private Status status;
 

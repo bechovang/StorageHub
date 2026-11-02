@@ -122,6 +122,9 @@ export default function RentalDetailPage() {
                       reservation.checkoutRequestedDate || reservation.endDate
                     )}
                   </strong>
+                  {reservation.checkoutTimeSlot
+                    ? ` · ${({ MORNING: "Ca sáng (08:00–12:00)", AFTERNOON: "Ca chiều (13:00–17:00)", EVENING: "Ca tối (17:00–20:00)" }[reservation.checkoutTimeSlot] || reservation.checkoutTimeSlot)}`
+                    : ""}
                   . Quý khách vui lòng mang khóa kho và xuất trình CCCD tại quầy dịch vụ để hoàn tất thủ tục bàn giao và nhận lại tiền cọc.
                 </p>
               </div>

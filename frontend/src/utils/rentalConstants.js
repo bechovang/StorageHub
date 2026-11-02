@@ -62,3 +62,20 @@ export const CONTRACT_STATUS_LABEL = {
 export const fmtMoney = formatVND;
 export const fmtDate = formatDate;
 export const fmtDateTime = formatDateTime;
+
+/** Số ngày còn lại đến hạn trả kho (âm = quá hạn). */
+export function checkoutDaysLeft(endDate) {
+  if (!endDate) return null;
+  const end = new Date(`${String(endDate).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(end.getTime())) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((end.getTime() - today.getTime()) / 86400000);
+}
+
+export function checkoutDeadlineLabel(daysLeft) {
+  if (daysLeft == null) return "—";
+  if (daysLeft < 0) return `Quá hạn ${Math.abs(daysLeft)} ngày`;
+  if (daysLeft === 0) return "Hết hạn hôm nay";
+  return `Còn ${daysLeft} ngày`;
+}

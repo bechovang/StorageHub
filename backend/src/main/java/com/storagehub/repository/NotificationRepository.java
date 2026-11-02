@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
+    boolean existsByUserAndTypeAndTitle(User user, String type, String title);
+
     /** Đếm số thông báo chưa đọc của user cho bell badge (FR-33). */
     long countByUserAndIsReadFalse(User user);
 

@@ -73,4 +73,7 @@ public interface NotificationService {
 
     /** Chuyển task → báo người nhận mới. */
     void notifyTaskHandoff(Task task, User recipient, String reason);
+
+    /** Nhắc khách sắp đến hạn trả kho. */
+    void notifyCheckoutReminder(Reservation reservation, int daysLeft, boolean overdue);
 }
