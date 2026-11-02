@@ -27,14 +27,6 @@ export const STANDARD_SHIFTS = [
     border: "#bae6fd",
   },
   {
-    key: "EVENING",
-    name: "Ca đêm",
-    hours: "19:00 – 07:00",
-    color: "#b45309",
-    bg: "#fffbeb",
-    border: "#fde68a",
-  },
-  {
     key: "FULL_DAY",
     name: "Cả ngày",
     hours: "07:00 – 23:00",
