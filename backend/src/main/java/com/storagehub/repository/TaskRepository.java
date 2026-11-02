@@ -57,6 +57,14 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("""
         SELECT t FROM Task t
+        JOIN FETCH t.assignedStaff s
+        WHERE t.status <> com.storagehub.entity.Task.Status.DONE
+        ORDER BY t.workDate ASC, t.taskId ASC
+    """)
+    List<Task> findOpenTasksWithStaff();
+
+    @Query("""
+        SELECT t FROM Task t
         LEFT JOIN FETCH t.assignedStaff s
         WHERE t.assignedStaff IS NULL
           AND t.status = com.storagehub.entity.Task.Status.TODO
