@@ -259,38 +259,23 @@ export async function resolveSupportTicket({
  * PATCH /api/v1/tickets/{ticketId}/status — Chuyển cấp lên Quản lý (ESCALATE — FR-24)
  */
 export async function escalateSupportTicket({
-  ticketId = null,
-  unitCode = null,
-  customerName = null,
-  customerPhone = "",
-  description = "",
+  ticketId,
   escalationReason,
   staffName,
 }) {
+  if (ticketId == null || ticketId === "") {
+    throw new Error("Thiếu mã yêu cầu hỗ trợ cần chuyển cấp.");
+  }
   if (!escalationReason || !escalationReason.trim()) {
     throw new Error("Lý do chuyển cấp lên Quản lý cơ sở là bắt buộc theo quy định vận hành.");
   }
 
-  const payload = {
-    status: "ESCALATED",
-    escalationReason: escalationReason.trim(),
-    assignedStaff: cleanActorName(staffName),
-  };
-
-  const endpoint = ticketId != null ? `/api/v1/tickets/${ticketId}/status` : "/api/v1/tickets";
-  const res = await apiClient(endpoint, {
-    method: ticketId != null ? "PATCH" : "POST",
-    body: JSON.stringify(
-      ticketId != null
-        ? payload
-        : {
-            ...payload,
-            unitCode: (unitCode || "").trim().toUpperCase(),
-            customerName,
-            customerPhone,
-            description: description || `Sự cố kỹ thuật phát sinh tại kho ${unitCode || ""}`.trim(),
-          }
-    ),
+  const res = await apiClient(`/api/v1/tickets/${ticketId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      status: "ESCALATED",
+      escalationReason: escalationReason.trim(),
+    }),
   });
 
   return handleTicketResponse(res, "Không thể chuyển cấp yêu cầu hỗ trợ.");

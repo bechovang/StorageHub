@@ -126,7 +126,7 @@ export function useSupportTickets() {
     setResolveError("");
     try {
       await resolveSupportTicket({
-        ticketId: resolveTargetTicket.ticketId,
+        ticketId: resolveTargetTicket.id ?? resolveTargetTicket.ticketId,
         resolutionNote,
         staffName: user?.fullName || "",
         actorRole: user?.role || "STAFF",
@@ -145,7 +145,7 @@ export function useSupportTickets() {
     setEscalateError("");
     try {
       await escalateSupportTicket({
-        ticketId: escalateTargetTicket.ticketId,
+        ticketId: escalateTargetTicket.id ?? escalateTargetTicket.ticketId,
         escalationReason: escalateReason,
         staffName: user?.fullName || "",
       });
