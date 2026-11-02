@@ -35,6 +35,9 @@ public interface TaskService {
      */
     Task createSupportTask(com.storagehub.entity.SupportTicket ticket);
 
+    /** Ghi chú nghiệp vụ lên task (hiển thị trên card). */
+    void setTaskNote(Long taskId, String note);
+
     /** Dữ liệu hợp đồng tại quầy cho task check-in/check-out. */
     com.storagehub.dto.task.ContractPreviewResponse getContractPreview(Long taskId);
 

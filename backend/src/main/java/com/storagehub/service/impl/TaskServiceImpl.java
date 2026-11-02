@@ -220,6 +220,14 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public void setTaskNote(Long taskId, String note) {
+        taskRepository.findByIdForUpdate(taskId).ifPresent(task -> {
+            task.setNote(note);
+            taskRepository.save(task);
+        });
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public com.storagehub.dto.task.ContractPreviewResponse getContractPreview(Long taskId) {
         Task task = taskRepository.findWithStaffById(taskId)
@@ -758,6 +766,7 @@ public class TaskServiceImpl implements TaskService {
                         task.getAssignedStaff().getUserId(),
                         task.getAssignedStaff().getFullName());
 
+        String effectiveAlertNote = alertNote != null ? alertNote : task.getNote();
         return new TaskResponse(
                 task.getTaskId(),
                 task.getType(),
@@ -774,7 +783,7 @@ public class TaskServiceImpl implements TaskService {
                 depositPaid,
                 priority,
                 issueDesc,
-                alertNote,
+                effectiveAlertNote,
                 assignedStaffDto,
                 ritual,
                 includePhotos ? task.getPaymentProofPhoto() : null,
@@ -1156,6 +1165,7 @@ public class TaskServiceImpl implements TaskService {
             existing.setShift(getCurrentShift());
             existing.setUnitType(ticket.getUnit().getType());
             existing.setClaimedAt(null);
+            existing.setNote(ticket.getManagerPlan());
             Task reopened = taskRepository.save(existing);
             logService.log(ticket.getCustomer(), "TASK", reopened.getTaskId(),
                     "REOPENED", "DONE", Task.Status.TODO.name(),
@@ -1171,6 +1181,7 @@ public class TaskServiceImpl implements TaskService {
         task.setUnitType(ticket.getUnit().getType());
         task.setWorkDate(java.time.LocalDate.now());
         task.setStatus(Task.Status.TODO);
+        task.setNote(ticket.getManagerPlan());
         Task saved = taskRepository.save(task);
 
         logService.log(ticket.getCustomer(), "TASK", saved.getTaskId(),

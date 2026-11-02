@@ -8,6 +8,7 @@ import com.storagehub.entity.Contract;
 import com.storagehub.entity.Payment;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Role;
+import com.storagehub.entity.Task;
 import com.storagehub.entity.Unit;
 import com.storagehub.entity.User;
 import com.storagehub.exception.BusinessRuleException;
@@ -169,13 +170,17 @@ public class EarlyCheckoutService {
         //    CHECKOUT_REQUESTED + tạo task checkout để staff tất toán.
         Unit oldUnit = oldReservation.getUnit();
         if (deferOldCheckout) {
-            taskService.createOrUpdateCheckoutTask(
+            Task checkoutTask = taskService.createOrUpdateCheckoutTask(
                     actor,
                     oldReservation,
                     LocalDate.now(ICT_ZONE),
                     null,
                     relocationReason != null ? relocationReason : "Đổi kho do sự cố"
             );
+            if (checkoutTask != null) {
+                taskService.setTaskNote(checkoutTask.getTaskId(),
+                        "Không thu tiền — chỉ dời hàng");
+            }
         } else {
             oldReservation.setStatus(Reservation.Status.CLOSED);
             reservationRepository.save(oldReservation);
@@ -225,7 +230,11 @@ public class EarlyCheckoutService {
 
         // 5. Hợp đồng mới + task check-in cho kho mới
         contractService.autoDraftContract(savedNew);
-        taskService.createCheckInTask(savedNew.getCustomer(), savedNew);
+        Task checkInTask = taskService.createCheckInTask(savedNew.getCustomer(), savedNew);
+        if (checkInTask != null && deferOldCheckout) {
+            taskService.setTaskNote(checkInTask.getTaskId(),
+                    "Không thu tiền — chỉ dời hàng");
+        }
 
         logService.log(actor, "RESERVATION", savedNew.getReservationId(), "TRANSFER_CREATED",
                 oldReservation.getCode(), savedNew.getCode(),

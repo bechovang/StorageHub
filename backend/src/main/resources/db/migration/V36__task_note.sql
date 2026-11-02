@@ -1,0 +1,1 @@
+ALTER TABLE tasks ADD COLUMN note VARCHAR(500) NULL AFTER unit_type_id;
