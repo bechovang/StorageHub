@@ -132,8 +132,25 @@ public class TaskServiceImpl implements TaskService {
 
         List<Task> tasks;
         if (roleName == Role.Name.STAFF) {
-            tasks = taskRepository.findFilteredTasks(currentUser.getUserId(), targetDate, type, status);
-            // Fallback khi xem mặc định ngày hôm nay mà DB chưa có task hôm nay -> lấy task gần nhất của staff
+            List<Task> own = taskRepository.findFilteredTasks(
+                    currentUser.getUserId(), targetDate, type, status);
+            List<Task> pool = new java.util.ArrayList<>();
+            if (status == null || status == Task.Status.TODO) {
+                for (Task candidate : taskRepository.findUnassignedPool(type)) {
+                    if (candidate.getWorkDate() != null
+                            && !candidate.getWorkDate().isAfter(targetDate)
+                            && isEligibleForPool(currentUser, candidate)) {
+                        pool.add(candidate);
+                    }
+                }
+            }
+            tasks = new java.util.ArrayList<>(own);
+            for (Task candidate : pool) {
+                if (tasks.stream().noneMatch(t -> t.getTaskId().equals(candidate.getTaskId()))) {
+                    tasks.add(candidate);
+                }
+            }
+            // Fallback khi xem mặc định ngày hôm nay mà không có task nào (của mình hoặc pool).
             if (tasks.isEmpty() && isDefaultDate) {
                 tasks = taskRepository.findStaffTasks(currentUser.getUserId(), type, status);
             }
@@ -168,8 +185,10 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
 
         Role.Name roleName = currentUser.getRole().getName();
-        if (roleName == Role.Name.STAFF && !currentUser.getUserId().equals(task.getAssignedStaff().getUserId())) {
-            throw new AccessDeniedException("Bạn không được phân công xử lý nhiệm vụ này.");
+        if (roleName == Role.Name.STAFF
+                && (task.getAssignedStaff() == null
+                    || !currentUser.getUserId().equals(task.getAssignedStaff().getUserId()))) {
+            throw new AccessDeniedException("Nhiệm vụ chưa được bạn nhận hoặc không được phân công.");
         }
 
         // Task đã DONE là trạng thái cuối — không cho kéo về TODO/IN_PROGRESS.
@@ -263,6 +282,80 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public TaskResponse claimTask(String currentUserEmail, Long taskId) {
+        User currentUser = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new AccessDeniedException("Người dùng không tồn tại"));
+        if (currentUser.getRole().getName() != Role.Name.STAFF) {
+            throw new AccessDeniedException("Chỉ nhân viên ca trực mới được nhận task.");
+        }
+
+        Task task = taskRepository.findByIdForUpdate(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        if (task.getAssignedStaff() != null) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Task đã được người khác nhận. Vui lòng tải lại bảng.");
+        }
+        if (task.getStatus() != Task.Status.TODO) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Chỉ task đang chờ xử lý mới được nhận.");
+        }
+        if (!isEligibleForPool(currentUser, task)) {
+            throw new AccessDeniedException(
+                    "Task không thuộc ca hoặc loại kho bạn phụ trách.");
+        }
+
+        task.setAssignedStaff(currentUser);
+        task.setStatus(Task.Status.IN_PROGRESS);
+        task.setClaimedAt(java.time.LocalDateTime.now());
+        Task saved = taskRepository.save(task);
+        logService.log(currentUser, "TASK", taskId, "CLAIMED", "TODO", "IN_PROGRESS",
+                "Nhận task " + task.getType() + " " + task.getRefCode());
+        return toTaskResponse(saved, getCurrentShift(), null, null, null, null, true);
+    }
+
+    @Override
+    public TaskResponse handoffTask(
+            String currentUserEmail,
+            Long taskId,
+            com.storagehub.dto.task.TaskHandoffRequest request
+    ) {
+        User currentUser = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new AccessDeniedException("Người dùng không tồn tại"));
+        Task task = taskRepository.findByIdForUpdate(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        Role.Name roleName = currentUser.getRole().getName();
+        boolean isManager = roleName == Role.Name.FACILITY_MANAGER
+                || roleName == Role.Name.SYSTEM_ADMIN;
+        boolean isOwner = task.getAssignedStaff() != null
+                && currentUser.getUserId().equals(task.getAssignedStaff().getUserId());
+        if (!isManager && !isOwner) {
+            throw new AccessDeniedException("Chỉ người đang xử lý hoặc quản lý mới được chuyển task.");
+        }
+
+        User target = userRepository.findById(request.staffId())
+                .orElseThrow(() -> new AccessDeniedException("Nhân viên nhận task không tồn tại."));
+        if (target.getRole() == null || target.getRole().getName() != Role.Name.STAFF) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Chỉ có thể chuyển task cho nhân viên vận hành.");
+        }
+
+        String oldOwner = task.getAssignedStaff() != null
+                ? task.getAssignedStaff().getFullName() : "Chưa có người nhận";
+        task.setAssignedStaff(target);
+        if (task.getStatus() == Task.Status.IN_PROGRESS) {
+            task.setClaimedAt(java.time.LocalDateTime.now());
+        }
+        Task saved = taskRepository.save(task);
+        String reason = request.reason() != null && !request.reason().isBlank()
+                ? request.reason().trim() : "Chuyển task";
+        logService.log(currentUser, "TASK", taskId, "HANDOFF", oldOwner,
+                target.getFullName(), reason);
+        notificationService.notifyTaskHandoff(saved, target, reason);
+        return toTaskResponse(saved, getCurrentShift(), null, null, null, null, true);
+    }
+
+    @Override
     public TaskResponse completeSupportRitual(
             String currentUserEmail,
             Long taskId,
@@ -275,8 +368,9 @@ public class TaskServiceImpl implements TaskService {
 
         Role.Name roleName = currentUser.getRole().getName();
         if (roleName == Role.Name.STAFF
-                && !currentUser.getUserId().equals(task.getAssignedStaff().getUserId())) {
-            throw new AccessDeniedException("Bạn không được phân công xử lý nhiệm vụ này.");
+                && (task.getAssignedStaff() == null
+                    || !currentUser.getUserId().equals(task.getAssignedStaff().getUserId()))) {
+            throw new AccessDeniedException("Nhiệm vụ chưa được bạn nhận hoặc không được phân công.");
         }
         if (task.getType() != Task.Type.SUPPORT) {
             throw new com.storagehub.exception.BusinessRuleException("Task không phải loại SUPPORT.");
@@ -343,28 +437,28 @@ public class TaskServiceImpl implements TaskService {
         LocalDate workDate = (request.workDate() != null) ? request.workDate() : getToday();
         StaffAssignment.Shift shift = (request.shift() != null) ? request.shift() : getCurrentShift();
 
-        // 3. Tự động phân công staff trực ca phụ trách Zone chứa Unit
-        User assignedStaff = autoAssignStaff(unit, workDate, shift);
-
-        // 4. Tạo thực thể Task
+        // 3. Task vào pool chưa giao người; staff đúng ca/loại kho tự nhận.
         Task task = new Task();
         task.setType(request.type());
         task.setRefCode(request.refCode());
-        task.setAssignedStaff(assignedStaff);
+        task.setAssignedStaff(null);
+        task.setShift(shift);
+        task.setUnitType(unit != null ? unit.getType() : null);
         task.setWorkDate(workDate);
         task.setStatus(Task.Status.TODO);
 
         Task saved = taskRepository.save(task);
+        notifyEligibleStaffForTask(saved);
 
         String typeName = (unit != null && unit.getType() != null) ? unit.getType().getName() : "Chung";
         logService.log(
-                assignedStaff,
+                null,
                 "TASK",
                 saved.getTaskId(),
                 "TASK_CREATED",
                 null,
                 Task.Status.TODO.name(),
-                "Tự động phân cho staff " + assignedStaff.getFullName() + " phụ trách kho " + typeName + " ca " + shift
+                "Tạo task pool kho " + typeName + " ca " + shift
         );
 
         return toTaskResponse(saved, shift, request.dueTime(), request.priority(), request.alertNote(), request.issueDescription());
@@ -391,6 +485,60 @@ public class TaskServiceImpl implements TaskService {
         }
 
         return unitRepository.findByCode(refCode).orElse(null);
+    }
+
+    private void notifyEligibleStaffForTask(Task task) {
+        if (task.getWorkDate() == null) return;
+        Integer typeId = task.getUnitType() != null ? task.getUnitType().getTypeId() : null;
+        java.util.List<StaffAssignment> assignments = staffAssignmentRepository
+                .findByWorkDateBetween(task.getWorkDate(), task.getWorkDate());
+        java.util.Set<User> recipients = new java.util.LinkedHashSet<>();
+        for (StaffAssignment assignment : assignments) {
+            boolean typeMatches = typeId == null
+                    || (assignment.getUnitTypes() != null
+                        && assignment.getUnitTypes().stream()
+                            .anyMatch(t -> t.getTypeId().equals(typeId)));
+            if (!typeMatches) continue;
+            boolean shiftMatches = task.getShift() == null
+                    || assignment.getShift() == task.getShift()
+                    || (assignment.getShift() == StaffAssignment.Shift.FULL_DAY
+                        && (task.getShift() == StaffAssignment.Shift.MORNING
+                            || task.getShift() == StaffAssignment.Shift.AFTERNOON));
+            if (shiftMatches && assignment.getStaff() != null) {
+                recipients.add(assignment.getStaff());
+            }
+        }
+        notificationService.notifyTaskPool(task, new java.util.ArrayList<>(recipients));
+    }
+
+    private boolean isEligibleForPool(User staff, Task task) {
+        LocalDate today = getToday();
+        if (task.getWorkDate() == null || task.getWorkDate().isAfter(today)) {
+            return false;
+        }
+        LocalDate effectiveDate = task.getWorkDate().isBefore(today) ? today : task.getWorkDate();
+        List<StaffAssignment> assignments = staffAssignmentRepository
+                .findByStaff_UserIdAndWorkDate(staff.getUserId(), effectiveDate);
+        if (assignments.isEmpty()) {
+            return false;
+        }
+        Integer typeId = task.getUnitType() != null ? task.getUnitType().getTypeId() : null;
+        for (StaffAssignment assignment : assignments) {
+            boolean typeMatches = typeId == null
+                    || (assignment.getUnitTypes() != null
+                        && assignment.getUnitTypes().stream()
+                            .anyMatch(t -> t.getTypeId().equals(typeId)));
+            if (!typeMatches) continue;
+            if (task.getShift() == null || assignment.getShift() == task.getShift()) {
+                return true;
+            }
+            if (assignment.getShift() == StaffAssignment.Shift.FULL_DAY
+                    && (task.getShift() == StaffAssignment.Shift.MORNING
+                        || task.getShift() == StaffAssignment.Shift.AFTERNOON)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private User autoAssignStaff(Unit unit, LocalDate workDate, StaffAssignment.Shift shift) {
@@ -662,10 +810,11 @@ public class TaskServiceImpl implements TaskService {
             }
         }
 
-        AssignedStaffDto assignedStaffDto = new AssignedStaffDto(
-                task.getAssignedStaff().getUserId(),
-                task.getAssignedStaff().getFullName()
-        );
+        AssignedStaffDto assignedStaffDto = task.getAssignedStaff() == null
+                ? null
+                : new AssignedStaffDto(
+                        task.getAssignedStaff().getUserId(),
+                        task.getAssignedStaff().getFullName());
 
         return new TaskResponse(
                 task.getTaskId(),
@@ -677,7 +826,7 @@ public class TaskServiceImpl implements TaskService {
                 dueTime,
                 task.getStatus(),
                 task.getWorkDate(),
-                shift != null ? shift : getCurrentShift(),
+                task.getShift() != null ? task.getShift() : (shift != null ? shift : getCurrentShift()),
                 accessPin,
                 rentAmount,
                 depositPaid,
@@ -703,28 +852,21 @@ public class TaskServiceImpl implements TaskService {
         }
 
         StaffAssignment.Shift shift = getCurrentShift();
-        User assignee;
-        try {
-            assignee = autoAssignStaff(reservation.getUnit(), reservation.getStartDate(), shift);
-        } catch (Exception e) {
-            assignee = userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1).orElse(null);
-        }
-
-        if (assignee == null) {
-            return null;
-        }
 
         Task task = new Task();
         task.setType(Task.Type.CHECK_IN);
         task.setRefCode(reservation.getCode());
-        task.setAssignedStaff(assignee);
+        task.setAssignedStaff(null);
+        task.setShift(shift);
+        task.setUnitType(reservation.getUnit().getType());
         task.setWorkDate(reservation.getStartDate());
         task.setStatus(Task.Status.TODO);
         Task saved = taskRepository.save(task);
+        notifyEligibleStaffForTask(saved);
 
-        logService.log(actor != null ? actor : assignee, "TASK", saved.getTaskId(),
+        logService.log(actor, "TASK", saved.getTaskId(),
                 "CREATED", null, "TODO",
-                "Auto check-in task for " + reservation.getCode());
+                "Tạo task pool check-in cho " + reservation.getCode());
         return saved;
     }
 
@@ -1063,33 +1205,20 @@ public class TaskServiceImpl implements TaskService {
             return existing;
         }
 
-        StaffAssignment.Shift shift = getCurrentShift();
-        User assignee = ticket.getAssignedStaff();
-        if (assignee == null) {
-            try {
-                assignee = autoAssignStaff(ticket.getUnit(), java.time.LocalDate.now(), shift);
-            } catch (Exception e) {
-                assignee = userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1).orElse(null);
-            }
-        }
-        if (assignee == null) {
-            return null;
-        }
-
         Task task = new Task();
         task.setType(Task.Type.SUPPORT);
         task.setRefCode(ticket.getCode());
-        task.setAssignedStaff(assignee);
+        task.setAssignedStaff(null);
+        task.setShift(getCurrentShift());
+        task.setUnitType(ticket.getUnit().getType());
         task.setWorkDate(java.time.LocalDate.now());
-        // Ticket đã IN_PROGRESS/ESCALATED (staff tạo hộ) → task intoprogress luôn
-        task.setStatus(ticket.getStatus() == com.storagehub.entity.SupportTicket.Status.OPEN
-                ? Task.Status.TODO
-                : Task.Status.IN_PROGRESS);
+        task.setStatus(Task.Status.TODO);
         Task saved = taskRepository.save(task);
+        notifyEligibleStaffForTask(saved);
 
-        logService.log(assignee, "TASK", saved.getTaskId(),
-                "CREATED", null, saved.getStatus().name(),
-                "Auto support task cho ticket " + ticket.getCode());
+        logService.log(null, "TASK", saved.getTaskId(),
+                "CREATED", null, Task.Status.TODO.name(),
+                "Tạo task pool support cho ticket " + ticket.getCode());
         return saved;
     }
 
@@ -1143,42 +1272,33 @@ public class TaskServiceImpl implements TaskService {
 
         if (existing != null) {
             existing.setWorkDate(requestedDate);
-            try {
-                User assignee = autoAssignStaff(reservation.getUnit(), requestedDate, shift);
-                if (assignee != null) {
-                    existing.setAssignedStaff(assignee);
-                }
-            } catch (Exception ignored) {
-            }
+            existing.setShift(shift);
+            existing.setUnitType(reservation.getUnit().getType());
+            existing.setAssignedStaff(null);
+            existing.setStatus(Task.Status.TODO);
+            existing.setClaimedAt(null);
             Task saved = taskRepository.save(existing);
-            logService.log(actor != null ? actor : existing.getAssignedStaff(), "TASK", saved.getTaskId(),
+            notifyEligibleStaffForTask(saved);
+            logService.log(actor, "TASK", saved.getTaskId(),
                     "STATUS_CHANGED", saved.getStatus().name(), saved.getStatus().name(),
                     "Cập nhật ngày hẹn trả kho: " + requestedDate + (reason != null ? " (" + reason + ")" : ""));
             return saved;
         }
 
-        User assignee;
-        try {
-            assignee = autoAssignStaff(reservation.getUnit(), requestedDate, shift);
-        } catch (Exception e) {
-            assignee = userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1).orElse(null);
-        }
-
-        if (assignee == null) {
-            assignee = actor;
-        }
-
         Task task = new Task();
         task.setType(Task.Type.CHECKOUT);
         task.setRefCode(reservation.getCode());
-        task.setAssignedStaff(assignee);
+        task.setAssignedStaff(null);
+        task.setShift(shift);
+        task.setUnitType(reservation.getUnit().getType());
         task.setWorkDate(requestedDate);
         task.setStatus(Task.Status.TODO);
         Task saved = taskRepository.save(task);
+        notifyEligibleStaffForTask(saved);
 
-        logService.log(actor != null ? actor : assignee, "TASK", saved.getTaskId(),
+        logService.log(actor, "TASK", saved.getTaskId(),
                 "CREATED", null, Task.Status.TODO.name(),
-                "Auto checkout task for " + reservation.getCode() + " on " + requestedDate);
+                "Tạo task pool checkout cho " + reservation.getCode() + " ngày " + requestedDate);
         return saved;
     }
 

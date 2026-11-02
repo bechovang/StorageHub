@@ -47,6 +47,8 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String TYPE_TICKET_STATUS_CHANGED = "TICKET_STATUS_CHANGED";
     private static final String TYPE_FORCED_CHECKOUT = "FORCED_CHECKOUT";
     private static final String TYPE_SETTLEMENT_COMPLETED = "SETTLEMENT_COMPLETED";
+    private static final String TYPE_TASK_POOL = "TASK_POOL";
+    private static final String TYPE_TASK_HANDOFF = "TASK_HANDOFF";
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -406,6 +408,35 @@ public class NotificationServiceImpl implements NotificationService {
         row.setType(TYPE_SETTLEMENT_COMPLETED);
         row.setTitle("Đã tất toán — " + reservation.getUnit().getCode());
         row.setDeepLink("/rentals/" + reservation.getReservationId());
+        row.setIsRead(false);
+        notificationRepository.save(row);
+    }
+
+    @Override
+    @Transactional
+    public void notifyTaskPool(com.storagehub.entity.Task task, java.util.List<User> recipients) {
+        if (recipients == null || recipients.isEmpty()) return;
+        String title = "Task mới — " + task.getType() + " · " + (task.getRefCode() != null ? task.getRefCode() : "Kho");
+        for (User recipient : recipients) {
+            Notification row = new Notification();
+            row.setUser(recipient);
+            row.setType(TYPE_TASK_POOL);
+            row.setTitle(title);
+            row.setDeepLink("/tasks");
+            row.setIsRead(false);
+            notificationRepository.save(row);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void notifyTaskHandoff(com.storagehub.entity.Task task, User recipient, String reason) {
+        Notification row = new Notification();
+        row.setUser(recipient);
+        row.setType(TYPE_TASK_HANDOFF);
+        row.setTitle("Task được chuyển cho bạn — " + task.getType()
+                + (reason != null && !reason.isBlank() ? " · " + reason : ""));
+        row.setDeepLink("/tasks");
         row.setIsRead(false);
         notificationRepository.save(row);
     }

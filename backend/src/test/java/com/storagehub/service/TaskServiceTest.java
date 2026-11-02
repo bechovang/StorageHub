@@ -58,6 +58,9 @@ class TaskServiceTest {
     private LogService logService;
 
     @Mock
+    private NotificationService notificationService;
+
+    @Mock
     private Clock clock;
 
     @InjectMocks
@@ -168,18 +171,9 @@ class TaskServiceTest {
     }
 
     @Test
-    @DisplayName("autoCreateTask tự động phân công staff trực ca phụ trách loại kho (FR-21)")
+    @DisplayName("autoCreateTask tạo task pool chưa giao người (FR-21)")
     void testAutoCreateTask_AutoAssignByZoneAndShift() {
-        StaffAssignment assignment = new StaffAssignment();
-        assignment.setAssignmentId(10L);
-        assignment.setStaff(staffUser);
-        assignment.setUnitType(unitS3.getType());
-        assignment.setWorkDate(today);
-        assignment.setShift(StaffAssignment.Shift.MORNING);
-
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
-        when(staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(eq(2), eq(today), eq(StaffAssignment.Shift.MORNING)))
-                .thenReturn(List.of(assignment));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
             t.setTaskId(99L);
@@ -201,24 +195,17 @@ class TaskServiceTest {
         TaskResponse res = taskService.autoCreateTask(req);
 
         assertThat(res.taskId()).isEqualTo(99L);
-        assertThat(res.assignedStaff().staffId()).isEqualTo(2L);
-        assertThat(res.assignedStaff().fullName()).isEqualTo("Trần Minh");
+        assertThat(res.assignedStaff()).isNull();
+        assertThat(res.shift()).isEqualTo(StaffAssignment.Shift.MORNING);
         assertThat(res.status()).isEqualTo(Task.Status.TODO);
 
-        verify(logService).log(eq(staffUser), eq("TASK"), eq(99L), eq("TASK_CREATED"), eq(null), eq("TODO"), any());
+        verify(logService).log(eq(null), eq("TASK"), eq(99L), eq("TASK_CREATED"), eq(null), eq("TODO"), any());
     }
 
     @Test
-    @DisplayName("autoCreateTask fallback khi không có staff trực loại kho cụ thể")
+    @DisplayName("autoCreateTask không fallback gán người khi không có staff trực")
     void testAutoCreateTask_FallbackStaff() {
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
-        when(staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(eq(2), eq(today), eq(StaffAssignment.Shift.MORNING)))
-                .thenReturn(List.of());
-        when(staffAssignmentRepository.findByWorkDateAndShift(eq(today), eq(StaffAssignment.Shift.MORNING)))
-                .thenReturn(List.of());
-        when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))
-                .thenReturn(Optional.of(staffUser));
-
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
             t.setTaskId(100L);
@@ -240,7 +227,7 @@ class TaskServiceTest {
         TaskResponse res = taskService.autoCreateTask(req);
 
         assertThat(res.taskId()).isEqualTo(100L);
-        assertThat(res.assignedStaff().staffId()).isEqualTo(2L);
+        assertThat(res.assignedStaff()).isNull();
     }
 
     @Test
