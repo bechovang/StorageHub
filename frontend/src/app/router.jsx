@@ -41,22 +41,6 @@ import LegalManagementPage from "../pages/admin/LegalManagementPage.jsx";
 import ActivityLogPage from "../pages/common/ActivityLogPage.jsx";
 import SupportPage from "../pages/common/SupportPage.jsx";
 
-export const ROLE_LANDINGS = {
-  CUSTOMER: "/",
-  STAFF: "/tasks",
-  FACILITY_MANAGER: "/facility",
-  BUSINESS_OPS: "/overview",
-  SYSTEM_ADMIN: "/users",
-};
-
-function RootRedirect() {
-  const { user, isAuthenticated, loading } = useAuth();
-  if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/" replace />;
-  const target = ROLE_LANDINGS[user?.role] || "/";
-  return <Navigate to={target} replace />;
-}
-
 function LegacyCheckinRedirect() {
   const { reservationId } = useParams();
   return <Navigate to={`/rentals/${reservationId}/check-in-pass`} replace />;
@@ -196,6 +180,7 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route path="/facility/shift" element={<Navigate to="/facility/shifts" replace />} />
       <Route
         path="/facility/activity"
         element={

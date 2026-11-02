@@ -77,27 +77,41 @@ function startOfWeek(base = new Date()) {
   return d;
 }
 
-export function getWeekDays(base = new Date()) {
+export function getWeekDays(weekOffset = 0, base = new Date()) {
   const monday = startOfWeek(base);
+  if (typeof weekOffset === 'number' && weekOffset !== 0) {
+    monday.setDate(monday.getDate() + weekOffset * 7);
+  } else if (weekOffset instanceof Date) {
+    // backward compatibility if called with date
+    return getWeekDays(0, weekOffset);
+  }
   const today = new Date();
   const dayNames = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
-  const shortNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const shortLabels = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+  const enPrefixes = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     return {
       key: ymd(d),
       dayName: dayNames[i],
-      label: `${shortNames[i]} ${d.getDate()}`,
+      shortName: shortLabels[i],
+      label: `${enPrefixes[i]} ${d.getDate()}`,
+      dayNum: String(d.getDate()).padStart(2, "0"),
+      monthNum: String(d.getMonth() + 1).padStart(2, "0"),
       fullDate: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`,
       isToday: ymd(d) === ymd(today),
     };
   });
 }
 
-export function getWeekRange(base = new Date()) {
-  const days = getWeekDays(base);
-  return { startDate: days[0].key, endDate: days[6].key };
+export function getWeekRange(weekOffset = 0, base = new Date()) {
+  const days = getWeekDays(weekOffset, base);
+  return {
+    startDate: days[0].key,
+    endDate: days[6].key,
+    weekLabel: `${days[0].fullDate.slice(0, 5)} – ${days[6].fullDate}`,
+  };
 }
 
 export const DAYS_OF_WEEK = getWeekDays();
@@ -215,4 +229,46 @@ export function detectShiftConflict({ staffId, date, shiftWindows = [], shifts =
   }
 
   return { hasConflict: false, reason: null, conflictingShift: null };
+}
+
+/**
+ * Sao chép ca trực tuần trước sang tuần hiện tại
+ */
+export async function copyShiftsFromPreviousWeek({ weekOffset = 0 } = {}) {
+  const prevDays = getWeekDays(weekOffset - 1);
+  const currentDays = getWeekDays(weekOffset);
+
+  const prevShifts = await getShifts({
+    startDate: prevDays[0].key,
+    endDate: prevDays[6].key,
+  });
+
+  if (!Array.isArray(prevShifts) || prevShifts.length === 0) {
+    throw new Error("Không tìm thấy ca trực nào ở tuần trước để sao chép.");
+  }
+
+  let copiedCount = 0;
+  let skippedCount = 0;
+
+  for (const prev of prevShifts) {
+    const dayIndex = prevDays.findIndex((d) => d.key === prev.workDate);
+    if (dayIndex === -1) continue;
+
+    const targetDate = currentDays[dayIndex].key;
+    const typeIds = prev.unitTypeIds || (prev.unitTypeId ? [prev.unitTypeId] : [1, 2]);
+
+    try {
+      await createShiftAssignment({
+        staffId: prev.staffId,
+        unitTypeIds: typeIds,
+        shifts: [prev.shift],
+        workDate: targetDate,
+      });
+      copiedCount++;
+    } catch {
+      skippedCount++;
+    }
+  }
+
+  return { copiedCount, skippedCount, total: prevShifts.length };
 }

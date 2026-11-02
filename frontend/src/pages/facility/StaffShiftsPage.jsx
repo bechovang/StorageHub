@@ -1,49 +1,68 @@
 import {
-  Clock,
   WarningCircle,
   CheckCircle,
   X,
+  FloppyDisk,
+  ArrowCounterClockwise,
+  Spinner,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
 import {
-  DAYS_OF_WEEK,
-  UNIT_TYPES,
-  } from "../../services/shiftService.js";
-import {
   useStaffShifts,
   ShiftKpiGrid,
-  ShiftAssignmentForm,
-  WeeklyScheduleTable,
+  ShiftToolbar,
+  ShiftFirstScheduleTable,
+  ShiftFillPopover,
+  StaffWorkloadBar,
 } from "../../features/shifts/index.js";
 import "./StaffShiftsPage.css";
 
 export default function StaffShiftsPage() {
   const {
-    selectedStaffId,
-    setSelectedStaffId,
-    selectedTypeIds,
-    setSelectedTypeIds,
-    selectedShifts,
-    setSelectedShifts,
-    selectedDate,
-    setSelectedDate,
+    error,
+    saving,
+    weekOffset,
+    weekDays,
+    weekLabel,
+    handlePrevWeek,
+    handleNextWeek,
+    handleCurrentWeek,
     searchTerm,
     setSearchTerm,
+    selectedTypeFilter,
+    setSelectedTypeFilter,
+    highlightedStaffId,
+    setHighlightedStaffId,
     toast,
     setToast,
     staffRoster,
     staffList,
     allShifts,
     totalConflicts,
-    liveConflict,
-    handleSaveAssignment,
+    shiftGrid,
+    activeFillPopover,
+    handleOpenFillPopover,
+    handleCloseFillPopover,
+    handleSaveFill,
     handleRemoveShift,
+    handleCopyPreviousWeek,
+    copying,
+    hasPendingChanges,
+    pendingCount,
+    handleConfirmSave,
+    handleRevertChanges,
   } = useStaffShifts();
 
   return (
     <AppShell>
       <div className="staff-shifts-page">
         {/* Toast thông báo */}
+        {error && (
+          <div className="shifts-toast shifts-toast--error" role="alert" style={{ top: "76px" }}>
+            <WarningCircle size={20} weight="fill" />
+            <span>{error}</span>
+          </div>
+        )}
         {toast && (
           <div className={`shifts-toast shifts-toast--${toast.type}`} role="alert">
             {toast.type === "error" ? (
@@ -62,54 +81,98 @@ export default function StaffShiftsPage() {
           </div>
         )}
 
-        
-
-        {/* ── Main Canvas ── */}
         <div className="shifts-container">
-          {/* Header & Controls */}
+          {/* Header & Title */}
           <header className="shifts-header">
             <div>
               <div className="shifts-breadcrumb">
                 <span>Vận hành cơ sở</span>
                 <span className="shifts-breadcrumb__sep">/</span>
-                <span className="shifts-breadcrumb__curr">Lịch trực nhân viên</span>
+                <span className="shifts-breadcrumb__curr">Lịch phân ca</span>
               </div>
               <h1 className="shifts-title">Phân công ca trực & Rà soát xung đột</h1>
               <p className="shifts-subtitle">
-                Phân công ca trực theo loại kho và tự động phát hiện lịch trực bị trùng.
+                Điều phối ca làm việc cơ sở theo tuần, đảm bảo tối đa 4 nhân viên/ca trông coi các nhóm kho và rà soát chồng chéo lịch trực.
               </p>
             </div>
           </header>
 
-          {/* ── Row 4 KPI Summary Cards ── */}
+          {/* 1. Dải thống kê mỏng (Compact Stats Strip) */}
           <ShiftKpiGrid
             totalConflicts={totalConflicts}
             staffRoster={staffRoster}
             allShifts={allShifts}
           />
 
-          {/* ── Top Assignment Form Bar ── */}
-          <ShiftAssignmentForm
-            selectedStaffId={selectedStaffId}
-            setSelectedStaffId={setSelectedStaffId}
-            selectedTypeIds={selectedTypeIds}
-            setSelectedTypeIds={setSelectedTypeIds}
-            selectedShifts={selectedShifts}
-            setSelectedShifts={setSelectedShifts}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            liveConflict={liveConflict}
-            staffList={staffList}
-            onSaveAssignment={handleSaveAssignment}
-            onResetDefaults={() => {
-              if (staffList && staffList.length > 0) setSelectedStaffId(staffList[0].id);
-              setSelectedTypeIds([UNIT_TYPES[0].id]);
-              setSelectedShifts(["MORNING"]);
-              setSelectedDate(DAYS_OF_WEEK[0].key);
-            }}
+          {/* 2. Toolbar điều hướng tuần, tìm kiếm, lọc loại kho & sao chép */}
+          <ShiftToolbar
+            weekOffset={weekOffset}
+            weekLabel={weekLabel}
+            onPrevWeek={handlePrevWeek}
+            onNextWeek={handleNextWeek}
+            onCurrentWeek={handleCurrentWeek}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedTypeFilter={selectedTypeFilter}
+            onTypeFilterChange={setSelectedTypeFilter}
+            onCopyPreviousWeek={handleCopyPreviousWeek}
+            copying={copying}
+            hasPendingChanges={hasPendingChanges}
+            pendingCount={pendingCount}
+            onConfirmSave={handleConfirmSave}
+            onRevertChanges={handleRevertChanges}
+            saving={saving}
           />
 
-          {/* ── Prominent Conflict Alert Banner (Nếu có xung đột trong lịch hiện hành) ── */}
+          {/* 3. Dải banner thông báo thay đổi chưa lưu (Staged / Draft Mode) */}
+          {hasPendingChanges && (
+            <div className="shifts-staged-banner" role="status">
+              <div className="staged-banner__left">
+                <span className="staged-banner__pulse-dot" />
+                <div>
+                  <strong className="staged-banner__title">
+                    Có {pendingCount} thay đổi phân ca chưa lưu trên bảng tuần này
+                  </strong>
+                  <p className="staged-banner__desc">
+                    Các thao tác xếp ca, gỡ người và cập nhật loại kho đang ở chế độ nháp. Bấm "Xác nhận lưu ca" để lưu vào cơ sở dữ liệu.
+                  </p>
+                </div>
+              </div>
+              <div className="staged-banner__actions">
+                <button
+                  type="button"
+                  className="btn btn--secondary staged-banner__btn-revert"
+                  onClick={handleRevertChanges}
+                  disabled={saving}
+                  title="Hủy toàn bộ thay đổi chưa lưu và khôi phục lịch gốc"
+                >
+                  <ArrowCounterClockwise size={16} />
+                  <span>Hoàn tác</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--primary staged-banner__btn-save"
+                  onClick={handleConfirmSave}
+                  disabled={saving}
+                  title="Xác nhận và lưu toàn bộ thay đổi vào cơ sở dữ liệu"
+                >
+                  {saving ? (
+                    <>
+                      <Spinner size={16} className="shifts-spinner" />
+                      <span>Đang lưu {pendingCount} ca...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FloppyDisk size={16} weight="bold" />
+                      <span>Xác nhận lưu ca ({pendingCount})</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Cảnh báo nổi bật nếu phát hiện xung đột lịch */}
           {totalConflicts > 0 && (
             <div className="conflict-banner" role="alert">
               <div className="conflict-banner__left">
@@ -118,23 +181,42 @@ export default function StaffShiftsPage() {
                 </div>
                 <div>
                   <strong className="conflict-banner__title">
-                    Phát hiện trùng lịch trực ({totalConflicts} ca):
+                    Phát hiện {totalConflicts} ca trực bị xung đột thời gian:
                   </strong>
                   <p className="conflict-banner__msg">
-                    Có ca trực bị trùng khung giờ hoặc nhân sự trong tuần. Vui lòng kiểm tra các ô màu cam trên bảng lịch bên dưới để điều chỉnh.
+                    Có nhân viên đang bị phân công 2 ca trùng nhau trong ngày. Vui lòng bấm vào thẻ nhân viên có viền đỏ bên dưới để điều chỉnh hoặc hủy ca.
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── Weekly Schedule (full width) ── */}
-          <WeeklyScheduleTable
-            staffRoster={staffRoster}
-            totalConflicts={totalConflicts}
+          {/* 5. Bảng phân ca theo Ca làm việc (Shift-First Weekly Matrix) */}
+          <ShiftFirstScheduleTable
+            weekDays={weekDays}
+            shiftGrid={shiftGrid}
+            highlightedStaffId={highlightedStaffId}
+            onOpenFillPopover={handleOpenFillPopover}
             onRemoveShift={handleRemoveShift}
           />
+
+          {/* 6. Thanh tải công việc nhân sự trong tuần (Staff Workload Bar) */}
+          <StaffWorkloadBar
+            staffRoster={staffRoster}
+            highlightedStaffId={highlightedStaffId}
+            onToggleHighlight={setHighlightedStaffId}
+          />
         </div>
+
+        {/* 7. Quick Fill Popover Modal */}
+        <ShiftFillPopover
+          activePopover={activeFillPopover}
+          staffList={staffList}
+          allShifts={allShifts}
+          onClose={handleCloseFillPopover}
+          onSaveFill={handleSaveFill}
+          onRemoveShift={handleRemoveShift}
+        />
       </div>
     </AppShell>
   );
