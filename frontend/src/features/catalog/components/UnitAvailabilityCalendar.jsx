@@ -10,7 +10,6 @@ import {
 import "./UnitAvailabilityCalendar.css";
 import {
   formatDate,
-  getTomorrowDate,
   getTodayDate,
   addDaysToDateStr,
 } from "../../../utils/formatters.js";
@@ -31,12 +30,12 @@ export default function UnitAvailabilityCalendar({
   isSoon = false,
   minDate,
 }) {
-  const tomorrowStr = getTomorrowDate();
+  const todayDefaultStr = getTodayDate();
   const effectiveMinDate =
-    isSoon && availableFromDate ? availableFromDate : minDate || tomorrowStr;
+    isSoon && availableFromDate ? availableFromDate : minDate || todayDefaultStr;
 
-  const resolvedStartDate = propStartDate || selectedDate || tomorrowStr;
-  const resolvedEndDate = propEndDate || resolvedStartDate || tomorrowStr;
+  const resolvedStartDate = propStartDate || selectedDate || todayDefaultStr;
+  const resolvedEndDate = propEndDate || resolvedStartDate || todayDefaultStr;
 
   const handleSelectStart = onSelectStartDate || onSelectDate || (() => {});
   const handleSelectEnd = onSelectEndDate || onSelectDate || (() => {});

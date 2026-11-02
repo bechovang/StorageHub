@@ -4,7 +4,7 @@ import {
   Lock,
   Clock,
 } from "@phosphor-icons/react";
-import { formatVND, formatDate, getTomorrowDate } from "../../../utils/formatters.js";
+import { formatVND, formatDate, getTodayDate } from "../../../utils/formatters.js";
 import UnitAvailabilityCalendar from "./UnitAvailabilityCalendar.jsx";
 
 export default function UnitPricingCalculator({
@@ -24,7 +24,7 @@ export default function UnitPricingCalculator({
   availableDate,
   onBookNow,
 }) {
-  const today = getTomorrowDate();
+  const today = getTodayDate();
   const invalidRange = Boolean(endDate && startDate && endDate < startDate);
 
   return (
@@ -53,7 +53,7 @@ export default function UnitPricingCalculator({
           durationDays={durationDays}
           availableFromDate={availableDate}
           isSoon={isSoon}
-          minDate={isSoon && availableDate ? availableDate : getTomorrowDate()}
+          minDate={isSoon && availableDate ? availableDate : getTodayDate()}
         />
 
         {invalidRange && (

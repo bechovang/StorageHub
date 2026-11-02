@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { getUnitDetail, getUnitQuote } from "../../../services/unitService.js";
-import { getTomorrowDate } from "../../../utils/formatters.js";
+import { getTodayDate } from "../../../utils/formatters.js";
 
 /** Số ngày thuê (inclusive) giữa 2 chuỗi ngày yyyy-MM-dd */
 export function diffDaysInclusive(start, end) {
@@ -21,7 +21,7 @@ export function useUnitDetailView() {
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Bộ chọn khoảng thời gian thuê (mô hình thuê theo ngày)
-  const [startDate, setStartDate] = useState(getTomorrowDate());
+  const [startDate, setStartDate] = useState(getTodayDate());
   const [endDate, setEndDate] = useState("");
 
   // Bảng giá minh bạch tính từ PricingEngine theo Rental Policy
@@ -40,7 +40,7 @@ export function useUnitDetailView() {
           const from =
             (typeof data.availability === "object"
               ? data.availability?.availableFromDate
-              : data.availableFrom) || getTomorrowDate();
+              : data.availableFrom) || getTodayDate();
           setStartDate(from);
           setEndDate((prev) => prev || from);
         }
