@@ -339,6 +339,10 @@ public class TaskServiceImpl implements TaskService {
             throw new com.storagehub.exception.BusinessRuleException(
                     "Chỉ có thể chuyển task cho nhân viên vận hành.");
         }
+        if (!isEligibleForPool(target, task)) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    "Nhân viên nhận không đúng ca hoặc loại kho của task.");
+        }
 
         String oldOwner = task.getAssignedStaff() != null
                 ? task.getAssignedStaff().getFullName() : "Chưa có người nhận";
