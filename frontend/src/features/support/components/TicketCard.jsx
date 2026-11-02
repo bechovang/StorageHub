@@ -8,8 +8,10 @@ import {
 export default function TicketCard({
   ticket,
   isStaffOrAdmin,
+  isManager = false,
   onResolve,
   onEscalate,
+  onDispatch,
   onShowDetail,
 }) {
   const t = ticket;
