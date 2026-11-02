@@ -1,7 +1,6 @@
 import {
   Clock,
   CaretRight,
-  CaretLeft,
   ArrowRight,
 } from "@phosphor-icons/react";
 import { TASK_TYPES } from "../../../services/taskService.js";
@@ -72,11 +71,6 @@ export function TaskCard({
         <p className="task-card__meta">
           {task.customerName} {task.dueTime ? `· Hẹn ${task.dueTime}` : ""}
         </p>
-        {!task.assignedStaff && (
-          <span className="task-card__extra-badge task-card__extra-badge--pool">
-            Chưa có người nhận
-          </span>
-        )}
         {showAssignee && task.assignedStaff?.fullName && (
           <p className="task-card__assignee">
             Phụ trách: <strong>{task.assignedStaff.fullName}</strong>
@@ -134,18 +128,6 @@ export function TaskCard({
 
         <div className="task-card__actions" onClick={(e) => e.stopPropagation()}>
           {/* Left navigation arrow */}
-          {task.status === "IN_PROGRESS" && (
-            <button
-              type="button"
-              className="card-nav-btn"
-              title="Chuyển về To do"
-              onClick={() => onMoveStatus(task, "TODO")}
-            >
-              <CaretLeft size={13} weight="bold" />
-              <span>To do</span>
-            </button>
-          )}
-
           {/* Ritual Trigger Action Buttons */}
           {task.type === "CHECK_IN" && task.status === "IN_PROGRESS" && (
             <button
@@ -212,17 +194,6 @@ export function TaskCard({
             >
               <span>Nhận việc</span>
               <CaretRight size={13} weight="bold" />
-            </button>
-          )}
-
-          {task.status === "IN_PROGRESS" && task.assignedStaff && (
-            <button
-              type="button"
-              className="card-nav-btn"
-              title="Chuyển task cho nhân viên khác"
-              onClick={() => onHandoff?.(task)}
-            >
-              <span>Chuyển</span>
             </button>
           )}
 

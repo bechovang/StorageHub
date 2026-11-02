@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   getStaffTasks,
-  claimTask,
-  handoffTask,
   updateTaskStatus,
   checkSnapBackViolation,
 } from "../../../services/taskService.js";
@@ -75,13 +73,6 @@ export function useTaskBoard({ staffId } = {}) {
   // Xử lý chuyển cột trạng thái (bằng nút hoặc drag-drop)
   const handleMoveStatus = async (task, targetStatus) => {
     try {
-      // Task pool: kéo sang IN_PROGRESS là nhận việc.
-      if (targetStatus === "IN_PROGRESS" && !task.assignedStaff) {
-        await claimTask(task.taskId);
-        await reloadTasks();
-        return;
-      }
-
       // Kiểm tra Snap-back chống Done ảo (FR-22)
       if (targetStatus === "DONE") {
         const violation = checkSnapBackViolation(task);
@@ -190,10 +181,6 @@ export function useTaskBoard({ staffId } = {}) {
     dragOverCol,
     reloadTasks,
     handleMoveStatus,
-    handleHandoff: async (task, staffId, reason) => {
-      await handoffTask(task.taskId, { staffId, reason });
-      await reloadTasks();
-    },
     handleDragStart,
     handleDragEnd,
     handleDragOver,

@@ -18,7 +18,6 @@ export function KanbanColumn({
   onOpenSupport,
   onOpenContract,
   onShowDetail,
-  onHandoff,
   showAssignee,
 }) {
   return (
@@ -67,7 +66,6 @@ export function KanbanColumn({
             onOpenSupport={onOpenSupport}
             onOpenContract={onOpenContract}
             onShowDetail={onShowDetail}
-            onHandoff={onHandoff}
             showAssignee={showAssignee}
           />
         ))}

@@ -69,25 +69,6 @@ export async function getStaffTasks(staffId) {
   return Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : [];
 }
 
-/** Staff nhận task từ pool (atomic). */
-export async function claimTask(taskId) {
-  const res = await apiClient(`/api/v1/tasks/${taskId}/claim`, { method: "POST" });
-  const data = await safeParseJson(res);
-  if (!res.ok) throw new Error(data.message || "Task đã được người khác nhận.");
-  return data;
-}
-
-/** Chuyển task cho staff khác. */
-export async function handoffTask(taskId, { staffId, reason = "" }) {
-  const res = await apiClient(`/api/v1/tasks/${taskId}/handoff`, {
-    method: "POST",
-    body: JSON.stringify({ staffId: Number(staffId), reason }),
-  });
-  const data = await safeParseJson(res);
-  if (!res.ok) throw new Error(data.message || "Không thể chuyển task.");
-  return data;
-}
-
 /**
  * Cập nhật trạng thái nhiệm vụ (To do -> In progress -> Done): PATCH /api/v1/tasks/{taskId}/status
  */
