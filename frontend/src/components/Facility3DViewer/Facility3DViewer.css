@@ -26,3 +26,5 @@
 @media (max-width: 800px) {
   .facility-3d-viewer .facility-3d-zones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.facility-3d-reset { border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 7px 11px; color: #475569; font-size: .7rem; cursor: pointer; white-space: nowrap; }
+.facility-3d-reset:hover { border-color: #94a3b8; color: #0f172a; }

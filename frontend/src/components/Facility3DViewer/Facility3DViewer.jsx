@@ -113,6 +113,7 @@ export default function Facility3DViewer({
 }) {
   const mountRef = useRef(null);
   const hoverRef = useRef(null);
+  const resetViewRef = useRef(null);
   const selectRef = useRef(onSelectUnit);
   const [activeFloor, setActiveFloor] = useState(initialFloor || 1);
   const [mode, setMode] = useState("exploded");
@@ -154,7 +155,8 @@ export default function Facility3DViewer({
 
     const camera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, 200);
     let fitSize = 21.5;
-    camera.position.set(20, 18, 26);
+    const defaultCameraPosition = new THREE.Vector3(20, 21, 27);
+    camera.position.copy(defaultCameraPosition);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -165,10 +167,23 @@ export default function Facility3DViewer({
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.target.set(0, 0, 0);
-    controls.enablePan = false;
+    controls.enablePan = true;
+    controls.screenSpacePanning = true;
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN,
+    };
     controls.minZoom = 0.5;
     controls.maxZoom = 3.0;
     controls.maxPolarAngle = Math.PI / 2.05;
+
+    const resetView = () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.set(0, 0, 0);
+      controls.update();
+    };
+    resetViewRef.current = resetView;
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xcbd5e1, 2.5));
     const sun = new THREE.DirectionalLight(0xffffff, 2.4);
@@ -332,10 +347,12 @@ export default function Facility3DViewer({
       setHover(null);
     };
 
+    const preventContextMenu = (event) => event.preventDefault();
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
     renderer.domElement.addEventListener("pointermove", onPointerMove);
     renderer.domElement.addEventListener("pointerup", onPointerUp);
     renderer.domElement.addEventListener("pointerleave", onPointerLeave);
+    renderer.domElement.addEventListener("contextmenu", preventContextMenu);
 
     const resize = () => {
       const width = mount.clientWidth;
@@ -379,6 +396,8 @@ export default function Facility3DViewer({
       renderer.domElement.removeEventListener("pointermove", onPointerMove);
       renderer.domElement.removeEventListener("pointerup", onPointerUp);
       renderer.domElement.removeEventListener("pointerleave", onPointerLeave);
+      renderer.domElement.removeEventListener("contextmenu", preventContextMenu);
+      if (resetViewRef.current === resetView) resetViewRef.current = null;
       controls.dispose();
       scene.traverse((obj) => {
         if (obj.geometry) obj.geometry.dispose();
@@ -437,6 +456,14 @@ export default function Facility3DViewer({
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          className="facility-3d-reset"
+          onClick={() => resetViewRef.current?.()}
+          title="Đưa camera về góc nhìn mặc định"
+        >
+          Căn giữa
+        </button>
         <div className="facility-3d-legend">
           {Object.entries(TYPE_COLORS).map(([name, color]) => (
             <span key={name}>
