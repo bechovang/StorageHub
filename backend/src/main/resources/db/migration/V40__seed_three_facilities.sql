@@ -1,6 +1,6 @@
 -- ============================================================================
 -- StorageHub - Demo seed: 3 facilities x (2 floors x 2 zones x 5x5 units)
--- RESET DEMO DATA. This file is loaded after V39 schema migration.
+-- RESET DEMO DATA. Runs as a Flyway migration so deploy also seeds the demo.
 -- ============================================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
