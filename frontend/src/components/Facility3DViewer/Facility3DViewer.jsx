@@ -155,8 +155,9 @@ export default function Facility3DViewer({
 
     const camera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, 200);
     let fitSize = 21.5;
-    const defaultCameraPosition = new THREE.Vector3(20, 21, 27);
-    camera.position.copy(defaultCameraPosition);
+    const modelCenter = new THREE.Vector3();
+    const cameraOffset = new THREE.Vector3(20, 21, 27);
+    camera.position.copy(cameraOffset);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -179,8 +180,8 @@ export default function Facility3DViewer({
     controls.maxPolarAngle = Math.PI / 2.05;
 
     const resetView = () => {
-      camera.position.copy(defaultCameraPosition);
-      controls.target.set(0, 0, 0);
+      camera.position.copy(modelCenter).add(cameraOffset);
+      controls.target.copy(modelCenter);
       controls.update();
     };
     resetViewRef.current = resetView;
@@ -233,7 +234,7 @@ export default function Facility3DViewer({
           const box = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.35, 0.98), material);
           box.position.set(x, floorY + 0.7, z);
           if (isSelected) box.scale.set(1.16, 1.16, 1.16);
-          box.userData = unit;
+          box.userData = { ...unit, isSelected };
 
           const edge = new THREE.LineSegments(
             new THREE.EdgesGeometry(box.geometry),
@@ -244,6 +245,13 @@ export default function Facility3DViewer({
             })
           );
           box.add(edge);
+          box.userData.hover = {
+            baseScale: box.scale.clone(),
+            baseEmissive: material.emissive.clone(),
+            baseEmissiveIntensity: material.emissiveIntensity,
+            baseEdgeColor: edge.material.color.clone(),
+            isSelected,
+          };
 
           // Dải màu loại kho + đèn trạng thái nhỏ ở mặt trước.
           const stripe = new THREE.Mesh(
@@ -304,19 +312,54 @@ export default function Facility3DViewer({
     });
 
     const bounds = new THREE.Box3().setFromObject(geometryGroup);
-    const boundsCenter = bounds.getCenter(new THREE.Vector3());
-    modelGroup.position.sub(boundsCenter);
+    bounds.getCenter(modelCenter);
     fitSize = Math.max(
       bounds.max.x - bounds.min.x,
       bounds.max.y - bounds.min.y,
       bounds.max.z - bounds.min.z
     ) * 1.28;
 
+    const pivot = new THREE.Object3D();
+    pivot.position.copy(modelCenter);
+    scene.add(pivot);
+    camera.position.copy(modelCenter).add(cameraOffset);
+    controls.target.copy(modelCenter);
+    camera.lookAt(modelCenter);
+    controls.update();
+
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
+    let hoveredBox = null;
     let downX = 0;
     let downY = 0;
     let pointerDown = false;
+
+    const clearHover = () => {
+      if (!hoveredBox) return;
+      const { baseScale, baseEmissive, baseEmissiveIntensity, baseEdgeColor } = hoveredBox.userData.hover;
+      hoveredBox.scale.copy(baseScale);
+      hoveredBox.material.emissive.copy(baseEmissive);
+      hoveredBox.material.emissiveIntensity = baseEmissiveIntensity;
+      const edge = hoveredBox.children.find((child) => child.isLineSegments);
+      if (edge) edge.material.color.copy(baseEdgeColor);
+      hoveredBox = null;
+    };
+
+    const applyHover = (box) => {
+      if (!box || box.userData.hover?.isSelected) {
+        clearHover();
+        return;
+      }
+      if (hoveredBox === box) return;
+      clearHover();
+      hoveredBox = box;
+      const typeColor = TYPE_COLORS[box.userData.typeName] || 0x64748b;
+      box.scale.copy(box.userData.hover.baseScale).multiplyScalar(1.06);
+      box.material.emissive.setHex(typeColor);
+      box.material.emissiveIntensity = 0.32;
+      const edge = box.children.find((child) => child.isLineSegments);
+      if (edge) edge.material.color.setHex(0xfbbf24);
+    };
 
     const onPointerDown = (event) => {
       pointerDown = true;
@@ -329,7 +372,12 @@ export default function Facility3DViewer({
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
       const hit = raycaster.intersectObjects(unitMeshes, false)[0];
-      const next = hit ? { ...hit.object.userData, x: event.clientX, y: event.clientY } : null;
+      applyHover(hit?.object);
+      const next = hit ? {
+        ...hit.object.userData,
+        x: event.clientX,
+        y: event.clientY,
+      } : null;
       hoverRef.current = next;
       setHover(next);
       renderer.domElement.style.cursor = hit ? "pointer" : "grab";
@@ -343,6 +391,7 @@ export default function Facility3DViewer({
       pointerDown = false;
     };
     const onPointerLeave = () => {
+      clearHover();
       hoverRef.current = null;
       setHover(null);
     };
@@ -390,6 +439,7 @@ export default function Facility3DViewer({
     animate();
 
     return () => {
+      clearHover();
       cancelAnimationFrame(frame);
       observer.disconnect();
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
