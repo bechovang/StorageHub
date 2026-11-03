@@ -20,6 +20,16 @@ public record UnitDetailResponse(
         String photoUrl,
         String dimensions,
         String security,
-        List<String> photoUrls
+        List<String> photoUrls,
+        Integer facilityId
 ) {
+    public UnitDetailResponse(
+            Long id, String code, String typeName, BigDecimal sizeM2, Integer floor,
+            String zoneCode, String facilityName, String accessType, Long baseDailyRent,
+            UnitAvailabilityResponse availability, String photoUrl, String dimensions,
+            String security, List<String> photoUrls
+    ) {
+        this(id, code, typeName, sizeM2, floor, zoneCode, facilityName, accessType,
+                baseDailyRent, availability, photoUrl, dimensions, security, photoUrls, null);
+    }
 }
