@@ -151,39 +151,6 @@ export default function UnitDetailPage() {
               />
             </article>
 
-            {/* Vị trí kho trong sơ đồ 3D cơ sở */}
-            <article className="unit-detail-card unit-detail-3d-card">
-              <div className="unit-detail-card__header">
-                <h2 className="unit-detail-card__title">
-                  VỊ TRÍ KHO TRONG CƠ SỞ
-                </h2>
-                <span className="unit-detail-badge-mono">SƠ ĐỒ 3D</span>
-              </div>
-              <div className="unit-detail-card__body">
-                <p className="unit-3d-caption">
-                  Kho <strong>{unit.code}</strong> đang được khoanh vàng trên tầng {unit.floor || 1}.
-                  Kéo để xoay, lăn chuột để zoom.
-                </p>
-                {facilityLayout ? (
-                  <Suspense fallback={<p className="unit-3d-empty">Đang tải mô hình 3D...</p>}>
-                    <Facility3DViewer
-                      layout={facilityLayout}
-                      selectedUnitId={unit.id}
-                      initialFloor={unit.floor || 1}
-                      height={420}
-                      onSelectUnit={(id) => {
-                        if (String(id) !== String(unit.id)) navigate(`/units/${id}`);
-                      }}
-                    />
-                  </Suspense>
-                ) : (
-                  <p className="unit-3d-empty">
-                    {facilityLayoutError || "Đang tải sơ đồ vị trí kho..."}
-                  </p>
-                )}
-              </div>
-            </article>
-
             {/* Thông số kỹ thuật không gian kho */}
             <article className="unit-detail-card">
               <div className="unit-detail-card__header">
@@ -260,6 +227,37 @@ export default function UnitDetailPage() {
             />
           </aside>
         </div>
+
+        {/* Vị trí kho: full-width để đọc sơ đồ 3D */}
+        <section className="unit-detail-3d-full">
+          <div className="unit-detail-card__header">
+            <div>
+              <h2 className="unit-detail-card__title">VỊ TRÍ KHO TRONG CƠ SỞ</h2>
+              <p className="unit-3d-caption">
+                Kho <strong>{unit.code}</strong> đang được khoanh vàng trên tầng {unit.floor || 1}.
+                Mô hình 2 tầng có cầu thang; kéo để xoay, lăn chuột để zoom.
+              </p>
+            </div>
+            <span className="unit-detail-badge-mono">SƠ ĐỒ 3D · 2 TẦNG</span>
+          </div>
+          {facilityLayout ? (
+            <Suspense fallback={<p className="unit-3d-empty">Đang tải mô hình 3D...</p>}>
+              <Facility3DViewer
+                layout={facilityLayout}
+                selectedUnitId={unit.id}
+                initialFloor={unit.floor || 1}
+                height={580}
+                onSelectUnit={(id) => {
+                  if (String(id) !== String(unit.id)) navigate(`/units/${id}`);
+                }}
+              />
+            </Suspense>
+          ) : (
+            <p className="unit-3d-empty">
+              {facilityLayoutError || "Đang tải sơ đồ vị trí kho..."}
+            </p>
+          )}
+        </section>
       </main>
       </div>
     </AppShell>
