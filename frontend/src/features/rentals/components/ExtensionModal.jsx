@@ -32,9 +32,17 @@ export default function ExtensionModal({
 
     // Giá thuê 1 ngày & tỷ lệ cọc (mô hình thuê theo ngày)
     const dailyRent = reservation?.quote?.dailyRent || reservation?.unit?.baseDailyRent || 0;
-    const depositRate = 0.1; // 10%
+    const depositPercent = reservation?.quote?.depositPercent ?? null;
     const currentDepositHeld = reservation?.depositAmount || 0;
     const currentDurationDays = reservation?.durationDays || 0;
+    const currentTotalRent =
+        reservation?.quote?.totalRent || dailyRent * currentDurationDays;
+    const depositRate =
+        depositPercent != null
+            ? depositPercent / 100
+            : currentTotalRent > 0 && currentDepositHeld > 0
+                ? currentDepositHeld / currentTotalRent
+                : 0;
 
     /** Số ngày thuê (inclusive) giữa 2 chuỗi ngày yyyy-MM-dd */
     const diffDaysInclusive = (start, end) => {
@@ -98,7 +106,7 @@ export default function ExtensionModal({
             topUpDeposit,
             totalPayable,
         };
-    }, [selectedDateStr, dailyRent, currentDurationDays, currentDepositHeld, currentEndDateStr]);
+    }, [selectedDateStr, dailyRent, currentDurationDays, currentDepositHeld, currentEndDateStr, depositRate]);
 
     // Chọn nhanh các gói ngày
     const handleQuickSelectDays = (days) => {
@@ -252,7 +260,7 @@ export default function ExtensionModal({
                                 </div>
                                 <div className="rd-price-row">
                                     <span>
-                                        Tiền cọc bổ sung (đạt 10% hợp đồng mới)
+                                        Tiền cọc bổ sung (đạt {depositPercent != null ? `${depositPercent}%` : "mức chính sách"} hợp đồng mới)
                                         <Info size={13} className="rd-info-icon" title="Cọc nâng từ mức cũ lên mức tương ứng với tổng giá trị hợp đồng mới" />
                                     </span>
                                     <span className="rd-topup-value">

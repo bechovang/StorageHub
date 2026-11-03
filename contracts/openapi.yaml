@@ -1817,6 +1817,8 @@ components:
         depositAmount: { type: integer, example: 103500 }
         dueNow: { type: integer, description: "Số phải trả ngay = deposit (booking)", example: 103500 }
         policyVersion: { type: string, example: v3 }
+        policyId: { type: integer, nullable: true, description: "Policy snapshot dùng cho quote" }
+        depositPercent: { type: integer, nullable: true, example: 10, description: "Tỷ lệ cọc của policy snapshot" }
 
     # --------------------------- Reservations -----------------------------
 

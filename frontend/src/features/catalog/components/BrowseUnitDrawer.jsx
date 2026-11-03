@@ -183,7 +183,7 @@ export default function BrowseUnitDrawer({
             </div>
             <div className="spec-row">
               <dt>Tiền đặt cọc (hoàn lại khi trả kho)</dt>
-              <dd>10% tổng tiền thuê (tối thiểu 5.000 ₫)</dd>
+              <dd>Theo chính sách thuê hiện hành (tối thiểu 5.000 ₫)</dd>
             </div>
             <div className="spec-row">
               <dt>Thời gian bàn giao</dt>

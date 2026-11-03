@@ -67,7 +67,8 @@ public class DepositPaymentSuccessHandler implements PaymentSuccessHandler {
                 payment.getUnit().getUnitId(),
                 payment.getStartDate(),
                 payment.getEndDate(),
-                payment.getAmount()
+                payment.getAmount(),
+                payment.getPolicy()
         );
 
         if (reservation == null) {

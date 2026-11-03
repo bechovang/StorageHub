@@ -88,7 +88,7 @@ export default function MyRentalsPage() {
             <WarningCircle size={18} weight="fill" className="my-rentals-page__alert-icon" />
             <div className="my-rentals-page__alert-content">
               Quý khách có <strong>{counts.pending}</strong> đơn đang chờ thanh toán
-              tiền cọc (10%). Vui lòng hoàn tất thanh toán trước khi hết hạn để
+              tiền cọc theo chính sách thuê. Vui lòng hoàn tất thanh toán trước khi hết hạn để
               bảo lưu quyền sử dụng kho.
             </div>
           </div>

@@ -131,6 +131,7 @@ export function useUnitDetailView() {
   const dueNow = quote?.dueNow ?? 0;
   const quoteEndDate = quote?.endDate || endDate;
   const policyVersion = quote?.policyVersion || "";
+  const depositPercent = quote?.depositPercent ?? null;
 
   return {
     unitId,
@@ -157,6 +158,7 @@ export function useUnitDetailView() {
     volumeM3,
     totalRent,
     depositAmount,
+    depositPercent,
     dueNow,
     endDate: quoteEndDate,
     policyVersion,

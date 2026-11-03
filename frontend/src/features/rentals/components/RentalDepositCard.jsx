@@ -2,6 +2,7 @@ import { Receipt } from "@phosphor-icons/react";
 import { fmtMoney } from "../../../utils/rentalConstants.js";
 
 export function RentalDepositCard({ reservation, depositText }) {
+  const depositPercent = reservation?.quote?.depositPercent ?? null;
   return (
     <article className="rd-card">
       <header className="rd-card__header">
@@ -9,7 +10,9 @@ export function RentalDepositCard({ reservation, depositText }) {
           <Receipt size={18} weight="bold" />
           <h2 className="rd-card__title">Tiền cọc &amp; Ký quỹ</h2>
         </div>
-        <span className="rd-card__sub-badge">10% GIỮ CHỖ</span>
+        <span className="rd-card__sub-badge">
+          {depositPercent != null ? `${depositPercent}% GIỮ CHỖ` : "GIỮ CHỖ THEO CHÍNH SÁCH"}
+        </span>
       </header>
 
       <div className="rd-card__body">

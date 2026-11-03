@@ -80,6 +80,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final TransactionTemplate transactionTemplate;
     private final com.storagehub.service.PricingEngine pricingEngine;
     private final ExtensionService extensionService;
+    private final com.storagehub.repository.RentalPolicyRepository rentalPolicyRepository;
     @org.springframework.beans.factory.annotation.Value("${payment.demo.skip-enabled:false}")
     private boolean demoSkipEnabled;
 
@@ -93,7 +94,8 @@ public class PaymentServiceImpl implements PaymentService {
             PlatformTransactionManager transactionManager,
             com.storagehub.service.PricingEngine pricingEngine,
             ExtensionService extensionService,
-            ReservationService reservationService
+            ReservationService reservationService,
+            com.storagehub.repository.RentalPolicyRepository rentalPolicyRepository
     ) {
         this.paymentRepository = paymentRepository;
         this.unitRepository = unitRepository;
@@ -105,6 +107,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.pricingEngine = pricingEngine;
         this.extensionService = extensionService;
+        this.rentalPolicyRepository = rentalPolicyRepository;
     }
 
     @Override
@@ -152,11 +155,15 @@ public class PaymentServiceImpl implements PaymentService {
 
             com.storagehub.dto.quote.QuoteResponse quote = pricingEngine.calculateQuote(
                     unit, request.startDate(), request.endDate());
+            com.storagehub.entity.RentalPolicy policy = quote.policyId() == null
+                    ? null
+                    : rentalPolicyRepository.findById(quote.policyId()).orElse(null);
 
             return createWithRetry(
                     payer, null, unit,
                     request.startDate(), quote.endDate(),
                     java.math.BigDecimal.valueOf(quote.depositAmount()),
+                    policy,
                     request);
         }
 
@@ -216,7 +223,7 @@ public class PaymentServiceImpl implements PaymentService {
                             "Chưa có yêu cầu gia hạn nào chờ thanh toán — hãy tạo gia hạn trước."));
         }
 
-        return createWithRetry(payer, reservation, null, null, null, null, request);
+        return createWithRetry(payer, reservation, null, null, null, null, null, request);
     }
 
     private PaymentSessionResponse createWithRetry(
@@ -226,6 +233,7 @@ public class PaymentServiceImpl implements PaymentService {
             LocalDate startDate,
             LocalDate endDate,
             java.math.BigDecimal depositAmount,
+            com.storagehub.entity.RentalPolicy policy,
             CreatePaymentRequest request
     ) {
         for (int attempt = 0; attempt < 3; attempt++) {
@@ -252,6 +260,7 @@ public class PaymentServiceImpl implements PaymentService {
                     }
                     payment.setPurpose(request.purpose());
                     payment.setMethod(request.method());
+                    payment.setPolicy(policy);
                     // AD-11: server tính từ quote snapshot — FE không gửi được amount.
                     payment.setAmount(managedRes != null
                             ? resolveAmount(managedRes, request.purpose())

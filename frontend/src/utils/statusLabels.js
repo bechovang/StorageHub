@@ -74,7 +74,7 @@ export const PAYMENT_STATUS_LABELS = {
 
 export const DEPOSIT_STATUS_LABELS = {
   PENDING: "Chờ thanh toán cọc",
-  HELD: "Đang giữ ký quỹ (10%)",
+  HELD: "Đang giữ ký quỹ",
   SETTLED: "Đã tất toán hoàn cọc",
   FORFEITED: "Không hoàn cọc (quá hạn)",
 };

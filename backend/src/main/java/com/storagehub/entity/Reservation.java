@@ -55,6 +55,11 @@ public class Reservation {
     @JoinColumn(name = "unit_id")
     private Unit unit;
 
+    /** Policy snapshot dùng lúc quote/đặt cọc. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "policy_id")
+    private RentalPolicy policy;
+
     /** Ngày bắt đầu (đã cộng turnover buffer) — ngữ nghĩa ICT (AD-7). */
     private LocalDate startDate;
 

@@ -37,9 +37,26 @@ public class PricingEngine {
         if (endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu");
         }
-
         RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
                 .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
+        return calculateQuote(unit, startDate, endDate, activePolicy);
+    }
+
+    /** Tính quote theo đúng policy snapshot (reservation/contract), không dùng active. */
+    public QuoteResponse calculateQuote(
+            Unit unit,
+            LocalDate startDate,
+            LocalDate endDate,
+            RentalPolicy policy
+    ) {
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu");
+        }
+
+        RentalPolicy activePolicy = policy != null
+                ? policy
+                : rentalPolicyRepository.findByStatus(1)
+                    .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
 
         List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
 
@@ -84,7 +101,9 @@ public class PricingEngine {
                 totalRent,
                 depositAmount,
                 dueNow,
-                activePolicy.getVersion()
+                activePolicy.getVersion(),
+                activePolicy.getPolicyId(),
+                depositPercent
         );
     }
 }

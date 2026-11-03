@@ -72,7 +72,8 @@ class PaymentWebhookServiceTest {
                 transactionManager,
                 mock(PricingEngine.class),
                 mock(ExtensionService.class),
-                mock(ReservationService.class)
+                mock(ReservationService.class),
+                mock(com.storagehub.repository.RentalPolicyRepository.class)
         );
 
         Reservation reservation = new Reservation();

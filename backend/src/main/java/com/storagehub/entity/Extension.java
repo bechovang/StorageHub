@@ -41,6 +41,11 @@ public class Extension {
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
+    /** Policy snapshot của hợp đồng gốc. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "policy_id")
+    private RentalPolicy policy;
+
     private LocalDate oldEndDate;
 
     private LocalDate newEndDate;

@@ -88,6 +88,8 @@ class PricingEngineTest {
         assertThat(quote.depositAmount()).isEqualTo(14500L);
         assertThat(quote.dueNow()).isEqualTo(14500L);
         assertThat(quote.policyVersion()).isEqualTo("v3");
+        assertThat(quote.policyId()).isEqualTo(2);
+        assertThat(quote.depositPercent()).isEqualTo(10);
 
         assertThat(quote.lines()).hasSize(2);
         QuoteLineResponse rentLine = quote.lines().get(0);
@@ -101,6 +103,36 @@ class PricingEngineTest {
         assertThat(depositLine.code()).isEqualTo("DEPOSIT_RATE");
         assertThat(depositLine.amount()).isEqualTo(14500L);
         assertThat(depositLine.refundable()).isTrue();
+    }
+
+    @Test
+    @DisplayName("calculateQuote theo policy snapshot dùng đúng deposit rate của policy đó")
+    void testCalculateQuote_PolicySnapshot() {
+        RentalPolicy snapshot = new RentalPolicy();
+        snapshot.setPolicyId(1);
+        snapshot.setVersion("v2");
+        snapshot.setStatus(0);
+
+        PolicyRule rentRule = new PolicyRule();
+        rentRule.setType(typeS);
+        rentRule.setRuleType(PolicyRule.RuleType.RENT_RATE);
+        rentRule.setValue(new BigDecimal("5000"));
+
+        PolicyRule depositRule = new PolicyRule();
+        depositRule.setType(typeS);
+        depositRule.setRuleType(PolicyRule.RuleType.DEPOSIT_RATE);
+        depositRule.setValue(new BigDecimal("50"));
+
+        when(policyRuleRepository.findByPolicy_PolicyId(1)).thenReturn(List.of(rentRule, depositRule));
+
+        QuoteResponse quote = pricingEngine.calculateQuote(
+                unit, LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 4), snapshot);
+
+        assertThat(quote.totalRent()).isEqualTo(10000L);
+        assertThat(quote.depositAmount()).isEqualTo(5000L);
+        assertThat(quote.depositPercent()).isEqualTo(50);
+        assertThat(quote.policyId()).isEqualTo(1);
+        assertThat(quote.policyVersion()).isEqualTo("v2");
     }
 
     @Test

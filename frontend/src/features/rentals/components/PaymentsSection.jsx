@@ -18,7 +18,7 @@ export function PaymentsSection({ payments = [] }) {
   };
 
   const purposeLabel = {
-    DEPOSIT: "Tiền cọc (10%)",
+    DEPOSIT: "Tiền cọc",
     RENT: "Tiền thuê kho",
     EXTENSION_FEE: "Phí gia hạn",
     DAMAGE_FEE: "Bồi thường hư hại",

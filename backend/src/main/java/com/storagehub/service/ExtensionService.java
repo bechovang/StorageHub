@@ -4,6 +4,7 @@ import com.storagehub.dto.extension.ExtensionQuoteResponse;
 import com.storagehub.dto.quote.QuoteResponse;
 import com.storagehub.entity.Extension;
 import com.storagehub.entity.PolicyRule;
+import com.storagehub.entity.Contract;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Unit;
@@ -11,6 +12,7 @@ import com.storagehub.entity.User;
 import com.storagehub.exception.InvalidCredentialsException;
 import com.storagehub.exception.ReservationInvalidStateException;
 import com.storagehub.exception.ReservationNotFoundException;
+import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.ExtensionRepository;
 import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
@@ -53,6 +55,7 @@ public class ExtensionService {
 
     private final ExtensionRepository extensionRepository;
     private final ReservationRepository reservationRepository;
+    private final ContractRepository contractRepository;
     private final UserRepository userRepository;
     private final RentalPolicyRepository rentalPolicyRepository;
     private final PolicyRuleRepository policyRuleRepository;
@@ -113,15 +116,19 @@ public class ExtensionService {
 
         int addedDays = (int) ChronoUnit.DAYS.between(reservation.getEndDate(), newEndDate);
 
-        // Tổng tiền thuê hiện tại + kỳ thêm đều recompute theo policy active (AD-11).
+        // Gia hạn bám policy snapshot của hợp đồng gốc, không dùng active.
+        Contract contract = contractRepository
+                .findByReservation_ReservationIdAndIsLatestTrue(reservation.getReservationId())
+                .orElse(null);
+        RentalPolicy policy = contract != null ? contract.getPolicy() : null;
         QuoteResponse originalQuote = pricingEngine.calculateQuote(
-                unit, reservation.getStartDate(), reservation.getEndDate());
+                unit, reservation.getStartDate(), reservation.getEndDate(), policy);
         QuoteResponse extensionQuote = pricingEngine.calculateQuote(
-                unit, reservation.getEndDate().plusDays(1), newEndDate);
+                unit, reservation.getEndDate().plusDays(1), newEndDate, policy);
 
         long addedRent = extensionQuote.totalRent();
         long newTotalRent = originalQuote.totalRent() + addedRent;
-        int depositPercent = depositPercentFor(unit);
+        int depositPercent = depositPercentFor(unit, policy);
         long newDepositHeld = (newTotalRent * depositPercent) / 100;
 
         long depositHeld = reservation.getDepositAmount().longValueExact();
@@ -188,6 +195,9 @@ public class ExtensionService {
                 .orElseGet(() -> {
                     Extension created = new Extension();
                     created.setReservation(reservation);
+                    created.setPolicy(contractRepository
+                            .findByReservation_ReservationIdAndIsLatestTrue(reservationId)
+                            .map(c -> c.getPolicy()).orElse(null));
                     created.setOldEndDate(reservation.getEndDate());
                     created.setNewEndDate(newEndDate);
                     created.setExtensionFee(BigDecimal.valueOf(breakdown.addedRent()));
@@ -233,10 +243,12 @@ public class ExtensionService {
     }
 
     /** Deposit% theo unit type từ policy active — cùng logic PricingEngine. */
-    private int depositPercentFor(Unit unit) {
+    private int depositPercentFor(Unit unit, RentalPolicy policy) {
         int depositPercent = 10;
-        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
-                .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
+        RentalPolicy activePolicy = policy != null
+                ? policy
+                : rentalPolicyRepository.findByStatus(1)
+                    .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
         Integer typeId = unit.getType().getTypeId();
         for (PolicyRule r : policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId())) {
             if (r.getType().getTypeId().equals(typeId)
