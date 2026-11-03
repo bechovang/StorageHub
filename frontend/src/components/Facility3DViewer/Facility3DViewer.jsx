@@ -237,10 +237,10 @@ export default function Facility3DViewer({
           const isSelected = selectedUnitId != null && String(unit.id) === String(selectedUnitId);
           const typeColor = TYPE_COLORS[unit.typeName] || 0x94a3b8;
           const bodyColor = new THREE.Color(typeColor).lerp(new THREE.Color(0xffffff), 0.68);
-          const dim = selectedUnitId ? (isSelected ? 0 : (isActive ? 0.38 : 0.12)) : 1;
+          const dim = selectedUnitId ? (isSelected ? 1 : (isActive ? 0.48 : 0.14)) : 1;
 
           const material = new THREE.MeshStandardMaterial({
-            color: bodyColor,
+            color: isSelected ? 0xf59e0b : bodyColor,
             roughness: 0.58,
             metalness: 0.05,
             transparent: dim < 1,
