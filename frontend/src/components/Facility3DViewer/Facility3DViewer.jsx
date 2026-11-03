@@ -84,13 +84,10 @@ function buildFloorShell(floorY, floorNumber, opacity = 1) {
     group.add(side);
   }
 
-  const floorLabel = makeLabel(`TẦNG ${floorNumber}`, "#334155", [2.4, 0.6]);
-  floorLabel.position.set(-9.7, floorY + 0.5, 3.9);
-  group.add(floorLabel);
   return group;
 }
 
-function addZonePlate(scene, zone, zoneIndex, floorY, opacity) {
+function addZonePlate(parent, zone, zoneIndex, floorY, opacity) {
   const color = TYPE_COLORS[zone.typeName] || 0x64748b;
   const plate = new THREE.Mesh(
     new THREE.BoxGeometry(7.2, 0.035, 7.2),
@@ -102,11 +99,7 @@ function addZonePlate(scene, zone, zoneIndex, floorY, opacity) {
     })
   );
   plate.position.set(zoneIndex === 0 ? -4.2 : 4.2, floorY + 0.015, 0);
-  scene.add(plate);
-
-  const label = makeLabel(`${zone.code} · ${zone.typeName}`, `#${color.toString(16).padStart(6, "0")}`, [3.8, 0.64]);
-  label.position.set(zoneIndex === 0 ? -4.2 : 4.2, floorY + 1.6, 4.55);
-  scene.add(label);
+  parent.add(plate);
 }
 
 export default function Facility3DViewer({
@@ -153,9 +146,16 @@ export default function Facility3DViewer({
     let selectedRing = null;
     let selectedLabel = null;
 
+    const modelGroup = new THREE.Group();
+    const geometryGroup = new THREE.Group();
+    const labelGroup = new THREE.Group();
+    modelGroup.add(geometryGroup, labelGroup);
+    scene.add(modelGroup);
+
     const camera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, 200);
-    camera.position.set(20, 19, 26);
-    camera.lookAt(0, floorGap * 0.45, 0);
+    let fitSize = 21.5;
+    camera.position.set(20, 18, 26);
+    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -164,7 +164,7 @@ export default function Facility3DViewer({
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.target.set(0, floorGap * 0.45, 0);
+    controls.target.set(0, 0, 0);
     controls.enablePan = false;
     controls.minZoom = 0.5;
     controls.maxZoom = 3.0;
@@ -180,10 +180,21 @@ export default function Facility3DViewer({
       const floorY = isUpper ? floorGap : 0;
       const isActive = Number(floorData.floor) === Number(active);
       const opacity = selectedUnitId && !isActive ? 0.2 : 1;
-      scene.add(buildFloorShell(floorY, floorData.floor, opacity));
+      geometryGroup.add(buildFloorShell(floorY, floorData.floor, opacity));
+
+      const floorLabel = makeLabel(`TẦNG ${floorData.floor}`, "#334155", [2.4, 0.6]);
+      floorLabel.position.set(-9.7, floorY + 0.5, 3.9);
+      labelGroup.add(floorLabel);
 
       floorData.zones.forEach((zone, zoneIndex) => {
-        addZonePlate(scene, zone, zoneIndex, floorY, opacity);
+        addZonePlate(geometryGroup, zone, zoneIndex, floorY, opacity);
+        const zoneLabel = makeLabel(
+          `${zone.code} · ${zone.typeName}`,
+          `#${(TYPE_COLORS[zone.typeName] || 0x64748b).toString(16).padStart(6, "0")}`,
+          [3.8, 0.64]
+        );
+        zoneLabel.position.set(zoneIndex === 0 ? -4.2 : 4.2, floorY + 1.6, 4.55);
+        labelGroup.add(zoneLabel);
         zone.units.forEach((unit) => {
           const row = Number(unit.row) || 1;
           const col = Number(unit.col) || 1;
@@ -237,7 +248,7 @@ export default function Facility3DViewer({
           statusLight.position.set(0.36, 0.44, 0.505);
           box.add(statusLight);
 
-          scene.add(box);
+          geometryGroup.add(box);
           unitMeshes.push(box);
 
           if (isSelected) {
@@ -245,7 +256,7 @@ export default function Facility3DViewer({
             selectedLabel = makeLabel(`KHO ${unit.code}`, "#b45309", [2.9, 0.68]);
             selectedLabel.position.set(x, floorY + 2.2, z);
             selectedLabel.userData.baseY = selectedLabel.position.y;
-            scene.add(selectedLabel);
+            labelGroup.add(selectedLabel);
 
             const ring = new THREE.Mesh(
               new THREE.RingGeometry(0.78, 0.98, 40),
@@ -258,7 +269,7 @@ export default function Facility3DViewer({
             );
             ring.rotation.x = -Math.PI / 2;
             ring.position.set(x, floorY + 0.03, z);
-            scene.add(ring);
+            geometryGroup.add(ring);
             selectedRing = ring;
 
             const beam = new THREE.Mesh(
@@ -271,11 +282,20 @@ export default function Facility3DViewer({
               })
             );
             beam.position.set(x, floorY + 1.6, z);
-            scene.add(beam);
+            geometryGroup.add(beam);
           }
         });
       });
     });
+
+    const bounds = new THREE.Box3().setFromObject(geometryGroup);
+    const boundsCenter = bounds.getCenter(new THREE.Vector3());
+    modelGroup.position.sub(boundsCenter);
+    fitSize = Math.max(
+      bounds.max.x - bounds.min.x,
+      bounds.max.y - bounds.min.y,
+      bounds.max.z - bounds.min.z
+    ) * 1.28;
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -322,7 +342,7 @@ export default function Facility3DViewer({
       const heightPx = mount.clientHeight;
       renderer.setSize(width, heightPx, false);
       const aspect = width / Math.max(heightPx, 1);
-      const size = 21.5;
+      const size = fitSize;
       camera.left = (-size * aspect) / 2;
       camera.right = (size * aspect) / 2;
       camera.top = size / 2;
