@@ -2,8 +2,15 @@ package com.storagehub.service;
 
 import com.storagehub.dto.facility.FacilityDrilldownResponse;
 import com.storagehub.dto.facility.FacilityOverviewResponse;
+import com.storagehub.dto.facility.FacilitySummaryResponse;
+import com.storagehub.dto.facility.FacilityLayoutResponse;
 
 public interface FacilityService {
+
+    /** Danh sách cơ sở đang hoạt động cho bộ chọn địa chỉ. */
+    java.util.List<FacilitySummaryResponse> listActiveFacilities();
+
+    FacilityLayoutResponse getLayout(Integer facilityId);
 
     /**
      * Lấy dữ liệu tổng quan cơ sở vật chất và chỉ số vận hành (FR-32).

@@ -47,6 +47,11 @@ public class User {
     @JoinColumn(name = "facility_id")
     private Facility facility;
 
+    /** Staff owner của một loại kho; manager/admin để null. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_type_id")
+    private UnitType unitType;
+
     /** 0 = off, 1 = active, 2 = locked — filter kiểm tra mỗi request, token của tài khoản lock hết hiệu lực ngay (AD-5). */
     @JdbcTypeCode(SqlTypes.TINYINT)
     private Integer status;

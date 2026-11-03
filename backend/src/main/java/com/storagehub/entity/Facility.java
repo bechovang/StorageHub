@@ -21,11 +21,18 @@ public class Facility {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer facilityId;
 
+    /** Mã ngắn dùng cho unit code: TB/TD/BT. */
+    private String code;
+
     private String name;
+
+    private String description;
 
     private String address;
 
     private String phone;
+
+    private String photoUrl;
 
     /** 0 = đóng cửa, 1 = hoạt động. */
     @JdbcTypeCode(SqlTypes.TINYINT)

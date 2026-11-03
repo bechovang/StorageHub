@@ -164,10 +164,11 @@ public class ReservationService {
         }
 
         Unit unit = reservation.getUnit();
-        Long baseDailyRent = policyRuleRepository.findActivePolicyRule(
-                unit.getType(),
-                PolicyRule.RuleType.RENT_RATE
-        ).map(pr -> pr.getValue().longValue()).orElse(null);
+        QuoteResponse dailyQuote = pricingEngine.calculateQuote(
+                unit, reservation.getStartDate(), reservation.getEndDate());
+        Long baseDailyRent = dailyQuote.durationDays() > 0
+                ? dailyQuote.totalRent() / dailyQuote.durationDays()
+                : null;
 
         UnitAvailabilityResponse availability = new UnitAvailabilityResponse(
                 "AVAILABLE",
@@ -386,10 +387,7 @@ public class ReservationService {
 
         Long baseDailyRent = (quote != null && quote.durationDays() > 0)
                 ? (quote.totalRent() / quote.durationDays())
-                : policyRuleRepository.findActivePolicyRule(
-                        unit.getType(),
-                        PolicyRule.RuleType.RENT_RATE
-                ).map(r -> r.getValue().longValue()).orElse(0L);
+                : 0L;
 
         UnitAvailabilityResponse availability = new UnitAvailabilityResponse(
                 unit.getStatus() == Unit.Status.AVAILABLE ? "AVAILABLE" : unit.getStatus().name(),

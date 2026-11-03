@@ -55,6 +55,12 @@ public class Unit {
 
     private Integer floor;
 
+    /** Vị trí trong lưới 5x5 của zone (1..5). */
+    private Integer gridRow;
+
+    /** Vị trí trong lưới 5x5 của zone (1..5). */
+    private Integer gridCol;
+
     /**
      * Kiểu mở cửa: PIN / QR / smart lock.
      * Map String (không enum) vì dữ liệu seed dùng 'smart lock' thường, có dấu cách —

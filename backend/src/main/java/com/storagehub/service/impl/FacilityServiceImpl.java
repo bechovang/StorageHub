@@ -3,6 +3,8 @@ package com.storagehub.service.impl;
 import com.storagehub.dto.facility.FacilityDrilldownItem;
 import com.storagehub.dto.facility.FacilityDrilldownResponse;
 import com.storagehub.dto.facility.FacilityOverviewResponse;
+import com.storagehub.dto.facility.FacilitySummaryResponse;
+import com.storagehub.dto.facility.FacilityLayoutResponse;
 import com.storagehub.entity.*;
 import com.storagehub.repository.*;
 import com.storagehub.service.FacilityService;
@@ -24,6 +26,7 @@ public class FacilityServiceImpl implements FacilityService {
     private final TaskRepository taskRepository;
     private final SupportTicketRepository supportTicketRepository;
     private final PolicyRuleRepository policyRuleRepository;
+    private final FacilityRepository facilityRepository;
 
     public FacilityServiceImpl(
             UnitRepository unitRepository,
@@ -31,7 +34,8 @@ public class FacilityServiceImpl implements FacilityService {
             ReservationRepository reservationRepository,
             TaskRepository taskRepository,
             SupportTicketRepository supportTicketRepository,
-            PolicyRuleRepository policyRuleRepository
+            PolicyRuleRepository policyRuleRepository,
+            FacilityRepository facilityRepository
     ) {
         this.unitRepository = unitRepository;
         this.unitTypeRepository = unitTypeRepository;
@@ -39,6 +43,63 @@ public class FacilityServiceImpl implements FacilityService {
         this.taskRepository = taskRepository;
         this.supportTicketRepository = supportTicketRepository;
         this.policyRuleRepository = policyRuleRepository;
+        this.facilityRepository = facilityRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FacilityLayoutResponse getLayout(Integer facilityId) {
+        Facility facility = facilityRepository.findById(facilityId)
+                .orElseThrow(() -> new IllegalArgumentException("Cơ sở không tồn tại: " + facilityId));
+        List<Unit> units = unitRepository.findLayoutByFacility(facilityId);
+
+        Map<Integer, Map<String, List<Unit>>> byFloor = new TreeMap<>();
+        for (Unit unit : units) {
+            byFloor.computeIfAbsent(unit.getFloor(), f -> new LinkedHashMap<>())
+                    .computeIfAbsent(unit.getZone().getCode(), z -> new ArrayList<>())
+                    .add(unit);
+        }
+
+        List<FacilityLayoutResponse.Floor> floors = byFloor.entrySet().stream()
+                .map(floorEntry -> {
+                    List<FacilityLayoutResponse.Zone> zones = floorEntry.getValue().entrySet().stream()
+                            .map(zoneEntry -> {
+                                List<Unit> zoneUnits = zoneEntry.getValue();
+                                String typeName = zoneUnits.isEmpty() ? null
+                                        : zoneUnits.get(0).getType().getName();
+                                List<FacilityLayoutResponse.UnitCell> cells = zoneUnits.stream()
+                                        .map(u -> new FacilityLayoutResponse.UnitCell(
+                                                u.getUnitId(), u.getCode(), u.getGridRow(), u.getGridCol(),
+                                                u.getStatus().name(), u.getType().getName(),
+                                                u.getSizeM2() == null ? null : u.getSizeM2().intValue()))
+                                        .toList();
+                                return new FacilityLayoutResponse.Zone(zoneEntry.getKey(), typeName, cells);
+                            })
+                            .toList();
+                    return new FacilityLayoutResponse.Floor(floorEntry.getKey(), zones);
+                })
+                .toList();
+
+        return new FacilityLayoutResponse(
+                facility.getFacilityId(), facility.getName(), facility.getAddress(), floors);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FacilitySummaryResponse> listActiveFacilities() {
+        return facilityRepository.findByStatusOrderByFacilityIdAsc(1).stream()
+                .map(f -> new FacilitySummaryResponse(
+                        f.getFacilityId(),
+                        f.getCode(),
+                        f.getName(),
+                        f.getDescription(),
+                        f.getAddress(),
+                        f.getPhone(),
+                        f.getPhotoUrl(),
+                        unitRepository.countByZone_Facility_FacilityIdAndStatusNot(
+                                f.getFacilityId(), Unit.Status.RETIRED)
+                ))
+                .toList();
     }
 
     @Override

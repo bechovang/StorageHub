@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ListChecks,
   WarningCircle,
@@ -34,6 +34,14 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
     task?.ritual?.damageCharges || []
   );
 
+  const assets = task?.assets || [];
+  const [assetChecks, setAssetChecks] = useState({});
+  useEffect(() => {
+    setAssetChecks(
+      Object.fromEntries((task?.assets || []).map((asset) => [String(asset.assetId), "OK"]))
+    );
+  }, [task?.taskId]);
+
   const [newChargeItem, setNewChargeItem] = useState("");
   const [newChargeAmount, setNewChargeAmount] = useState("");
   const [newChargeReason, setNewChargeReason] = useState("");
@@ -59,6 +67,8 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const extraDue = Math.max(0, totalCharges - depositHeld);
 
   const isChecklistAllOk = Object.values(checklist).every((val) => val === "OK");
+  const assetsAllChecked = assets.every((asset) => Boolean(assetChecks[String(asset.assetId)]));
+  const assetsAllOk = assets.every((asset) => assetChecks[String(asset.assetId)] === "OK");
 
   // Xử lý đọc file ảnh thật từ máy/thiết bị
   const handleSettlementFileSelect = (e) => {
@@ -110,6 +120,11 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
       return;
     }
 
+    if (!assetsAllChecked) {
+      showToast?.("Vui lòng kiểm tra đầy đủ thiết bị trong kho trước khi tất toán.", "warning");
+      return;
+    }
+
     // Bắt buộc minh chứng ảnh đối soát tiền hoàn hoặc tiền thu thêm
     if (!settlementPhotoUrl) {
       if (refundAmount > 0) {
@@ -140,6 +155,11 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
         extraCharged: extraDue,
         settlementMethod,
         settlementPhotoUrl,
+        assetChecks: assets.map((asset) => ({
+          assetId: asset.assetId,
+          result: assetChecks[String(asset.assetId)] || "OK",
+          note: "",
+        })),
       });
 
       const messageDetail =
@@ -177,7 +197,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
       >
         <div className="ritual-flow">
           {/* ── BƯỚC 1: KIỂM TRA HIỆN TRẠNG & THU HỒI TÀI SẢN ── */}
-          <div className={`ritual-step-card ${isChecklistAllOk ? "is-completed" : "needs-attention"}`}>
+          <div className={`ritual-step-card ${isChecklistAllOk && assetsAllOk ? "is-completed" : "needs-attention"}`}>
             <div className="ritual-step-header">
               <span className="ritual-step-title">
                 <ListChecks size={18} weight="bold" />
@@ -241,6 +261,57 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 ))}
               </tbody>
             </table>
+
+            {assets.length > 0 && (
+              <>
+                <div className="ritual-step-title" style={{ marginTop: 18, fontSize: "0.86rem" }}>
+                  Thiết bị trong kho ({assets.length})
+                </div>
+                <table className="inspection-table">
+                  <thead>
+                    <tr>
+                      <th>Thiết bị</th>
+                      <th>Tình trạng</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assets.map((asset) => (
+                      <tr key={asset.assetId}>
+                        <td>
+                          <strong>{asset.name || asset.code}</strong>
+                          <small style={{ display: "block", color: "#64748b" }}>
+                            {asset.code} · Serial {asset.serialNo || "—"}
+                          </small>
+                        </td>
+                        <td>
+                          <div className="inspection-radio-group">
+                            {[
+                              ["OK", "OK"],
+                              ["MINOR", "Hư hại nhẹ"],
+                              ["MAJOR", "Nghiêm trọng"],
+                            ].map(([value, label]) => (
+                              <label className="inspection-radio-label" key={value}>
+                                <input
+                                  type="radio"
+                                  name={`asset-${asset.assetId}`}
+                                  value={value}
+                                  checked={assetChecks[String(asset.assetId)] === value}
+                                  onChange={() => setAssetChecks({
+                                    ...assetChecks,
+                                    [String(asset.assetId)]: value,
+                                  })}
+                                />
+                                <span>{label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
           </div>
 
           {/* ── BƯỚC 2: KÊ KHAI PHỤ PHÍ HƯ HẠI (BẮT BUỘC LÝ DO) ── */}

@@ -13,6 +13,8 @@ export default function BrowsePage() {
   const { user } = useAuth();
   const {
     filterOptions,
+    selectedFacility,
+    setSelectedFacility,
     selectedType,
     setSelectedType,
     selectedSize,
@@ -39,6 +41,7 @@ export default function BrowsePage() {
     handleViewDetails,
     handleBook,
     activeTypeName,
+    activeFacilityName,
   } = useBrowseUnits();
 
   return (
@@ -56,6 +59,16 @@ export default function BrowsePage() {
                 Kho tự quản sạch sẽ, an ninh 24/7, ra vào chủ động bằng mã PIN
                 riêng.
               </p>
+              <button
+                type="button"
+                className="browse-3d-btn"
+                onClick={() => {
+                  const id = selectedFacility || filterOptions.facilities?.[0]?.id;
+                  if (id) window.location.assign(`/facilities/${id}/3d`);
+                }}
+              >
+                Xem sơ đồ 3D cơ sở
+              </button>
             </div>
           </section>
 
@@ -64,6 +77,8 @@ export default function BrowsePage() {
           filterOptions={filterOptions}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          selectedFacility={selectedFacility}
+          setSelectedFacility={setSelectedFacility}
           selectedType={selectedType}
           setSelectedType={setSelectedType}
           selectedSize={selectedSize}
@@ -90,6 +105,20 @@ export default function BrowsePage() {
 
             {/* Active filter chips */}
             <div className="browse-active-chips">
+              {activeFacilityName && (
+                <span className="browse-chip">
+                  Cơ sở: {activeFacilityName}
+                  <button
+                    type="button"
+                    className="browse-chip__remove"
+                    onClick={() => handleRemoveFilter("facilityId")}
+                    aria-label={`Xóa lọc cơ sở ${activeFacilityName}`}
+                  >
+                    <X size={12} weight="bold" />
+                  </button>
+                </span>
+              )}
+
               {activeTypeName && (
                 <span className="browse-chip">
                   Loại: {activeTypeName}

@@ -57,6 +57,7 @@ export async function getUnitFilterOptions() {
  * Flow 1: loại, kích thước, khoảng ngày thuê (theo ngày)
  */
 export async function searchUnits({
+  facilityId = "",
   typeId = "",
   sizeM2 = "",
   query = "",
@@ -67,6 +68,7 @@ export async function searchUnits({
   pageSize = 25,
 } = {}) {
   const queryParams = new URLSearchParams();
+  if (facilityId) queryParams.set("facility-id", facilityId);
   if (typeId) queryParams.set("type-id", typeId);
   if (sizeM2) queryParams.set("size-m2", sizeM2);
   if (query) queryParams.set("q", query.trim());
