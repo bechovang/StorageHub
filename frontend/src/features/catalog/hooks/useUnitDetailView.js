@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { getUnitDetail, getUnitQuote } from "../../../services/unitService.js";
+import { getFacilityLayout } from "../../../services/facilityService.js";
 import { getTodayDate } from "../../../utils/formatters.js";
 
 /** Số ngày thuê (inclusive) giữa 2 chuỗi ngày yyyy-MM-dd */
@@ -28,6 +29,10 @@ export function useUnitDetailView() {
   const [quote, setQuote] = useState(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState("");
+
+  // Layout 3D của cơ sở chứa kho đang xem.
+  const [facilityLayout, setFacilityLayout] = useState(null);
+  const [facilityLayoutError, setFacilityLayoutError] = useState("");
 
   // 1. Tải thông tin chi tiết của kho
   useEffect(() => {
@@ -57,6 +62,17 @@ export function useUnitDetailView() {
       isMounted = false;
     };
   }, [unitId]);
+
+  useEffect(() => {
+    if (!unit?.facilityId) return undefined;
+    let active = true;
+    setFacilityLayoutError("");
+    getFacilityLayout(unit.facilityId)
+      .then((data) => active && setFacilityLayout(data))
+      .catch((err) => active && setFacilityLayoutError(
+        err.message || "Không thể tải sơ đồ vị trí kho."))
+    return () => { active = false; };
+  }, [unit?.facilityId]);
 
   // 2. Tính toán bảng giá minh bạch khi thay đổi khoảng ngày thuê
   useEffect(() => {
@@ -160,6 +176,8 @@ export function useUnitDetailView() {
     depositAmount,
     depositPercent,
     dueNow,
+    facilityLayout,
+    facilityLayoutError,
     endDate: quoteEndDate,
     policyVersion,
   };
