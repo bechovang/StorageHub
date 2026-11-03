@@ -4,4 +4,6 @@ import com.storagehub.entity.Facility;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FacilityRepository extends JpaRepository<Facility, Integer> {
+
+    java.util.List<Facility> findByStatusOrderByFacilityIdAsc(Integer status);
 }

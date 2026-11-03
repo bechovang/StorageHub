@@ -43,6 +43,9 @@ class FacilityServiceTest {
     @Mock
     private PolicyRuleRepository policyRuleRepository;
 
+    @Mock
+    private com.storagehub.repository.FacilityRepository facilityRepository;
+
     private FacilityServiceImpl facilityService;
 
     private UnitType typeSmall;
@@ -58,7 +61,8 @@ class FacilityServiceTest {
                 reservationRepository,
                 taskRepository,
                 supportTicketRepository,
-                policyRuleRepository
+                policyRuleRepository,
+                facilityRepository
         );
 
         facility = new Facility();

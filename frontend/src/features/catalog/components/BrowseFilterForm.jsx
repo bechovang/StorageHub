@@ -4,6 +4,8 @@ export default function BrowseFilterForm({
   filterOptions,
   searchQuery,
   setSearchQuery,
+  selectedFacility,
+  setSelectedFacility,
   selectedType,
   setSelectedType,
   selectedSize,
@@ -28,7 +30,27 @@ export default function BrowseFilterForm({
           />
         </div>
 
-        {/* 2. Loại kho */}
+        {/* 2. Cơ sở */}
+        <div className="browse-filter-field">
+          <label className="browse-filter-field__label" htmlFor="filter-facility">
+            Cơ sở
+          </label>
+          <select
+            id="filter-facility"
+            className="browse-filter-field__select"
+            value={selectedFacility}
+            onChange={(e) => setSelectedFacility(e.target.value)}
+          >
+            <option value="">Tất cả cơ sở</option>
+            {(filterOptions.facilities || []).map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 3. Loại kho */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-type">
             Loại kho
@@ -48,7 +70,7 @@ export default function BrowseFilterForm({
           </select>
         </div>
 
-        {/* 3. Kích thước (m²) */}
+        {/* 4. Kích thước (m²) */}
         <div className="browse-filter-field">
           <label className="browse-filter-field__label" htmlFor="filter-size">
             Kích thước (m²)

@@ -115,7 +115,7 @@
 
 .browse-filter-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr) auto;
+  grid-template-columns: repeat(4, 1fr) auto;
   gap: var(--space-4);
   align-items: flex-end;
 }
@@ -555,4 +555,15 @@
   .browse-drawer-footer__actions .button {
     flex: 1;
   }
+}
+
+.browse-3d-btn {
+  margin-top: 14px;
+  border: 1px solid #0f172a;
+  background: #0f172a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
 }

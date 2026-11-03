@@ -2,6 +2,8 @@ package com.storagehub.controller;
 
 import com.storagehub.dto.facility.FacilityDrilldownResponse;
 import com.storagehub.dto.facility.FacilityOverviewResponse;
+import com.storagehub.dto.facility.FacilitySummaryResponse;
+import com.storagehub.dto.facility.FacilityLayoutResponse;
 import com.storagehub.service.FacilityService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,17 @@ public class FacilityController {
 
     public FacilityController(FacilityService facilityService) {
         this.facilityService = facilityService;
+    }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<FacilitySummaryResponse>> listFacilities() {
+        return ResponseEntity.ok(facilityService.listActiveFacilities());
+    }
+
+    @GetMapping("/{facilityId}/layout")
+    public ResponseEntity<FacilityLayoutResponse> getLayout(
+            @org.springframework.web.bind.annotation.PathVariable Integer facilityId) {
+        return ResponseEntity.ok(facilityService.getLayout(facilityId));
     }
 
     /**

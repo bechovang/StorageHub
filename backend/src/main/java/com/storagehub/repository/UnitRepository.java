@@ -74,6 +74,17 @@ public interface UnitRepository extends JpaRepository<Unit, Long>, JpaSpecificat
     @Query("SELECT u FROM Unit u JOIN FETCH u.type t JOIN FETCH u.zone z JOIN FETCH z.facility f ORDER BY u.code ASC")
     List<Unit> findAllWithDetails();
 
+    long countByZone_Facility_FacilityIdAndStatusNot(Integer facilityId, Unit.Status status);
+
+    @Query("""
+        SELECT u FROM Unit u
+        JOIN FETCH u.type t
+        JOIN FETCH u.zone z
+        WHERE z.facility.facilityId = :facilityId
+        ORDER BY u.floor ASC, z.code ASC, u.gridRow ASC, u.gridCol ASC
+    """)
+    List<Unit> findLayoutByFacility(@Param("facilityId") Integer facilityId);
+
     @Query("""
         SELECT u FROM Unit u
         JOIN FETCH u.type t

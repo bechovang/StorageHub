@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useParams } from "react-router";
 import { useAuth } from "../context/AuthContext.jsx";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
@@ -19,6 +20,8 @@ import PaymentPage from "../pages/customer/PaymentPage.jsx";
 import MyRentalsPage from "../pages/customer/MyRentalsPage.jsx";
 import RentalDetailPage from "../pages/customer/RentalDetailPage.jsx";
 import CheckInPassPage from "../pages/customer/CheckInPassPage.jsx";
+
+const Facility3DPage = lazy(() => import("../pages/customer/Facility3DPage.jsx"));
 
 // Staff Pages
 import TaskBoardPage from "../pages/staff/TaskBoardPage.jsx";
@@ -75,6 +78,14 @@ export default function AppRouter() {
 
       {/* ── 2. Customer & Public Catalog Routes ── */}
       <Route path="/browse" element={<BrowsePage />} />
+      <Route
+        path="/facilities/:facilityId/3d"
+        element={
+          <Suspense fallback={<div style={{ padding: 80, textAlign: "center" }}>Đang tải sơ đồ 3D...</div>}>
+            <Facility3DPage />
+          </Suspense>
+        }
+      />
       <Route path="/units/:unitId" element={<UnitDetailPage />} />
       <Route
         path="/units/:unitId/book"

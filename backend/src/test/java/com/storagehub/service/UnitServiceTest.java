@@ -55,6 +55,12 @@ class UnitServiceTest {
     private PolicyRuleRepository policyRuleRepository;
 
     @Mock
+    private com.storagehub.repository.UnitTypeImageRepository unitTypeImageRepository;
+
+    @Mock
+    private com.storagehub.repository.FacilityRepository facilityRepository;
+
+    @Mock
     private ReservationRepository reservationRepository;
 
     @Mock
@@ -251,6 +257,13 @@ class UnitServiceTest {
         rentRule.setValue(new BigDecimal("345000"));
 
         when(policyRuleRepository.findByPolicy_PolicyId(2)).thenReturn(List.of(rentRule));
+
+        com.storagehub.entity.UnitTypeImage img1 = new com.storagehub.entity.UnitTypeImage();
+        img1.setUrl("/assets/unit-types/kho-lanh-1.jpg");
+        com.storagehub.entity.UnitTypeImage img2 = new com.storagehub.entity.UnitTypeImage();
+        img2.setUrl("/assets/unit-types/kho-lanh-2.jpg");
+        when(unitTypeImageRepository.findByType_TypeIdOrderBySortOrderAsc(2))
+                .thenReturn(List.of(img1, img2));
 
         UnitDetailResponse detail = unitService.getUnitDetail(1L);
 

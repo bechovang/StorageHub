@@ -13,10 +13,12 @@ import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Unit;
 import com.storagehub.entity.User;
 import com.storagehub.exception.UnitNotFoundException;
+import com.storagehub.repository.FacilityRepository;
 import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UnitRepository;
+import com.storagehub.repository.UnitTypeImageRepository;
 import com.storagehub.repository.UnitTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,8 @@ public class UnitService {
 
     private final UnitRepository unitRepository;
     private final UnitTypeRepository unitTypeRepository;
+    private final UnitTypeImageRepository unitTypeImageRepository;
+    private final FacilityRepository facilityRepository;
     private final RentalPolicyRepository rentalPolicyRepository;
     private final PolicyRuleRepository policyRuleRepository;
     private final ReservationRepository reservationRepository;
@@ -62,13 +66,35 @@ public class UnitService {
                 .toList();
 
         List<BigDecimal> sizesM2 = unitRepository.findDistinctSizesM2();
-        return new UnitFilterOptionsResponse(types, sizesM2);
+        List<com.storagehub.dto.facility.FacilitySummaryResponse> facilities =
+                facilityRepository.findByStatusOrderByFacilityIdAsc(1).stream()
+                        .map(f -> new com.storagehub.dto.facility.FacilitySummaryResponse(
+                                f.getFacilityId(), f.getCode(), f.getName(), f.getDescription(),
+                                f.getAddress(), f.getPhone(), f.getPhotoUrl(),
+                                unitRepository.countByZone_Facility_FacilityIdAndStatusNot(
+                                        f.getFacilityId(), Unit.Status.RETIRED)))
+                        .toList();
+        return new UnitFilterOptionsResponse(types, sizesM2, facilities);
     }
 
     /**
      * Tìm kho — availability tính tại thời điểm query (FR-4, AD-4, AD-7, AD-8, AD-11).
      */
     public UnitPageResponse searchUnits(
+            Long typeId,
+            BigDecimal sizeM2,
+            String query,
+            LocalDate startDate,
+            LocalDate endDate,
+            String sort,
+            Integer page,
+            Integer pageSize
+    ) {
+        return searchUnits(null, typeId, sizeM2, query, startDate, endDate, sort, page, pageSize);
+    }
+
+    public UnitPageResponse searchUnits(
+            Integer facilityId,
             Long typeId,
             BigDecimal sizeM2,
             String query,
@@ -93,19 +119,12 @@ public class UnitService {
 
         List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
 
-        // Map: TypeId -> BaseMonthlyRent
-        Map<Integer, Long> rentRateMap = new HashMap<>();
-        // Map: TypeId -> TurnoverBufferDays
-        Map<Integer, Integer> bufferDaysMap = new HashMap<>();
+        Map<Integer, List<String>> imagesByType = unitTypeImageRepository.findAll().stream()
+                .collect(Collectors.groupingBy(
+                        img -> img.getType().getTypeId(),
+                        Collectors.mapping(img -> img.getUrl(), Collectors.toList())));
 
-        for (PolicyRule r : rules) {
-            Integer tId = r.getType().getTypeId();
-            if (r.getRuleType() == PolicyRule.RuleType.RENT_RATE) {
-                rentRateMap.put(tId, r.getValue().longValue());
-            } else if (r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER) {
-                bufferDaysMap.put(tId, r.getValue().intValue());
-            }
-        }
+        // Rules được lọc theo facility của từng unit khi map giá.
 
         // Ứng viên: Loại trừ RENTED, MAINTENANCE, RETIRED khỏi kết quả (OpenAPI & PRD FR-4)
         List<Unit.Status> candidateStatuses = List.of(Unit.Status.AVAILABLE, Unit.Status.PREPARING);
@@ -119,6 +138,9 @@ public class UnitService {
                 : query.replaceAll("[^a-zA-Z0-9]", "").toUpperCase(Locale.ROOT);
 
         List<Unit> filteredUnits = candidates.stream()
+                .filter(u -> facilityId == null
+                        || (u.getZone().getFacility() != null
+                            && facilityId.equals(u.getZone().getFacility().getFacilityId())))
                 .filter(u -> typeId == null || u.getType().getTypeId().longValue() == typeId)
                 .filter(u -> sizeM2 == null || u.getSizeM2().compareTo(sizeM2) == 0)
                 .filter(u -> normalizedQuery == null
@@ -147,9 +169,9 @@ public class UnitService {
         List<UnitSummaryResponse> resultItems = new ArrayList<>();
 
         for (Unit unit : filteredUnits) {
-            Integer typeIdVal = unit.getType().getTypeId();
-            int bufferDays = bufferDaysMap.getOrDefault(typeIdVal, 1);
-            long dailyRent = rentRateMap.getOrDefault(typeIdVal, 0L);
+            List<PolicyRule> unitRules = rulesForUnit(unit, rules);
+            int bufferDays = bufferFor(unit, unitRules, 1);
+            long dailyRent = rentFor(unit, unitRules, 0L);
 
             // 1. Tính ngày sẵn sàng sau dọn dẹp của kho
             LocalDate readyDate = today;
@@ -208,7 +230,7 @@ public class UnitService {
                     unit.getAccessType(),
                     dailyRent,
                     availability,
-                    "/units/" + unit.getCode() + ".jpg"
+                    imagesByType.getOrDefault(unit.getType().getTypeId(), List.of()).stream().findFirst().orElse(null)
             );
 
             resultItems.add(summary);
@@ -250,19 +272,9 @@ public class UnitService {
 
         List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
 
-        long dailyRent = 0L;
-        int bufferDays = 1;
-        Integer typeIdVal = unit.getType().getTypeId();
-
-        for (PolicyRule r : rules) {
-            if (r.getType().getTypeId().equals(typeIdVal)) {
-                if (r.getRuleType() == PolicyRule.RuleType.RENT_RATE) {
-                    dailyRent = r.getValue().longValue();
-                } else if (r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER) {
-                    bufferDays = r.getValue().intValue();
-                }
-            }
-        }
+        List<PolicyRule> unitRules = rulesForUnit(unit, rules);
+        long dailyRent = rentFor(unit, unitRules, 0L);
+        int bufferDays = bufferFor(unit, unitRules, 1);
 
         LocalDate today = LocalDate.now(ICT_ZONE);
         UnitAvailabilityResponse availability;
@@ -282,10 +294,10 @@ public class UnitService {
 
         String dimensions = resolveDimensions(unit.getSizeM2());
         String security = resolveSecurity(unit.getAccessType());
-        List<String> photoUrls = List.of(
-                "/units/" + unit.getCode() + ".jpg",
-                "/units/" + unit.getCode() + "-interior.jpg"
-        );
+        List<String> photoUrls = unitTypeImageRepository
+                .findByType_TypeIdOrderBySortOrderAsc(unit.getType().getTypeId())
+                .stream().map(img -> img.getUrl()).toList();
+        String photoUrl = photoUrls.isEmpty() ? null : photoUrls.get(0);
 
         return new UnitDetailResponse(
                 unit.getUnitId(),
@@ -298,7 +310,7 @@ public class UnitService {
                 unit.getAccessType(),
                 dailyRent,
                 availability,
-                "/units/" + unit.getCode() + ".jpg",
+                photoUrl,
                 dimensions,
                 security,
                 photoUrls
@@ -384,5 +396,33 @@ public class UnitService {
             return "Smart keyless lock + CCTV 24/7";
         }
         return "Keycard/QR 24/7 + CCTV";
+    }
+
+    private List<PolicyRule> rulesForUnit(Unit unit, List<PolicyRule> all) {
+        if (unit.getZone() == null || unit.getZone().getFacility() == null) {
+            return all;
+        }
+        Integer facilityId = unit.getZone().getFacility().getFacilityId();
+        List<PolicyRule> facilityRules = all.stream()
+                .filter(r -> r.getFacility() != null
+                        && facilityId.equals(r.getFacility().getFacilityId()))
+                .toList();
+        return facilityRules.isEmpty() ? all : facilityRules;
+    }
+
+    private long rentFor(Unit unit, List<PolicyRule> rules, long fallback) {
+        return rules.stream()
+                .filter(r -> r.getType().getTypeId().equals(unit.getType().getTypeId()))
+                .filter(r -> r.getRuleType() == PolicyRule.RuleType.RENT_RATE)
+                .mapToLong(r -> r.getValue().longValue())
+                .findFirst().orElse(fallback);
+    }
+
+    private int bufferFor(Unit unit, List<PolicyRule> rules, int fallback) {
+        return rules.stream()
+                .filter(r -> r.getType().getTypeId().equals(unit.getType().getTypeId()))
+                .filter(r -> r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER)
+                .mapToInt(r -> r.getValue().intValue())
+                .findFirst().orElse(fallback);
     }
 }

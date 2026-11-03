@@ -39,6 +39,7 @@ public class UnitController {
 
     @GetMapping
     public ResponseEntity<UnitPageResponse> searchUnits(
+            @RequestParam(name = "facility-id", required = false) Integer facilityId,
             @RequestParam(name = "type-id", required = false) Long typeId,
             @RequestParam(name = "size-m2", required = false) BigDecimal sizeM2,
             @RequestParam(name = "q", required = false) String q,
@@ -52,16 +53,11 @@ public class UnitController {
             @RequestParam(name = "page-size", defaultValue = "25")
             @Min(value = 1) @Max(value = 100) Integer pageSize
     ) {
-        UnitPageResponse response = unitService.searchUnits(
-                typeId,
-                sizeM2,
-                q,
-                startDate,
-                endDate,
-                sort,
-                page,
-                pageSize
-        );
+        UnitPageResponse response = facilityId == null
+                ? unitService.searchUnits(
+                    typeId, sizeM2, q, startDate, endDate, sort, page, pageSize)
+                : unitService.searchUnits(
+                    facilityId, typeId, sizeM2, q, startDate, endDate, sort, page, pageSize);
         return ResponseEntity.ok(response);
     }
 

@@ -46,6 +46,11 @@ public class PolicyRule {
     @JoinColumn(name = "policy_id")
     private RentalPolicy policy;
 
+    /** Null = áp dụng toàn hệ thống (legacy); có giá trị = rule riêng cơ sở. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "facility_id")
+    private Facility facility;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "type_id")
     private UnitType type;

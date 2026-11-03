@@ -14,6 +14,7 @@ export function useBrowseUnits() {
   });
 
   // State các giá trị trong form bộ lọc
+  const [selectedFacility, setSelectedFacility] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   // Tìm theo mã kho (vd: "S-7") — BE match contains, bỏ qua hoa/thường + dấu gạch
@@ -22,6 +23,7 @@ export function useBrowseUnits() {
 
   // State bộ lọc đang có hiệu lực (active filters) sau khi bấm Tìm kiếm
   const [activeFilters, setActiveFilters] = useState({
+    facilityId: "",
     typeId: "",
     sizeM2: "",
     query: "",
@@ -61,6 +63,7 @@ export function useBrowseUnits() {
     setSearchError("");
     try {
       const data = await searchUnits({
+        facilityId: filters.facilityId,
         typeId: filters.typeId,
         sizeM2: filters.sizeM2,
         query: filters.query,
@@ -87,6 +90,7 @@ export function useBrowseUnits() {
     async function loadInitialUnits() {
       try {
         const data = await searchUnits({
+          facilityId: activeFilters.facilityId,
           typeId: activeFilters.typeId,
           sizeM2: activeFilters.sizeM2,
           query: activeFilters.query,
@@ -133,6 +137,7 @@ export function useBrowseUnits() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const newFilters = {
+      facilityId: selectedFacility,
       typeId: selectedType,
       sizeM2: selectedSize,
       query: searchQuery,
@@ -151,10 +156,12 @@ export function useBrowseUnits() {
 
   // Đặt lại toàn bộ bộ lọc
   const handleResetFilters = () => {
+    setSelectedFacility("");
     setSelectedType("");
     setSelectedSize("");
     setSearchQuery("");
     const reset = {
+      facilityId: "",
       typeId: "",
       sizeM2: "",
         query: "",
@@ -167,7 +174,10 @@ export function useBrowseUnits() {
   // Xóa từng bộ lọc riêng lẻ từ chip
   const handleRemoveFilter = (filterKey) => {
     const updated = { ...activeFilters };
-    if (filterKey === "typeId") {
+    if (filterKey === "facilityId") {
+      updated.facilityId = "";
+      setSelectedFacility("");
+    } else if (filterKey === "typeId") {
       updated.typeId = "";
       setSelectedType("");
     } else if (filterKey === "sizeM2") {
@@ -202,11 +212,17 @@ export function useBrowseUnits() {
   )?.name;
 
   // Lấy tên cơ sở đang được lọc để hiển thị trên chip
+  const activeFacilityName = (filterOptions.facilities || []).find(
+    (f) => String(f.id) === String(activeFilters.facilityId),
+  )?.name;
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return {
     navigate,
     filterOptions,
+    selectedFacility,
+    setSelectedFacility,
     selectedType,
     setSelectedType,
     selectedSize,
@@ -215,6 +231,7 @@ export function useBrowseUnits() {
     setSearchQuery,
     searchError,
     activeFilters,
+    activeFacilityName,
     sortOrder,
     units,
     loading,

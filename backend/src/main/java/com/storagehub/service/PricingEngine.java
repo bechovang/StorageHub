@@ -58,7 +58,8 @@ public class PricingEngine {
                 : rentalPolicyRepository.findByStatus(1)
                     .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
 
-        List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
+        List<PolicyRule> rules = rulesForUnit(
+                unit, policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId()));
 
         long dailyRent = 0L;
         int depositPercent = 10; // Mặc định 10% nếu chưa cấu hình
@@ -105,5 +106,18 @@ public class PricingEngine {
                 activePolicy.getPolicyId(),
                 depositPercent
         );
+    }
+
+    /** Rule riêng facility nếu có; fallback rule toàn hệ thống/legacy. */
+    private List<PolicyRule> rulesForUnit(Unit unit, List<PolicyRule> all) {
+        if (unit.getZone() == null || unit.getZone().getFacility() == null) {
+            return all;
+        }
+        Integer facilityId = unit.getZone().getFacility().getFacilityId();
+        List<PolicyRule> facilityRules = all.stream()
+                .filter(r -> r.getFacility() != null
+                        && facilityId.equals(r.getFacility().getFacilityId()))
+                .toList();
+        return facilityRules.isEmpty() ? all : facilityRules;
     }
 }

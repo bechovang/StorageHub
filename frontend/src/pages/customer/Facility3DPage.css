@@ -1,0 +1,27 @@
+.facility-3d-page { max-width: 1240px; margin: 0 auto; padding: 32px 24px 72px; }
+.facility-3d-head { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 22px; }
+.facility-3d-kicker { margin: 0 0 6px; color: #64748b; font-size: .72rem; letter-spacing: .16em; font-weight: 800; }
+.facility-3d-head h1 { margin: 0 0 6px; font-size: clamp(1.5rem, 3vw, 2.3rem); }
+.facility-3d-head p { margin: 0; color: #64748b; }
+.facility-3d-back { border: 1px solid #cbd5e1; background: #fff; border-radius: 10px; padding: 10px 14px; cursor: pointer; white-space: nowrap; }
+.facility-3d-toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.facility-3d-floors { display: flex; gap: 8px; }
+.facility-3d-floors button { border: 1px solid #cbd5e1; background: #fff; border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+.facility-3d-floors button.is-active { background: #0f172a; border-color: #0f172a; color: #fff; }
+.facility-3d-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .78rem; color: #475569; }
+.facility-3d-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.facility-3d-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+.facility-3d-stage { position: relative; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; background: #f8fafc; }
+.facility-3d-canvas { width: 100%; height: min(66vh, 640px); min-height: 420px; }
+.facility-3d-hint { position: absolute; left: 16px; bottom: 14px; background: rgba(15,23,42,.82); color: #fff; border-radius: 8px; padding: 7px 11px; font-size: .74rem; }
+.facility-3d-tooltip { position: fixed; z-index: 50; display: flex; flex-direction: column; gap: 2px; background: #0f172a; color: #fff; border-radius: 8px; padding: 9px 12px; font-size: .75rem; pointer-events: none; box-shadow: 0 12px 30px rgba(15,23,42,.25); }
+.facility-3d-tooltip strong { font-size: .82rem; }
+.facility-3d-zones { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.facility-3d-zone-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; background: #fff; }
+.facility-3d-zone-card span { font-size: .68rem; letter-spacing: .12em; color: #64748b; font-weight: 800; }
+.facility-3d-zone-card small { color: #64748b; }
+.facility-3d-error { color: #b91c1c; }
+@media (max-width: 800px) {
+  .facility-3d-head { flex-direction: column; }
+  .facility-3d-zones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
