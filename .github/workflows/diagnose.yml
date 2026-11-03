@@ -31,7 +31,9 @@ jobs:
             curl -fsS "${auth[@]}" "$base/docker.readContainerFile?containerId=$id&path=/proc/1/fd/1" | jq -r .content | base64 -d > /tmp/backend.log || true
             tail -250 /tmp/backend.log || true
             echo "--- flyway-error ---"
-            grep -i -E "Caused by|SQLException|Migration V40|Failed to execute|ERROR.*DbMigrate|SQL State|Error Code" /tmp/backend.log | tail -80 || true
+            grep -n -A 80 -B 5 "Migration of schema.*40" /tmp/backend.log | tail -120 || true
+            echo "--- sql ---"
+            grep -n -A 20 -B 5 -i "sql" /tmp/backend.log | tail -100 || true
             echo "--- stderr ---"
             curl -fsS "${auth[@]}" "$base/docker.readContainerFile?containerId=$id&path=/proc/1/fd/2" | jq -r .content | base64 -d | tail -120 || true
           fi
