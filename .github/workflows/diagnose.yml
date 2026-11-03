@@ -1,0 +1,21 @@
+name: diagnose
+on:
+  workflow_dispatch:
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect storagehub containers
+        env:
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+        run: |
+          set -euo pipefail
+          base="$DOKPLOY_URL/api"
+          auth=(-H "x-api-key: $DOKPLOY_API_KEY")
+          curl -fsS "${auth[@]}" "$base/docker.getContainers" -o /tmp/containers.json
+          jq '[.[] | {id:.id, name:.name, state:.state, status:.status, image:.image}]' /tmp/containers.json | head -100
+          for id in $(jq -r '.[] | select(.name|test("storagehub")) | .id' /tmp/containers.json); do
+            echo "--- config $id ---"
+            curl -fsS "${auth[@]}" "$base/docker.getConfig?containerId=$id" | jq '{Name,State,Config:{Image:.Config.Image,Env:(.Config.Env|map(select(startswith("SPRING") or startswith("FLYWAY"))))}}'
+          done
