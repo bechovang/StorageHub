@@ -54,51 +54,6 @@ function makeLabel(text, color = "#0f172a", scale = [3.4, 0.8]) {
   return sprite;
 }
 
-function buildStairs(height) {
-  const group = new THREE.Group();
-  const steps = 18;
-  const stepMaterial = new THREE.MeshStandardMaterial({
-    color: 0xcbd5e1,
-    roughness: 0.75,
-  });
-  const railMaterial = new THREE.MeshStandardMaterial({
-    color: 0x64748b,
-    roughness: 0.55,
-    metalness: 0.35,
-  });
-  const rise = height / steps;
-  const run = 0.28;
-  const startZ = -2.6;
-  const x = 9.35;
-
-  for (let i = 0; i < steps; i += 1) {
-    const step = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.13, run + 0.05), stepMaterial);
-    step.position.set(x, i * rise + 0.065, startZ + i * run);
-    group.add(step);
-  }
-
-  for (const side of [-0.88, 0.88]) {
-    for (let i = 0; i <= 4; i += 1) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.0, 0.05), railMaterial);
-      post.position.set(x + side, (i / 4) * height + 0.5, startZ + (i / 4) * steps * run);
-      group.add(post);
-    }
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 4.9), railMaterial);
-    rail.position.set(x + side, height + 0.55, startZ + 2.2);
-    rail.rotation.x = -Math.atan2(height, steps * run);
-    group.add(rail);
-  }
-
-  const landing = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.12, 1.3), stepMaterial);
-  landing.position.set(x, height + 0.02, 2.65);
-  group.add(landing);
-
-  const label = makeLabel("CẦU THANG", "#475569", [2.2, 0.5]);
-  label.position.set(x, height + 1.25, 2.7);
-  group.add(label);
-  return group;
-}
-
 function buildFloorShell(floorY, floorNumber, opacity = 1) {
   const group = new THREE.Group();
   const slab = new THREE.Mesh(
@@ -194,14 +149,13 @@ export default function Facility3DViewer({
 
     const active = activeFloor ?? selectedFloor;
     const unitMeshes = [];
-    let selectedBox = null;
     let selectedMaterial = null;
     let selectedRing = null;
     let selectedLabel = null;
 
     const camera = new THREE.OrthographicCamera(-12, 12, 8, -8, 0.1, 200);
-    camera.position.set(18, 16, 23);
-    camera.lookAt(0, floorGap * 0.5, 0);
+    camera.position.set(20, 19, 26);
+    camera.lookAt(0, floorGap * 0.45, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -210,9 +164,10 @@ export default function Facility3DViewer({
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.target.set(0, floorGap * 0.5, 0);
-    controls.minZoom = 0.55;
-    controls.maxZoom = 3.2;
+    controls.target.set(0, floorGap * 0.45, 0);
+    controls.enablePan = false;
+    controls.minZoom = 0.5;
+    controls.maxZoom = 3.0;
     controls.maxPolarAngle = Math.PI / 2.05;
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0xcbd5e1, 2.5));
@@ -286,7 +241,6 @@ export default function Facility3DViewer({
           unitMeshes.push(box);
 
           if (isSelected) {
-            selectedBox = box;
             selectedMaterial = material;
             selectedLabel = makeLabel(`KHO ${unit.code}`, "#b45309", [2.9, 0.68]);
             selectedLabel.position.set(x, floorY + 2.2, z);
@@ -322,18 +276,6 @@ export default function Facility3DViewer({
         });
       });
     });
-
-    scene.add(buildStairs(floorGap));
-
-    if (selectedBox) {
-      controls.target.set(
-        selectedBox.position.x * 0.45,
-        Math.min(selectedBox.position.y + 0.4, floorGap + 0.8),
-        selectedBox.position.z * 0.45
-      );
-      camera.position.set(selectedBox.position.x + 17, selectedBox.position.y + 14, selectedBox.position.z + 22);
-      camera.lookAt(controls.target);
-    }
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -380,7 +322,7 @@ export default function Facility3DViewer({
       const heightPx = mount.clientHeight;
       renderer.setSize(width, heightPx, false);
       const aspect = width / Math.max(heightPx, 1);
-      const size = 15.5;
+      const size = 21.5;
       camera.left = (-size * aspect) / 2;
       camera.right = (size * aspect) / 2;
       camera.top = size / 2;
