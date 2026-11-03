@@ -34,7 +34,7 @@ export default function UnitCard({
 
   const subline = isSoon
     ? "Đang chuẩn bị bàn giao cho khách mới"
-    : "Thanh toán cọc 10% để khóa giữ chỗ · Ra vào 24/7";
+    : "Thanh toán cọc theo chính sách để khóa giữ chỗ · Ra vào 24/7";
 
   const price = unit.baseDailyRent ?? 0;
   const typeLabel = unit.typeName || unit.type || "Tiêu chuẩn";
@@ -121,7 +121,7 @@ export default function UnitCard({
         <div className="unit-card__footer">
           <div className="unit-card__price">
             <strong>{formatVnd(price)}</strong>
-            <span>/ ngày · Cọc 10% để giữ chỗ (hoàn lại)</span>
+            <span>/ ngày · Cọc giữ chỗ theo chính sách (hoàn lại)</span>
           </div>
 
           <div className="unit-card__actions" onClick={(e) => e.stopPropagation()}>

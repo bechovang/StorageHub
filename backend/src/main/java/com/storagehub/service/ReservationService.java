@@ -261,7 +261,8 @@ public class ReservationService {
             Long unitId,
             LocalDate startDate,
             LocalDate endDate,
-            BigDecimal depositAmount
+            BigDecimal depositAmount,
+            com.storagehub.entity.RentalPolicy policy
     ) {
         Unit unit = unitRepository.findByIdForUpdate(unitId)
                 .orElseThrow(() -> new UnitNotFoundException("Unit này không tồn tại."));
@@ -279,6 +280,7 @@ public class ReservationService {
         reservation.setStartDate(startDate);
         reservation.setEndDate(endDate);
         reservation.setDepositAmount(depositAmount);
+        reservation.setPolicy(policy);
         reservation.setStatus(Reservation.Status.RESERVED);
         Reservation saved = reservationRepository.save(reservation);
 
@@ -376,7 +378,11 @@ public class ReservationService {
             }
         }
 
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, reservation.getStartDate(), reservation.getEndDate());
+        QuoteResponse quote = reservation.getPolicy() == null
+                ? pricingEngine.calculateQuote(
+                    unit, reservation.getStartDate(), reservation.getEndDate())
+                : pricingEngine.calculateQuote(
+                    unit, reservation.getStartDate(), reservation.getEndDate(), reservation.getPolicy());
 
         Long baseDailyRent = (quote != null && quote.durationDays() > 0)
                 ? (quote.totalRent() / quote.durationDays())
@@ -719,8 +725,11 @@ public class ReservationService {
             throw new ReservationInvalidStateException(
                     "Chưa thu tiền thuê — trả 100% rent qua Payment Modal trước khi check-in.");
         }
-        QuoteResponse quote = pricingEngine.calculateQuote(
-                reservation.getUnit(), reservation.getStartDate(), reservation.getEndDate());
+        QuoteResponse quote = reservation.getPolicy() == null
+                ? pricingEngine.calculateQuote(
+                    reservation.getUnit(), reservation.getStartDate(), reservation.getEndDate())
+                : pricingEngine.calculateQuote(
+                    reservation.getUnit(), reservation.getStartDate(), reservation.getEndDate(), reservation.getPolicy());
         BigDecimal paid = rentPayments.stream()
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

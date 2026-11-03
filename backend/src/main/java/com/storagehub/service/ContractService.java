@@ -62,8 +62,13 @@ public class ContractService {
      */
     @Transactional
     public Contract autoDraftContract(Reservation reservation) {
-        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
-                .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
+        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1).orElse(null);
+        RentalPolicy contractPolicy = reservation.getPolicy() != null
+                ? reservation.getPolicy()
+                : activePolicy;
+        if (contractPolicy == null) {
+            throw new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực");
+        }
 
         Unit unit = reservation.getUnit();
         LocalDate startDate = reservation.getStartDate();
@@ -74,14 +79,16 @@ public class ContractService {
             durationDays = 1;
         }
 
-        QuoteResponse quote = pricingEngine.calculateQuote(unit, startDate, endDate);
+        QuoteResponse quote = reservation.getPolicy() != null
+                ? pricingEngine.calculateQuote(unit, startDate, endDate, contractPolicy)
+                : pricingEngine.calculateQuote(unit, startDate, endDate);
         String code = generateContractCode();
 
         String contentSnapshot = buildContractContentSnapshot(
                 code,
                 reservation,
                 unit,
-                activePolicy.getVersion(),
+                contractPolicy.getVersion(),
                 startDate,
                 endDate,
                 durationDays,
@@ -102,7 +109,7 @@ public class ContractService {
         Contract newContract = new Contract();
         newContract.setCode(code);
         newContract.setReservation(reservation);
-        newContract.setPolicy(activePolicy);
+        newContract.setPolicy(contractPolicy);
         newContract.setContentSnapshot(contentSnapshot);
         newContract.setStatus(Contract.Status.DRAFT);
         newContract.setIsLatest(true);
@@ -196,6 +203,8 @@ public class ContractService {
             throw new ReservationNotFoundException("Reservation not found.");
         }
 
+        // Re-draft bám policy active hiện hành; bản cũ vẫn giữ snapshot riêng.
+        rentalPolicyRepository.findByStatus(1).ifPresent(reservation::setPolicy);
         Contract contract = autoDraftContract(reservation);
         return mapToDetailResponse(contract);
     }
@@ -360,7 +369,7 @@ public class ContractService {
                 ĐIỀU 3. GIÁ CẢ VÀ QUY ĐỊNH THANH TOÁN
                 1. Đơn giá thuê ngày: %s / ngày.
                 2. Tổng giá trị hợp đồng thuê: %s (Thanh toán 100%% tại quầy lúc làm thủ tục Check-in).
-                3. Tiền đặt cọc bảo đảm (10%%): %s (Đã thanh toán lúc đặt chỗ, có hoàn lại 100%% khi thanh lý hợp đồng nếu kho nguyên vẹn).
+                3. Tiền đặt cọc bảo đảm (%s): %s (Đã thanh toán lúc đặt chỗ, có hoàn lại 100%% khi thanh lý hợp đồng nếu kho nguyên vẹn).
 
                 ĐIỀU 4. TRÁCH NHIỆM VẬN HÀNH VÀ BÀN GIAO
                 1. Khách hàng xuất trình mã Check-in Pass và giấy tờ tùy thân hợp lệ tại quầy depot để nhận kho.
@@ -390,6 +399,7 @@ public class ContractService {
                 endDate,
                 formattedDailyRent,
                 formattedTotalRent,
+                quote.depositPercent() != null ? quote.depositPercent() + "%" : "theo chính sách",
                 formattedDeposit
         );
     }
@@ -413,8 +423,10 @@ public class ContractService {
                 .orElseThrow(() -> new IllegalStateException(
                         "Không tìm thấy hợp đồng đang hiệu lực cho " + reservation.getCode()));
 
-        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
-                .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
+        RentalPolicy activePolicy = contract.getPolicy() != null
+                ? contract.getPolicy()
+                : rentalPolicyRepository.findByStatus(1)
+                    .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
 
         long sequence = contractAddendumRepository
                 .countByContract_ContractId(contract.getContractId()) + 1;
@@ -433,6 +445,7 @@ public class ContractService {
 
         ContractAddendum addendum = new ContractAddendum();
         addendum.setContract(contract);
+        addendum.setPolicy(activePolicy);
         addendum.setExtension(extension);
         addendum.setCode(addendumCode);
         addendum.setContentSnapshot(snapshot);

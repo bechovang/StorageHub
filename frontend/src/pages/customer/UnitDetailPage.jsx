@@ -39,6 +39,7 @@ export default function UnitDetailPage() {
     volumeM3,
     totalRent,
     depositAmount,
+    depositPercent,
     dueNow,
     policyVersion,
   } = useUnitDetailView();
@@ -211,6 +212,7 @@ export default function UnitDetailPage() {
               dailyRent={dailyRent}
               totalRent={totalRent}
               depositAmount={depositAmount}
+              depositPercent={depositPercent}
               dueNow={dueNow}
               policyVersion={policyVersion}
               quoteLoading={quoteLoading}

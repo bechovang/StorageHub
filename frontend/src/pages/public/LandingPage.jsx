@@ -335,9 +335,9 @@ const PILLARS = [
   },
   {
     icon: Receipt,
-    title: "Cọc chỉ 10% & Minh bạch",
+    title: "Cọc minh bạch & Linh hoạt",
     description:
-      "Không phát sinh phụ phí ẩn. Chỉ cọc 10% để xác nhận giữ kho. Hoàn cọc tự động qua tài khoản ngân hàng trong 24h sau khi kiểm tra trả kho",
+      "Không phát sinh phụ phí ẩn. Chỉ cọc theo chính sách thuê để xác nhận giữ kho. Hoàn cọc tự động qua tài khoản ngân hàng trong 24h sau khi kiểm tra trả kho",
   },
   {
     icon: ShieldCheck,
@@ -367,9 +367,9 @@ const STEPS = [
   },
   {
     step: "02",
-    title: "Đặt cọc 10% & Nhận PIN",
+    title: "Đặt cọc & Nhận PIN",
     description:
-      "Thanh toán cọc 10% an toàn trực tuyến. Hệ thống lập tức kích hoạt hợp đồng điện tử và cấp mã PIN mở kho riêng cho bạn",
+      "Thanh toán cọc an toàn trực tuyến. Hệ thống lập tức kích hoạt hợp đồng điện tử và cấp mã PIN mở kho riêng cho bạn",
     visualAsset: {
       idleSrc: "/assets/landing/step-payment.png",
       hoverSrc: "/assets/landing/step-payment-hover.png",
@@ -394,8 +394,8 @@ const FAQ_ITEMS = [
     a: "Thời gian thuê kho tại StorageHub vô cùng linh hoạt, tối thiểu từ 1 tháng. Bạn có thể gia hạn tự động hàng tháng hoặc kết thúc hợp đồng bất kỳ lúc nào tùy theo nhu cầu thực tế.",
   },
   {
-    q: "Tiền đặt cọc 10% được hoàn trả như thế nào?",
-    a: "Tiền cọc 10% nhằm đảm bảo giữ chỗ và trang thiết bị kho. Sau khi bạn làm thủ tục trả kho và đối soát hình ảnh hiện trạng, tiền cọc sẽ được hoàn trả tự động qua chuyển khoản ngân hàng trong vòng 24 giờ.",
+    q: "Tiền đặt cọc được hoàn trả như thế nào?",
+    a: "Tiền cọc nhằm đảm bảo giữ chỗ và trang thiết bị kho. Sau khi bạn làm thủ tục trả kho và đối soát hình ảnh hiện trạng, tiền cọc sẽ được hoàn trả tự động qua chuyển khoản ngân hàng trong vòng 24 giờ.",
   },
   {
     q: "Tôi có thể vào kho lúc đêm khuya hoặc ngày lễ không?",
@@ -427,13 +427,13 @@ export default function LandingPage() {
     if (metaDescription) {
       metaDescription.setAttribute(
         "content",
-        "StorageHub - Hệ thống cho thuê kho tự quản thông minh hàng đầu TP.HCM. 40+ kho sạch sẽ, an ninh đa lớp 24/7, cọc 10% trực tuyến, mở kho tự do bằng mã PIN riêng."
+        "StorageHub - Hệ thống cho thuê kho tự quản thông minh hàng đầu TP.HCM. 40+ kho sạch sẽ, an ninh đa lớp 24/7, cọc trực tuyến theo chính sách, mở kho tự do bằng mã PIN riêng."
       );
     } else {
       const meta = document.createElement("meta");
       meta.name = "description";
       meta.content =
-        "StorageHub - Hệ thống cho thuê kho tự quản thông minh hàng đầu TP.HCM. 40+ kho sạch sẽ, an ninh đa lớp 24/7, cọc 10% trực tuyến, mở kho tự do bằng mã PIN riêng.";
+        "StorageHub - Hệ thống cho thuê kho tự quản thông minh hàng đầu TP.HCM. 40+ kho sạch sẽ, an ninh đa lớp 24/7, cọc trực tuyến theo chính sách, mở kho tự do bằng mã PIN riêng.";
       document.head.appendChild(meta);
     }
 
@@ -453,7 +453,7 @@ export default function LandingPage() {
           priceRange: "100.000 VND - 2.500.000 VND",
           image: "https://storagehub.vn/og-storagehub.jpg",
           description:
-            "Hệ thống cho thuê kho tự quản thông minh cá nhân và doanh nghiệp tại TP.HCM. Mở cửa 24/7 bằng mã PIN riêng, cọc 10%, an ninh camera PCCC đa lớp.",
+            "Hệ thống cho thuê kho tự quản thông minh cá nhân và doanh nghiệp tại TP.HCM. Mở cửa 24/7 bằng mã PIN riêng, cọc theo chính sách, an ninh camera PCCC đa lớp.",
           address: {
             "@type": "PostalAddress",
             streetAddress: "123 Hoàng Văn Thụ, Phường 2",
@@ -560,7 +560,7 @@ export default function LandingPage() {
                   transition={{ duration: 0.55, ease: SOFT_EASE, delay: 0.35 }}
                 >
                   Giải pháp cho thuê kho tự quản thông minh dành cho cá nhân và doanh
-                  nghiệp tại TP.HCM. Đặt kho trực tuyến chỉ trong 3 phút, cọc 10% giữ
+                  nghiệp tại TP.HCM. Đặt kho trực tuyến chỉ trong 3 phút, cọc giữ
                   chỗ tức thì, chủ động ra vào 24/7 không hẹn trước với mã PIN cá
                   nhân bảo mật tuyệt đối.
                 </motion.p>
@@ -716,7 +716,7 @@ export default function LandingPage() {
 
                   <div className="size-card__pricing">
                     <span className="size-card__price">{unit.priceText}</span>
-                    <span className="size-card__deposit-tag">Cọc online 10%</span>
+                    <span className="size-card__deposit-tag">Cọc online</span>
                   </div>
 
                   <div className="size-card__details">

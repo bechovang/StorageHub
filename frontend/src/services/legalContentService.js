@@ -28,7 +28,7 @@ export const DEFAULT_TERMS = {
     {
       id: "clause-2",
       number: "ĐIỀU 2",
-      title: "QUY TRÌNH ĐẶT CHỖ & KÝ QUỸ ĐẶT CỌC (10%)",
+      title: "QUY TRÌNH ĐẶT CHỖ & KÝ QUỸ ĐẶT CỌC",
       content:
         "Để đảm bảo kho được giữ chỗ chính thức trên hệ thống và tránh tình trạng đặt chỗ ảo, Khách hàng phải hoàn tất thanh toán khoản tiền ký quỹ bảo đảm giữ chỗ tương đương 10% tổng giá trị tiền thuê của kỳ cam kết.",
       bullets: [
@@ -96,7 +96,7 @@ export const DEFAULT_TERMS = {
       bullets: [
         "Gia hạn thuê kho: Khách hàng có thể tạo yêu cầu gia hạn trên ứng dụng trước khi hợp đồng kết thúc ít nhất 03 ngày để đảm bảo giữ nguyên vị trí kho.",
         "Nghiệm thu 4 hạng mục trả kho: Nhân viên cơ sở cùng Khách hàng đối chiếu: (1) Thẻ/chìa khóa kho, (2) Khóa và tay nắm cửa, (3) Vệ sinh mặt sàn, (4) Kết cấu khung vách nguyên vẹn.",
-        "Tất toán tiền cọc: Số tiền cọc 10% sẽ được hoàn trả đầy đủ vào tài khoản ngân hàng của Khách hàng ngay sau khi lập biên bản nghiệm thu (sau khi trừ các chi phí phụ thu hoặc tiền khắc phục hư hại nếu có).",
+        "Tất toán tiền cọc: Số tiền cọc sẽ được hoàn trả đầy đủ vào tài khoản ngân hàng của Khách hàng ngay sau khi lập biên bản nghiệm thu (sau khi trừ các chi phí phụ thu hoặc tiền khắc phục hư hại nếu có).",
       ],
     },
     {

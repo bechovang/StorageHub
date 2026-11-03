@@ -258,7 +258,7 @@ export default function PolicyManagementPage() {
                   <span className="policy-legal-badge">8 Điều khoản</span>
                 </div>
                 <p className="policy-legal-box__desc">
-                  Quy định ký quỹ cọc 10%, thủ tục nhận kho đối chiếu CCCD, mã PIN ra vào 24/7, danh mục hàng hóa cấm cháy nổ, bảo quản sàn Epoxy và biên bản nghiệm thu 4 bước khi trả kho.
+                  Quy định ký quỹ cọc theo chính sách hiện hành, thủ tục nhận kho đối chiếu CCCD, mã PIN ra vào 24/7, danh mục hàng hóa cấm cháy nổ, bảo quản sàn Epoxy và biên bản nghiệm thu 4 bước khi trả kho.
                 </p>
                 <div className="policy-legal-box__actions">
                   <Link to="/legal-management?tab=terms" className="policy-btn policy-btn--secondary policy-btn--sm">

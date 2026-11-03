@@ -16,6 +16,7 @@ export default function UnitPricingCalculator({
   dailyRent,
   totalRent,
   depositAmount,
+  depositPercent,
   dueNow,
   policyVersion,
   quoteLoading,
@@ -80,12 +81,12 @@ export default function UnitPricingCalculator({
           <strong className="pricing-row-val">{formatVND(totalRent)}</strong>
         </div>
 
-        {/* 2. Tiền đặt cọc giữ chỗ: 10% (tối thiểu 5.000 ₫) theo Rental Policy */}
+        {/* 2. Tiền đặt cọc giữ chỗ theo Rental Policy */}
         <div className="pricing-breakdown-row">
           <div className="pricing-row-left">
             <span className="pricing-row-label">Tiền đặt cọc giữ chỗ</span>
             <span className="pricing-row-hint">
-              10% tổng tiền thuê (tối thiểu 5.000 ₫) · Hoàn lại 100% khi trả kho
+              {depositPercent != null ? `${depositPercent}%` : "Theo chính sách"} tổng tiền thuê (tối thiểu 5.000 ₫) · Hoàn lại 100% khi trả kho
             </span>
           </div>
           <strong className="pricing-row-val">{formatVND(depositAmount)}</strong>
@@ -109,7 +110,7 @@ export default function UnitPricingCalculator({
         <div>
           <span>Áp dụng Quy chế thuê: <strong>{policyVersion}</strong></span>
           <p style={{ margin: "2px 0 0 0", fontSize: "0.72rem", color: "#64748b" }}>
-            Cọc 10% được lưu trữ an toàn và hoàn trả ngay khi kết thúc thuê kho.
+            Cọc {depositPercent != null ? `${depositPercent}%` : "theo chính sách"} được lưu trữ an toàn và hoàn trả ngay khi kết thúc thuê kho.
           </p>
         </div>
       </div>
@@ -119,7 +120,7 @@ export default function UnitPricingCalculator({
         <div className="due-now-row">
           <div>
             <span className="due-now-label">THANH TOÁN HÔM NAY:</span>
-            <span className="due-now-sub">Tiền cọc để khóa giữ chỗ kho (10%)</span>
+            <span className="due-now-sub">Tiền cọc để khóa giữ chỗ kho{depositPercent != null ? ` (${depositPercent}%)` : ""}</span>
           </div>
           <strong className="due-now-amount">{formatVND(dueNow)}</strong>
         </div>

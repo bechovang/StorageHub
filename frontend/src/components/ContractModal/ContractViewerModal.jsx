@@ -51,7 +51,12 @@ export default function ContractViewerModal({
   const dailyRent = u.baseDailyRent || res.dailyRent || (u.baseMonthlyRent ? Math.round(u.baseMonthlyRent / 30) : 0);
   const durationDays = res.durationDays || res.quote?.durationDays || 0;
   const totalRent = res.totalRent ?? res.totalEstimatedPrice ?? res.quote?.totalRent ?? (dailyRent * durationDays);
-  const depositPaid = res.depositAmount || Math.round(totalRent * 0.1);
+  const depositPaid = res.depositAmount || 0;
+  const depositPercent =
+    res.quote?.depositPercent ??
+    (totalRent > 0 && depositPaid > 0
+      ? Math.round((depositPaid / totalRent) * 100)
+      : null);
 
   const startDate = res.startDate || "";
   const endDate = res.endDate || "";
@@ -195,7 +200,7 @@ export default function ContractViewerModal({
                 2.3. <strong>Tổng tiền thuê kỳ cam kết:</strong> <strong>{formatVND(totalRent)}</strong>.
               </p>
               <p>
-                2.4. <strong>Tiền đặt cọc giữ chỗ bảo đảm (10%):</strong> Bên B đã nộp <strong>{formatVND(depositPaid)}</strong> vào tài khoản chuyên thu ký quỹ bảo đảm của Bên A. Khoản tiền cọc này được Bên A lưu giữ an toàn và cam kết hoàn trả 100% cho Bên B ngay khi hợp đồng chấm dứt và hoàn tất biên bản nghiệm thu trả kho.
+                2.4. <strong>Tiền đặt cọc giữ chỗ bảo đảm ({depositPercent != null ? `${depositPercent}%` : "theo chính sách"}):</strong> Bên B đã nộp <strong>{formatVND(depositPaid)}</strong> vào tài khoản chuyên thu ký quỹ bảo đảm của Bên A. Khoản tiền cọc này được Bên A lưu giữ an toàn và cam kết hoàn trả 100% cho Bên B ngay khi hợp đồng chấm dứt và hoàn tất biên bản nghiệm thu trả kho.
               </p>
             </div>
 

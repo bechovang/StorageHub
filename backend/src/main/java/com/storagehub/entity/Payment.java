@@ -77,6 +77,11 @@ public class Payment {
     @JoinColumn(name = "unit_id")
     private Unit unit;
 
+    /** Policy snapshot của quote cọc. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "policy_id")
+    private RentalPolicy policy;
+
     private LocalDate startDate;
 
     private LocalDate endDate;

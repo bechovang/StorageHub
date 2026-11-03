@@ -30,8 +30,8 @@ export const STATUS_COLOR = {
 
 export const DEPOSIT_STATUS_LABEL = {
   PENDING: "Chờ thanh toán cọc",
-  HELD: "Đang giữ ký quỹ (10%)",
-  PAID: "Đang giữ ký quỹ (10%)",
+  HELD: "Đang giữ ký quỹ",
+  PAID: "Đang giữ ký quỹ",
   UNPAID: "Chưa thanh toán cọc",
   SETTLED: "Đã tất toán / hoàn trả",
   FORFEITED: "Không hoàn cọc (quá hạn)",

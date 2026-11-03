@@ -44,6 +44,11 @@ public class ContractAddendum {
     @JoinColumn(name = "contract_id")
     private Contract contract;
 
+    /** Policy snapshot của hợp đồng gốc. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "policy_id")
+    private RentalPolicy policy;
+
     /** Nullable — chỉ set khi phụ lục đi kèm một extension cụ thể. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "extension_id")
