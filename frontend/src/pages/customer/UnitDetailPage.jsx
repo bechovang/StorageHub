@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   ArrowLeft,
@@ -5,6 +6,7 @@ import {
   Check,
 } from "@phosphor-icons/react";
 import AppShell from "../../components/AppShell/AppShell.jsx";
+const Facility3DViewer = lazy(() => import("../../components/Facility3DViewer/Facility3DViewer.jsx"));
 import { Badge, Button } from "../../components";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -41,6 +43,8 @@ export default function UnitDetailPage() {
     depositAmount,
     depositPercent,
     dueNow,
+    facilityLayout,
+    facilityLayoutError,
     policyVersion,
   } = useUnitDetailView();
 
@@ -145,6 +149,39 @@ export default function UnitDetailPage() {
                 sizeM2={unit.sizeM2}
                 typeName={typeLabel}
               />
+            </article>
+
+            {/* Vị trí kho trong sơ đồ 3D cơ sở */}
+            <article className="unit-detail-card unit-detail-3d-card">
+              <div className="unit-detail-card__header">
+                <h2 className="unit-detail-card__title">
+                  VỊ TRÍ KHO TRONG CƠ SỞ
+                </h2>
+                <span className="unit-detail-badge-mono">SƠ ĐỒ 3D</span>
+              </div>
+              <div className="unit-detail-card__body">
+                <p className="unit-3d-caption">
+                  Kho <strong>{unit.code}</strong> đang được khoanh vàng trên tầng {unit.floor || 1}.
+                  Kéo để xoay, lăn chuột để zoom.
+                </p>
+                {facilityLayout ? (
+                  <Suspense fallback={<p className="unit-3d-empty">Đang tải mô hình 3D...</p>}>
+                    <Facility3DViewer
+                      layout={facilityLayout}
+                      selectedUnitId={unit.id}
+                      initialFloor={unit.floor || 1}
+                      height={420}
+                      onSelectUnit={(id) => {
+                        if (String(id) !== String(unit.id)) navigate(`/units/${id}`);
+                      }}
+                    />
+                  </Suspense>
+                ) : (
+                  <p className="unit-3d-empty">
+                    {facilityLayoutError || "Đang tải sơ đồ vị trí kho..."}
+                  </p>
+                )}
+              </div>
             </article>
 
             {/* Thông số kỹ thuật không gian kho */}

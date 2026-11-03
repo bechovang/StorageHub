@@ -875,3 +875,8 @@
   color: var(--color-secondary, #64748b);
   margin-left: 2px;
 }
+
+.unit-detail-3d-card .unit-detail-card__body { padding-top: 10px; }
+.unit-3d-caption { margin: 0 0 12px; color: #475569; font-size: .82rem; }
+.unit-3d-caption strong { color: #0f172a; }
+.unit-3d-empty { margin: 0; padding: 28px 0; text-align: center; color: #64748b; }

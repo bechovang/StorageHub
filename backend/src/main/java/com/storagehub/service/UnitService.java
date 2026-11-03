@@ -313,7 +313,8 @@ public class UnitService {
                 photoUrl,
                 dimensions,
                 security,
-                photoUrls
+                photoUrls,
+                unit.getZone().getFacility().getFacilityId()
         );
     }
 
