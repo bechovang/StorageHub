@@ -28,5 +28,7 @@ jobs:
             echo "--- config ---"
             curl -fsS "${auth[@]}" "$base/docker.getConfig?containerId=$id" | jq '{Name,State,Config:{Image:.Config.Image,Env:(.Config.Env|map(select(startswith("SPRING") or startswith("FLYWAY"))))}}'
             echo "--- stdout ---"
-            curl -fsS "${auth[@]}" "$base/docker.readContainerFile?containerId=$id&path=/proc/1/fd/1" | head -c 20000 || true
+            curl -fsS "${auth[@]}" "$base/docker.readContainerFile?containerId=$id&path=/proc/1/fd/1" | jq -r .content | base64 -d | tail -120 || true
+            echo "--- stderr ---"
+            curl -fsS "${auth[@]}" "$base/docker.readContainerFile?containerId=$id&path=/proc/1/fd/2" | jq -r .content | base64 -d | tail -120 || true
           fi
