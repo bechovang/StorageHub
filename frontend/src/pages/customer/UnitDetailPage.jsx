@@ -160,7 +160,7 @@ export default function UnitDetailPage() {
               <div className="unit-detail-card__body">
                 <p className="unit-3d-caption">
                   Kho <strong>{unit.code}</strong> đang được khoanh vàng trên tầng {unit.floor || 1}.
-                  Kéo để xoay, lăn chuột để zoom.
+                  Kéo trái để xoay, kéo phải để pan, lăn chuột để zoom.
                 </p>
                 {facilityLayout ? (
                   <Suspense fallback={<p className="unit-3d-empty">Đang tải mô hình 3D...</p>}>

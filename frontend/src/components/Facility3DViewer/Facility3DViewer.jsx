@@ -109,7 +109,7 @@ export default function Facility3DViewer({
   onSelectUnit = null,
   height = 560,
   showFloorControls = true,
-  hint = "Kéo để xoay · lăn chuột để zoom · click kho để mở chi tiết",
+  hint = "Kéo trái để xoay · kéo phải để pan · lăn chuột để zoom · click kho để mở chi tiết",
 }) {
   const mountRef = useRef(null);
   const hoverRef = useRef(null);
