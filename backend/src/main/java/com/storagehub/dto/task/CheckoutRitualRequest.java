@@ -22,12 +22,28 @@ public record CheckoutRitualRequest(
         String settlementMethod,
 
         @NotBlank(message = "Bắt buộc đính kèm ảnh biên bản thanh lý")
-        String settlementPhotoUrl
+        String settlementPhotoUrl,
+
+        List<AssetCheck> assetChecks
 ) {
+    public CheckoutRitualRequest(
+            List<CheckItem> checklist,
+            List<DamageCharge> damageCharges,
+            Long refundAmount,
+            Long extraCharged,
+            String settlementMethod,
+            String settlementPhotoUrl
+    ) {
+        this(checklist, damageCharges, refundAmount, extraCharged,
+                settlementMethod, settlementPhotoUrl, List.of());
+    }
 
     public record CheckItem(String item, String result) {
     }
 
     public record DamageCharge(String item, Long amount, String reason) {
+    }
+
+    public record AssetCheck(Long assetId, String result, String note) {
     }
 }

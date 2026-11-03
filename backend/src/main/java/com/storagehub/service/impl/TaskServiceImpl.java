@@ -4,6 +4,10 @@ import com.storagehub.dto.task.AssignedStaffDto;
 import com.storagehub.dto.task.CreateTaskRequest;
 import com.storagehub.dto.task.TaskResponse;
 import com.storagehub.dto.task.TaskRitualDto;
+import com.storagehub.dto.task.TaskAssetDto;
+import com.storagehub.entity.UnitAsset;
+import com.storagehub.repository.UnitAssetRepository;
+import com.storagehub.repository.InspectionAssetRepository;
 import com.storagehub.entity.*;
 import com.storagehub.exception.TaskNotFoundException;
 import com.storagehub.exception.TaskSnapBackException;
@@ -42,6 +46,12 @@ public class TaskServiceImpl implements TaskService {
     private final com.storagehub.repository.SettlementRepository settlementRepository;
     private final com.storagehub.repository.InspectionRepository inspectionRepository;
     private final com.storagehub.repository.CheckoutRequestRepository checkoutRequestRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private UnitAssetRepository unitAssetRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private InspectionAssetRepository inspectionAssetRepository;
     private final com.storagehub.service.PricingEngine pricingEngine;
     private final com.storagehub.service.ReservationService reservationService;
     private final com.storagehub.service.ContractService contractService;
@@ -138,8 +148,17 @@ public class TaskServiceImpl implements TaskService {
             if (tasks.isEmpty() && isDefaultDate) {
                 tasks = taskRepository.findStaffTasks(currentUser.getUserId(), type, status);
             }
+        } else if (roleName == Role.Name.FACILITY_MANAGER
+                && currentUser.getFacility() != null) {
+            Integer facilityId = currentUser.getFacility().getFacilityId();
+            tasks = taskRepository.findFilteredTasksByFacility(
+                    staffId, facilityId, targetDate, type, status);
+            if (tasks.isEmpty() && isDefaultDate) {
+                tasks = taskRepository.findFilteredTasksByFacility(
+                        staffId, facilityId, null, type, status);
+            }
         } else {
-            // Facility Manager/System Admin: xem toàn bộ hoặc lọc theo 1 staff.
+            // System Admin: xem toàn bộ hoặc lọc theo 1 staff.
             tasks = taskRepository.findFilteredTasks(staffId, targetDate, type, status);
             if (tasks.isEmpty() && isDefaultDate) {
                 tasks = taskRepository.findFilteredTasks(staffId, null, type, status);
@@ -156,6 +175,9 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse getTaskDetail(String currentUserEmail, Long taskId) {
         Task task = taskRepository.findWithStaffById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
+        User currentUser = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Người dùng không tồn tại"));
+        assertTaskFacility(currentUser, task);
 
         return toTaskResponse(task, getCurrentShift(), null, null, null, null, true);
     }
@@ -167,6 +189,7 @@ public class TaskServiceImpl implements TaskService {
 
         Task task = taskRepository.findWithStaffById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
+        assertTaskFacility(currentUser, task);
 
         Role.Name roleName = currentUser.getRole().getName();
         if (roleName == Role.Name.STAFF
@@ -642,6 +665,7 @@ public class TaskServiceImpl implements TaskService {
         String alertNote = customAlertNote;
 
         TaskRitualDto ritual = null;
+        Long checkoutUnitId = null;
         boolean isDone = (task.getStatus() == Task.Status.DONE);
 
         switch (task.getType()) {
@@ -680,6 +704,7 @@ public class TaskServiceImpl implements TaskService {
                         customerName = res.getCustomer().getFullName();
                         customerPhone = res.getCustomer().getPhone();
                         depositPaid = res.getDepositAmount() != null ? res.getDepositAmount().longValue() : 360000L;
+                        checkoutUnitId = res.getUnit().getUnitId();
                     }
                 }
                 ritual = new TaskRitualDto(
@@ -767,6 +792,7 @@ public class TaskServiceImpl implements TaskService {
                         task.getAssignedStaff().getFullName());
 
         String effectiveAlertNote = alertNote != null ? alertNote : task.getNote();
+        java.util.List<TaskAssetDto> assets = checkoutUnitId == null ? null : loadTaskAssets(checkoutUnitId);
         return new TaskResponse(
                 task.getTaskId(),
                 task.getType(),
@@ -999,6 +1025,37 @@ public class TaskServiceImpl implements TaskService {
         for (com.storagehub.entity.Inspection ins : inspections) {
             ins.setSettlement(settlement);
             inspectionRepository.save(ins);
+        }
+
+        // 5b. Thiết bị trong kho (unit_assets) — chỉ nhận asset thuộc đúng kho.
+        if (request.assetChecks() != null && !request.assetChecks().isEmpty()) {
+            if (unitAssetRepository == null || inspectionAssetRepository == null) {
+                throw new com.storagehub.exception.BusinessRuleException(
+                        "Chưa cấu hình kho thiết bị để nghiệm thu.");
+            }
+            for (var check : request.assetChecks()) {
+                if (check.assetId() == null) continue;
+                UnitAsset asset = unitAssetRepository.findById(check.assetId())
+                        .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
+                                "Thiết bị không tồn tại: " + check.assetId()));
+                if (!asset.getUnit().getUnitId().equals(reservation.getUnit().getUnitId())) {
+                    throw new com.storagehub.exception.BusinessRuleException(
+                            "Thiết bị không thuộc kho " + reservation.getUnit().getCode());
+                }
+                String result = check.result() == null ? "OK" : check.result().toUpperCase(java.util.Locale.ROOT);
+                if (!result.equals("OK") && !result.equals("MINOR") && !result.equals("MAJOR")) {
+                    throw new com.storagehub.exception.BusinessRuleException(
+                            "Kết quả thiết bị không hợp lệ: " + check.result());
+                }
+                com.storagehub.entity.InspectionAsset ia = new com.storagehub.entity.InspectionAsset();
+                ia.setSettlement(settlement);
+                ia.setUnitAsset(asset);
+                ia.setResult(result);
+                ia.setNote(check.note());
+                inspectionAssetRepository.save(ia);
+                asset.setStatus(result.equals("OK") ? "OK" : "NEEDS_SERVICE");
+                unitAssetRepository.save(asset);
+            }
         }
 
         // 6. Đóng vòng thuê: reservation CLOSED, contract CLOSED, kho về PREPARING
@@ -1293,6 +1350,35 @@ public class TaskServiceImpl implements TaskService {
             logService.log(actor, "TASK", taskId,
                     "DELETED", fromStatus, null,
                     "Hủy checkout task cho " + reservationCode);
+        }
+    }
+
+    private java.util.List<TaskAssetDto> loadTaskAssets(Long unitId) {
+        if (unitAssetRepository == null) return java.util.List.of();
+        return unitAssetRepository.findByUnit_UnitIdOrderByUnitAssetIdAsc(unitId).stream()
+                .map(a -> new TaskAssetDto(
+                        a.getUnitAssetId(),
+                        a.getAssetType() != null ? a.getAssetType().getCode() : null,
+                        a.getAssetType() != null ? a.getAssetType().getName() : null,
+                        a.getSerialNo(),
+                        a.getStatus(),
+                        a.getLastServiceAt(),
+                        a.getNote()))
+                .toList();
+    }
+
+    /** Manager chỉ được xem task thuộc facility của mình. */
+    private void assertTaskFacility(User currentUser, Task task) {
+        if (currentUser.getRole().getName() != Role.Name.FACILITY_MANAGER
+                || currentUser.getFacility() == null
+                || task.getAssignedStaff() == null
+                || task.getAssignedStaff().getFacility() == null) {
+            return;
+        }
+        if (!currentUser.getFacility().getFacilityId()
+                .equals(task.getAssignedStaff().getFacility().getFacilityId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Nhiệm vụ thuộc cơ sở khác.");
         }
     }
 }

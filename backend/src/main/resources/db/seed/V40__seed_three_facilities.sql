@@ -14,6 +14,7 @@ TRUNCATE TABLE contracts;
 TRUNCATE TABLE escalations;
 TRUNCATE TABLE extensions;
 TRUNCATE TABLE inspections;
+TRUNCATE TABLE settlements;
 TRUNCATE TABLE notifications;
 TRUNCATE TABLE payments;
 TRUNCATE TABLE policy_rules;
