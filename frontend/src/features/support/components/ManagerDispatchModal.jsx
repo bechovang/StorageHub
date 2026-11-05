@@ -22,7 +22,12 @@ export default function ManagerDispatchModal({ ticket, onClose, onSuccess }) {
     setLoadingUnits(true);
     setError("");
     try {
-      const data = await searchUnits({ startDate, endDate, pageSize: 100 });
+      const data = await searchUnits({
+        facilityId: ticket.facilityId || "",
+        startDate,
+        endDate,
+        pageSize: 100,
+      });
       const items = Array.isArray(data?.items) ? data.items : [];
       setUnits(items.filter((u) => (u.availability?.status || u.availability) === "AVAILABLE"));
     } catch (err) {

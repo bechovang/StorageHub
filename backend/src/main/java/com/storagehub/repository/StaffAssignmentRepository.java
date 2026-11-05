@@ -13,27 +13,45 @@ import java.util.Optional;
 @Repository
 public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment, Long> {
 
-    /** Các ca trực phụ trách loại kho trong ngày + ca — dùng gán task tự động. */
+    /** Các ca trực phụ trách loại kho trong ngày + ca — dùng gán task tự động (lọc theo facility). */
     @Query("""
             SELECT DISTINCT sa FROM StaffAssignment sa
             JOIN FETCH sa.staff s
             LEFT JOIN FETCH sa.unitTypes t
-            WHERE s.userId = sa.staff.userId
-              AND sa.workDate = :workDate
+            WHERE sa.workDate = :workDate
               AND sa.shift = :shift
+              AND (:facilityId IS NULL OR s.facility.facilityId = :facilityId)
               AND EXISTS (SELECT 1 FROM sa.unitTypes ut WHERE ut.typeId = :typeId)
             """)
-    List<StaffAssignment> findByUnitType_TypeIdAndWorkDateAndShift(
+    List<StaffAssignment> findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(
+            @Param("facilityId") Integer facilityId,
             @Param("typeId") Integer typeId,
             @Param("workDate") LocalDate workDate,
             @Param("shift") StaffAssignment.Shift shift
     );
 
-    @Query("SELECT DISTINCT sa FROM StaffAssignment sa JOIN FETCH sa.staff WHERE sa.workDate = :workDate AND sa.shift = :shift")
-    List<StaffAssignment> findByWorkDateAndShift(
+    @Query("""
+            SELECT DISTINCT sa FROM StaffAssignment sa
+            JOIN FETCH sa.staff s
+            WHERE sa.workDate = :workDate
+              AND sa.shift = :shift
+              AND (:facilityId IS NULL OR s.facility.facilityId = :facilityId)
+            """)
+    List<StaffAssignment> findByFacilityAndWorkDateAndShift(
+            @Param("facilityId") Integer facilityId,
             @Param("workDate") LocalDate workDate,
             @Param("shift") StaffAssignment.Shift shift
     );
+
+    default List<StaffAssignment> findByUnitType_TypeIdAndWorkDateAndShift(
+            Integer typeId, LocalDate workDate, StaffAssignment.Shift shift) {
+        return findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(null, typeId, workDate, shift);
+    }
+
+    default List<StaffAssignment> findByWorkDateAndShift(
+            LocalDate workDate, StaffAssignment.Shift shift) {
+        return findByFacilityAndWorkDateAndShift(null, workDate, shift);
+    }
 
     @Query("SELECT DISTINCT sa FROM StaffAssignment sa LEFT JOIN FETCH sa.unitTypes WHERE sa.staff.userId = :staffId AND sa.workDate = :workDate")
     List<StaffAssignment> findByStaff_UserIdAndWorkDate(

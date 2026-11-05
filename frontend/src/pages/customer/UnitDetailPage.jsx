@@ -134,7 +134,7 @@ export default function UnitDetailPage() {
             </div>
 
             <div className="unit-detail-depot-tag">
-              <span>CƠ SỞ: VN-SGN-01 (Tân Bình)</span>
+              <span>CƠ SỞ: {facilityLabel ? facilityLabel.toUpperCase() : "VN-SGN-01 (TÂN BÌNH)"}</span>
             </div>
           </section>
 

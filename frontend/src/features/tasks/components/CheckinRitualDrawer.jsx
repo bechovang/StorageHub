@@ -6,11 +6,7 @@ import {
   UploadSimple,
   Key,
   QrCode,
-  IdentificationCard,
   CheckCircle,
-  Eye,
-  Camera,
-  Image as ImageIcon,
   Copy,
   Check,
 } from "@phosphor-icons/react";

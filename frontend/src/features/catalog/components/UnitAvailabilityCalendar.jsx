@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   CaretLeft,
   CaretRight,
@@ -100,7 +100,7 @@ export default function UnitAvailabilityCalendar({
       const isBooked = !isPast && isSoon && availableFromDate && dateStr < availableFromDate;
 
       // Kiểm tra tính hợp lệ tuỳ theo mode đang chọn
-      let isSelectable = false;
+      let isSelectable;
       let isBeforeStart = false;
 
       if (activeMode === "START") {
@@ -351,7 +351,7 @@ export default function UnitAvailabilityCalendar({
             { label: "30 ngày (1 tháng)", days: 30 },
           ].map((sc) => {
             const targetDate = addDaysToDateStr(
-              resolvedStartDate || tomorrowStr,
+              resolvedStartDate || todayDefaultStr,
               sc.days - 1
             );
             const isActive = resolvedEndDate === targetDate;

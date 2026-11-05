@@ -105,7 +105,7 @@ export function UnitDrawer({
               KHU {selectedUnit.zone} · TẦNG {selectedUnit.floor}
             </div>
             <div className="drawer-unit-hero__price font-mono">
-              {formatVND(selectedUnit.rentPrice || editPrice || 0)}
+              {formatVND(selectedUnit.rentPrice || 0)}
               <span className="drawer-unit-hero__price-sub">/tháng</span>
             </div>
           </div>

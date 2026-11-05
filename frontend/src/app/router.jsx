@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useParams } from "react-router";
-import { useAuth } from "../context/AuthContext.jsx";
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute.jsx";
 
 // Auth & Public Pages
@@ -80,6 +79,14 @@ export default function AppRouter() {
       <Route path="/browse" element={<BrowsePage />} />
       <Route
         path="/facilities/:facilityId/3d"
+        element={
+          <Suspense fallback={<div style={{ padding: 80, textAlign: "center" }}>Đang tải sơ đồ 3D...</div>}>
+            <Facility3DPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/facility/:facilityId/3d"
         element={
           <Suspense fallback={<div style={{ padding: 80, textAlign: "center" }}>Đang tải sơ đồ 3D...</div>}>
             <Facility3DPage />

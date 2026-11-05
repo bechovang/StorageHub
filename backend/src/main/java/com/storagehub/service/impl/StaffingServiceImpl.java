@@ -60,12 +60,39 @@ public class StaffingServiceImpl implements StaffingService {
             Long staffId,
             Integer typeId
     ) {
+        return getShifts(null, startDate, endDate, staffId, typeId, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ShiftAssignmentResponse> getShifts(
+            String actorEmail,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long staffId,
+            Integer typeId,
+            Integer facilityId
+    ) {
         LocalDate start = startDate != null ? startDate : LocalDate.now(ICT_ZONE).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate end = endDate != null ? endDate : start.plusDays(6);
 
+        Integer effectiveFacilityId = resolveEffectiveFacility(actorEmail, facilityId);
+
         return staffAssignmentRepository.findFiltered(start, end, staffId, typeId).stream()
+                .filter(a -> effectiveFacilityId == null || (a.getStaff() != null && a.getStaff().getFacility() != null && a.getStaff().getFacility().getFacilityId().equals(effectiveFacilityId)))
                 .map(ShiftAssignmentResponse::fromEntity)
                 .toList();
+    }
+
+    private Integer resolveEffectiveFacility(String actorEmail, Integer requestedFacilityId) {
+        if (requestedFacilityId != null) return requestedFacilityId;
+        if (actorEmail != null && !actorEmail.isBlank()) {
+            User actor = userRepository.findByEmailIgnoreCase(actorEmail).orElse(null);
+            if (actor != null && actor.getFacility() != null) {
+                return actor.getFacility().getFacilityId();
+            }
+        }
+        return null;
     }
 
     @Override
@@ -184,10 +211,29 @@ public class StaffingServiceImpl implements StaffingService {
             LocalDate startDate,
             LocalDate endDate
     ) {
+        return getStaffRoster(null, startDate, endDate, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StaffRosterMember> getStaffRoster(
+            String actorEmail,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer facilityId
+    ) {
         LocalDate start = startDate != null ? startDate : LocalDate.now(ICT_ZONE).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate end = endDate != null ? endDate : start.plusDays(6);
 
+        Integer effectiveFacilityId = resolveEffectiveFacility(actorEmail, facilityId);
+
         List<User> staffUsers = userRepository.findByRole_NameAndStatus(Role.Name.STAFF, 1);
+        if (effectiveFacilityId != null) {
+            staffUsers = staffUsers.stream()
+                    .filter(s -> s.getFacility() != null && s.getFacility().getFacilityId().equals(effectiveFacilityId))
+                    .toList();
+        }
+
         List<StaffAssignment> weekAssignments = staffAssignmentRepository.findByWorkDateBetween(start, end);
 
         List<StaffRosterMember> roster = new ArrayList<>();

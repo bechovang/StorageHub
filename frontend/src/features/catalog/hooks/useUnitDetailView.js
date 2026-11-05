@@ -178,7 +178,7 @@ export function useUnitDetailView() {
     dueNow,
     facilityLayout,
     facilityLayoutError,
-    endDate: quoteEndDate,
+    quoteEndDate,
     policyVersion,
   };
 }

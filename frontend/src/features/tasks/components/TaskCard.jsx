@@ -19,7 +19,6 @@ export function TaskCard({
   onOpenSupport,
   onOpenContract,
   onShowDetail,
-  onHandoff,
   showAssignee = false,
 }) {
   const typeConfig = TASK_TYPES[task.type] || TASK_TYPES.CHECK_IN;

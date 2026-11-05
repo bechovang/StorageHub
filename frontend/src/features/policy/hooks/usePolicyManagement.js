@@ -57,7 +57,7 @@ export function usePolicyManagement() {
   }, []);
 
   // Khi persistedPolicy đổi, đồng bộ form draft
-  const syncDraftFromPersisted = (policy) => {
+  function syncDraftFromPersisted(policy) {
     if (!policy) return;
     setDraftBaseRates(Array.isArray(policy.baseRates) ? policy.baseRates.map((r) => ({ ...r })) : []);
     setDraftLateFee(policy.surcharges?.lateCheckoutPercent ?? "");
