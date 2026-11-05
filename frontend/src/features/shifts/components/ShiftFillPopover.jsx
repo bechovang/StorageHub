@@ -19,7 +19,12 @@ const TYPE_COLORS = {
   LOCKER: "#7c3aed",
 };
 
-export default function ShiftFillPopover({
+export default function ShiftFillPopover(props) {
+  if (!props.activePopover) return null;
+  return <ShiftFillPopoverContent {...props} />;
+}
+
+function ShiftFillPopoverContent({
   activePopover,
   staffList = [],
   allShifts = [],
@@ -27,7 +32,7 @@ export default function ShiftFillPopover({
   onSaveFill,
   onRemoveShift,
 }) {
-  if (!activePopover) return null;
+
 
   const {
     shiftKey,

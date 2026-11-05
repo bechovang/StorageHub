@@ -116,16 +116,17 @@ export default function Facility3DViewer({
   const resetViewRef = useRef(null);
   const selectRef = useRef(onSelectUnit);
   const [activeFloor, setActiveFloor] = useState(initialFloor || 1);
+  const [prevInitialFloor, setPrevInitialFloor] = useState(initialFloor);
+  if (initialFloor !== prevInitialFloor) {
+    setPrevInitialFloor(initialFloor);
+    if (initialFloor != null) setActiveFloor(initialFloor);
+  }
   const [mode, setMode] = useState("exploded");
   const [hover, setHover] = useState(null);
 
   useEffect(() => {
     selectRef.current = onSelectUnit;
   }, [onSelectUnit]);
-
-  useEffect(() => {
-    if (initialFloor != null) setActiveFloor(initialFloor);
-  }, [initialFloor]);
 
   useEffect(() => {
     if (!layout || !mountRef.current) return undefined;
@@ -459,8 +460,11 @@ export default function Facility3DViewer({
           }
         }
       });
+      renderer.forceContextLoss();
       renderer.dispose();
-      mount.removeChild(renderer.domElement);
+      if (renderer.domElement && mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement);
+      }
     };
   }, [layout, mode, activeFloor, selectedUnitId]);
 
@@ -528,9 +532,19 @@ export default function Facility3DViewer({
 
       <div className="facility-3d-stage" style={{ height }}>
         <div ref={mountRef} className="facility-3d-canvas" />
-        <div className="facility-3d-hint">{hint}</div>
+        <div className="facility-3d-hint">
+          {typeof window !== "undefined" && window.matchMedia && window.matchMedia("(pointer: coarse)").matches
+            ? "Chạm để chọn kho · Dùng 2 ngón để xoay & zoom"
+            : hint}
+        </div>
         {hover && (
-          <div className="facility-3d-tooltip" style={{ left: hover.x + 14, top: hover.y + 14 }}>
+          <div
+            className="facility-3d-tooltip"
+            style={{
+              left: Math.min(hover.x + 14, (typeof window !== "undefined" ? window.innerWidth : 800) - 220),
+              top: Math.min(hover.y + 14, (typeof window !== "undefined" ? window.innerHeight : 600) - 110),
+            }}
+          >
             <strong>{hover.code}</strong>
             <span>{hover.typeName} · {hover.sizeM2} m²</span>
             <span>{STATUS_LABEL[hover.status] || hover.status}</span>

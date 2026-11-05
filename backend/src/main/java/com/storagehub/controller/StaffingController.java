@@ -40,9 +40,15 @@ public class StaffingController {
             @RequestParam(name = "endDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(name = "staffId", required = false) Long staffId,
-            @RequestParam(name = "unitTypeId", required = false) Integer unitTypeId
+            @RequestParam(name = "unitTypeId", required = false) Integer unitTypeId,
+            @RequestParam(name = "facilityId", required = false) Integer facilityId,
+            Authentication authentication
     ) {
-        List<ShiftAssignmentResponse> list = staffingService.getShifts(startDate, endDate, staffId, unitTypeId);
+        String actorEmail = authentication != null ? authentication.getName() : null;
+        if (actorEmail == null && facilityId == null) {
+            return ResponseEntity.ok(staffingService.getShifts(startDate, endDate, staffId, unitTypeId));
+        }
+        List<ShiftAssignmentResponse> list = staffingService.getShifts(actorEmail, startDate, endDate, staffId, unitTypeId, facilityId);
         return ResponseEntity.ok(list);
     }
 
@@ -90,9 +96,15 @@ public class StaffingController {
             @RequestParam(name = "startDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "endDate", required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(name = "facilityId", required = false) Integer facilityId,
+            Authentication authentication
     ) {
-        List<StaffRosterMember> roster = staffingService.getStaffRoster(startDate, endDate);
+        String actorEmail = authentication != null ? authentication.getName() : null;
+        if (actorEmail == null && facilityId == null) {
+            return ResponseEntity.ok(staffingService.getStaffRoster(startDate, endDate));
+        }
+        List<StaffRosterMember> roster = staffingService.getStaffRoster(actorEmail, startDate, endDate, facilityId);
         return ResponseEntity.ok(roster);
     }
 }

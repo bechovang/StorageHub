@@ -7,6 +7,27 @@ export default defineConfig({
   optimizeDeps: {
     include: ['qrcode'],
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three')) {
+            return 'vendor-three';
+          }
+          if (id.includes('node_modules/recharts')) {
+            return 'vendor-recharts';
+          }
+          if (id.includes('node_modules/@phosphor-icons')) {
+            return 'vendor-icons';
+          }
+          if (id.includes('node_modules/motion') || id.includes('node_modules/gsap')) {
+            return 'vendor-motion';
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

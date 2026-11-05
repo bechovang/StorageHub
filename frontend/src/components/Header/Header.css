@@ -583,6 +583,12 @@
   }
 }
 
+@media (max-width: 480px) {
+  .header-guest-actions {
+    display: none;
+  }
+}
+
 /* ── Header Greeting & Guest Register Button ── */
 .header-greeting {
   display: inline-flex;
