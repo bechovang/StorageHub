@@ -3,10 +3,13 @@ import { useParams, useNavigate } from "react-router";
 import {
   getReservation,
   createCheckoutRequest,
+  createExtensionRequest,
   cancelCheckoutRequest,
 } from "../../../services/rentalService.js";
+import { paymentService } from "../../../services/paymentService.js";
 import {
   fmtDate,
+  fmtMoney,
   STATUS_LABEL,
   STATUS_COLOR,
   DEPOSIT_STATUS_LABEL,
@@ -97,62 +100,55 @@ export function useRentalDetail() {
     return () => clearTimeout(timer);
   }, [toastMessage]);
 
-  // Xử lý xác nhận gia hạn (US-18 & US-19)
+  // Xử lý xác nhận gia hạn (US-18 & US-19):
+  // 1) server tạo extension PENDING_PAYMENT + bảng tính server-truth
+  // 2) tạo payment EXTENSION_FEE rồi chuyển sang màn hình quét QR
+  // EndDate/cọc/addendum chỉ được backend cập nhật khi PayOS SUCCEEDED.
   const handleConfirmExtension = async (extensionData) => {
-    setReservation((prev) => {
-      const existingContracts = prev.contracts || [];
-      const originalContract =
-        existingContracts.find((c) => c.kind === "ORIGINAL") || existingContracts[0];
-      const newAddendumCode = originalContract
-        ? `${originalContract.code}-A1`
-        : "CT-1042-A1";
+    try {
+      const quote = await createExtensionRequest(
+        reservationId,
+        extensionData.newEndDate
+      );
 
-      const updatedContracts = existingContracts.map((c) => ({
-        ...c,
-        isLatest: false,
-      }));
-
-      updatedContracts.push({
-        id: Date.now(),
-        code: newAddendumCode,
-        kind: "ADDENDUM",
-        status: "AWAITING_SIGNATURE",
-        isLatest: true,
-        signatureDueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split("T")[0],
+      const session = await paymentService.createPayment({
+        purpose: "EXTENSION_FEE",
+        reservationId: Number(reservationId),
+        method: "PAYOS",
       });
 
-      const newPayments = [
-        ...(prev.payments || []),
-        {
-          id: Date.now(),
-          purpose: "EXTENSION_FEE",
-          method: "CARD",
-          amount: extensionData.totalPayable,
-          status: "SUCCEEDED",
-          receiptCode: `RT-EXT-${Date.now().toString().slice(-4)}`,
-          paidAt: new Date().toISOString(),
-        },
-      ];
+      setToastMessage({
+        type: "info",
+        text: `Đã tạo yêu cầu gia hạn +${quote.addedDays} ngày. Vui lòng hoàn tất thanh toán ${fmtMoney(
+          quote.totalPayable
+        )}.`,
+      });
 
-      return {
-        ...prev,
-        endDate: extensionData.newEndDate,
-        durationDays:
-          (prev.durationDays || 0) + (extensionData.addedDays || 0),
-        depositAmount: extensionData.newDepositHeld,
-        contracts: updatedContracts,
-        payments: newPayments,
-      };
-    });
-
-    setToastMessage({
-      type: "success",
-      text: `Gia hạn thành công! Ngày trả kho mới: ${fmtDate(
-        extensionData.newEndDate
-      )}. Phụ lục hợp đồng đã sinh ra (hẹn ký tại quầy trong 7 ngày).`,
-    });
+      navigate(`/payments/${session.id}`);
+      return quote;
+    } catch (err) {
+      // Nếu phiên PayOS cũ vẫn PENDING, mở lại đúng phiên thay vì báo lỗi.
+      if (err?.code === "PAYMENT_DUPLICATE") {
+        try {
+          const history = await paymentService.listPayments({
+            reservationId: Number(reservationId),
+            pageSize: 50,
+          });
+          const pending = history?.items?.find(
+            (p) => p.purpose === "EXTENSION_FEE"
+              && ["PENDING", "PROCESSING"].includes(p.status)
+          );
+          if (pending) {
+            navigate(`/payments/${pending.id}`);
+            return null;
+          }
+        } catch {
+          // Rơi xuống để hiển thị lỗi gốc.
+        }
+      }
+      // Ném lại để ExtensionModal hiển thị lỗi server (boundary, hạn mức...)
+      throw err;
+    }
   };
 
   // Xử lý gửi yêu cầu trả kho (US-20)

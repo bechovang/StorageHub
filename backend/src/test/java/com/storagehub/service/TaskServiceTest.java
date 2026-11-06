@@ -49,6 +49,9 @@ class TaskServiceTest {
     private ContractRepository contractRepository;
 
     @Mock
+    private ContractAddendumRepository contractAddendumRepository;
+
+    @Mock
     private SupportTicketRepository supportTicketRepository;
 
     @Mock
@@ -291,6 +294,54 @@ class TaskServiceTest {
 
         assertThat(res.taskId()).isEqualTo(100L);
         assertThat(res.assignedStaff()).isNull();
+    }
+
+    @Test
+    @DisplayName("createContractTask sinh task CONTRACT idempotent cho phụ lục gia hạn")
+    void testCreateContractTask_ForAddendum() {
+        Contract contract = new Contract();
+        contract.setContractId(10L);
+        contract.setCode("CT-2026-0002");
+        contract.setStatus(Contract.Status.SIGNED);
+
+        Reservation reservation = new Reservation();
+        reservation.setReservationId(2L);
+        reservation.setCode("BK-2026-0002");
+        reservation.setUnit(unitS3);
+        reservation.setCustomer(customerUser);
+        reservation.setStartDate(today);
+        reservation.setEndDate(today.plusDays(7));
+        reservation.setStatus(Reservation.Status.CHECKED_IN);
+        contract.setReservation(reservation);
+
+        ContractAddendum addendum = new ContractAddendum();
+        addendum.setAddendumId(20L);
+        addendum.setCode("CT-2026-0002-A1");
+        addendum.setContract(contract);
+        addendum.setStatus(ContractAddendum.Status.AWAITING_SIGNATURE);
+        addendum.setSignatureDueDate(today.plusDays(7));
+
+        when(taskRepository
+                .findFirstByTypeAndRefCodeOrderByCreatedAtDesc(
+                        Task.Type.CONTRACT, "CT-2026-0002-A1"))
+                .thenReturn(Optional.empty());
+        when(staffAssignmentRepository
+                .findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(
+                        1, 2, today, StaffAssignment.Shift.MORNING))
+                .thenReturn(List.of());
+        when(taskRepository.save(any(Task.class))).thenAnswer(inv -> {
+            Task saved = inv.getArgument(0);
+            saved.setTaskId(88L);
+            return saved;
+        });
+
+        Task task = taskService.createContractTask(staffUser, addendum);
+
+        assertThat(task.getType()).isEqualTo(Task.Type.CONTRACT);
+        assertThat(task.getRefCode()).isEqualTo("CT-2026-0002-A1");
+        assertThat(task.getFacility()).isSameAs(facility);
+        assertThat(task.getAssignedStaff()).isNull();
+        assertThat(task.getStatus()).isEqualTo(Task.Status.TODO);
     }
 
     @Test

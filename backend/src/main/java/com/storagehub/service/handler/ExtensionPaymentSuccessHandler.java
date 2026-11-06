@@ -25,6 +25,7 @@ public class ExtensionPaymentSuccessHandler implements PaymentSuccessHandler {
     private final ExtensionService extensionService;
     private final ReservationService reservationService;
     private final ContractService contractService;
+    private final com.storagehub.service.TaskService taskService;
     private final NotificationService notificationService;
     private final LogService logService;
 
@@ -32,12 +33,14 @@ public class ExtensionPaymentSuccessHandler implements PaymentSuccessHandler {
             ExtensionService extensionService,
             ReservationService reservationService,
             ContractService contractService,
+            com.storagehub.service.TaskService taskService,
             NotificationService notificationService,
             LogService logService
     ) {
         this.extensionService = extensionService;
         this.reservationService = reservationService;
         this.contractService = contractService;
+        this.taskService = taskService;
         this.notificationService = notificationService;
         this.logService = logService;
     }
@@ -66,9 +69,13 @@ public class ExtensionPaymentSuccessHandler implements PaymentSuccessHandler {
                 payment.getPayer(), reservation, extension,
                 breakdown.depositTopUp(), breakdown.newDepositHeld());
 
+        // FR-12: phụ lục phải xuất hiện trên Task Board như card Contract-signature.
+        var contractTask = taskService.createContractTask(payment.getPayer(), addendum);
+        var assignee = contractTask != null ? contractTask.getAssignedStaff() : null;
+
         NotificationEventResponse notification =
                 notificationService.notifyExtensionApplied(reservation, extension);
-        notificationService.notifyAddendumAwaitingSignature(reservation, addendum);
+        notificationService.notifyAddendumAwaitingSignature(reservation, addendum, assignee);
 
         logService.log(
                 payment.getPayer(),

@@ -87,6 +87,12 @@ public interface TaskService {
     TaskResponse autoCreateTask(CreateTaskRequest request);
 
     /**
+     * US-18/FR-12: phí gia hạn thành công → sinh task CONTRACT-signature
+     * cho staff ký phụ lục giấy (idempotent theo (CONTRACT, addendum.code)).
+     */
+    Task createContractTask(User actor, com.storagehub.entity.ContractAddendum addendum);
+
+    /**
      * US-15: Tự động sinh task CHECK_IN khi reservation hoàn tất trả cọc.
      */
     Task createCheckInTask(User actor, Reservation reservation);

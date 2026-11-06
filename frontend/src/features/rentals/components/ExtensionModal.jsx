@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     X,
     CalendarPlus,
@@ -44,26 +44,26 @@ export default function ExtensionModal({
                 ? currentDepositHeld / currentTotalRent
                 : 0;
 
-    /** Số ngày thuê (inclusive) giữa 2 chuỗi ngày yyyy-MM-dd */
-    const diffDaysInclusive = (start, end) => {
+    /** Số ngày cộng thêm giữa 2 chuỗi ngày yyyy-MM-dd (cùng semantics backend). */
+    const daysBetween = (start, end) => {
         if (!start || !end) return 0;
         const a = new Date(`${start}T00:00:00`);
         const b = new Date(`${end}T00:00:00`);
-        return Math.floor((b - a) / 86400000) + 1;
+        return Math.floor((b - a) / 86400000);
     };
 
-    // Giới hạn xung đột (Conflict boundary): Chỉ áp dụng nếu backend báo có đơn tiếp theo
-    const conflictStartDateStr = reservation?.nextReservationStartDate || null;
+    // Backend trả latestNewCheckout = ngày trả muộn nhất được phép (đã trừ đơn kế tiếp).
+    const latestAllowedCheckoutStr = reservation?.latestNewCheckout || null;
+    const conflictStartDateStr = useMemo(() => {
+        if (!latestAllowedCheckoutStr) return null;
+        const d = new Date(`${latestAllowedCheckoutStr}T00:00:00`);
+        d.setDate(d.getDate() + 1);
+        return d.toISOString().split("T")[0];
+    }, [latestAllowedCheckoutStr]);
     const conflictStartDate = useMemo(
-        () => (conflictStartDateStr ? new Date(conflictStartDateStr) : null),
+        () => (conflictStartDateStr ? new Date(`${conflictStartDateStr}T00:00:00`) : null),
         [conflictStartDateStr]
     );
-    const latestAllowedCheckoutStr = useMemo(() => {
-        if (!conflictStartDate) return null;
-        const d = new Date(conflictStartDate);
-        d.setDate(d.getDate() - 1);
-        return d.toISOString().split("T")[0];
-    }, [conflictStartDate]);
 
     // Ngày checkout mới được chọn (mặc định gợi ý +30 ngày tính từ currentEndDate)
     const [extensionDays, setExtensionDays] = useState(30);
@@ -73,6 +73,11 @@ export default function ExtensionModal({
         return target.toISOString().split("T")[0];
     });
     const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState("");
+
+    useEffect(() => {
+        if (isOpen) setSubmitError("");
+    }, [isOpen]);
 
     // Tính toán ngày và kiểm tra xung đột
     const selectedDate = useMemo(() => new Date(selectedDateStr), [selectedDateStr]);
@@ -90,7 +95,7 @@ export default function ExtensionModal({
     // Tính toán chi phí gia hạn theo công thức PRD FR-16 (mô hình ngày):
     // Phí gia hạn = Tiền thuê kỳ thêm (ngày × giá ngày) + Top-up cọc
     const calculation = useMemo(() => {
-        const addedDays = Math.max(1, diffDaysInclusive(currentEndDateStr, selectedDateStr));
+        const addedDays = Math.max(1, daysBetween(currentEndDateStr, selectedDateStr));
         const addedRent = addedDays * dailyRent;
         const newTotalDuration = currentDurationDays + addedDays;
         const newTotalRent = newTotalDuration * dailyRent;
@@ -121,7 +126,7 @@ export default function ExtensionModal({
         const val = e.target.value;
         setSelectedDateStr(val);
         if (val) {
-            setExtensionDays(diffDaysInclusive(currentEndDateStr, val));
+            setExtensionDays(daysBetween(currentEndDateStr, val));
         }
     };
 
@@ -129,6 +134,7 @@ export default function ExtensionModal({
         e.preventDefault();
         if (isConflict || isBeforeCurrent) return;
 
+        setSubmitError("");
         setSubmitting(true);
         try {
             await onConfirmExtension({
@@ -142,6 +148,9 @@ export default function ExtensionModal({
             onClose();
         } catch (err) {
             console.error("Failed to extend rental:", err);
+            setSubmitError(
+                err?.message || "Không thể tạo yêu cầu gia hạn. Vui lòng thử lại."
+            );
         } finally {
             setSubmitting(false);
         }
@@ -283,6 +292,16 @@ export default function ExtensionModal({
                                 <span>
                                     Sau khi thanh toán, thời hạn thuê mới sẽ có hiệu lực ngay lập tức. Quý khách vui lòng đến quầy dịch vụ để ký xác nhận phụ lục hợp đồng trong vòng 7 ngày làm việc.
                                 </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {submitError && (
+                        <div className="rd-conflict-alert" role="alert">
+                            <Warning size={20} weight="fill" className="rd-conflict-alert__icon" />
+                            <div>
+                                <h4 className="rd-conflict-alert__title">Không thể gia hạn</h4>
+                                <p className="rd-conflict-alert__text">{submitError}</p>
                             </div>
                         </div>
                     )}

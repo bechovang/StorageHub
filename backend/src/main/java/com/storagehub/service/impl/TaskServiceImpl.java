@@ -148,6 +148,14 @@ public class TaskServiceImpl implements TaskService {
             if (tasks.isEmpty() && isDefaultDate) {
                 tasks = taskRepository.findStaffTasks(currentUser.getUserId(), type, status);
             }
+            if (currentUser.getFacility() != null) {
+                tasks = java.util.stream.Stream.concat(
+                                tasks.stream(),
+                                taskRepository.findUnassignedPoolForFacility(
+                                        currentUser.getFacility().getFacilityId(),
+                                        targetDate, type, status).stream())
+                        .toList();
+            }
         } else if (roleName == Role.Name.FACILITY_MANAGER
                 && currentUser.getFacility() != null) {
             Integer facilityId = currentUser.getFacility().getFacilityId();
@@ -157,6 +165,11 @@ public class TaskServiceImpl implements TaskService {
                 tasks = taskRepository.findFilteredTasksByFacility(
                         staffId, facilityId, null, type, status);
             }
+            tasks = java.util.stream.Stream.concat(
+                            tasks.stream(),
+                            taskRepository.findUnassignedPoolForFacility(
+                                    facilityId, targetDate, type, status).stream())
+                    .toList();
         } else {
             // System Admin: xem toàn bộ hoặc lọc theo 1 staff.
             tasks = taskRepository.findFilteredTasks(staffId, targetDate, type, status);
@@ -192,10 +205,21 @@ public class TaskServiceImpl implements TaskService {
         assertTaskFacility(currentUser, task);
 
         Role.Name roleName = currentUser.getRole().getName();
-        if (roleName == Role.Name.STAFF
-                && (task.getAssignedStaff() == null
-                    || !currentUser.getUserId().equals(task.getAssignedStaff().getUserId()))) {
-            throw new AccessDeniedException("Nhiệm vụ chưa được bạn nhận hoặc không được phân công.");
+        if (roleName == Role.Name.STAFF) {
+            if (task.getAssignedStaff() == null) {
+                // Task pool: staff cùng cơ sở được nhận việc; guard chống cross-facility.
+                if (currentUser.getFacility() == null
+                        || task.getFacility() == null
+                        || !currentUser.getFacility().getFacilityId()
+                            .equals(task.getFacility().getFacilityId())) {
+                    throw new AccessDeniedException(
+                            "Nhiệm vụ thuộc cơ sở khác hoặc chưa xác định cơ sở.");
+                }
+                task.setAssignedStaff(currentUser);
+                task.setClaimedAt(java.time.LocalDateTime.now(clock.withZone(ICT_ZONE)));
+            } else if (!currentUser.getUserId().equals(task.getAssignedStaff().getUserId())) {
+                throw new AccessDeniedException("Nhiệm vụ chưa được bạn nhận hoặc không được phân công.");
+            }
         }
 
         // Task đã DONE là trạng thái cuối — không cho kéo về TODO/IN_PROGRESS.
@@ -393,6 +417,7 @@ public class TaskServiceImpl implements TaskService {
         task.setAssignedStaff(assignedStaff);
         task.setShift(shift);
         task.setUnitType(unit != null ? unit.getType() : null);
+        task.setFacility(facilityOf(unit));
         task.setWorkDate(workDate);
         task.setStatus(Task.Status.TODO);
 
@@ -598,6 +623,13 @@ public class TaskServiceImpl implements TaskService {
                 .orElse(null);
     }
 
+    private Facility facilityOf(Unit unit) {
+        if (unit == null || unit.getZone() == null) {
+            return null;
+        }
+        return unit.getZone().getFacility();
+    }
+
     private Integer facilityIdOf(Unit unit) {
         if (unit == null || unit.getZone() == null || unit.getZone().getFacility() == null) {
             return null;
@@ -660,6 +692,19 @@ public class TaskServiceImpl implements TaskService {
             }
             case CONTRACT -> {
                 if (ref != null) {
+                    // Addendum codes live in contract_addendums, not contracts.
+                    var addendum = contractAddendumRepository.findByCode(ref).orElse(null);
+                    if (addendum != null) {
+                        if (addendum.getStatus() != ContractAddendum.Status.SIGNED
+                                || addendum.getSignedPhotoUrl() == null
+                                || addendum.getSignedPhotoUrl().isBlank()) {
+                            throw new TaskSnapBackException(
+                                    "Chặn Done ảo: Thiếu ảnh chụp phụ lục đã ký tại quầy!",
+                                    "CONTRACT_NOT_SIGNED"
+                            );
+                        }
+                        return;
+                    }
                     Contract ct = contractRepository.findByCode(ref).orElse(null);
                     if (ct != null && ct.getStatus() != Contract.Status.SIGNED && ct.getSignedPhotoUrl() == null) {
                         throw new TaskSnapBackException(
@@ -873,6 +918,47 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public Task createContractTask(User actor, com.storagehub.entity.ContractAddendum addendum) {
+        if (addendum == null || addendum.getCode() == null || addendum.getCode().isBlank()) {
+            throw new IllegalArgumentException("Không thể tạo task CONTRACT thiếu phụ lục.");
+        }
+
+        Task existing = taskRepository
+                .findFirstByTypeAndRefCodeOrderByCreatedAtDesc(
+                        Task.Type.CONTRACT, addendum.getCode())
+                .orElse(null);
+        if (existing != null) {
+            return existing;
+        }
+
+        Reservation reservation = addendum.getContract().getReservation();
+        Unit unit = reservation.getUnit();
+        LocalDate workDate = getToday();
+        StaffAssignment.Shift shift = getCurrentShift();
+        User assignee = autoAssignStaff(unit, workDate, shift);
+
+        Task task = new Task();
+        task.setType(Task.Type.CONTRACT);
+        task.setRefCode(addendum.getCode());
+        task.setAssignedStaff(assignee);
+        task.setShift(shift);
+        task.setUnitType(unit != null ? unit.getType() : null);
+        task.setFacility(facilityOf(unit));
+        task.setWorkDate(workDate);
+        task.setStatus(Task.Status.TODO);
+        task.setNote("Hạn ký phụ lục: " + addendum.getSignatureDueDate());
+        Task saved = taskRepository.save(task);
+
+        User logActor = actor != null ? actor : assignee;
+        logService.log(logActor != null ? logActor : reservation.getCustomer(),
+                "TASK", saved.getTaskId(),
+                "CREATED", null, Task.Status.TODO.name(),
+                "Auto contract-signature task cho " + addendum.getCode()
+                        + (assignee != null ? " — " + assignee.getFullName() : " — chưa phân công"));
+        return saved;
+    }
+
+    @Override
     public Task createCheckInTask(User actor, Reservation reservation) {
         Task existing = taskRepository
                 .findFirstByTypeAndRefCodeOrderByCreatedAtDesc(
@@ -891,6 +977,7 @@ public class TaskServiceImpl implements TaskService {
         task.setAssignedStaff(assignee);
         task.setShift(shift);
         task.setUnitType(reservation.getUnit().getType());
+        task.setFacility(facilityOf(reservation.getUnit()));
         task.setWorkDate(reservation.getStartDate());
         task.setStatus(Task.Status.TODO);
         Task saved = taskRepository.save(task);
@@ -1275,6 +1362,7 @@ public class TaskServiceImpl implements TaskService {
             existing.setWorkDate(java.time.LocalDate.now());
             existing.setShift(getCurrentShift());
             existing.setUnitType(ticket.getUnit().getType());
+            existing.setFacility(facilityOf(ticket.getUnit()));
             existing.setClaimedAt(null);
             existing.setNote(ticket.getManagerPlan());
             Task reopened = taskRepository.save(existing);
@@ -1291,6 +1379,7 @@ public class TaskServiceImpl implements TaskService {
         task.setAssignedStaff(assignee);
         task.setShift(getCurrentShift());
         task.setUnitType(ticket.getUnit().getType());
+        task.setFacility(facilityOf(ticket.getUnit()));
         task.setWorkDate(java.time.LocalDate.now());
         task.setStatus(Task.Status.TODO);
         task.setNote(ticket.getManagerPlan());
@@ -1354,6 +1443,7 @@ public class TaskServiceImpl implements TaskService {
             existing.setWorkDate(requestedDate);
             existing.setShift(shift);
             existing.setUnitType(reservation.getUnit().getType());
+            existing.setFacility(facilityOf(reservation.getUnit()));
             try {
                 User assignee = autoAssignStaff(reservation.getUnit(), requestedDate, shift);
                 if (assignee != null) existing.setAssignedStaff(assignee);
@@ -1379,6 +1469,7 @@ public class TaskServiceImpl implements TaskService {
         task.setAssignedStaff(assignee);
         task.setShift(shift);
         task.setUnitType(reservation.getUnit().getType());
+        task.setFacility(facilityOf(reservation.getUnit()));
         task.setWorkDate(requestedDate);
         task.setStatus(Task.Status.TODO);
         Task saved = taskRepository.save(task);
@@ -1425,13 +1516,16 @@ public class TaskServiceImpl implements TaskService {
     /** Manager chỉ được xem task thuộc facility của mình. */
     private void assertTaskFacility(User currentUser, Task task) {
         if (currentUser.getRole().getName() != Role.Name.FACILITY_MANAGER
-                || currentUser.getFacility() == null
-                || task.getAssignedStaff() == null
-                || task.getAssignedStaff().getFacility() == null) {
+                || currentUser.getFacility() == null) {
             return;
         }
-        if (!currentUser.getFacility().getFacilityId()
-                .equals(task.getAssignedStaff().getFacility().getFacilityId())) {
+        Integer taskFacilityId = task.getFacility() != null
+                ? task.getFacility().getFacilityId()
+                : task.getAssignedStaff() != null && task.getAssignedStaff().getFacility() != null
+                    ? task.getAssignedStaff().getFacility().getFacilityId()
+                    : null;
+        if (taskFacilityId != null
+                && !currentUser.getFacility().getFacilityId().equals(taskFacilityId)) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "Nhiệm vụ thuộc cơ sở khác.");
         }

@@ -160,10 +160,13 @@ export function usePayment() {
                     || "Hệ thống sẽ hoàn lại tiền cọc cho bạn. Không có đơn thuê nào được tạo.",
                 });
               } else {
+                const isExtension = updated.purpose === "EXTENSION_FEE";
                 setNotificationToast({
                   type: "PAYMENT_CONFIRMED",
-                  title: "Thanh toán cọc thành công",
-                  body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
+                  title: isExtension ? "Gia hạn kho thành công" : "Thanh toán cọc thành công",
+                  body: isExtension
+                    ? `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Hạn trả kho đã được cập nhật; phụ lục đang chờ ký tại quầy.`
+                    : `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
                 });
                 syncReservationFromSession(updated);
               }
@@ -506,10 +509,13 @@ export function usePayment() {
 
       if (updated.status === "SUCCEEDED") {
         stopPolling();
+        const isExtension = updated.purpose === "EXTENSION_FEE";
         setNotificationToast({
           type: "PAYMENT_CONFIRMED",
-          title: "Thanh toán cọc thành công",
-          body: `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
+          title: isExtension ? "Gia hạn kho thành công" : "Thanh toán cọc thành công",
+          body: isExtension
+            ? `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Hạn trả kho đã được cập nhật; phụ lục đang chờ ký tại quầy.`
+            : `Biên lai ${updated.receiptCode || "RT-..."} đã được cấp. Đơn thuê đã được tạo.`,
         });
         syncReservationFromSession(updated);
       } else if (updated.status === "FAILED") {

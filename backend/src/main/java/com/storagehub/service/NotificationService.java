@@ -53,6 +53,12 @@ public interface NotificationService {
     /** US-18 (FR-12): addendum chờ ký tại quầy — bell cho staff. */
     void notifyAddendumAwaitingSignature(Reservation reservation, com.storagehub.entity.ContractAddendum addendum);
 
+    /** US-18/FR-12: bell cho đúng staff được giao task CONTRACT (fallback manager/first staff). */
+    void notifyAddendumAwaitingSignature(
+            Reservation reservation,
+            com.storagehub.entity.ContractAddendum addendum,
+            com.storagehub.entity.User assignee);
+
     /** US-15: tiền thuê RENT đã trả đủ → bell staff chuẩn bị ritual check-in + hướng dẫn khách. */
     void notifyRentPaidReadyForCheckIn(Reservation reservation, com.storagehub.entity.Payment payment);
 
