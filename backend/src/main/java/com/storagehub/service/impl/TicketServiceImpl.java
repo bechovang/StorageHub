@@ -209,7 +209,8 @@ public class TicketServiceImpl implements TicketService {
                                 + expectedStart + " → " + expectedEnd + ").");
             }
             var oldQuote = pricingEngine.calculateQuote(
-                    oldReservation.getUnit(), expectedStart, expectedEnd);
+                    oldReservation.getUnit(), expectedStart, expectedEnd,
+                    oldReservation.getPolicy());
             var newQuote = pricingEngine.calculateQuote(
                     newUnit, request.newStartDate(), request.newEndDate());
             int oldDays = Math.max(1, oldQuote.durationDays());

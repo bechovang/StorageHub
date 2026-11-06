@@ -336,7 +336,8 @@ public class UnitService {
         LocalDate start = startDate != null ? startDate : reservation.getStartDate();
         LocalDate end = (endDate != null && !endDate.isBefore(start)) ? endDate : start;
 
-        QuoteResponse oldQuote = pricingEngine.calculateQuote(oldUnit, start, end);
+        QuoteResponse oldQuote = pricingEngine.calculateQuote(
+                oldUnit, start, end, reservation.getPolicy());
         long oldDailyRent = oldQuote.totalRent() / Math.max(1, oldQuote.durationDays());
 
         UnitPageResponse page = searchUnits(
