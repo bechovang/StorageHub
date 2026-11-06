@@ -58,12 +58,37 @@ export const SHIFT_WINDOWS = {
   },
 };
 
-export const UNIT_TYPES = [
-  { id: 1, code: "LOCK", name: "Kho LOCK" },
-  { id: 2, code: "S", name: "Kho S" },
-  { id: 3, code: "M", name: "Kho M" },
-  { id: 4, code: "L", name: "Kho L" },
+/** Bảng màu ổn định cho các loại kho (theo thứ tự type_id từ backend). */
+export const TYPE_PALETTE = [
+  "#7c3aed",
+  "#0284c7",
+  "#ea580c",
+  "#16a34a",
+  "#db2777",
+  "#0891b2",
 ];
+
+export function typeColorFor(index) {
+  if (index < 0) return "#475569";
+  return TYPE_PALETTE[index % TYPE_PALETTE.length];
+}
+
+/**
+ * Loại kho lấy động từ backend — nguồn sự thật duy nhất là bảng unit_types.
+ * Không hardcode LOCK/S/M/L (kích thước) nữa.
+ */
+export async function getUnitTypes() {
+  const res = await apiClient("/api/v1/units/filter-options");
+  const data = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || "Không thể tải danh sách loại kho.");
+  }
+  const types = data.types || data.unitTypes || [];
+  return types.map((t) => ({
+    id: Number(t.id ?? t.typeId),
+    name: t.name,
+  }));
+}
 
 function ymd(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

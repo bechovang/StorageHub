@@ -6,7 +6,7 @@ import {
   getStaffRoster,
   getShifts,
   batchUpdateShiftAssignments,
-  UNIT_TYPES,
+  getUnitTypes,
 } from "../../../services/shiftService.js";
 
 export const STANDARD_SHIFTS = [
@@ -48,6 +48,20 @@ export function useStaffShifts() {
   // Bộ lọc tìm kiếm & loại kho
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("ALL");
+
+  // Loại kho lấy động từ backend (bỏ hoàn toàn LOCK/S/M/L theo kích thước)
+  const [unitTypes, setUnitTypes] = useState([]);
+  useEffect(() => {
+    let ignore = false;
+    getUnitTypes()
+      .then((types) => {
+        if (!ignore) setUnitTypes(types);
+      })
+      .catch((err) => console.error("Failed to load unit types:", err));
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Highlight nhân viên khi click vào Staff Workload Bar
   const [highlightedStaffId, setHighlightedStaffId] = useState(null);
@@ -303,7 +317,12 @@ export function useStaffShifts() {
         }
       }
       for (const items of byStaff.values()) {
-        if (items.length > 1) {
+        // Sáng + chiều cùng ngày là lịch hợp lệ (14 ca/tuần). Chỉ tính xung đột
+        // khi trùng đúng một ca, hoặc FULL_DAY chồng lên ca khác.
+        const windows = items.map((item) => item.shiftWindow);
+        const duplicateWindow = new Set(windows).size !== windows.length;
+        const fullDayOverlap = windows.includes("FULL_DAY") && windows.length > 1;
+        if (duplicateWindow || fullDayOverlap) {
           conflicts++;
           for (const item of items) item.isConflict = true;
         }
@@ -358,7 +377,7 @@ export function useStaffShifts() {
     const staffCode = staff ? staff.code : `KC-${staffId}`;
 
     const typeCodes = unitTypeIds.map(
-      (id) => UNIT_TYPES.find((u) => u.id === id)?.code || "Kho"
+      (id) => unitTypes.find((u) => u.id === id)?.name || "Kho"
     );
 
     setWorkingShifts((prev) => {
@@ -530,10 +549,10 @@ export function useStaffShifts() {
             shiftWindow: prev.shift,
             unitTypeIds: typeIds,
             typeNames: typeIds.map(
-              (id) => UNIT_TYPES.find((u) => u.id === id)?.code || "Kho"
+              (id) => unitTypes.find((u) => u.id === id)?.name || "Kho"
             ),
             typeName: typeIds
-              .map((id) => UNIT_TYPES.find((u) => u.id === id)?.name || "Kho")
+              .map((id) => unitTypes.find((u) => u.id === id)?.name || "Kho")
               .join(", "),
             isDraftNew: true,
           });
@@ -595,6 +614,7 @@ export function useStaffShifts() {
     setSearchTerm,
     selectedTypeFilter,
     setSelectedTypeFilter,
+    unitTypes,
     highlightedStaffId,
     setHighlightedStaffId,
     toast,

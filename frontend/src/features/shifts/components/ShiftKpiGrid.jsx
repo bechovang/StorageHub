@@ -10,25 +10,20 @@ export default function ShiftKpiGrid({
   totalConflicts = 0,
   staffRoster = [],
   allShifts = [],
+  unitTypes = [],
 }) {
   const staffCount = staffRoster.length;
   const shiftCount = allShifts.length;
   const coveragePercent = Math.min(100, Math.round((shiftCount / 14) * 100)); // 2 ca x 7 ngày = 14 ca chuẩn
 
-  const typeKey = (name) => {
-    const normalized = String(name || "").toUpperCase();
-    return normalized === "LOCKER" ? "LOCK" : normalized;
-  };
-  const countType = (key) =>
-    allShifts.reduce(
+  const typeBreakdown = unitTypes.map((type) => ({
+    ...type,
+    count: allShifts.reduce(
       (sum, shift) =>
-        sum + (shift.typeNames || []).filter((name) => typeKey(name) === key).length,
+        sum + (shift.typeNames || []).filter((name) => name === type.name).length,
       0
-    );
-  const countLock = countType("LOCK");
-  const countS = countType("S");
-  const countM = countType("M");
-  const countL = countType("L");
+    ),
+  }));
 
   return (
     <div className="shifts-stats-strip">
@@ -72,12 +67,13 @@ export default function ShiftKpiGrid({
           <Warehouse size={18} weight="duotone" />
         </div>
         <div className="stats-item__content">
-          <span className="stats-item__label">Phân bổ 4 nhóm kho</span>
+          <span className="stats-item__label">Phân bổ theo loại kho</span>
           <div className="stats-item__zones">
-            <span className="zone-pill">LOCK: <strong>{countLock}</strong></span>
-            <span className="zone-pill">S: <strong>{countS}</strong></span>
-            <span className="zone-pill">M: <strong>{countM}</strong></span>
-            <span className="zone-pill">L: <strong>{countL}</strong></span>
+            {typeBreakdown.map((type) => (
+              <span key={type.id} className="zone-pill">
+                {type.name}: <strong>{type.count}</strong>
+              </span>
+            ))}
           </div>
         </div>
       </div>

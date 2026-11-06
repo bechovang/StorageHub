@@ -3,6 +3,7 @@ package com.storagehub.service;
 import com.storagehub.dto.quote.QuoteResponse;
 import com.storagehub.dto.unit.UnitAvailabilityResponse;
 import com.storagehub.dto.unit.UnitDetailResponse;
+import com.storagehub.dto.unit.RelocationCandidatesResponse;
 import com.storagehub.dto.unit.UnitFilterOptionsResponse;
 import com.storagehub.dto.unit.UnitPageResponse;
 import com.storagehub.dto.unit.UnitSummaryResponse;
@@ -10,6 +11,7 @@ import com.storagehub.dto.unit.UnitTypeOptionDto;
 import com.storagehub.entity.PolicyRule;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
+import com.storagehub.entity.SupportTicket;
 import com.storagehub.entity.Unit;
 import com.storagehub.entity.User;
 import com.storagehub.exception.UnitNotFoundException;
@@ -17,6 +19,7 @@ import com.storagehub.repository.FacilityRepository;
 import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
+import com.storagehub.repository.SupportTicketRepository;
 import com.storagehub.repository.UnitRepository;
 import com.storagehub.repository.UnitTypeImageRepository;
 import com.storagehub.repository.UnitTypeRepository;
@@ -52,6 +55,7 @@ public class UnitService {
     private final RentalPolicyRepository rentalPolicyRepository;
     private final PolicyRuleRepository policyRuleRepository;
     private final ReservationRepository reservationRepository;
+    private final SupportTicketRepository supportTicketRepository;
     private final PricingEngine pricingEngine;
     private final LogService logService;
 
@@ -258,6 +262,81 @@ public class UnitService {
         }
 
         return new UnitPageResponse(pagedItems, validPage, validPageSize, total);
+    }
+
+    /**
+     * Ứng viên đổi kho do sự cố: CÙNG loại kho + CÙNG cơ sở + giá/ngày >= kho cũ,
+     * còn trống đúng khoảng ngày thuê mới. Dùng cho ManagerDispatchModal (RELOCATE).
+     */
+    public RelocationCandidatesResponse getRelocationCandidates(Long ticketId) {
+        SupportTicket ticket = supportTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("Ticket không tồn tại."));
+
+        Reservation reservation = ticket.getReservation();
+        if (reservation == null && ticket.getUnit() != null) {
+            reservation = reservationRepository.findActiveReservationsForUnit(
+                            ticket.getUnit().getUnitId(),
+                            List.of(Reservation.Status.CHECKED_IN,
+                                    Reservation.Status.CHECKOUT_REQUESTED))
+                    .stream().findFirst().orElse(null);
+        }
+        if (reservation == null) {
+            throw new IllegalArgumentException(
+                    "Ticket " + ticket.getCode()
+                            + " chưa gắn với đơn thuê đang hoạt động (CHECKED_IN/CHECKOUT_REQUESTED).");
+        }
+
+        // "Thời gian còn lại" = từ hôm nay (hoặc ngày bắt đầu nếu đơn chưa tới)
+        // đến ngày kết thúc của đơn hiện tại.
+        LocalDate today = LocalDate.now(ICT_ZONE);
+        LocalDate start = reservation.getStartDate() != null
+                && reservation.getStartDate().isAfter(today)
+                ? reservation.getStartDate() : today;
+        LocalDate end = reservation.getEndDate() != null
+                && !reservation.getEndDate().isBefore(start)
+                ? reservation.getEndDate() : start;
+
+        return new RelocationCandidatesResponse(
+                start,
+                end,
+                relocationCandidatesForReservation(reservation, start, end));
+    }
+
+    private List<UnitSummaryResponse> relocationCandidatesForReservation(
+            Reservation reservation,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        Unit oldUnit = reservation.getUnit();
+        if (oldUnit == null || oldUnit.getType() == null
+                || oldUnit.getZone() == null || oldUnit.getZone().getFacility() == null) {
+            return List.of();
+        }
+
+        LocalDate start = startDate != null ? startDate : reservation.getStartDate();
+        LocalDate end = (endDate != null && !endDate.isBefore(start)) ? endDate : start;
+
+        QuoteResponse oldQuote = pricingEngine.calculateQuote(oldUnit, start, end);
+        long oldDailyRent = oldQuote.totalRent() / Math.max(1, oldQuote.durationDays());
+
+        UnitPageResponse page = searchUnits(
+                oldUnit.getZone().getFacility().getFacilityId(),
+                oldUnit.getType().getTypeId().longValue(),
+                null,
+                null,
+                start,
+                end,
+                "price-asc",
+                1,
+                100
+        );
+
+        return page.getItems().stream()
+                .filter(u -> !u.id().equals(oldUnit.getUnitId()))
+                .filter(u -> u.baseDailyRent() != null && u.baseDailyRent() >= oldDailyRent)
+                .filter(u -> u.availability() != null
+                        && "AVAILABLE".equals(u.availability().status()))
+                .toList();
     }
 
     /**

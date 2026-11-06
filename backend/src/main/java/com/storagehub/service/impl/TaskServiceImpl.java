@@ -493,7 +493,7 @@ public class TaskServiceImpl implements TaskService {
                             && a.getStaff().getUserId().equals(currentOwner.getUserId()));
             if (currentStillOnShift) continue;
 
-            User nextOwner = candidates.get(0).getStaff();
+            User nextOwner = pickStaff(candidates, facilityIdOf(task));
             if (nextOwner == null) continue;
 
             String oldOwner = currentOwner != null ? currentOwner.getFullName() : "—";
@@ -515,40 +515,100 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private User autoAssignStaff(Unit unit, LocalDate workDate, StaffAssignment.Shift shift) {
+        // Cùng loại kho có thể có staff ở nhiều facility — ưu tiên đúng facility
+        // của unit để task không bị giao chéo cơ sở.
+        Integer facilityId = facilityIdOf(unit);
+
         // Ưu tiên staff được phân ca đúng LOẠI KHO (LOCK/S/M/L).
         if (unit != null && unit.getType() != null) {
             Integer typeId = unit.getType().getTypeId();
             List<StaffAssignment> assignments = staffAssignmentRepository
                     .findByUnitType_TypeIdAndWorkDateAndShift(typeId, workDate, shift);
-            if (!assignments.isEmpty()) {
-                return assignments.get(0).getStaff();
+            User picked = pickStaff(assignments, facilityId);
+            if (picked != null) {
+                return picked;
             }
             // Staff trực FULL_DAY phủ cả ca sáng/chiều.
             if (shift == StaffAssignment.Shift.MORNING || shift == StaffAssignment.Shift.AFTERNOON) {
                 List<StaffAssignment> fullDay = staffAssignmentRepository
                         .findByUnitType_TypeIdAndWorkDateAndShift(typeId, workDate, StaffAssignment.Shift.FULL_DAY);
-                if (!fullDay.isEmpty()) {
-                    return fullDay.get(0).getStaff();
+                picked = pickStaff(fullDay, facilityId);
+                if (picked != null) {
+                    return picked;
                 }
             }
         }
 
         // Fallback: bất kỳ staff nào trực cùng ca.
         List<StaffAssignment> shiftAssignments = staffAssignmentRepository.findByWorkDateAndShift(workDate, shift);
-        if (!shiftAssignments.isEmpty()) {
-            return shiftAssignments.get(0).getStaff();
+        User picked = pickStaff(shiftAssignments, facilityId);
+        if (picked != null) {
+            return picked;
         }
         if (shift != StaffAssignment.Shift.FULL_DAY) {
             List<StaffAssignment> fullDay = staffAssignmentRepository
                     .findByWorkDateAndShift(workDate, StaffAssignment.Shift.FULL_DAY);
-            if (!fullDay.isEmpty()) {
-                return fullDay.get(0).getStaff();
+            picked = pickStaff(fullDay, facilityId);
+            if (picked != null) {
+                return picked;
             }
         }
 
-        // Fallback cuối: staff đầu tiên đang active.
+        // Fallback cuối: staff đầu tiên đang active (ưu tiên cùng facility).
+        if (facilityId != null) {
+            Optional<User> sameFacility = userRepository
+                    .findFirstByRole_NameAndStatusAndFacility_FacilityId(
+                            Role.Name.STAFF, 1, facilityId);
+            if (sameFacility.isPresent()) {
+                return sameFacility.get();
+            }
+        }
         return userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1)
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy nhân viên trực ca để tự động phân công nhiệm vụ."));
+    }
+
+    private Integer facilityIdOf(Unit unit) {
+        if (unit == null || unit.getZone() == null || unit.getZone().getFacility() == null) {
+            return null;
+        }
+        return unit.getZone().getFacility().getFacilityId();
+    }
+
+    /** Task chỉ lưu refCode đa hình — suy ngược unit để biết task thuộc facility nào. */
+    private Integer facilityIdOf(Task task) {
+        String ref = task.getRefCode();
+        if (ref == null) {
+            return null;
+        }
+        Unit unit;
+        if (ref.startsWith("BK-")) {
+            unit = reservationRepository.findByCode(ref).map(Reservation::getUnit).orElse(null);
+        } else if (ref.startsWith("CT-")) {
+            unit = contractRepository.findByCode(ref)
+                    .map(contract -> contract.getReservation().getUnit()).orElse(null);
+        } else if (ref.startsWith("SR-")) {
+            unit = supportTicketRepository.findByCode(ref).map(SupportTicket::getUnit).orElse(null);
+        } else {
+            unit = unitRepository.findByCode(ref).orElse(null);
+        }
+        return facilityIdOf(unit);
+    }
+
+    /** Chọn staff cùng facility nếu có; nếu không rơi về ứng viên đầu tiên. */
+    private User pickStaff(List<StaffAssignment> assignments, Integer facilityId) {
+        if (assignments.isEmpty()) {
+            return null;
+        }
+        if (facilityId != null) {
+            for (StaffAssignment assignment : assignments) {
+                User staff = assignment.getStaff();
+                if (staff != null && staff.getFacility() != null
+                        && facilityId.equals(staff.getFacility().getFacilityId())) {
+                    return staff;
+                }
+            }
+        }
+        return assignments.get(0).getStaff();
     }
 
     private void validateSnapBackRule(Task task) {

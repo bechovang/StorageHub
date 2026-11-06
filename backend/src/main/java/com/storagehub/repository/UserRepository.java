@@ -24,6 +24,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findFirstByRole_NameAndStatusOrderByUserIdAsc(Role.Name name, Integer status);
 
+    Optional<User> findFirstByRole_NameAndStatusAndFacility_FacilityId(
+            Role.Name name, Integer status, Integer facilityId);
+
     List<User> findByRole_Name(Role.Name roleName);
 
     List<User> findByRole_NameAndStatus(Role.Name roleName, Integer status);

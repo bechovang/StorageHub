@@ -53,6 +53,29 @@ export async function getUnitFilterOptions() {
 }
 
 /**
+ * GET /api/v1/units/relocation-candidates?ticket-id=&start-date=&end-date=
+ * Kho thay thế khi xử lý sự cố: cùng loại + cùng cơ sở + giá >= kho cũ.
+ * Backend tự suy reservation từ ticket (hoặc đơn đang thuê của unit).
+ */
+export async function getRelocationCandidates({ ticketId } = {}) {
+  if (!ticketId) {
+    throw new Error("Không xác định được ticket — không thể tải kho thay thế.");
+  }
+  const params = new URLSearchParams({ "ticket-id": String(ticketId) });
+
+  const res = await apiClient(`/api/v1/units/relocation-candidates?${params.toString()}`);
+  const data = await safeParseJson(res);
+  if (!res.ok) {
+    throw new Error(data.message || "Không thể tải danh sách kho thay thế.");
+  }
+  return {
+    startDate: data.startDate || "",
+    endDate: data.endDate || "",
+    items: Array.isArray(data.items) ? data.items : [],
+  };
+}
+
+/**
  * GET /api/v1/units?type-id=&size-m2=&start-date=&end-date=&sort=&page=&page-size=
  * Flow 1: loại, kích thước, khoảng ngày thuê (theo ngày)
  */

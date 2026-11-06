@@ -2,15 +2,14 @@ import { useState } from "react";
 import Modal from "../../../components/Modal/Modal.jsx";
 import Button from "../../../components/Button/Button.jsx";
 import { dispatchSupportTicket } from "../../../services/ticketService.js";
-import { searchUnits } from "../../../services/unitService.js";
+import { getRelocationCandidates } from "../../../services/unitService.js";
 
 export default function ManagerDispatchModal({ ticket, onClose, onSuccess }) {
-  const today = new Date().toISOString().slice(0, 10);
   const [mode, setMode] = useState("INSTRUCT");
   const [managerPlan, setManagerPlan] = useState("");
   const [newUnitId, setNewUnitId] = useState("");
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState(today);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [units, setUnits] = useState([]);
   const [loadingUnits, setLoadingUnits] = useState(false);
   const [error, setError] = useState("");
@@ -22,9 +21,14 @@ export default function ManagerDispatchModal({ ticket, onClose, onSuccess }) {
     setLoadingUnits(true);
     setError("");
     try {
-      const data = await searchUnits({ startDate, endDate, pageSize: 100 });
-      const items = Array.isArray(data?.items) ? data.items : [];
-      setUnits(items.filter((u) => (u.availability?.status || u.availability) === "AVAILABLE"));
+      const data = await getRelocationCandidates({ ticketId: ticket.id });
+      setStartDate(data.startDate);
+      setEndDate(data.endDate);
+      setUnits(
+        (data.items || []).filter(
+          (u) => (u.availability?.status || u.availability) === "AVAILABLE"
+        )
+      );
     } catch (err) {
       setError(err.message || "Không thể tải kho trống.");
     } finally {
@@ -87,12 +91,12 @@ export default function ManagerDispatchModal({ ticket, onClose, onSuccess }) {
           <>
             <div className="rd-form-row">
               <div className="form-field" style={{ flex: 1 }}>
-                <label className="form-field__label">Từ ngày</label>
-                <input type="date" className="form-field__input" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <label className="form-field__label">Từ ngày (thời gian còn lại)</label>
+                <input type="date" className="form-field__input" value={startDate} disabled readOnly />
               </div>
               <div className="form-field" style={{ flex: 1 }}>
-                <label className="form-field__label">Đến ngày</label>
-                <input type="date" className="form-field__input" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                <label className="form-field__label">Đến ngày (thời gian còn lại)</label>
+                <input type="date" className="form-field__input" value={endDate} disabled readOnly />
               </div>
             </div>
             <Button variant="secondary" onClick={loadUnits} disabled={loadingUnits}>
@@ -105,11 +109,15 @@ export default function ManagerDispatchModal({ ticket, onClose, onSuccess }) {
                 {units.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.code} · {u.typeName} · {u.sizeM2} m²
+                    {u.baseDailyRent != null
+                      ? ` · ${Number(u.baseDailyRent).toLocaleString("vi-VN")} ₫/ngày`
+                      : ""}
                   </option>
                 ))}
               </select>
               <small style={{ color: "var(--color-muted)", fontSize: "0.75rem" }}>
-                Chọn kho cùng giá hoặc giá cao hơn. Chênh lệch công ty chịu; không thu tiền khách.
+                Đơn mới giữ đúng thời gian còn lại của đơn hiện tại. Chọn kho cùng loại,
+                cùng cơ sở, giá bằng hoặc cao hơn; chênh lệch công ty chịu.
               </small>
             </div>
           </>

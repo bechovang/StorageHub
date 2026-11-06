@@ -31,6 +31,7 @@ export default function StaffShiftsPage() {
     setSearchTerm,
     selectedTypeFilter,
     setSelectedTypeFilter,
+    unitTypes,
     highlightedStaffId,
     setHighlightedStaffId,
     toast,
@@ -102,6 +103,7 @@ export default function StaffShiftsPage() {
             totalConflicts={totalConflicts}
             staffRoster={staffRoster}
             allShifts={allShifts}
+            unitTypes={unitTypes}
           />
 
           {/* 2. Toolbar điều hướng tuần, tìm kiếm, lọc loại kho & sao chép */}
@@ -115,6 +117,7 @@ export default function StaffShiftsPage() {
             onSearchChange={setSearchTerm}
             selectedTypeFilter={selectedTypeFilter}
             onTypeFilterChange={setSelectedTypeFilter}
+            unitTypes={unitTypes}
             onCopyPreviousWeek={handleCopyPreviousWeek}
             copying={copying}
             hasPendingChanges={hasPendingChanges}
@@ -195,6 +198,7 @@ export default function StaffShiftsPage() {
           <ShiftFirstScheduleTable
             weekDays={weekDays}
             shiftGrid={shiftGrid}
+            unitTypes={unitTypes}
             highlightedStaffId={highlightedStaffId}
             onOpenFillPopover={handleOpenFillPopover}
             onRemoveShift={handleRemoveShift}
@@ -213,6 +217,7 @@ export default function StaffShiftsPage() {
           activePopover={activeFillPopover}
           staffList={staffList}
           allShifts={allShifts}
+          unitTypes={unitTypes}
           onClose={handleCloseFillPopover}
           onSaveFill={handleSaveFill}
           onRemoveShift={handleRemoveShift}
