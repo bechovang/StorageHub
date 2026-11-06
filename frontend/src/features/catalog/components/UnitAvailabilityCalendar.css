@@ -430,3 +430,33 @@
   font-size: 0.74rem;
   color: #0f172a;
 }
+
+/* ── 9. Blocked range callout & badge ── */
+.unit-calendar-blocked-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0 2px;
+  padding: 9px 11px;
+  border: 1px solid #fca5a5;
+  border-left: 4px solid #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.unit-cal-blocked-badge {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  padding: 1px 3px;
+  background: #dc2626;
+  color: #fff;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.46rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-decoration: none;
+  pointer-events: none;
+}

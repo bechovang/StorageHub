@@ -132,6 +132,7 @@ export default function UnitAvailabilityCalendar({
         dateStr,
         isPast,
         isBooked,
+        isBlocked,
         isBeforeStart,
         isSelectable,
         isStartDate,
@@ -238,6 +239,21 @@ export default function UnitAvailabilityCalendar({
         </button>
       </div>
 
+      {blockedRanges.length > 0 && (
+        <div className="unit-calendar-blocked-note" role="note">
+          <Info size={15} weight="bold" />
+          <span>
+            Kho đang bận:{" "}
+            {blockedRanges.map((range, index) => (
+              <strong key={`${range.startDate}-${index}`}>
+                {formatDate(range.startDate)} → {formatDate(range.endDate)}
+                {index < blockedRanges.length - 1 ? " · " : ""}
+              </strong>
+            ))}
+          </span>
+        </div>
+      )}
+
       {/* ── 3. Header Lịch & Điều hướng Tháng ── */}
       <div className="unit-calendar-header">
         <span className="unit-calendar-title">
@@ -331,6 +347,9 @@ export default function UnitAvailabilityCalendar({
               aria-selected={item.isStartDate || item.isEndDate}
             >
               <span className="unit-calendar-day-number">{item.day}</span>
+              {item.isBlocked && (
+                <span className="unit-cal-blocked-badge">Đã thuê</span>
+              )}
               {item.isBooked && (
                 <span className="unit-calendar-dot is-red" aria-hidden="true" />
               )}

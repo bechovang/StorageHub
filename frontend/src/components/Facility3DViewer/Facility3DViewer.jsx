@@ -109,6 +109,7 @@ export default function Facility3DViewer({
   onSelectUnit = null,
   height = 560,
   showFloorControls = true,
+  dateRangeLabel = null,
   hint = "Kéo trái để xoay · kéo phải để pan · lăn chuột để zoom · click kho để mở chi tiết",
 }) {
   const mountRef = useRef(null);
@@ -219,7 +220,9 @@ export default function Facility3DViewer({
           const z = (row - 3) * 1.35;
           const isSelected = selectedUnitId != null && String(unit.id) === String(selectedUnitId);
           const typeColor = TYPE_COLORS[unit.typeName] || 0x94a3b8;
-          const bodyColor = new THREE.Color(typeColor).lerp(new THREE.Color(0xffffff), 0.68);
+          const statusColor = STATUS_COLORS[unit.status] || 0x94a3b8;
+          // Thân box ưu tiên màu trạng thái; màu loại kho nằm ở dải mặt trước.
+          const bodyColor = new THREE.Color(statusColor).lerp(new THREE.Color(0xffffff), 0.44);
           const dim = selectedUnitId ? (isSelected ? 1 : (isActive ? 0.48 : 0.14)) : 1;
 
           const material = new THREE.MeshStandardMaterial({
@@ -240,7 +243,7 @@ export default function Facility3DViewer({
           const edge = new THREE.LineSegments(
             new THREE.EdgesGeometry(box.geometry),
             new THREE.LineBasicMaterial({
-              color: isSelected ? 0xf59e0b : typeColor,
+              color: isSelected ? 0xf59e0b : statusColor,
               transparent: dim < 1,
               opacity: Math.max(dim, 0.12),
             })
@@ -271,6 +274,18 @@ export default function Facility3DViewer({
           );
           statusLight.position.set(0.36, 0.44, 0.505);
           box.add(statusLight);
+
+          // Label trạng thái chỉ cho kho đang bận/đã giữ chỗ, tránh rối 40 box.
+          if (unit.status === "RENTED" || unit.status === "RESERVED") {
+            const statusLabel = makeLabel(
+              `${unit.code} · ${STATUS_LABEL[unit.status] || unit.status}`,
+              `#${statusColor.toString(16).padStart(6, "0")}`,
+              [2.45, 0.46]
+            );
+            statusLabel.position.set(x, floorY + 1.48, z);
+            statusLabel.material.opacity = dim;
+            labelGroup.add(statusLabel);
+          }
 
           geometryGroup.add(box);
           unitMeshes.push(box);
@@ -519,14 +534,15 @@ export default function Facility3DViewer({
           Căn giữa
         </button>
         <div className="facility-3d-legend">
-          {Object.entries(TYPE_COLORS).map(([name, color]) => (
+          {dateRangeLabel && (
+            <span className="facility-3d-date-range">Trạng thái: {dateRangeLabel}</span>
+          )}
+          {Object.entries(STATUS_COLORS).map(([name, color]) => (
             <span key={name}>
-              <i style={{ background: `#${color.toString(16).padStart(6, "0")}` }} />
-              {name.replace("Kho ", "")}
+              <i className="is-status" style={{ background: `#${color.toString(16).padStart(6, "0")}` }} />
+              {STATUS_LABEL[name] || name}
             </span>
           ))}
-          <span><i className="is-status is-available" />Trống</span>
-          <span><i className="is-status is-rented" />Thuê</span>
         </div>
       </div>
 
