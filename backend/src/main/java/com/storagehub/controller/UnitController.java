@@ -45,9 +45,10 @@ public class UnitController {
      */
     @GetMapping("/relocation-candidates")
     public ResponseEntity<RelocationCandidatesResponse> getRelocationCandidates(
-            @RequestParam("ticket-id") Long ticketId
+            @RequestParam("ticket-id") Long ticketId,
+            java.security.Principal principal
     ) {
-        return ResponseEntity.ok(unitService.getRelocationCandidates(ticketId));
+        return ResponseEntity.ok(unitService.getRelocationCandidates(principal.getName(), ticketId));
     }
 
     @GetMapping

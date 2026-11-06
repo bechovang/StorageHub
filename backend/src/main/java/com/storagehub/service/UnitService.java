@@ -20,6 +20,8 @@ import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.SupportTicketRepository;
+import com.storagehub.repository.UserRepository;
+import com.storagehub.entity.Role;
 import com.storagehub.repository.UnitRepository;
 import com.storagehub.repository.UnitTypeImageRepository;
 import com.storagehub.repository.UnitTypeRepository;
@@ -56,6 +58,7 @@ public class UnitService {
     private final PolicyRuleRepository policyRuleRepository;
     private final ReservationRepository reservationRepository;
     private final SupportTicketRepository supportTicketRepository;
+    private final UserRepository userRepository;
     private final PricingEngine pricingEngine;
     private final LogService logService;
 
@@ -268,9 +271,26 @@ public class UnitService {
      * Ứng viên đổi kho do sự cố: CÙNG loại kho + CÙNG cơ sở + giá/ngày >= kho cũ,
      * còn trống đúng khoảng ngày thuê mới. Dùng cho ManagerDispatchModal (RELOCATE).
      */
-    public RelocationCandidatesResponse getRelocationCandidates(Long ticketId) {
+    public RelocationCandidatesResponse getRelocationCandidates(String email, Long ticketId) {
         SupportTicket ticket = supportTicketRepository.findById(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("Ticket không tồn tại."));
+
+        User actor = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException(
+                        "Người dùng không tồn tại."));
+        Unit ticketUnit = ticket.getUnit();
+        if (actor.getRole() != null
+                && actor.getRole().getName() == Role.Name.FACILITY_MANAGER) {
+            Integer actorFacility = actor.getFacility() != null
+                    ? actor.getFacility().getFacilityId() : null;
+            Integer ticketFacility = ticketUnit != null && ticketUnit.getZone() != null
+                    && ticketUnit.getZone().getFacility() != null
+                    ? ticketUnit.getZone().getFacility().getFacilityId() : null;
+            if (actorFacility == null || !actorFacility.equals(ticketFacility)) {
+                throw new org.springframework.security.access.AccessDeniedException(
+                        "Ticket thuộc cơ sở khác.");
+            }
+        }
 
         Reservation reservation = ticket.getReservation();
         if (reservation == null && ticket.getUnit() != null) {
