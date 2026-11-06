@@ -47,6 +47,7 @@ export default function UnitDetailPage() {
     dueNow,
     facilityLayout,
     facilityLayoutError,
+    blockedRanges,
     policyVersion,
   } = useUnitDetailView();
 
