@@ -29,6 +29,7 @@ export default function UnitAvailabilityCalendar({
   availableFromDate,
   isSoon = false,
   minDate,
+  blockedRanges = [],
 }) {
   const todayDefaultStr = getTodayDate();
   const effectiveMinDate =
@@ -96,8 +97,13 @@ export default function UnitAvailabilityCalendar({
       const dateStr = `${year}-${monthStr}-${dayStr}`;
 
       const isPast = dateStr < todayStr;
-      // Ngày bị kín trước availableFromDate
-      const isBooked = !isPast && isSoon && availableFromDate && dateStr < availableFromDate;
+      const isBlocked = !isPast && blockedRanges.some((range) =>
+        range?.startDate && range?.endDate
+        && dateStr >= range.startDate && dateStr <= range.endDate
+      );
+      // Ngày bị kín trước availableFromDate hoặc nằm trong reservation active
+      const isBooked = !isPast && (isBlocked
+        || (isSoon && availableFromDate && dateStr < availableFromDate));
 
       // Kiểm tra tính hợp lệ tuỳ theo mode đang chọn
       let isSelectable;
@@ -108,7 +114,7 @@ export default function UnitAvailabilityCalendar({
       } else {
         // Mode END (Chọn ngày trả kho)
         isBeforeStart = resolvedStartDate ? dateStr < resolvedStartDate : dateStr < effectiveMinDate;
-        isSelectable = !isPast && !isBeforeStart;
+        isSelectable = !isPast && !isBeforeStart && !isBlocked;
       }
 
       const isStartDate = dateStr === resolvedStartDate;
@@ -147,6 +153,7 @@ export default function UnitAvailabilityCalendar({
     effectiveMinDate,
     resolvedStartDate,
     resolvedEndDate,
+    blockedRanges,
   ]);
 
   // Xử lý khi click vào 1 ô lịch (ngày)

@@ -32,8 +32,14 @@ public class FacilityController {
 
     @GetMapping("/{facilityId}/layout")
     public ResponseEntity<FacilityLayoutResponse> getLayout(
-            @org.springframework.web.bind.annotation.PathVariable Integer facilityId) {
-        return ResponseEntity.ok(facilityService.getLayout(facilityId));
+            @org.springframework.web.bind.annotation.PathVariable Integer facilityId,
+            @org.springframework.web.bind.annotation.RequestParam(name = "start-date", required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate startDate,
+            @org.springframework.web.bind.annotation.RequestParam(name = "end-date", required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate endDate) {
+        return ResponseEntity.ok(facilityService.getLayout(facilityId, startDate, endDate));
     }
 
     /**

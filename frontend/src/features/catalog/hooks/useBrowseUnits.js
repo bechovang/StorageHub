@@ -70,6 +70,7 @@ export function useBrowseUnits() {
         sort,
         page: targetPage,
         pageSize,
+        includeOccupied: true,
       });
       const sorted = sortUnitsWithAvailableFirst(data.items || [], sort);
       setUnits(sorted);
@@ -97,6 +98,7 @@ export function useBrowseUnits() {
           sort: sortOrder,
           page: 1,
           pageSize,
+          includeOccupied: true,
         });
         if (!ignore) {
           const sorted = sortUnitsWithAvailableFirst(data.items || [], sortOrder);

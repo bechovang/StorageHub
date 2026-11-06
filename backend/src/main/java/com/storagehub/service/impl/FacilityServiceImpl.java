@@ -49,9 +49,28 @@ public class FacilityServiceImpl implements FacilityService {
     @Override
     @Transactional(readOnly = true)
     public FacilityLayoutResponse getLayout(Integer facilityId) {
+        return getLayout(facilityId, LocalDate.now(), LocalDate.now());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FacilityLayoutResponse getLayout(
+            Integer facilityId, LocalDate startDate, LocalDate endDate) {
         Facility facility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new IllegalArgumentException("Cơ sở không tồn tại: " + facilityId));
         List<Unit> units = unitRepository.findLayoutByFacility(facilityId);
+
+        LocalDate rangeStart = startDate != null ? startDate : LocalDate.now();
+        LocalDate rangeEnd = endDate != null && !endDate.isBefore(rangeStart) ? endDate : rangeStart;
+        List<Long> unitIds = units.stream().map(Unit::getUnitId).toList();
+        java.util.Map<Long, List<Reservation>> reservationsByUnit = unitIds.isEmpty()
+                ? java.util.Map.of()
+                : reservationRepository.findActiveReservationsForUnits(
+                        unitIds,
+                        List.of(Reservation.Status.RESERVED,
+                                Reservation.Status.CHECKED_IN,
+                                Reservation.Status.CHECKOUT_REQUESTED))
+                .stream().collect(Collectors.groupingBy(r -> r.getUnit().getUnitId()));
 
         Map<Integer, Map<String, List<Unit>>> byFloor = new TreeMap<>();
         for (Unit unit : units) {
@@ -68,10 +87,38 @@ public class FacilityServiceImpl implements FacilityService {
                                 String typeName = zoneUnits.isEmpty() ? null
                                         : zoneUnits.get(0).getType().getName();
                                 List<FacilityLayoutResponse.UnitCell> cells = zoneUnits.stream()
-                                        .map(u -> new FacilityLayoutResponse.UnitCell(
-                                                u.getUnitId(), u.getCode(), u.getGridRow(), u.getGridCol(),
-                                                u.getStatus().name(), u.getType().getName(),
-                                                u.getSizeM2() == null ? null : u.getSizeM2().intValue()))
+                                        .map(u -> {
+                                            List<Reservation> reservations =
+                                                    reservationsByUnit.getOrDefault(u.getUnitId(), List.of());
+                                            boolean overlaps = reservations.stream().anyMatch(r ->
+                                                    !r.getStartDate().isAfter(rangeEnd)
+                                                            && !r.getEndDate().isBefore(rangeStart));
+                                            boolean currentRented = reservations.stream().anyMatch(r ->
+                                                    (r.getStatus() == Reservation.Status.CHECKED_IN
+                                                            || r.getStatus() == Reservation.Status.CHECKOUT_REQUESTED)
+                                                            && !r.getStartDate().isAfter(rangeEnd)
+                                                            && !r.getEndDate().isBefore(rangeStart));
+                                            String status;
+                                            if (u.getStatus() == Unit.Status.MAINTENANCE
+                                                    || u.getStatus() == Unit.Status.RETIRED) {
+                                                status = u.getStatus().name();
+                                            } else if (overlaps) {
+                                                status = currentRented ? "RENTED" : "RESERVED";
+                                            } else if (u.getStatus() == Unit.Status.PREPARING) {
+                                                status = "PREPARING";
+                                            } else {
+                                                status = "AVAILABLE";
+                                            }
+                                            LocalDate availableFrom = reservations.stream()
+                                                    .map(r -> r.getEndDate().plusDays(1))
+                                                    .max(LocalDate::compareTo)
+                                                    .orElse(null);
+                                            return new FacilityLayoutResponse.UnitCell(
+                                                    u.getUnitId(), u.getCode(), u.getGridRow(), u.getGridCol(),
+                                                    status, u.getType().getName(),
+                                                    u.getSizeM2() == null ? null : u.getSizeM2().intValue(),
+                                                    availableFrom);
+                                        })
                                         .toList();
                                 return new FacilityLayoutResponse.Zone(zoneEntry.getKey(), typeName, cells);
                             })

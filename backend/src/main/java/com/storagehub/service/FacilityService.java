@@ -12,6 +12,8 @@ public interface FacilityService {
 
     FacilityLayoutResponse getLayout(Integer facilityId);
 
+    FacilityLayoutResponse getLayout(Integer facilityId, java.time.LocalDate startDate, java.time.LocalDate endDate);
+
     /**
      * Lấy dữ liệu tổng quan cơ sở vật chất và chỉ số vận hành (FR-32).
      */

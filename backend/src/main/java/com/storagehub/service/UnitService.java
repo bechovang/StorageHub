@@ -97,7 +97,21 @@ public class UnitService {
             Integer page,
             Integer pageSize
     ) {
-        return searchUnits(null, typeId, sizeM2, query, startDate, endDate, sort, page, pageSize);
+        return searchUnits(null, typeId, sizeM2, query, startDate, endDate, sort, page, pageSize, false);
+    }
+
+    public UnitPageResponse searchUnits(
+            Long typeId,
+            BigDecimal sizeM2,
+            String query,
+            LocalDate startDate,
+            LocalDate endDate,
+            String sort,
+            Integer page,
+            Integer pageSize,
+            boolean includeOccupied
+    ) {
+        return searchUnits(null, typeId, sizeM2, query, startDate, endDate, sort, page, pageSize, includeOccupied);
     }
 
     public UnitPageResponse searchUnits(
@@ -110,6 +124,21 @@ public class UnitService {
             String sort,
             Integer page,
             Integer pageSize
+    ) {
+        return searchUnits(facilityId, typeId, sizeM2, query, startDate, endDate, sort, page, pageSize, false);
+    }
+
+    public UnitPageResponse searchUnits(
+            Integer facilityId,
+            Long typeId,
+            BigDecimal sizeM2,
+            String query,
+            LocalDate startDate,
+            LocalDate endDate,
+            String sort,
+            Integer page,
+            Integer pageSize,
+            boolean includeOccupied
     ) {
         // Chuẩn hóa phân trang 1-based (AD-8)
         int validPage = (page == null || page < 1) ? 1 : page;
@@ -133,8 +162,12 @@ public class UnitService {
 
         // Rules được lọc theo facility của từng unit khi map giá.
 
-        // Ứng viên: Loại trừ RENTED, MAINTENANCE, RETIRED khỏi kết quả (OpenAPI & PRD FR-4)
-        List<Unit.Status> candidateStatuses = List.of(Unit.Status.AVAILABLE, Unit.Status.PREPARING);
+        // Catalog mặc định chỉ trả kho khả dụng; browse có thể yêu cầu cả kho
+        // đang giữ chỗ / đang thuê. Luôn ẩn bảo trì và ngừng khai thác.
+        List<Unit.Status> candidateStatuses = includeOccupied
+                ? List.of(Unit.Status.AVAILABLE, Unit.Status.PREPARING,
+                          Unit.Status.RESERVED, Unit.Status.RENTED)
+                : List.of(Unit.Status.AVAILABLE, Unit.Status.PREPARING);
         List<Unit> candidates = unitRepository.findCandidateUnits(candidateStatuses);
 
         // Lọc theo typeId và sizeM2 nếu có
@@ -198,6 +231,8 @@ public class UnitService {
             // 3. Kiểm tra xung đột (overlap) với reservation đang có trong tương lai
             List<Reservation> unitReservations = reservationsByUnit.getOrDefault(unit.getUnitId(), List.of());
             boolean hasOverlap = false;
+            LocalDate occupiedUntil = null;
+            boolean currentlyRented = false;
 
             for (Reservation res : unitReservations) {
                 LocalDate resOccupiedEnd = res.getEndDate().plusDays(bufferDays);
@@ -206,19 +241,29 @@ public class UnitService {
                 // Hai khoảng [A, B] và [C, D] trùng nhau khi A <= D && C <= B
                 if (!effectiveStart.isAfter(resOccupiedEnd) && !res.getStartDate().isAfter(reqOccupiedEnd)) {
                     hasOverlap = true;
-                    break;
+                    if (res.getStatus() == Reservation.Status.CHECKED_IN
+                            || res.getStatus() == Reservation.Status.CHECKOUT_REQUESTED) {
+                        currentlyRented = true;
+                    }
+                    if (occupiedUntil == null || resOccupiedEnd.isAfter(occupiedUntil)) {
+                        occupiedUntil = resOccupiedEnd;
+                    }
                 }
             }
 
-
-            // Nếu bị trùng lịch đặt trong tương lai -> loại khỏi kết quả
-            if (hasOverlap) {
+            // Catalog mặc định bỏ kho đang bận; browse includeOccupied vẫn trả
+            // card với trạng thái RENTED/RESERVED để khách xem.
+            if (hasOverlap && !includeOccupied) {
                 continue;
             }
 
             // 4. Xác định availability status
             UnitAvailabilityResponse availability;
-            if (queryStartDate.isBefore(readyDate)) {
+            if (hasOverlap) {
+                availability = new UnitAvailabilityResponse(
+                        currentlyRented ? "RENTED" : "RESERVED",
+                        occupiedUntil);
+            } else if (queryStartDate.isBefore(readyDate)) {
                 // Đang trong turnover buffer -> AVAILABLE_SOON kèm availableFromDate
                 availability = new UnitAvailabilityResponse("AVAILABLE_SOON", readyDate);
             } else {
@@ -377,9 +422,33 @@ public class UnitService {
         int bufferDays = bufferFor(unit, unitRules, 1);
 
         LocalDate today = LocalDate.now(ICT_ZONE);
-        UnitAvailabilityResponse availability;
+        List<Reservation> activeReservations = reservationRepository.findActiveReservationsForUnit(
+                unit.getUnitId(),
+                List.of(Reservation.Status.RESERVED,
+                        Reservation.Status.CHECKED_IN,
+                        Reservation.Status.CHECKOUT_REQUESTED));
+        List<com.storagehub.dto.unit.UnitAvailabilityRange> blockedRanges =
+                activeReservations.stream()
+                        .map(r -> new com.storagehub.dto.unit.UnitAvailabilityRange(
+                                r.getStartDate(),
+                                r.getEndDate().plusDays(bufferDays)))
+                        .toList();
+        LocalDate occupiedUntil = activeReservations.stream()
+                .map(r -> r.getEndDate().plusDays(bufferDays))
+                .max(LocalDate::compareTo)
+                .orElse(null);
+        boolean currentlyRented = activeReservations.stream().anyMatch(r ->
+                r.getStatus() == Reservation.Status.CHECKED_IN
+                        || r.getStatus() == Reservation.Status.CHECKOUT_REQUESTED);
 
-        if (unit.getStatus() == Unit.Status.PREPARING) {
+        UnitAvailabilityResponse availability;
+        if (!activeReservations.isEmpty()
+                && unit.getStatus() != Unit.Status.MAINTENANCE
+                && unit.getStatus() != Unit.Status.RETIRED) {
+            availability = new UnitAvailabilityResponse(
+                    currentlyRented ? "RENTED" : "RESERVED",
+                    occupiedUntil);
+        } else if (unit.getStatus() == Unit.Status.PREPARING) {
             List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
             LocalDate readyDate = !closedList.isEmpty()
                     ? closedList.get(0).getEndDate().plusDays(bufferDays)
@@ -414,7 +483,8 @@ public class UnitService {
                 dimensions,
                 security,
                 photoUrls,
-                unit.getZone().getFacility().getFacilityId()
+                unit.getZone().getFacility().getFacilityId(),
+                blockedRanges
         );
     }
 

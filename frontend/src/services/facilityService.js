@@ -38,8 +38,12 @@ export async function getFacilities() {
   return Array.isArray(data) ? data : [];
 }
 
-export async function getFacilityLayout(facilityId) {
-  const response = await apiClient(`/api/v1/facility/${facilityId}/layout`);
+export async function getFacilityLayout(facilityId, { startDate, endDate } = {}) {
+  const params = new URLSearchParams();
+  if (startDate) params.set("start-date", startDate);
+  if (endDate) params.set("end-date", endDate);
+  const query = params.toString();
+  const response = await apiClient(`/api/v1/facility/${facilityId}/layout${query ? `?${query}` : ""}`);
   const data = await safeParseJson(response);
   if (!response.ok) {
     throw new Error(data.message || "Không thể tải sơ đồ cơ sở.");
