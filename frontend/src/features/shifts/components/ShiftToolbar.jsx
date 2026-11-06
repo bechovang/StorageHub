@@ -7,7 +7,6 @@ import {
   ArrowCounterClockwise,
   Spinner,
 } from "@phosphor-icons/react";
-import { UNIT_TYPES } from "../../../services/shiftService.js";
 
 export default function ShiftToolbar({
   weekOffset,
@@ -19,6 +18,7 @@ export default function ShiftToolbar({
   onSearchChange,
   selectedTypeFilter,
   onTypeFilterChange,
+  unitTypes = [],
   onCopyPreviousWeek,
   copying,
   hasPendingChanges = false,
@@ -95,8 +95,8 @@ export default function ShiftToolbar({
             aria-label="Lọc theo loại kho"
           >
             <option value="ALL">Tất cả loại kho</option>
-            {UNIT_TYPES.map((t) => (
-              <option key={t.id} value={t.code}>
+            {unitTypes.map((t) => (
+              <option key={t.id} value={t.name}>
                 {t.name}
               </option>
             ))}

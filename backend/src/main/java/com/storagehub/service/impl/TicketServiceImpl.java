@@ -100,10 +100,22 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
+        // Gắn ticket với đơn thuê đang hoạt động để luồng RELOCATE có "kho cũ"
+        // (trước đây reservation luôn null dù khách đang thuê).
+        Reservation linkedReservation = occupancies.isEmpty()
+                ? null
+                : isStaff(customer)
+                    ? occupancies.get(0)
+                    : occupancies.stream()
+                        .filter(r -> r.getCustomer().getUserId().equals(customer.getUserId()))
+                        .findFirst()
+                        .orElse(occupancies.get(0));
+
         SupportTicket ticket = new SupportTicket();
         ticket.setCode(generateCode());
         ticket.setCustomer(ticketOwner);
         ticket.setUnit(unit);
+        ticket.setReservation(linkedReservation);
         ticket.setIncidentType(incidentType);
         ticket.setDescription(request.description());
         ticket.setStatus(SupportTicket.Status.OPEN);
@@ -184,8 +196,21 @@ public class TicketServiceImpl implements TicketService {
             Unit newUnit = unitRepository.findWithDetailsById(request.newUnitId())
                     .orElseThrow(() -> new UnitNotFoundException("Kho mới không tồn tại."));
             LocalDate today = LocalDate.now(ICT_ZONE);
+            LocalDate expectedStart = oldReservation.getStartDate() != null
+                    && oldReservation.getStartDate().isAfter(today)
+                    ? oldReservation.getStartDate() : today;
+            LocalDate expectedEnd = oldReservation.getEndDate() != null
+                    && !oldReservation.getEndDate().isBefore(expectedStart)
+                    ? oldReservation.getEndDate() : expectedStart;
+            if (!expectedStart.equals(request.newStartDate())
+                    || !expectedEnd.equals(request.newEndDate())) {
+                throw new BusinessRuleException(
+                        "Đổi kho do sự cố phải giữ đúng thời gian còn lại của đơn ("
+                                + expectedStart + " → " + expectedEnd + ").");
+            }
             var oldQuote = pricingEngine.calculateQuote(
-                    oldReservation.getUnit(), today, oldReservation.getEndDate());
+                    oldReservation.getUnit(), expectedStart, expectedEnd,
+                    oldReservation.getPolicy());
             var newQuote = pricingEngine.calculateQuote(
                     newUnit, request.newStartDate(), request.newEndDate());
             int oldDays = Math.max(1, oldQuote.durationDays());

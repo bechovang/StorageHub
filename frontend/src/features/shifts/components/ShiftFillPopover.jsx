@@ -9,15 +9,7 @@ import {
   Warehouse,
   Check,
 } from "@phosphor-icons/react";
-import { UNIT_TYPES } from "../../../services/shiftService.js";
-
-const TYPE_COLORS = {
-  LOCK: "#7c3aed",
-  S: "#0284c7",
-  M: "#ea580c",
-  L: "#16a34a",
-  LOCKER: "#7c3aed",
-};
+import { typeColorFor } from "../../../services/shiftService.js";
 
 export default function ShiftFillPopover(props) {
   if (!props.activePopover) return null;
@@ -28,6 +20,7 @@ function ShiftFillPopoverContent({
   activePopover,
   staffList = [],
   allShifts = [],
+  unitTypes = [],
   onClose,
   onSaveFill,
   onRemoveShift,
@@ -57,7 +50,7 @@ function ShiftFillPopoverContent({
   const [selectedTypeIds, setSelectedTypeIds] = useState(
     existingAssignment?.unitTypeIds?.length
       ? existingAssignment.unitTypeIds
-      : [UNIT_TYPES[0].id, UNIT_TYPES[1].id] // Mặc định chọn LOCK + S
+      : [unitTypes[0]?.id].filter((id) => id != null) // Mỗi nhân viên 1 loại kho
   );
 
   const [errorMsg, setErrorMsg] = useState(null);
@@ -192,10 +185,10 @@ function ShiftFillPopoverContent({
             {/* Chọn Loại kho phụ trách (Gom các phân khu) */}
             <div className="form-group" style={{ marginTop: "16px" }}>
               <label className="form-label">
-                <Warehouse size={15} /> Các loại kho phụ trách trong ca:
+                <Warehouse size={15} /> Loại kho phụ trách trong ca (mỗi nhân viên 1 loại kho):
               </label>
               <div className="shift-check-grid">
-                {UNIT_TYPES.map((t) => {
+                {unitTypes.map((t) => {
                   const checked = selectedTypeIds.includes(t.id);
                   return (
                     <label
@@ -205,18 +198,14 @@ function ShiftFillPopoverContent({
                       <input
                         type="checkbox"
                         checked={checked}
-                        onChange={() => {
-                          setSelectedTypeIds((prev) =>
-                            prev.includes(t.id)
-                              ? prev.filter((id) => id !== t.id)
-                              : [...prev, t.id]
-                          );
-                        }}
+                        onChange={() => setSelectedTypeIds([t.id])}
                       />
                       <span
                         className="shift-type-dot"
                         style={{
-                          backgroundColor: TYPE_COLORS[t.code] || "#475569",
+                          backgroundColor: typeColorFor(
+                            unitTypes.findIndex((u) => u.id === t.id)
+                          ),
                         }}
                       />
                       <span>{t.name}</span>
@@ -316,10 +305,10 @@ function ShiftFillPopoverContent({
             {/* Bước 2: Chọn Loại kho phụ trách */}
             <div className="form-group">
               <label className="form-label">
-                Loại kho phụ trách trong ca (chọn nhiều để gom vào 1 thẻ)
+                Loại kho phụ trách trong ca (mỗi nhân viên 1 loại kho)
               </label>
               <div className="shift-check-grid">
-                {UNIT_TYPES.map((t) => {
+                {unitTypes.map((t) => {
                   const checked = selectedTypeIds.includes(t.id);
                   return (
                     <label
@@ -329,17 +318,11 @@ function ShiftFillPopoverContent({
                       <input
                         type="checkbox"
                         checked={checked}
-                        onChange={() => {
-                          setSelectedTypeIds((prev) =>
-                            prev.includes(t.id)
-                              ? prev.filter((id) => id !== t.id)
-                              : [...prev, t.id]
-                          );
-                        }}
+                        onChange={() => setSelectedTypeIds([t.id])}
                       />
                       <span
                         className="shift-type-dot"
-                        style={{ backgroundColor: TYPE_COLORS[t.code] || "#475569" }}
+                        style={{ backgroundColor: typeColorFor(unitTypes.findIndex((u) => u.id === t.id)) }}
                       />
                       <span>{t.name}</span>
                     </label>

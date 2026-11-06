@@ -70,6 +70,23 @@ export function useTaskBoard({ staffId } = {}) {
     };
   }, [staffId]);
 
+  // Khách có thể đặt kho trong lúc staff đang mở board — tự làm mới khi tab
+  // được focus lại hoặc mỗi 20s, để task mới xuất hiện mà không cần F5.
+  useEffect(() => {
+    const refresh = () => reloadTasks();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibility);
+    const intervalId = window.setInterval(refresh, 20000);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.clearInterval(intervalId);
+    };
+  }, [reloadTasks]);
+
   // Xử lý chuyển cột trạng thái (bằng nút hoặc drag-drop)
   const handleMoveStatus = async (task, targetStatus) => {
     try {

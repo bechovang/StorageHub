@@ -77,6 +77,10 @@ public class SecurityConfig {
                         // Unit management: đọc public (browse), ghi chỉ manager/ops/admin
                         .requestMatchers("/api/v1/units/admin", "/api/v1/units/admin/**")
                             .hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.GET,
+                                "/api/v1/units/relocation-candidates"
+                        ).hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/units").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/units/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/units/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN")

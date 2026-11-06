@@ -173,8 +173,15 @@ class TaskServiceTest {
     @Test
     @DisplayName("autoCreateTask tạo task pool chưa giao người (FR-21)")
     void testAutoCreateTask_AutoAssignByZoneAndShift() {
-        when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))
-                .thenReturn(Optional.of(staffUser));
+        staffUser.setFacility(facility);
+        StaffAssignment assignment = new StaffAssignment();
+        assignment.setAssignmentId(10L);
+        assignment.setStaff(staffUser);
+        assignment.setShift(StaffAssignment.Shift.MORNING);
+        assignment.setWorkDate(today);
+        when(staffAssignmentRepository.findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(
+                1, 2, today, StaffAssignment.Shift.MORNING))
+                .thenReturn(List.of(assignment));
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
@@ -205,10 +212,62 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("autoCreateTask ưu tiên staff cùng facility khi cùng loại kho có ở nhiều cơ sở")
+    void testAutoCreateTask_PrefersSameFacility() {
+        staffUser.setFacility(facility);
+
+        Facility otherFacility = new Facility();
+        otherFacility.setFacilityId(2);
+        otherFacility.setName("Thủ Đức Depot");
+
+        User otherStaff = new User();
+        otherStaff.setUserId(9L);
+        otherStaff.setEmail("other@demo.storagehub.vn");
+        otherStaff.setFullName("Võ Thành Đạt");
+        otherStaff.setRole(staffRole);
+        otherStaff.setStatus(1);
+        otherStaff.setFacility(otherFacility);
+
+        StaffAssignment otherFacilityAssignment = new StaffAssignment();
+        otherFacilityAssignment.setAssignmentId(1L);
+        otherFacilityAssignment.setStaff(otherStaff);
+        otherFacilityAssignment.setShift(StaffAssignment.Shift.MORNING);
+        otherFacilityAssignment.setWorkDate(today);
+
+        StaffAssignment sameFacilityAssignment = new StaffAssignment();
+        sameFacilityAssignment.setAssignmentId(2L);
+        sameFacilityAssignment.setStaff(staffUser);
+        sameFacilityAssignment.setShift(StaffAssignment.Shift.MORNING);
+        sameFacilityAssignment.setWorkDate(today);
+
+        when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
+        when(staffAssignmentRepository.findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(
+                1, 2, today, StaffAssignment.Shift.MORNING))
+                .thenReturn(List.of(otherFacilityAssignment, sameFacilityAssignment));
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
+            Task t = invocation.getArgument(0);
+            t.setTaskId(101L);
+            return t;
+        });
+
+        TaskResponse res = taskService.autoCreateTask(new CreateTaskRequest(
+                Task.Type.CHECK_IN,
+                3L,
+                "BK-1043",
+                today,
+                StaffAssignment.Shift.MORNING,
+                "09:00",
+                null,
+                null,
+                null
+        ));
+
+        assertThat(res.assignedStaff().staffId()).isEqualTo(2L);
+    }
+
+    @Test
     @DisplayName("autoCreateTask không fallback gán người khi không có staff trực")
     void testAutoCreateTask_FallbackStaff() {
-        when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))
-                .thenReturn(Optional.of(staffUser));
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
@@ -231,7 +290,7 @@ class TaskServiceTest {
         TaskResponse res = taskService.autoCreateTask(req);
 
         assertThat(res.taskId()).isEqualTo(100L);
-        assertThat(res.assignedStaff().staffId()).isEqualTo(2L);
+        assertThat(res.assignedStaff()).isNull();
     }
 
     @Test

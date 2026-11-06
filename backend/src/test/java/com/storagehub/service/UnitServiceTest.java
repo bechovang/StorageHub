@@ -61,6 +61,9 @@ class UnitServiceTest {
     private com.storagehub.repository.FacilityRepository facilityRepository;
 
     @Mock
+    private com.storagehub.repository.UserRepository userRepository;
+
+    @Mock
     private ReservationRepository reservationRepository;
 
     @Mock

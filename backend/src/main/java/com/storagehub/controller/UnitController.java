@@ -1,9 +1,11 @@
 package com.storagehub.controller;
 
 import com.storagehub.dto.quote.QuoteResponse;
+import com.storagehub.dto.unit.RelocationCandidatesResponse;
 import com.storagehub.dto.unit.UnitDetailResponse;
 import com.storagehub.dto.unit.UnitFilterOptionsResponse;
 import com.storagehub.dto.unit.UnitPageResponse;
+import com.storagehub.dto.unit.UnitSummaryResponse;
 import com.storagehub.service.UnitService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -35,6 +37,18 @@ public class UnitController {
     @GetMapping("/filter-options")
     public ResponseEntity<UnitFilterOptionsResponse> getFilterOptions() {
         return ResponseEntity.ok(unitService.getFilterOptions());
+    }
+
+    /**
+     * Ứng viên đổi kho do sự cố — cùng loại, cùng cơ sở, giá >= kho cũ, còn trống.
+     * Dùng cho ManagerDispatchModal (RELOCATE).
+     */
+    @GetMapping("/relocation-candidates")
+    public ResponseEntity<RelocationCandidatesResponse> getRelocationCandidates(
+            @RequestParam("ticket-id") Long ticketId,
+            java.security.Principal principal
+    ) {
+        return ResponseEntity.ok(unitService.getRelocationCandidates(principal.getName(), ticketId));
     }
 
     @GetMapping

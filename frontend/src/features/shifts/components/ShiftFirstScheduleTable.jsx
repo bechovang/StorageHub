@@ -5,22 +5,18 @@ import {
   Clock,
 } from "@phosphor-icons/react";
 import { STANDARD_SHIFTS } from "../hooks/useStaffShifts.js";
-
-const TYPE_COLORS = {
-  LOCK: "#7c3aed",
-  S: "#0284c7",
-  M: "#ea580c",
-  L: "#16a34a",
-  LOCKER: "#7c3aed",
-};
+import { typeColorFor } from "../../../services/shiftService.js";
 
 export default function ShiftFirstScheduleTable({
   weekDays = [],
   shiftGrid = {},
+  unitTypes = [],
   highlightedStaffId = null,
   onOpenFillPopover,
   onRemoveShift,
 }) {
+  const colorForType = (name) =>
+    typeColorFor(unitTypes.findIndex((t) => t.name === name));
   return (
     <section className="shift-first-schedule-wrap">
       <div className="schedule-table-container">
@@ -162,7 +158,7 @@ export default function ShiftFirstScheduleTable({
                                     key={t}
                                     className="worker-type-chip"
                                     style={{
-                                      backgroundColor: TYPE_COLORS[t.toUpperCase()] || "#475569",
+                                      backgroundColor: colorForType(t),
                                     }}
                                     title={`Phụ trách ${t}`}
                                   >
@@ -197,10 +193,10 @@ export default function ShiftFirstScheduleTable({
       <div className="shift-first-legend">
         <div className="legend-group">
           <span className="legend-label">Loại kho:</span>
-          {Object.entries(TYPE_COLORS).filter(([k]) => k !== "LOCKER").map(([code, color]) => (
-            <div key={code} className="legend-pill">
-              <span className="legend-dot" style={{ backgroundColor: color }} />
-              <span>Kho {code}</span>
+          {unitTypes.map((t, index) => (
+            <div key={t.id} className="legend-pill">
+              <span className="legend-dot" style={{ backgroundColor: typeColorFor(index) }} />
+              <span>{t.name}</span>
             </div>
           ))}
         </div>

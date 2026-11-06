@@ -399,6 +399,7 @@ public class TaskServiceImpl implements TaskService {
         Task saved = taskRepository.save(task);
 
         String typeName = (unit != null && unit.getType() != null) ? unit.getType().getName() : "Chung";
+        String assigneeName = assignedStaff != null ? assignedStaff.getFullName() : "chưa phân công";
         logService.log(
                 assignedStaff,
                 "TASK",
@@ -406,7 +407,7 @@ public class TaskServiceImpl implements TaskService {
                 "TASK_CREATED",
                 null,
                 Task.Status.TODO.name(),
-                "Tự động phân cho staff " + assignedStaff.getFullName() + " phụ trách kho " + typeName + " ca " + shift
+                "Task " + typeName + " ca " + shift + " — " + assigneeName
         );
 
         return toTaskResponse(saved, shift, request.dueTime(), request.priority(), request.alertNote(), request.issueDescription());
@@ -540,53 +541,68 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private User autoAssignStaff(Unit unit, LocalDate workDate, StaffAssignment.Shift shift) {
-        Integer facilityId = (unit != null && unit.getZone() != null && unit.getZone().getFacility() != null)
-                ? unit.getZone().getFacility().getFacilityId()
-                : null;
+        Integer facilityId = facilityIdOf(unit);
+        if (facilityId == null) {
+            return null;
+        }
 
         // Ưu tiên staff được phân ca đúng LOẠI KHO (LOCK/S/M/L) cùng cơ sở.
         if (unit != null && unit.getType() != null) {
             Integer typeId = unit.getType().getTypeId();
             List<StaffAssignment> assignments = staffAssignmentRepository
                     .findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(facilityId, typeId, workDate, shift);
-            if (!assignments.isEmpty()) {
-                return assignments.get(0).getStaff();
+            User picked = pickStaff(assignments, facilityId);
+            if (picked != null) {
+                return picked;
             }
             // Staff trực FULL_DAY phủ cả ca sáng/chiều.
             if (shift == StaffAssignment.Shift.MORNING || shift == StaffAssignment.Shift.AFTERNOON) {
                 List<StaffAssignment> fullDay = staffAssignmentRepository
                         .findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(facilityId, typeId, workDate, StaffAssignment.Shift.FULL_DAY);
-                if (!fullDay.isEmpty()) {
-                    return fullDay.get(0).getStaff();
+                User pickedFullDay = pickStaff(fullDay, facilityId);
+                if (pickedFullDay != null) {
+                    return pickedFullDay;
                 }
             }
         }
 
         // Fallback: bất kỳ staff nào trực cùng ca tại cùng cơ sở.
         List<StaffAssignment> shiftAssignments = staffAssignmentRepository.findByFacilityAndWorkDateAndShift(facilityId, workDate, shift);
-        if (!shiftAssignments.isEmpty()) {
-            return shiftAssignments.get(0).getStaff();
+        User pickedShift = pickStaff(shiftAssignments, facilityId);
+        if (pickedShift != null) {
+            return pickedShift;
         }
         if (shift != StaffAssignment.Shift.FULL_DAY) {
             List<StaffAssignment> fullDay = staffAssignmentRepository
                     .findByFacilityAndWorkDateAndShift(facilityId, workDate, StaffAssignment.Shift.FULL_DAY);
-            if (!fullDay.isEmpty()) {
-                return fullDay.get(0).getStaff();
+            User pickedFullDay = pickStaff(fullDay, facilityId);
+            if (pickedFullDay != null) {
+                return pickedFullDay;
             }
         }
 
-        // Fallback cuối: staff đầu tiên đang active của cùng cơ sở (nếu có) hoặc toàn hệ thống.
-        if (facilityId != null) {
-            java.util.Optional<User> staffInFacility = userRepository.findByRole_NameAndStatus(Role.Name.STAFF, 1).stream()
-                    .filter(u -> u.getFacility() != null && u.getFacility().getFacilityId().equals(facilityId))
-                    .findFirst();
-            if (staffInFacility.isPresent()) {
-                return staffInFacility.get();
-            }
-        }
+        // Không có người cùng cơ sở: để task unassigned cho manager xử lý.
+        return null;
+    }
 
-        return userRepository.findFirstByRole_NameAndStatus(Role.Name.STAFF, 1)
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy nhân viên trực ca để tự động phân công nhiệm vụ."));
+    private User pickStaff(List<StaffAssignment> assignments, Integer facilityId) {
+        if (assignments == null || assignments.isEmpty() || facilityId == null) {
+            return null;
+        }
+        return assignments.stream()
+                .map(StaffAssignment::getStaff)
+                .filter(staff -> staff != null
+                        && staff.getFacility() != null
+                        && facilityId.equals(staff.getFacility().getFacilityId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Integer facilityIdOf(Unit unit) {
+        if (unit == null || unit.getZone() == null || unit.getZone().getFacility() == null) {
+            return null;
+        }
+        return unit.getZone().getFacility().getFacilityId();
     }
 
     private void validateSnapBackRule(Task task) {
@@ -1264,7 +1280,8 @@ public class TaskServiceImpl implements TaskService {
             Task reopened = taskRepository.save(existing);
             logService.log(ticket.getCustomer(), "TASK", reopened.getTaskId(),
                     "REOPENED", "DONE", Task.Status.TODO.name(),
-                    "Manager trả ticket " + ticket.getCode() + " cho " + assignee.getFullName());
+                    "Manager trả ticket " + ticket.getCode() + " cho "
+                            + (assignee != null ? assignee.getFullName() : "chưa phân công"));
             return reopened;
         }
 
