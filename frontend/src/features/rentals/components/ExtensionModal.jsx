@@ -92,24 +92,24 @@ export default function ExtensionModal({
         return selectedDate <= currentEndDate;
     }, [selectedDate, currentEndDate, selectedDateStr]);
 
-    // Tính toán chi phí gia hạn theo công thức PRD FR-16 (mô hình ngày):
-    // Phí gia hạn = Tiền thuê kỳ thêm (ngày × giá ngày) + Top-up cọc
+    // Online chỉ thu chênh lệch cọc; 100% tiền thuê phần gia hạn thu tại quầy.
     const calculation = useMemo(() => {
         const addedDays = Math.max(1, daysBetween(currentEndDateStr, selectedDateStr));
-        const addedRent = addedDays * dailyRent;
+        const extensionRent = addedDays * dailyRent;
         const newTotalDuration = currentDurationDays + addedDays;
         const newTotalRent = newTotalDuration * dailyRent;
-        const targetDeposit = Math.round(newTotalRent * depositRate);
-        const topUpDeposit = Math.max(0, targetDeposit - currentDepositHeld);
-        const totalPayable = addedRent + topUpDeposit;
+        const targetDeposit = Math.max(5000, Math.round(newTotalRent * depositRate));
+        const depositDelta = Math.max(0, targetDeposit - currentDepositHeld);
+        const refundAtCheckout = Math.max(0, currentDepositHeld - targetDeposit);
 
         return {
             addedDays,
-            addedRent,
+            extensionRent,
             newTotalDuration,
             targetDeposit,
-            topUpDeposit,
-            totalPayable,
+            depositDelta,
+            refundAtCheckout,
+            totalPayable: depositDelta,
         };
     }, [selectedDateStr, dailyRent, currentDurationDays, currentDepositHeld, currentEndDateStr, depositRate]);
 
@@ -140,10 +140,8 @@ export default function ExtensionModal({
             await onConfirmExtension({
                 newEndDate: selectedDateStr,
                 addedDays: calculation.addedDays,
-                addedRent: calculation.addedRent,
-                topUpDeposit: calculation.topUpDeposit,
-                totalPayable: calculation.totalPayable,
-                newDepositHeld: calculation.targetDeposit,
+                extensionRent: calculation.extensionRent,
+                depositDelta: calculation.depositDelta,
             });
             onClose();
         } catch (err) {
@@ -264,25 +262,28 @@ export default function ExtensionModal({
 
                             <div className="rd-price-breakdown__rows">
                                 <div className="rd-price-row">
-                                    <span>Tiền thuê kỳ thêm ({calculation.addedDays} ngày × {fmtMoney(dailyRent)}/ngày)</span>
-                                    <strong>{fmtMoney(calculation.addedRent)}</strong>
+                                    <span>Tiền thuê phần gia hạn — thu tại quầy ({calculation.addedDays} ngày × {fmtMoney(dailyRent)}/ngày)</span>
+                                    <strong>{fmtMoney(calculation.extensionRent)}</strong>
                                 </div>
                                 <div className="rd-price-row">
                                     <span>
-                                        Tiền cọc bổ sung (đạt {depositPercent != null ? `${depositPercent}%` : "mức chính sách"} hợp đồng mới)
-                                        <Info size={13} className="rd-info-icon" title="Cọc nâng từ mức cũ lên mức tương ứng với tổng giá trị hợp đồng mới" />
+                                        Chênh lệch cọc thanh toán online (đạt {depositPercent != null ? `${depositPercent}%` : "mức chính sách"} hợp đồng mới)
+                                        <Info size={13} className="rd-info-icon" title="Cọc online chỉ là phần chênh lệch; rent 100% thu tại quầy khi ký phụ lục" />
                                     </span>
                                     <span className="rd-topup-value">
-                                        +{fmtMoney(calculation.topUpDeposit)}
+                                        +{fmtMoney(calculation.depositDelta)}
                                     </span>
                                 </div>
                                 <div className="rd-price-row rd-price-row--sub">
-                                    <small>• Tiền cọc đang giữ hiện tại: {fmtMoney(currentDepositHeld)}</small>
-                                    <small>➔ Tiền cọc mới sẽ giữ: {fmtMoney(calculation.targetDeposit)}</small>
+                                    <small>• Cọc đang giữ: {fmtMoney(currentDepositHeld)}</small>
+                                    <small>➔ Cọc mới: {fmtMoney(calculation.targetDeposit)}</small>
+                                    {calculation.refundAtCheckout > 0 && (
+                                        <small>• Hoàn lại lúc checkout: {fmtMoney(calculation.refundAtCheckout)}</small>
+                                    )}
                                 </div>
                                 <div className="rd-divider" />
                                 <div className="rd-price-row rd-price-row--total">
-                                    <span>Tổng số tiền cần thanh toán</span>
+                                    <span>{calculation.depositDelta > 0 ? "Thanh toán online ngay" : "Không cần thanh toán online"}</span>
                                     <strong className="rd-total-price">{fmtMoney(calculation.totalPayable)}</strong>
                                 </div>
                             </div>
@@ -290,7 +291,7 @@ export default function ExtensionModal({
                             <div className="rd-notice-box">
                                 <CheckCircle size={16} weight="fill" color="var(--color-status-success, #16a34a)" />
                                 <span>
-                                    Sau khi thanh toán, thời hạn thuê mới sẽ có hiệu lực ngay lập tức. Quý khách vui lòng đến quầy dịch vụ để ký xác nhận phụ lục hợp đồng trong vòng 7 ngày làm việc.
+                                    Sau khi cọc được xác nhận, kỳ gia hạn được giữ ngay và task hợp đồng xuất hiện cho staff. Quý khách đến quầy ký phụ lục và thanh toán 100% tiền thuê phần gia hạn.
                                 </span>
                             </div>
                         </div>

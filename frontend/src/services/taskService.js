@@ -182,11 +182,16 @@ export function checkSnapBackViolation(task) {
 /**
  * Thực hiện ký hợp đồng / phụ lục tại quầy (US-19)
  */
-export async function completeContractRitual(taskId, { contractPhotoUrl, notes = "" }) {
+export async function completeContractRitual(taskId, {
+  contractPhotoUrl,
+  paymentMethod,
+  paymentProofPhoto,
+  notes = "",
+}) {
   // POST /api/v1/tasks/{id}/rituals/contract — lưu ảnh bản ký + SIGNED addendum/contract.
   const res = await apiClient(`/api/v1/tasks/${taskId}/rituals/contract`, {
     method: "POST",
-    body: JSON.stringify({ contractPhotoUrl, notes }),
+    body: JSON.stringify({ contractPhotoUrl, paymentMethod, paymentProofPhoto, notes }),
   });
   const data = await safeParseJson(res);
   if (!res.ok) {

@@ -62,14 +62,14 @@ public class ExtensionService {
     private final PricingEngine pricingEngine;
     private final LogService logService;
 
-    /** Số tiền gia hạn tính lại theo policy active — handler dùng khi apply. */
+    /** Bảng tính gia hạn: online chỉ thu chênh lệch cọc; rent thu tại quầy. */
     public record Breakdown(
             int addedDays,
-            long addedRent,
-            long depositHeld,
-            long depositTopUp,
-            long newDepositHeld,
-            long totalPayable,
+            long extensionRent,
+            long oldDeposit,
+            long newDeposit,
+            long depositDelta,
+            long totalPayableOnline,
             String policyVersion
     ) {
     }
@@ -126,21 +126,22 @@ public class ExtensionService {
         QuoteResponse extensionQuote = pricingEngine.calculateQuote(
                 unit, reservation.getEndDate().plusDays(1), newEndDate, policy);
 
-        long addedRent = extensionQuote.totalRent();
-        long newTotalRent = originalQuote.totalRent() + addedRent;
+        long extensionRent = extensionQuote.totalRent();
+        long newTotalRent = originalQuote.totalRent() + extensionRent;
         int depositPercent = depositPercentFor(unit, policy);
-        long newDepositHeld = (newTotalRent * depositPercent) / 100;
+        long newDeposit = Math.max(PricingEngine.MIN_DEPOSIT,
+                (newTotalRent * depositPercent) / 100);
 
-        long depositHeld = reservation.getDepositAmount().longValueExact();
-        long depositTopUp = Math.max(0, newDepositHeld - depositHeld);
+        long oldDeposit = reservation.getDepositAmount().longValueExact();
+        long depositDelta = Math.max(0, newDeposit - oldDeposit);
 
         return new Breakdown(
                 addedDays,
-                addedRent,
-                depositHeld,
-                depositTopUp,
-                newDepositHeld,
-                addedRent + depositTopUp,
+                extensionRent,
+                oldDeposit,
+                newDeposit,
+                depositDelta,
+                depositDelta,
                 originalQuote.policyVersion()
         );
     }
@@ -200,14 +201,16 @@ public class ExtensionService {
                             .map(c -> c.getPolicy()).orElse(null));
                     created.setOldEndDate(reservation.getEndDate());
                     created.setNewEndDate(newEndDate);
-                    created.setExtensionFee(BigDecimal.valueOf(breakdown.addedRent()));
+                    created.setOldDeposit(BigDecimal.valueOf(breakdown.oldDeposit()));
+                    created.setNewDeposit(BigDecimal.valueOf(breakdown.newDeposit()));
+                    created.setExtensionFee(BigDecimal.valueOf(breakdown.extensionRent()));
                     created.setStatus(Extension.Status.PENDING_PAYMENT);
                     Extension saved = extensionRepository.save(created);
                     logService.log(customer, "EXTENSION", saved.getExtensionId(), "CREATED",
                             null, "PENDING_PAYMENT",
                             "Gia hạn " + reservation.getCode() + " đến " + newEndDate
-                                    + " — thuê thêm " + breakdown.addedRent()
-                                    + " ₫ + top-up cọc " + breakdown.depositTopUp() + " ₫");
+                                    + " — cọc online " + breakdown.depositDelta()
+                                    + " ₫; rent thu quầy " + breakdown.extensionRent() + " ₫");
                     return saved;
                 });
 
@@ -216,29 +219,43 @@ public class ExtensionService {
                 extension.getOldEndDate(),
                 extension.getNewEndDate(),
                 breakdown.addedDays(),
-                breakdown.addedRent(),
-                breakdown.depositHeld(),
-                breakdown.depositTopUp(),
-                breakdown.newDepositHeld(),
-                breakdown.totalPayable(),
-                latest,
-                breakdown.policyVersion()
+                breakdown.extensionRent(),
+                breakdown.oldDeposit(),
+                breakdown.newDeposit(),
+                breakdown.depositDelta(),
+                breakdown.policyVersion(),
+                latest
         );
     }
 
     /**
-     * Bước 2/2 (gọi từ ExtensionPaymentSuccessHandler trong lock payment —
-     * chạy đúng 1 lần): flip PENDING_PAYMENT → APPLIED kèm ActivityLog.
+     * Cọc gia hạn đã thanh toán: extension chuyển PENDING_CONTRACT. EndDate được
+     * ReservationService cập nhật ngay để giữ kỳ thuê; rent 100% còn chờ quầy.
      */
+    public Extension markDepositPaid(User actor, Extension extension) {
+        if (extension.getStatus() == Extension.Status.PENDING_CONTRACT
+                || extension.getStatus() == Extension.Status.APPLIED) {
+            return extension;
+        }
+        extension.setStatus(Extension.Status.PENDING_CONTRACT);
+        extensionRepository.save(extension);
+        logService.log(actor, "EXTENSION", extension.getExtensionId(), "STATUS_CHANGED",
+                "PENDING_PAYMENT", "PENDING_CONTRACT",
+                "Cọc gia hạn đã trả — chờ ký phụ lục/100% rent tại quầy");
+        return extension;
+    }
+
+    /** Hoàn tất gia hạn tại quầy sau khi đã ký phụ lục + thu 100% rent. */
     public Extension markApplied(User actor, Extension extension) {
         if (extension.getStatus() == Extension.Status.APPLIED) {
             return extension;
         }
+        String oldStatus = extension.getStatus().name();
         extension.setStatus(Extension.Status.APPLIED);
         extensionRepository.save(extension);
         logService.log(actor, "EXTENSION", extension.getExtensionId(), "STATUS_CHANGED",
-                "PENDING_PAYMENT", "APPLIED",
-                "Phí gia hạn đã trả — checkout mới " + extension.getNewEndDate());
+                oldStatus, "APPLIED",
+                "Gia hạn hoàn tất — checkout mới " + extension.getNewEndDate());
         return extension;
     }
 

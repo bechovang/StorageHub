@@ -29,7 +29,11 @@ public class PolicyRule {
         SURCHARGE,
         TURNOVER_BUFFER,
         DISCOUNT,
-        WAIVER_CAP
+        WAIVER_CAP,
+        CHECKIN_GRACE_DAYS,
+        CHECKIN_LATE_FEE_PER_DAY,
+        EXTENSION_GRACE_DAYS,
+        EXTENSION_LATE_FEE_PER_DAY
     }
 
     /** Chỉ áp dụng cho SURCHARGE / DISCOUNT: PERCENT (%) hoặc FIXED (đồng). */

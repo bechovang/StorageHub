@@ -11,6 +11,14 @@ export function SurchargesTable({
   setDraftBufferDays,
   isBufferViolated,
   isBufferModified,
+  draftCheckinGrace,
+  setDraftCheckinGrace,
+  draftCheckinLateFee,
+  setDraftCheckinLateFee,
+  draftExtensionGrace,
+  setDraftExtensionGrace,
+  draftExtensionLateFee,
+  setDraftExtensionLateFee,
 }) {
   return (
     <div className="policy-section">
@@ -271,6 +279,33 @@ export function SurchargesTable({
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div className="policy-section" style={{ marginTop: "20px" }}>
+        <div className="policy-section__header">
+          <div className="policy-section__title-wrap">
+            <span className="policy-section__title">Thời hạn bàn giao &amp; phí trễ</span>
+            <span className="policy-section__sub">(Check-in và gia hạn)</span>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(220px, 1fr))", gap: "16px", padding: "12px 0" }}>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
+            Check-in — số ngày grace
+            <input className="policy-input" type="number" min="1" max="30" value={draftCheckinGrace} onChange={(e) => setDraftCheckinGrace(e.target.value)} />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
+            Check-in — phí trễ / ngày (₫)
+            <input className="policy-input" type="number" min="0" value={draftCheckinLateFee} onChange={(e) => setDraftCheckinLateFee(e.target.value)} />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
+            Gia hạn — số ngày grace
+            <input className="policy-input" type="number" min="1" max="30" value={draftExtensionGrace} onChange={(e) => setDraftExtensionGrace(e.target.value)} />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
+            Gia hạn — phí trễ / ngày (₫)
+            <input className="policy-input" type="number" min="0" value={draftExtensionLateFee} onChange={(e) => setDraftExtensionLateFee(e.target.value)} />
+          </label>
+        </div>
       </div>
     </div>
   );

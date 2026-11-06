@@ -5,10 +5,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 
 /**
- * US-18 (FR-16): bảng tính gia hạn server-truth + id extension chờ thanh toán.
- * FE (ExtensionModal) thay toàn bộ phép tính client bằng response này, rồi mở
- * Payment Modal với purpose EXTENSION_FEE — amount BE tự resolve đúng totalPayable.
- * latestNewCheckout null khi không có đơn đặt trước trên cùng unit (FR-16 boundary).
+ * US-18 (FR-16): bảng tính gia hạn server-truth. Online chỉ thu chênh lệch cọc;
+ * 100% tiền thuê phần gia hạn được thu tại quầy khi ký phụ lục.
  */
 public record ExtensionQuoteResponse(
         Long extensionId,
@@ -17,13 +15,12 @@ public record ExtensionQuoteResponse(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         LocalDate newEndDate,
         int addedDays,
-        long addedRent,
-        long depositHeldCurrent,
-        long depositTopUp,
-        long newDepositHeld,
-        long totalPayable,
+        long extensionRent,
+        long oldDeposit,
+        long newDeposit,
+        long depositDelta,
+        String policyVersion,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-        LocalDate latestNewCheckout,
-        String policyVersion
+        LocalDate latestNewCheckout
 ) {
 }

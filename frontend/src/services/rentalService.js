@@ -124,6 +124,20 @@ export async function createExtensionRequest(reservationId, newEndDate) {
 }
 
 /**
+ * POST /api/v1/reservations/{reservationId}/extensions/{extensionId}/confirm-zero-deposit
+ * QR = 0: xác nhận cọc đã đủ, backend sinh Addendum + Task CONTRACT ngay.
+ */
+export async function confirmZeroExtensionDeposit(reservationId, extensionId) {
+  const res = await apiClient(
+    `/api/v1/reservations/${reservationId}/extensions/${extensionId}/confirm-zero-deposit`,
+    { method: "POST" }
+  );
+  const data = await safeParseJson(res);
+  if (!res.ok) throw { status: res.status, ...data };
+  return data;
+}
+
+/**
  * DELETE /api/v1/reservations/{reservationId}/checkout-request
  * Hủy yêu cầu trả kho (US-20 / FR-17)
  */

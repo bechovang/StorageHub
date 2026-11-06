@@ -18,6 +18,14 @@ public record PolicySaveRequest(
         @Min(value = 1, message = "Buffer tối thiểu 1 ngày")
         Integer turnoverBufferDays,
 
+        Integer checkinGraceDays,
+
+        Integer checkinLateFeePerDay,
+
+        Integer extensionGraceDays,
+
+        Integer extensionLateFeePerDay,
+
         String updatedBy
 ) {
 

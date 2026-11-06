@@ -21,9 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class ExtensionController {
 
     private final ExtensionService extensionService;
+    private final com.storagehub.service.ExtensionDepositService extensionDepositService;
 
-    public ExtensionController(ExtensionService extensionService) {
+    public ExtensionController(
+            ExtensionService extensionService,
+            com.storagehub.service.ExtensionDepositService extensionDepositService
+    ) {
         this.extensionService = extensionService;
+        this.extensionDepositService = extensionDepositService;
     }
 
     @PostMapping("/{reservationId}/extensions")
@@ -35,5 +40,17 @@ public class ExtensionController {
         String email = authentication != null ? authentication.getName() : "";
         return ResponseEntity.ok(
                 extensionService.createRequest(email, reservationId, request.newEndDate()));
+    }
+
+    /** QR = 0: xác nhận cọc đã đủ, sinh Addendum + Task CONTRACT ngay. */
+    @PostMapping("/{reservationId}/extensions/{extensionId}/confirm-zero-deposit")
+    public ResponseEntity<?> confirmZeroDeposit(
+            @PathVariable Long reservationId,
+            @PathVariable Long extensionId,
+            org.springframework.security.core.Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        extensionDepositService.confirmZeroDeposit(email, reservationId, extensionId);
+        return ResponseEntity.ok(java.util.Map.of("confirmed", true));
     }
 }

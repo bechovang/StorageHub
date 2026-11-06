@@ -56,6 +56,7 @@ public class TaskServiceImpl implements TaskService {
     private final com.storagehub.service.ReservationService reservationService;
     private final com.storagehub.service.ContractService contractService;
     private final com.storagehub.repository.ContractAddendumRepository contractAddendumRepository;
+    private final com.storagehub.repository.ExtensionRepository extensionRepository;
     private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
     private final Clock clock;
 
@@ -77,6 +78,7 @@ public class TaskServiceImpl implements TaskService {
             @org.springframework.context.annotation.Lazy com.storagehub.service.ReservationService reservationService,
             com.storagehub.service.ContractService contractService,
             com.storagehub.repository.ContractAddendumRepository contractAddendumRepository,
+            com.storagehub.repository.ExtensionRepository extensionRepository,
             org.springframework.transaction.PlatformTransactionManager transactionManager,
             Clock clock
     ) {
@@ -97,6 +99,7 @@ public class TaskServiceImpl implements TaskService {
         this.reservationService = reservationService;
         this.contractService = contractService;
         this.contractAddendumRepository = contractAddendumRepository;
+        this.extensionRepository = extensionRepository;
         this.transactionTemplate = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
         this.clock = clock;
     }
@@ -136,6 +139,7 @@ public class TaskServiceImpl implements TaskService {
             throw new AccessDeniedException("Chỉ Staff hoặc Quản lý mới có quyền truy cập Task Board");
         }
 
+        expireDueTasks();
         carryOverStaleTasks();
 
         boolean isDefaultDate = (workDate == null);
@@ -479,6 +483,55 @@ public class TaskServiceImpl implements TaskService {
     }
 
     /** Chuyển task chưa xong sang staff ca kế tiếp cùng loại kho. */
+    /** Task quá expires_on: DONE + note, kích hoạt side-effect của owner. */
+    private void expireDueTasks() {
+        LocalDate today = getToday();
+        for (Task task : taskRepository.findExpiredOpenTasks(today)) {
+            if (task.getStatus() == Task.Status.DONE) {
+                continue;
+            }
+            String note = "Hết hạn xử lý ngày " + task.getExpiresOn()
+                    + " — tự động đóng task.";
+            if (task.getType() == Task.Type.CHECK_IN && task.getRefCode() != null) {
+                reservationRepository.findByCode(task.getRefCode()).ifPresent(res -> {
+                    if (res.getStatus() == Reservation.Status.RESERVED) {
+                        reservationService.expireNoShowIfDue(
+                                res.getCustomer().getEmail(), res.getReservationId());
+                    }
+                });
+            } else if (task.getType() == Task.Type.CONTRACT && task.getRefCode() != null) {
+                var addendum = contractAddendumRepository.findByCode(task.getRefCode()).orElse(null);
+                var extension = addendum != null ? addendum.getExtension() : null;
+                if (extension != null && extension.getStatus() == Extension.Status.PENDING_CONTRACT) {
+                    addendum.setStatus(ContractAddendum.Status.VOIDED);
+                    contractAddendumRepository.save(addendum);
+
+                    extension.setStatus(Extension.Status.EXPIRED);
+                    extensionRepository.save(extension);
+
+                    Reservation res = extension.getReservation();
+                    res.setEndDate(task.getExpiresOn() != null ? task.getExpiresOn() : today);
+                    if (extension.getNewDeposit() != null && extension.getOldDeposit() != null
+                            && extension.getNewDeposit().compareTo(extension.getOldDeposit()) > 0) {
+                        res.setDepositAmount(extension.getOldDeposit());
+                    }
+                    reservationRepository.save(res);
+                    logService.log(res.getCustomer(), "EXTENSION", extension.getExtensionId(),
+                            "EXPIRED", "PENDING_CONTRACT", "EXPIRED",
+                            "Task contract " + task.getRefCode() + " hết hạn — rollback EndDate "
+                                    + res.getEndDate());
+                }
+            }
+
+            task.setStatus(Task.Status.DONE);
+            String oldNote = task.getNote();
+            task.setNote(oldNote == null || oldNote.isBlank() ? note : oldNote + " | " + note);
+            Task saved = taskRepository.save(task);
+            logService.log(task.getAssignedStaff() != null ? task.getAssignedStaff() : null,
+                    "TASK", saved.getTaskId(), "EXPIRED", "OPEN", "DONE", note);
+        }
+    }
+
     private void carryOverStaleTasks() {
         LocalTime now = LocalTime.now(clock.withZone(ICT_ZONE));
         LocalDate today = getToday();
@@ -874,6 +927,14 @@ public class TaskServiceImpl implements TaskService {
                         customerName = ct.getReservation().getCustomer().getFullName();
                         customerPhone = ct.getReservation().getCustomer().getPhone();
                     }
+                    if (addendum != null && addendum.getExtension() != null) {
+                        var ext = addendum.getExtension();
+                        rentAmount = ext.getExtensionFee() != null
+                                ? ext.getExtensionFee().longValueExact() : null;
+                        depositPaid = ext.getNewDeposit() != null
+                                ? ext.getNewDeposit().longValueExact() : null;
+                        alertNote = "Thu 100% rent kỳ gia hạn tại quầy khi ký phụ lục";
+                    }
                 }
                 ritual = new TaskRitualDto(
                         null, null,
@@ -946,6 +1007,15 @@ public class TaskServiceImpl implements TaskService {
         task.setFacility(facilityOf(unit));
         task.setWorkDate(workDate);
         task.setStatus(Task.Status.TODO);
+        LocalDate extensionStart = addendum.getExtension() != null
+                ? addendum.getExtension().getOldEndDate().plusDays(1)
+                : workDate;
+        int extensionGrace = pricingEngine.ruleInt(
+                unit,
+                addendum.getPolicy(),
+                PolicyRule.RuleType.EXTENSION_GRACE_DAYS,
+                3);
+        task.setExpiresOn(extensionStart.plusDays(extensionGrace));
         task.setNote("Hạn ký phụ lục: " + addendum.getSignatureDueDate());
         Task saved = taskRepository.save(task);
 
@@ -980,6 +1050,12 @@ public class TaskServiceImpl implements TaskService {
         task.setFacility(facilityOf(reservation.getUnit()));
         task.setWorkDate(reservation.getStartDate());
         task.setStatus(Task.Status.TODO);
+        int checkinGrace = pricingEngine.ruleInt(
+                reservation.getUnit(),
+                reservation.getPolicy(),
+                PolicyRule.RuleType.CHECKIN_GRACE_DAYS,
+                3);
+        task.setExpiresOn(reservation.getStartDate().plusDays(checkinGrace));
         Task saved = taskRepository.save(task);
 
         logService.log(actor != null ? actor : assignee,
@@ -1043,11 +1119,47 @@ public class TaskServiceImpl implements TaskService {
 
         var addendum = contractAddendumRepository.findByCode(ref).orElse(null);
         if (addendum != null) {
+            var extension = addendum.getExtension();
+            if (extension != null && extension.getStatus() == Extension.Status.PENDING_CONTRACT) {
+                if (request.paymentMethod() == null || request.paymentMethod().isBlank()
+                        || request.paymentProofPhoto() == null || request.paymentProofPhoto().isBlank()) {
+                    throw new com.storagehub.exception.BusinessRuleException(
+                            "Gia hạn cần thu 100% rent và ảnh chứng từ tại quầy.");
+                }
+                com.storagehub.entity.Payment.Method method = switch (request.paymentMethod().toUpperCase()) {
+                    case "CASH" -> com.storagehub.entity.Payment.Method.CASH;
+                    case "QR" -> com.storagehub.entity.Payment.Method.BANK;
+                    case "POS" -> com.storagehub.entity.Payment.Method.POS;
+                    default -> throw new com.storagehub.exception.BusinessRuleException(
+                            "Phương thức thu tiền không hợp lệ: " + request.paymentMethod());
+                };
+                boolean rentCollected = paymentRepository.findByExtension_ExtensionId(extension.getExtensionId())
+                        .stream()
+                        .anyMatch(p -> p.getPurpose() == com.storagehub.entity.Payment.Purpose.EXTENSION_RENT
+                                && p.getStatus() == com.storagehub.entity.Payment.Status.SUCCEEDED);
+                if (!rentCollected) {
+                    com.storagehub.entity.Payment rent = new com.storagehub.entity.Payment();
+                    rent.setPayer(extension.getReservation().getCustomer());
+                    rent.setExtension(extension);
+                    rent.setPurpose(com.storagehub.entity.Payment.Purpose.EXTENSION_RENT);
+                    rent.setMethod(method);
+                    rent.setAmount(extension.getExtensionFee());
+                    rent.setStatus(com.storagehub.entity.Payment.Status.SUCCEEDED);
+                    rent.setReceiptCode("RT-ER-" + System.currentTimeMillis());
+                    paymentRepository.saveAndFlush(rent);
+                    logService.log(staff, "PAYMENT", rent.getPaymentId(), "PAYMENT_SUCCEEDED",
+                            null, "SUCCEEDED", "Thu 100% rent gia hạn " + extension.getExtensionFee() + " ₫");
+                }
+            }
             contractService.signAddendum(
                     currentUserEmail,
                     addendum.getAddendumId(),
                     new com.storagehub.dto.contract.ContractAddendumSignRequest(
                             request.contractPhotoUrl(), request.notes()));
+            if (extension != null) {
+                extension.setStatus(Extension.Status.APPLIED);
+                extensionRepository.save(extension);
+            }
         } else {
             com.storagehub.entity.Contract contract = contractRepository.findByCode(ref)
                     .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
@@ -1058,6 +1170,9 @@ public class TaskServiceImpl implements TaskService {
 
         task.setStatus(Task.Status.DONE);
         task.setContractPhoto(request.contractPhotoUrl());
+        if (request.paymentProofPhoto() != null) {
+            task.setPaymentProofPhoto(request.paymentProofPhoto());
+        }
         Task saved = taskRepository.save(task);
         logService.log(staff, "TASK", saved.getTaskId(), "STATUS_CHANGED",
                 "IN_PROGRESS", "DONE",
@@ -1320,6 +1435,30 @@ public class TaskServiceImpl implements TaskService {
                         null, "SUCCEEDED",
                         "Thu tại quầy " + request.paymentMethod() + " — " + quote.totalRent()
                                 + " ₫, có ảnh chứng từ (check-in " + reservation.getCode() + ")");
+            });
+        }
+
+        long lateFee = reservationService.checkinLateFee(
+                reservation, java.time.LocalDate.now(clock.withZone(ICT_ZONE)));
+        boolean lateFeeCollected = paymentRepository
+                .findByReservation_ReservationIdOrderByCreatedAtAsc(reservation.getReservationId())
+                .stream()
+                .anyMatch(p -> p.getPurpose() == com.storagehub.entity.Payment.Purpose.CHECKIN_LATE_FEE
+                        && p.getStatus() == com.storagehub.entity.Payment.Status.SUCCEEDED);
+        if (lateFee > 0 && !lateFeeCollected) {
+            transactionTemplate.executeWithoutResult(tx -> {
+                com.storagehub.entity.Payment late = new com.storagehub.entity.Payment();
+                late.setPayer(reservation.getCustomer());
+                late.setReservation(reservation);
+                late.setPurpose(com.storagehub.entity.Payment.Purpose.CHECKIN_LATE_FEE);
+                late.setMethod(method);
+                late.setAmount(java.math.BigDecimal.valueOf(lateFee));
+                late.setStatus(com.storagehub.entity.Payment.Status.SUCCEEDED);
+                late.setReceiptCode("RT-LF-" + System.currentTimeMillis());
+                paymentRepository.saveAndFlush(late);
+                logService.log(staff, "PAYMENT", late.getPaymentId(), "PAYMENT_SUCCEEDED",
+                        null, "SUCCEEDED",
+                        "Phí check-in trễ " + lateFee + " ₫ — " + reservation.getCode());
             });
         }
 

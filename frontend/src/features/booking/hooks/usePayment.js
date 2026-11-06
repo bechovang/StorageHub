@@ -160,7 +160,7 @@ export function usePayment() {
                     || "Hệ thống sẽ hoàn lại tiền cọc cho bạn. Không có đơn thuê nào được tạo.",
                 });
               } else {
-                const isExtension = updated.purpose === "EXTENSION_FEE";
+                const isExtension = updated.purpose === "EXTENSION_DEPOSIT";
                 setNotificationToast({
                   type: "PAYMENT_CONFIRMED",
                   title: isExtension ? "Gia hạn kho thành công" : "Thanh toán cọc thành công",
@@ -509,7 +509,7 @@ export function usePayment() {
 
       if (updated.status === "SUCCEEDED") {
         stopPolling();
-        const isExtension = updated.purpose === "EXTENSION_FEE";
+        const isExtension = updated.purpose === "EXTENSION_DEPOSIT";
         setNotificationToast({
           type: "PAYMENT_CONFIRMED",
           title: isExtension ? "Gia hạn kho thành công" : "Thanh toán cọc thành công",
