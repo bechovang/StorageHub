@@ -11,7 +11,12 @@ import {
 } from "@phosphor-icons/react";
 import { typeColorFor } from "../../../services/shiftService.js";
 
-export default function ShiftFillPopover({
+export default function ShiftFillPopover(props) {
+  if (!props.activePopover) return null;
+  return <ShiftFillPopoverContent {...props} />;
+}
+
+function ShiftFillPopoverContent({
   activePopover,
   staffList = [],
   allShifts = [],
@@ -20,7 +25,7 @@ export default function ShiftFillPopover({
   onSaveFill,
   onRemoveShift,
 }) {
-  if (!activePopover) return null;
+
 
   const {
     shiftKey,

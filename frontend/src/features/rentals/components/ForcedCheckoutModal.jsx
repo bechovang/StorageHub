@@ -3,7 +3,6 @@ import {
   X,
   SignOut,
   WarningCircle,
-  ArrowRight,
   ShieldWarning,
 } from "@phosphor-icons/react";
 

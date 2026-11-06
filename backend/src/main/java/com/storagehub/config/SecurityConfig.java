@@ -75,7 +75,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/users/**").hasRole("SYSTEM_ADMIN")
                         .requestMatchers("/api/v1/policies/**").hasAnyRole("BUSINESS_OPS", "SYSTEM_ADMIN")
                         // Unit management: đọc public (browse), ghi chỉ manager/ops/admin
-                        .requestMatchers("/api/v1/units/admin/**")
+                        .requestMatchers("/api/v1/units/admin", "/api/v1/units/admin/**")
                             .hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/units").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/units/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
@@ -85,7 +85,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,
                                 "/api/v1/facility",
-                                "/api/v1/facility/*/layout"
+                                "/api/v1/facility/*/layout",
+                                "/api/v1/facilities",
+                                "/api/v1/facilities/*/layout"
                         ).permitAll()
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,
@@ -94,7 +96,7 @@ public class SecurityConfig {
                                 "/api/v1/units/*",
                                 "/api/v1/units/*/quote"
                         ).permitAll()
-                        .requestMatchers("/api/v1/facility/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
+                        .requestMatchers("/api/v1/facility/**", "/api/v1/facilities/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers("/api/v1/activity-logs/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers("/api/v1/shifts/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "STAFF")
                         .anyRequest().authenticated()

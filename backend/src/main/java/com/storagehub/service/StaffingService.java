@@ -48,4 +48,24 @@ public interface StaffingService {
             LocalDate startDate,
             LocalDate endDate
     );
+
+    default List<ShiftAssignmentResponse> getShifts(
+            String actorEmail,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long staffId,
+            Integer typeId,
+            Integer facilityId
+    ) {
+        return getShifts(startDate, endDate, staffId, typeId);
+    }
+
+    default List<StaffRosterMember> getStaffRoster(
+            String actorEmail,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer facilityId
+    ) {
+        return getStaffRoster(startDate, endDate);
+    }
 }

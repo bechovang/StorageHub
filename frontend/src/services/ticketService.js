@@ -244,7 +244,7 @@ export async function dispatchSupportTicketByManager({
 export async function resolveSupportTicket({
   ticketId,
   resolutionNote,
-  staffName,
+  /* staffName */
   actorRole = "STAFF",
 }) {
   if (!resolutionNote || !resolutionNote.trim()) {

@@ -175,8 +175,7 @@ export async function updateUserStatus({
   }
 
   const updatedUser = normalizeUser(backendData);
-  const statusLabelMap = { 1: "ACTIVE", 0: "INACTIVE", 2: "LOCKED" };
-
+  
 
   return updatedUser;
 }

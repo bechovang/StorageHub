@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Dành cho: FACILITY_MANAGER, SYSTEM_ADMIN, BUSINESS_OPS.
  */
 @RestController
-@RequestMapping("/api/v1/facility")
+@RequestMapping({"/api/v1/facility", "/api/v1/facilities"})
 public class FacilityController {
 
     private final FacilityService facilityService;

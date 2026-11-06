@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ReferenceLine,
-  Legend,
 } from "recharts";
 import { formatVND } from "../../../utils/formatters.js";
 

@@ -134,7 +134,7 @@ export default function UnitDetailPage() {
             </div>
 
             <div className="unit-detail-depot-tag">
-              <span>CƠ SỞ: VN-SGN-01 (Tân Bình)</span>
+              <span>CƠ SỞ: {facilityLabel ? facilityLabel.toUpperCase() : "VN-SGN-01 (TÂN BÌNH)"}</span>
             </div>
           </section>
 
@@ -154,15 +154,13 @@ export default function UnitDetailPage() {
             {/* Vị trí kho trong sơ đồ 3D cơ sở */}
             <article className="unit-detail-card unit-detail-3d-card">
               <div className="unit-detail-card__header">
-                <h2 className="unit-detail-card__title">
-                  VỊ TRÍ KHO TRONG CƠ SỞ
-                </h2>
-                <span className="unit-detail-badge-mono">SƠ ĐỒ 3D</span>
+                <h2 className="unit-detail-card__title">VỊ TRÍ KHO TRONG CƠ SỞ</h2>
+                <span className="unit-detail-badge-mono">SƠ ĐỒ 3D · 2 TẦNG</span>
               </div>
               <div className="unit-detail-card__body">
                 <p className="unit-3d-caption">
                   Kho <strong>{unit.code}</strong> đang được khoanh vàng trên tầng {unit.floor || 1}.
-                  Kéo để xoay, lăn chuột để zoom.
+                  Kéo trái để xoay, kéo phải để pan, lăn chuột để zoom.
                 </p>
                 {facilityLayout ? (
                   <Suspense fallback={<p className="unit-3d-empty">Đang tải mô hình 3D...</p>}>
@@ -170,7 +168,7 @@ export default function UnitDetailPage() {
                       layout={facilityLayout}
                       selectedUnitId={unit.id}
                       initialFloor={unit.floor || 1}
-                      height={420}
+                      height={430}
                       onSelectUnit={(id) => {
                         if (String(id) !== String(unit.id)) navigate(`/units/${id}`);
                       }}
@@ -260,6 +258,7 @@ export default function UnitDetailPage() {
             />
           </aside>
         </div>
+
       </main>
       </div>
     </AppShell>

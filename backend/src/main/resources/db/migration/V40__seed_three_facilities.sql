@@ -151,18 +151,18 @@ INSERT INTO users (user_id, full_name, email, phone, password_hash, role_id, fac
     (2, 'Quản lý TB', 'manager.tb@demo.storagehub.vn', '0900000001', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 3, 1, NULL, 1),
     (3, 'Quản lý TD', 'manager.td@demo.storagehub.vn', '0900000002', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 3, 2, NULL, 1),
     (4, 'Quản lý BT', 'manager.bt@demo.storagehub.vn', '0900000003', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 3, 3, NULL, 1),
-    (5, 'Nguyễn Văn An', 'staff.tb.1@demo.storagehub.vn', '09000000005', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 1, 1, 1),
-    (6, 'Trần Minh Bình', 'staff.tb.2@demo.storagehub.vn', '09000000006', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 1, 2, 1),
-    (7, 'Lê Hoàng Cường', 'staff.tb.3@demo.storagehub.vn', '09000000007', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 1, 3, 1),
-    (8, 'Phạm Quốc Dũng', 'staff.tb.4@demo.storagehub.vn', '09000000008', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 1, 4, 1),
-    (9, 'Võ Thành Đạt', 'staff.td.1@demo.storagehub.vn', '09000000009', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 2, 1, 1),
-    (10, 'Đặng Hữu Khang', 'staff.td.2@demo.storagehub.vn', '09000000010', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 2, 2, 1),
-    (11, 'Bùi Tuấn Kiệt', 'staff.td.3@demo.storagehub.vn', '09000000011', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 2, 3, 1),
-    (12, 'Hồ Nhật Long', 'staff.td.4@demo.storagehub.vn', '09000000012', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 2, 4, 1),
-    (13, 'Ngô Gia Huy', 'staff.bt.1@demo.storagehub.vn', '09000000013', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 3, 1, 1),
-    (14, 'Dương Bảo Nam', 'staff.bt.2@demo.storagehub.vn', '09000000014', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 3, 2, 1),
-    (15, 'Trịnh Đức Phúc', 'staff.bt.3@demo.storagehub.vn', '09000000015', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 3, 3, 1),
-    (16, 'Lý Minh Quân', 'staff.bt.4@demo.storagehub.vn', '09000000016', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 3, 4, 1),
+    (5, 'Nhân viên TB - cấp đông', 'staff.tb.1@demo.storagehub.vn', '09000000005', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 1, 1, 1),
+    (6, 'Nhân viên TB - lạnh', 'staff.tb.2@demo.storagehub.vn', '09000000006', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 1, 2, 1),
+    (7, 'Nhân viên TB - hút ẩm', 'staff.tb.3@demo.storagehub.vn', '09000000007', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 1, 3, 1),
+    (8, 'Nhân viên TB - tiệt trùng', 'staff.tb.4@demo.storagehub.vn', '09000000008', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 1, 4, 1),
+    (9, 'Nhân viên TD - cấp đông', 'staff.td.1@demo.storagehub.vn', '09000000009', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 2, 1, 1),
+    (10, 'Nhân viên TD - lạnh', 'staff.td.2@demo.storagehub.vn', '09000000010', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 2, 2, 1),
+    (11, 'Nhân viên TD - hút ẩm', 'staff.td.3@demo.storagehub.vn', '09000000011', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 2, 3, 1),
+    (12, 'Nhân viên TD - tiệt trùng', 'staff.td.4@demo.storagehub.vn', '09000000012', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 2, 4, 1),
+    (13, 'Nhân viên BT - cấp đông', 'staff.bt.1@demo.storagehub.vn', '09000000013', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 3, 1, 1),
+    (14, 'Nhân viên BT - lạnh', 'staff.bt.2@demo.storagehub.vn', '09000000014', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 3, 2, 1),
+    (15, 'Nhân viên BT - hút ẩm', 'staff.bt.3@demo.storagehub.vn', '09000000015', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 3, 3, 1),
+    (16, 'Nhân viên BT - tiệt trùng', 'staff.bt.4@demo.storagehub.vn', '09000000016', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 2, 3, 4, 1),
     (17, 'Nguyễn Thị Lan', 'lan@demo.storagehub.vn', '09080000017', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 1, NULL, NULL, 1),
     (18, 'Phạm Thị Trang', 'trang@demo.storagehub.vn', '09080000018', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 1, NULL, NULL, 1),
     (19, 'Đỗ Hoàng Anh', 'hoanganh@demo.storagehub.vn', '09080000019', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 1, NULL, NULL, 1),
@@ -1395,30 +1395,92 @@ INSERT INTO unit_assets (unit_id, asset_type_id, serial_no, status, installed_at
     (300, 5, 'BT-2B-25-A5', 'OK', '2026-01-01', '2026-10-01', NULL),
     (300, 7, 'BT-2B-25-A7', 'OK', '2026-01-01', '2026-10-01', NULL);
 
--- Mỗi cơ sở có 4 nhân viên, mỗi người phụ trách đúng 1 loại kho và trực đủ
--- 14 ca/tuần (7 ngày x MORNING + AFTERNOON) => 4 người phủ trọn tuần.
--- Schema hiện tại (sau V24/V26) không còn zone_id; loại kho nằm ở bảng nối
--- staff_assignment_types.
-INSERT INTO staff_assignments (assignment_id, staff_id, shift, work_date, created_at)
-SELECT
-    1000 + (u.user_id - 5) * 14 + d.n * 2 + sh.o,
-    u.user_id,
-    IF(sh.o = 0, 'MORNING', 'AFTERNOON'),
-    DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL d.n DAY),
-    NOW(6)
-FROM users u
-JOIN (
-    SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
-    UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6
-) d
-JOIN (SELECT 0 AS o UNION ALL SELECT 1) sh
-WHERE u.role_id = 2 AND u.unit_type_id IS NOT NULL
-ORDER BY u.user_id, d.n, sh.o;
+INSERT INTO staff_assignments (assignment_id, staff_id, shift, work_date, created_at) VALUES
+    (1000, 5, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 0 DAY), NOW(6)),
+    (1001, 6, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 0 DAY), NOW(6)),
+    (1002, 7, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 1 DAY), NOW(6)),
+    (1003, 8, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 1 DAY), NOW(6)),
+    (1004, 5, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 2 DAY), NOW(6)),
+    (1005, 6, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 2 DAY), NOW(6)),
+    (1006, 7, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 3 DAY), NOW(6)),
+    (1007, 8, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 3 DAY), NOW(6)),
+    (1008, 5, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 4 DAY), NOW(6)),
+    (1009, 6, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 4 DAY), NOW(6)),
+    (1010, 7, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 5 DAY), NOW(6)),
+    (1011, 8, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 5 DAY), NOW(6)),
+    (1012, 5, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 6 DAY), NOW(6)),
+    (1013, 6, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 6 DAY), NOW(6)),
+    (1014, 9, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 0 DAY), NOW(6)),
+    (1015, 10, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 0 DAY), NOW(6)),
+    (1016, 11, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 1 DAY), NOW(6)),
+    (1017, 12, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 1 DAY), NOW(6)),
+    (1018, 9, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 2 DAY), NOW(6)),
+    (1019, 10, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 2 DAY), NOW(6)),
+    (1020, 11, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 3 DAY), NOW(6)),
+    (1021, 12, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 3 DAY), NOW(6)),
+    (1022, 9, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 4 DAY), NOW(6)),
+    (1023, 10, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 4 DAY), NOW(6)),
+    (1024, 11, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 5 DAY), NOW(6)),
+    (1025, 12, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 5 DAY), NOW(6)),
+    (1026, 9, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 6 DAY), NOW(6)),
+    (1027, 10, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 6 DAY), NOW(6)),
+    (1028, 13, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 0 DAY), NOW(6)),
+    (1029, 14, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 0 DAY), NOW(6)),
+    (1030, 15, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 1 DAY), NOW(6)),
+    (1031, 16, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 1 DAY), NOW(6)),
+    (1032, 13, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 2 DAY), NOW(6)),
+    (1033, 14, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 2 DAY), NOW(6)),
+    (1034, 15, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 3 DAY), NOW(6)),
+    (1035, 16, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 3 DAY), NOW(6)),
+    (1036, 13, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 4 DAY), NOW(6)),
+    (1037, 14, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 4 DAY), NOW(6)),
+    (1038, 15, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 5 DAY), NOW(6)),
+    (1039, 16, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 5 DAY), NOW(6)),
+    (1040, 13, 'MORNING', DATE_ADD(CURDATE(), INTERVAL 6 DAY), NOW(6)),
+    (1041, 14, 'AFTERNOON', DATE_ADD(CURDATE(), INTERVAL 6 DAY), NOW(6));
 
-INSERT INTO staff_assignment_types (assignment_id, unit_type_id)
-SELECT sa.assignment_id, u.unit_type_id
-FROM staff_assignments sa
-JOIN users u ON u.user_id = sa.staff_id
-WHERE u.role_id = 2 AND u.unit_type_id IS NOT NULL;
+INSERT INTO staff_assignment_types (assignment_id, unit_type_id) VALUES
+    (1000, 1),
+    (1001, 2),
+    (1002, 3),
+    (1003, 4),
+    (1004, 1),
+    (1005, 2),
+    (1006, 3),
+    (1007, 4),
+    (1008, 1),
+    (1009, 2),
+    (1010, 3),
+    (1011, 4),
+    (1012, 1),
+    (1013, 2),
+    (1014, 1),
+    (1015, 2),
+    (1016, 3),
+    (1017, 4),
+    (1018, 1),
+    (1019, 2),
+    (1020, 3),
+    (1021, 4),
+    (1022, 1),
+    (1023, 2),
+    (1024, 3),
+    (1025, 4),
+    (1026, 1),
+    (1027, 2),
+    (1028, 1),
+    (1029, 2),
+    (1030, 3),
+    (1031, 4),
+    (1032, 1),
+    (1033, 2),
+    (1034, 3),
+    (1035, 4),
+    (1036, 1),
+    (1037, 2),
+    (1038, 3),
+    (1039, 4),
+    (1040, 1),
+    (1041, 2);
 
 -- End demo seed.

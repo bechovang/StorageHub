@@ -299,7 +299,11 @@ export function useStaffShifts() {
         if (!hasType) continue;
       }
 
-      addToSlot(shift.shiftWindow, shift);
+      addToSlot(shift.shiftWindow, {
+        ...shift,
+        unitTypeIds: [...(shift.unitTypeIds || [])],
+        typeNames: [...(shift.typeNames || [])],
+      });
     }
 
     return grid;

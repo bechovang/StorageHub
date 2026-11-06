@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Clock,
-  MapPin,
   CheckCircle,
   WarningCircle,
 } from "@phosphor-icons/react";

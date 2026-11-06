@@ -1,5 +1,4 @@
 import {
-  CalendarCheck,
   ShieldCheck,
   Lock,
   Clock,
@@ -25,7 +24,6 @@ export default function UnitPricingCalculator({
   availableDate,
   onBookNow,
 }) {
-  const today = getTodayDate();
   const invalidRange = Boolean(endDate && startDate && endDate < startDate);
 
   return (
