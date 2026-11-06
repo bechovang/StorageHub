@@ -1,13 +1,17 @@
 import { useRef, useState } from "react";
-import { FileText, UploadSimple } from "@phosphor-icons/react";
+import { FileText, Receipt, UploadSimple } from "@phosphor-icons/react";
 import Drawer from "../../../components/Drawer/Drawer.jsx";
 import Button from "../../../components/Button/Button.jsx";
 import { completeContractRitual } from "../../../services/taskService.js";
 
 export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [photoUrl, setPhotoUrl] = useState(task.ritual?.contractPhotoUrl || "");
+  const [paymentPhotoUrl, setPaymentPhotoUrl] = useState(task.ritual?.paymentProofPhoto || "");
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
+  const paymentFileInputRef = useRef(null);
+  const requiresPayment = Number(task.rentAmount || 0) > 0;
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -17,11 +21,24 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
     reader.readAsDataURL(file);
   };
 
+  const handlePaymentPhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPaymentPhotoUrl(reader.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleConfirmSignature = async () => {
     if (!photoUrl) return;
+    if (requiresPayment && !paymentPhotoUrl) return;
     setIsSubmitting(true);
     try {
-      await completeContractRitual(task.taskId, { contractPhotoUrl: photoUrl });
+      await completeContractRitual(task.taskId, {
+        contractPhotoUrl: photoUrl,
+        paymentMethod: requiresPayment ? paymentMethod : undefined,
+        paymentProofPhoto: requiresPayment ? paymentPhotoUrl : undefined,
+      });
       showToast?.(`Đã hoàn tất lưu hồ sơ hợp đồng/phụ lục ${task.refCode}!`, "success");
       onSuccess();
     } catch (err) {
@@ -66,6 +83,47 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
             )}
           </div>
         </div>
+
+        {requiresPayment && (
+          <div className={`ritual-step-card ${paymentPhotoUrl ? "is-completed" : "needs-attention"}`}>
+            <div className="ritual-step-header">
+              <span className="ritual-step-title">
+                <Receipt size={18} weight="bold" />
+                2. Thu 100% tiền thuê phần gia hạn tại quầy
+              </span>
+              <span className="ritual-step-badge ritual-step-badge--attention font-mono">
+                {Number(task.rentAmount || 0).toLocaleString("vi-VN")} ₫
+              </span>
+            </div>
+            <div style={{ marginBottom: "10px", marginTop: "8px" }}>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "6px" }}>
+                PHƯƠNG THỨC THU TIỀN:
+              </label>
+              <div style={{ display: "flex", gap: "16px", fontSize: "0.8rem" }}>
+                {["CASH", "QR", "POS"].map((m) => (
+                  <label key={m} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                    <input type="radio" name="ext-payment-method" checked={paymentMethod === m} onChange={() => setPaymentMethod(m)} />
+                    {m === "CASH" ? "Tiền mặt" : m === "QR" ? "Chuyển khoản QR" : "POS"}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="ritual-photo-dropzone" onClick={() => paymentFileInputRef.current?.click()}>
+              <input ref={paymentFileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePaymentPhotoSelect} />
+              {paymentPhotoUrl ? (
+                <div className="ritual-photo-preview">
+                  <img src={paymentPhotoUrl} alt="Chứng từ thu tiền" />
+                  <span className="photo-preview-tag">✓ Đã có ảnh chứng từ thu tiền</span>
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "20px 12px" }}>
+                  <UploadSimple size={28} weight="bold" color="#64748b" />
+                  <p style={{ margin: "6px 0 0 0", fontWeight: 600 }}>Chụp ảnh biên nhận / giao dịch</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Chụp / Tải ảnh bản hợp đồng giấy có chữ ký */}
         <div className={`ritual-step-card ${photoUrl ? "is-completed" : "needs-attention"}`}>
@@ -117,7 +175,7 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
           <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Hủy
           </Button>
-          <Button onClick={handleConfirmSignature} disabled={!photoUrl || isSubmitting}>
+          <Button onClick={handleConfirmSignature} disabled={!photoUrl || (requiresPayment && !paymentPhotoUrl) || isSubmitting}>
             {isSubmitting ? "Đang lưu..." : "Xác nhận & Lưu hồ sơ"}
           </Button>
         </div>

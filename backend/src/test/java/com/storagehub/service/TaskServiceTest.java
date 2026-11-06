@@ -24,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -52,6 +53,9 @@ class TaskServiceTest {
     private ContractAddendumRepository contractAddendumRepository;
 
     @Mock
+    private ExtensionRepository extensionRepository;
+
+    @Mock
     private SupportTicketRepository supportTicketRepository;
 
     @Mock
@@ -62,6 +66,9 @@ class TaskServiceTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private PricingEngine pricingEngine;
 
     @Mock
     private Clock clock;
@@ -329,6 +336,9 @@ class TaskServiceTest {
                 .findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(
                         1, 2, today, StaffAssignment.Shift.MORNING))
                 .thenReturn(List.of());
+        when(pricingEngine.ruleInt(
+                any(), any(), eq(PolicyRule.RuleType.EXTENSION_GRACE_DAYS), anyInt()))
+                .thenReturn(3);
         when(taskRepository.save(any(Task.class))).thenAnswer(inv -> {
             Task saved = inv.getArgument(0);
             saved.setTaskId(88L);

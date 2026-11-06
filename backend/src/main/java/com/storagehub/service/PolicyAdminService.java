@@ -45,6 +45,8 @@ public class PolicyAdminService {
     private static final int DEFAULT_TURNOVER_BUFFER_DAYS = 1;
     private static final int DEFAULT_LATE_CHECKOUT_PERCENT = 5;
     private static final long SURCHARGE_CAP_PERCENT = 10;
+    private static final int DEFAULT_GRACE_DAYS = 3;
+    private static final long DEFAULT_HANDOVER_LATE_FEE = 50_000L;
 
     private final RentalPolicyRepository rentalPolicyRepository;
     private final PolicyRuleRepository policyRuleRepository;
@@ -68,6 +70,14 @@ public class PolicyAdminService {
                 ? request.turnoverBufferDays() : DEFAULT_TURNOVER_BUFFER_DAYS;
         int latePercent = request.lateCheckoutPercent() != null
                 ? request.lateCheckoutPercent() : DEFAULT_LATE_CHECKOUT_PERCENT;
+        int checkinGrace = request.checkinGraceDays() != null
+                ? request.checkinGraceDays() : DEFAULT_GRACE_DAYS;
+        long checkinLateFee = request.checkinLateFeePerDay() != null
+                ? request.checkinLateFeePerDay() : DEFAULT_HANDOVER_LATE_FEE;
+        int extensionGrace = request.extensionGraceDays() != null
+                ? request.extensionGraceDays() : DEFAULT_GRACE_DAYS;
+        long extensionLateFee = request.extensionLateFeePerDay() != null
+                ? request.extensionLateFeePerDay() : DEFAULT_HANDOVER_LATE_FEE;
 
         // Map rateVnd theo typeName từ request
         Map<String, Long> requestedRates = request.baseRates() == null ? Map.of()
@@ -104,6 +114,14 @@ public class PolicyAdminService {
                     bufferDays, null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.SURCHARGE,
                     PolicyRule.SurchargeType.PERCENT, latePercent, SURCHARGE_CAP_PERCENT));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_GRACE_DAYS,
+                    null, checkinGrace, null));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY,
+                    null, checkinLateFee, null));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_GRACE_DAYS,
+                    null, extensionGrace, null));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_LATE_FEE_PER_DAY,
+                    null, extensionLateFee, null));
 
             copyRule(currentRules, type.getTypeId(), PolicyRule.RuleType.LATE_FEE)
                     .ifPresent(r -> rules.add(buildRule(saved, type, PolicyRule.RuleType.LATE_FEE,
@@ -149,6 +167,14 @@ public class PolicyAdminService {
             rules.add(buildRule(saved, type, PolicyRule.RuleType.SURCHARGE,
                     PolicyRule.SurchargeType.PERCENT, DEFAULT_LATE_CHECKOUT_PERCENT,
                     SURCHARGE_CAP_PERCENT));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_GRACE_DAYS,
+                    null, DEFAULT_GRACE_DAYS, null));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY,
+                    null, DEFAULT_HANDOVER_LATE_FEE, null));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_GRACE_DAYS,
+                    null, DEFAULT_GRACE_DAYS, null));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_LATE_FEE_PER_DAY,
+                    null, DEFAULT_HANDOVER_LATE_FEE, null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.LATE_FEE, null,
                     Math.max(2_000L, rate / 3), null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.WAIVER_CAP, null, 10_000L, null));
@@ -186,11 +212,19 @@ public class PolicyAdminService {
                 .filter(r -> r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER).findFirst().orElse(null);
         PolicyRule lateRule = rules.stream()
                 .filter(r -> r.getRuleType() == PolicyRule.RuleType.SURCHARGE).findFirst().orElse(null);
+        PolicyRule checkinGraceRule = findRule(rules, PolicyRule.RuleType.CHECKIN_GRACE_DAYS);
+        PolicyRule checkinLateRule = findRule(rules, PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY);
+        PolicyRule extensionGraceRule = findRule(rules, PolicyRule.RuleType.EXTENSION_GRACE_DAYS);
+        PolicyRule extensionLateRule = findRule(rules, PolicyRule.RuleType.EXTENSION_LATE_FEE_PER_DAY);
 
         PolicyActiveResponse.Surcharges surcharges = new PolicyActiveResponse.Surcharges(
                 lateRule != null ? lateRule.getValue().intValue() : DEFAULT_LATE_CHECKOUT_PERCENT,
                 depositRule != null ? depositRule.getValue().intValue() : DEFAULT_DEPOSIT_PERCENT,
-                bufferRule != null ? bufferRule.getValue().intValue() : DEFAULT_TURNOVER_BUFFER_DAYS
+                bufferRule != null ? bufferRule.getValue().intValue() : DEFAULT_TURNOVER_BUFFER_DAYS,
+                checkinGraceRule != null ? checkinGraceRule.getValue().intValue() : DEFAULT_GRACE_DAYS,
+                checkinLateRule != null ? checkinLateRule.getValue().intValue() : (int) DEFAULT_HANDOVER_LATE_FEE,
+                extensionGraceRule != null ? extensionGraceRule.getValue().intValue() : DEFAULT_GRACE_DAYS,
+                extensionLateRule != null ? extensionLateRule.getValue().intValue() : (int) DEFAULT_HANDOVER_LATE_FEE
         );
 
         return new PolicyActiveResponse(
@@ -211,6 +245,10 @@ public class PolicyAdminService {
                 .findFirst()
                 .map(r -> r.getValue().longValue())
                 .orElse(DEFAULT_DAILY_RATES.getOrDefault(typeName, 5_000L));
+    }
+
+    private PolicyRule findRule(List<PolicyRule> rules, PolicyRule.RuleType type) {
+        return rules.stream().filter(r -> r.getRuleType() == type).findFirst().orElse(null);
     }
 
     private PolicyRule buildRule(

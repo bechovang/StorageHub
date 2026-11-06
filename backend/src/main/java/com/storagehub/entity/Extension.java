@@ -30,7 +30,9 @@ public class Extension {
 
     public enum Status {
         PENDING_PAYMENT,
-        APPLIED
+        PENDING_CONTRACT,
+        APPLIED,
+        EXPIRED
     }
 
     @Id
@@ -50,7 +52,11 @@ public class Extension {
 
     private LocalDate newEndDate;
 
-    /** Phí gia hạn — VND DECIMAL(15,0) (AD-7). */
+    private java.math.BigDecimal oldDeposit;
+
+    private java.math.BigDecimal newDeposit;
+
+    /** 100% tiền thuê phần gia hạn — thu tại quầy khi ký phụ lục. */
     private BigDecimal extensionFee;
 
     @Enumerated(EnumType.STRING)

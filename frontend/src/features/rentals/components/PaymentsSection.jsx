@@ -21,6 +21,9 @@ export function PaymentsSection({ payments = [] }) {
     DEPOSIT: "Tiền cọc",
     RENT: "Tiền thuê kho",
     EXTENSION_FEE: "Phí gia hạn",
+    EXTENSION_DEPOSIT: "Cọc gia hạn",
+    EXTENSION_RENT: "Tiền thuê gia hạn",
+    CHECKIN_LATE_FEE: "Phí check-in trễ",
     DAMAGE_FEE: "Bồi thường hư hại",
     EXTRA_FEE: "Phí phụ trợ",
   };

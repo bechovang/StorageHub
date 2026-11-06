@@ -4,6 +4,7 @@ import {
   getReservation,
   createCheckoutRequest,
   createExtensionRequest,
+  confirmZeroExtensionDeposit,
   cancelCheckoutRequest,
 } from "../../../services/rentalService.js";
 import { paymentService } from "../../../services/paymentService.js";
@@ -111,16 +112,26 @@ export function useRentalDetail() {
         extensionData.newEndDate
       );
 
+      if (Number(quote.depositDelta || 0) <= 0) {
+        await confirmZeroExtensionDeposit(reservationId, quote.extensionId);
+        await handleRefresh();
+        setToastMessage({
+          type: "success",
+          text: `Cọc đã đủ — không cần quét QR. Đã tạo task hợp đồng cho staff cho kỳ +${quote.addedDays} ngày.`,
+        });
+        return quote;
+      }
+
       const session = await paymentService.createPayment({
-        purpose: "EXTENSION_FEE",
+        purpose: "EXTENSION_DEPOSIT",
         reservationId: Number(reservationId),
         method: "PAYOS",
       });
 
       setToastMessage({
         type: "info",
-        text: `Đã tạo yêu cầu gia hạn +${quote.addedDays} ngày. Vui lòng hoàn tất thanh toán ${fmtMoney(
-          quote.totalPayable
+        text: `Đã tạo yêu cầu gia hạn +${quote.addedDays} ngày. Vui lòng thanh toán chênh lệch cọc ${fmtMoney(
+          quote.depositDelta
         )}.`,
       });
 
@@ -135,7 +146,7 @@ export function useRentalDetail() {
             pageSize: 50,
           });
           const pending = history?.items?.find(
-            (p) => p.purpose === "EXTENSION_FEE"
+            (p) => p.purpose === "EXTENSION_DEPOSIT"
               && ["PENDING", "PROCESSING"].includes(p.status)
           );
           if (pending) {
@@ -209,6 +220,8 @@ export function useRentalDetail() {
       c.kind === "ADDENDUM" &&
       c.status !== "SIGNED" &&
       c.status !== "CLOSED" &&
+      c.status !== "VOIDED" &&
+      c.status !== "EXPIRED" &&
       c.status !== "SUPERSEDED"
   );
 

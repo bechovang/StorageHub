@@ -85,4 +85,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             ORDER BY p.createdAt DESC
             """)
     List<Payment> findByStatusWithAssociations(@Param("status") Payment.Status status);
+
+    java.util.List<Payment> findByExtension_ExtensionId(Long extensionId);
 }

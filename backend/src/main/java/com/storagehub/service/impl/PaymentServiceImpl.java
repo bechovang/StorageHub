@@ -173,7 +173,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
         if (request.reservationId() == null) {
             throw new PaymentBadRequestException(
-                    "RENT/EXTENSION_FEE cần reservationId.");
+                    "RENT/EXTENSION_DEPOSIT cần reservationId.");
         }
 
         Reservation reservation = reservationRepository
@@ -183,12 +183,12 @@ public class PaymentServiceImpl implements PaymentService {
                         "Reservation belongs to another customer"));
 
         if (request.purpose() != Payment.Purpose.RENT
-                && request.purpose() != Payment.Purpose.EXTENSION_FEE) {
+                && request.purpose() != Payment.Purpose.EXTENSION_DEPOSIT) {
             throw new PaymentBadRequestException(
-                    "Chỉ hỗ trợ purpose DEPOSIT, RENT và EXTENSION_FEE.");
+                    "Chỉ hỗ trợ purpose DEPOSIT, RENT và EXTENSION_DEPOSIT.");
         }
 
-        Set<Payment.Status> duplicateBlock = request.purpose() == Payment.Purpose.EXTENSION_FEE
+        Set<Payment.Status> duplicateBlock = request.purpose() == Payment.Purpose.EXTENSION_DEPOSIT
                 ? Set.of(Payment.Status.PENDING, Payment.Status.PROCESSING)
                 : BLOCKS_DUPLICATE;
         if (paymentRepository.existsByReservation_ReservationIdAndPurposeAndStatusIn(
@@ -208,11 +208,11 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
 
-        if (request.purpose() == Payment.Purpose.EXTENSION_FEE) {
+        if (request.purpose() == Payment.Purpose.EXTENSION_DEPOSIT) {
             LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
             if (reservation.getStatus() != Reservation.Status.CHECKED_IN) {
                 throw new PaymentInvalidStateException(
-                        "Chỉ thuê đang hoạt động (CHECKED_IN) mới thanh toán gia hạn.");
+                        "Chỉ thuê đang hoạt động (CHECKED_IN) mới thanh toán cọc gia hạn.");
             }
             if (today.isAfter(reservation.getEndDate())) {
                 throw new PaymentInvalidStateException(
@@ -292,19 +292,18 @@ public class PaymentServiceImpl implements PaymentService {
 
     /**
      * DEPOSIT = cọc đang giữ; RENT (US-15/FR-15) = 100% tổng tiền thuê theo quote;
-     * EXTENSION_FEE (US-18/FR-16) = tiền thuê kỳ thêm + top-up cọc (bảng tính
-     * server-truth từ extension PENDING_PAYMENT).
+     * EXTENSION_DEPOSIT = chênh lệch cọc của kỳ gia hạn (rent thu tại quầy).
      */
     private java.math.BigDecimal resolveAmount(
             Reservation reservation,
             Payment.Purpose purpose
     ) {
-        if (purpose == Payment.Purpose.EXTENSION_FEE) {
+        if (purpose == Payment.Purpose.EXTENSION_DEPOSIT) {
             com.storagehub.entity.Extension extension = extensionService
                     .pendingExtensionFor(reservation.getReservationId());
             ExtensionService.Breakdown breakdown = extensionService.breakdownFor(
                     reservation, extension.getNewEndDate());
-            return java.math.BigDecimal.valueOf(breakdown.totalPayable());
+            return java.math.BigDecimal.valueOf(breakdown.depositDelta());
         }
         if (purpose != Payment.Purpose.RENT) {
             return reservation.getDepositAmount();

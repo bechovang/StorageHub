@@ -19,7 +19,7 @@ import Button from "../../../components/Button/Button.jsx";
  * Thẻ tóm tắt hóa đơn cọc hiển thị trước khi thanh toán để người dùng xác nhận
  */
 function PaymentInvoiceSummary({ unit, reservation, formatVND, purpose, amount }) {
-  const isExtension = purpose === "EXTENSION_FEE";
+  const isExtension = purpose === "EXTENSION_DEPOSIT";
   const deposit = reservation?.depositAmount || 0;
   return (
     <div className="payment-invoice-summary">
@@ -46,7 +46,7 @@ function PaymentInvoiceSummary({ unit, reservation, formatVND, purpose, amount }
         </div>
         <div className="payment-invoice-summary__row payment-invoice-summary__row--total">
           <span className="payment-invoice-summary__label">
-            {isExtension ? "Phí gia hạn cần thanh toán:" : "Tiền cọc cần thanh toán:"}
+            {isExtension ? "Cọc gia hạn cần thanh toán:" : "Tiền cọc cần thanh toán:"}
           </span>
           <span className="payment-invoice-summary__total">
             {formatVND(isExtension ? (amount ?? 0) : deposit)}
@@ -86,7 +86,7 @@ export default function PaymentModal({
   if (!open) return null;
 
   const unit = reservation?.unit || {};
-  const isExtension = paymentSession?.purpose === "EXTENSION_FEE";
+  const isExtension = paymentSession?.purpose === "EXTENSION_DEPOSIT";
   const currentStatus =
     countdown === 0 && paymentSession?.status === "PENDING"
       ? "EXPIRED"
@@ -137,27 +137,27 @@ export default function PaymentModal({
           <div className="payment-modal__header-meta">
             <h2 id="payment-modal-title" className="payment-modal__title">
               {isTerminalSuccess
-                ? (isExtension ? "Gia hạn kho thành công" : "Thanh toán cọc thành công")
+                ? (isExtension ? "Đã xác nhận cọc gia hạn" : "Thanh toán cọc thành công")
                 : isTerminalFailed
                   ? "Giao dịch không thành công"
                   : isTerminalExpired
                     ? "Phiên thanh toán đã hết hạn"
                     : isProcessing
                       ? "Đang xử lý giao dịch..."
-                      : (isExtension ? "Thanh toán phí gia hạn" : "Thanh toán tiền cọc")}
+                      : (isExtension ? "Thanh toán cọc gia hạn" : "Thanh toán tiền cọc")}
             </h2>
 
             <p className="payment-modal__subtitle">
               {isTerminalSuccess
                   ? (isExtension
-                    ? `Đã thanh toán phí gia hạn cho kho ${unit.code || "—"} tại ${unit.depot || "cơ sở"}.`
+                    ? `Đã xác nhận cọc gia hạn cho kho ${unit.code || "—"} tại ${unit.depot || "cơ sở"}.`
                     : `Đã nhận tiền cọc cho kho ${unit.code || "—"} tại ${unit.depot || "cơ sở"}.`)
                 : isTerminalFailed
                   ? "Giao dịch chưa hoàn tất và tài khoản của Quý khách chưa bị trừ tiền."
                   : isTerminalExpired
                     ? "Mã thanh toán đã hết thời gian hiệu lực."
                     : (isExtension
-                      ? `Thanh toán phí gia hạn kho ${unit.code || "—"} · REF: ${reservation?.code || "—"}`
+                      ? `Thanh toán cọc gia hạn kho ${unit.code || "—"} · REF: ${reservation?.code || "—"}`
                       : `Thanh toán cọc để khóa giữ chỗ kho ${unit.code || "—"} · REF: ${reservation?.code || "—"}`)}
             </p>
           </div>
@@ -202,7 +202,7 @@ export default function PaymentModal({
                 <div className="status-icon-wrap status-icon-wrap--success">
                   <CheckCircle size={28} weight="fill" />
                 </div>
-                <Badge tone="success">{isExtension ? "Đã thanh toán gia hạn" : "Đã nhận tiền cọc"}</Badge>
+                <Badge tone="success">{isExtension ? "Đã xác nhận cọc gia hạn" : "Đã nhận tiền cọc"}</Badge>
               </div>
 
               <div className="terminal-content">
@@ -211,7 +211,7 @@ export default function PaymentModal({
                 </h3>
                 <p className="terminal-desc">
                   {isExtension
-                    ? <>Phí gia hạn đã được xác nhận thành công! Hạn trả kho của <strong>{unit.code || "—"}</strong> đã được cập nhật và phụ lục hợp đồng đang chờ ký tại quầy trong 7 ngày.</>
+                    ? <>Cọc gia hạn đã được xác nhận! Kỳ thuê mới của <strong>{unit.code || "—"}</strong> đã được giữ; vui lòng đến quầy ký phụ lục và thanh toán 100% tiền thuê phần gia hạn.</>
                     : <>Khoản đặt cọc đã được xác nhận thành công! Kho <strong>{unit.code || "—"}</strong>{" "}
                       đã chính thức chuyển sang trạng thái <strong>Đã giữ chỗ thành công</strong> và được đảm bảo giữ cho Quý khách đến ngày nhận kho{" "}
                       <strong>{reservation?.startDate}</strong>. Mã PIN vào kho sẽ tự động kích

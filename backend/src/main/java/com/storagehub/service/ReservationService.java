@@ -205,7 +205,7 @@ public class ReservationService {
                 reservation.getCode(),
                 unitSummary,
                 reservation.getStartDate(),
-                reservation.getStartDate(),
+                checkinExpiryDate(reservation),
                 instructions
         );
     }
@@ -215,11 +215,36 @@ public class ReservationService {
      */
     public Reservation.Status resolveEffectiveStatus(Reservation reservation, LocalDate today) {
         if (reservation.getStatus() == Reservation.Status.RESERVED) {
-            if (today.isAfter(reservation.getStartDate())) {
+            if (today.isAfter(checkinExpiryDate(reservation))) {
                 return Reservation.Status.EXPIRED;
             }
         }
         return reservation.getStatus();
+    }
+
+    /** Hạn check-in = startDate + CHECKIN_GRACE_DAYS (policy snapshot). */
+    public LocalDate checkinExpiryDate(Reservation reservation) {
+        int grace = pricingEngine.ruleInt(
+                reservation.getUnit(),
+                reservation.getPolicy(),
+                PolicyRule.RuleType.CHECKIN_GRACE_DAYS,
+                3);
+        return reservation.getStartDate().plusDays(grace);
+    }
+
+    /** Phí check-in trễ theo số ngày sau startDate, trong grace. */
+    public long checkinLateFee(Reservation reservation, LocalDate today) {
+        if (!today.isAfter(reservation.getStartDate())) {
+            return 0L;
+        }
+        long daysLate = java.time.temporal.ChronoUnit.DAYS.between(
+                reservation.getStartDate(), today);
+        long feePerDay = pricingEngine.ruleLong(
+                reservation.getUnit(),
+                reservation.getPolicy(),
+                PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY,
+                50000L);
+        return Math.max(0, daysLate * feePerDay);
     }
 
     /**
@@ -471,7 +496,7 @@ public class ReservationService {
                 depositStatus,
                 quote.durationDays(),
                 quote,
-                reservation.getStartDate(),
+                checkinExpiryDate(reservation),
                 depositForfeitReason,
                 accessCode,
                 payments,
@@ -484,6 +509,29 @@ public class ReservationService {
                 pendingCheckout != null ? pendingCheckout.getRequestedDate() : null,
                 pendingCheckout != null ? pendingCheckout.getTimeSlot() : null
         );
+    }
+
+    /**
+     * Cọc gia hạn đã trả: EndDate mở ngay để giữ kỳ thuê. Nếu cọc mới cao hơn
+     * cọc cũ, cập nhật cọc đang giữ; nếu thấp hơn, giữ cọc cũ và hoàn chênh
+     * lệch lúc checkout.
+     */
+    @Transactional
+    public void markExtensionDepositPaid(
+            Reservation reservation,
+            LocalDate newEndDate,
+            long oldDeposit,
+            long newDeposit
+    ) {
+        LocalDate previousEnd = reservation.getEndDate();
+        reservation.setEndDate(newEndDate);
+        if (newDeposit > oldDeposit) {
+            reservation.setDepositAmount(BigDecimal.valueOf(newDeposit));
+        }
+        reservationRepository.save(reservation);
+        logService.log(reservation.getCustomer(), "RESERVATION", reservation.getReservationId(),
+                "END_DATE_EXTENDED", previousEnd.toString(), newEndDate.toString(),
+                "Cọc gia hạn đã trả — giữ kỳ thuê mới; rent chờ thu tại quầy");
     }
 
     /**
@@ -583,7 +631,7 @@ public class ReservationService {
 
         LocalDate today = LocalDate.now(ICT_ZONE);
         if (reservation.getStatus() != Reservation.Status.RESERVED
-                || !today.isAfter(reservation.getStartDate())) {
+                || !today.isAfter(checkinExpiryDate(reservation))) {
             return; // không due — không đụng gì
         }
 
@@ -642,7 +690,7 @@ public class ReservationService {
 
         // FR-36/AD-4: quá hạn nhận kho → áp side-effect no-show exactly-once rồi chặn.
         if (reservation.getStatus() == Reservation.Status.RESERVED
-                && today.isAfter(reservation.getStartDate())) {
+                && today.isAfter(checkinExpiryDate(reservation))) {
             expireNoShowIfDue(email, reservationId);
             throw new ReservationInvalidStateException(
                     "Đặt chỗ " + reservation.getCode()
@@ -735,6 +783,21 @@ public class ReservationService {
             throw new ReservationInvalidStateException(
                     "Tiền thuê thu chưa đủ — cần " + quote.totalRent()
                             + " ₫, đã thu " + paid.toPlainString() + " ₫.");
+        }
+
+        long lateFee = checkinLateFee(reservation, LocalDate.now(ICT_ZONE));
+        if (lateFee > 0) {
+            BigDecimal latePaid = paymentRepository
+                    .findByReservation_ReservationIdOrderByCreatedAtAsc(reservation.getReservationId())
+                    .stream()
+                    .filter(p -> p.getPurpose() == Payment.Purpose.CHECKIN_LATE_FEE
+                            && p.getStatus() == Payment.Status.SUCCEEDED)
+                    .map(Payment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (latePaid.compareTo(BigDecimal.valueOf(lateFee)) < 0) {
+                throw new ReservationInvalidStateException(
+                        "Check-in trễ — cần thu phí trễ " + lateFee + " ₫ trước khi hoàn tất.");
+            }
         }
     }
 

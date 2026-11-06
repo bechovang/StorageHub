@@ -81,6 +81,15 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     """)
     List<Task> findOpenTasksWithStaff();
 
+    @Query("""
+        SELECT t FROM Task t
+        LEFT JOIN FETCH t.assignedStaff
+        WHERE t.status <> com.storagehub.entity.Task.Status.DONE
+          AND t.expiresOn IS NOT NULL
+          AND t.expiresOn < :today
+    """)
+    List<Task> findExpiredOpenTasks(@Param("today") LocalDate today);
+
     /** Task pool: chưa gán staff, cùng cơ sở, còn mở (kể cả task tồn từ ngày trước). */
     @Query("""
         SELECT t FROM Task t

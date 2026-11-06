@@ -75,6 +75,9 @@ public class Task {
 
     private LocalDate workDate;
 
+    /** Ngày hết hạn xử lý (check-in / contract); null với task cũ. */
+    private LocalDate expiresOn;
+
     @Enumerated(EnumType.STRING)
     private Status status;
 

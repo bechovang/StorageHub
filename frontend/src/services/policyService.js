@@ -72,6 +72,20 @@ export function validatePolicy(policyDraft) {
     });
   }
 
+  // 4. Grace/late fee bàn giao
+  ["checkinGraceDays", "extensionGraceDays"].forEach((field) => {
+    const value = Number(policyDraft.surcharges?.[field]);
+    if (!Number.isInteger(value) || value < 1 || value > 30) {
+      errors.push({ field, rule: "#HANDOVER-01", message: "Số ngày gia hạn/check-in phải từ 1 đến 30." });
+    }
+  });
+  ["checkinLateFeePerDay", "extensionLateFeePerDay"].forEach((field) => {
+    const value = Number(policyDraft.surcharges?.[field]);
+    if (isNaN(value) || value < 0) {
+      errors.push({ field, rule: "#HANDOVER-02", message: "Phí trễ mỗi ngày không được âm." });
+    }
+  });
+
   // 4. Kiểm tra giá thuê các loại kho (Base rent > 0)
   if (Array.isArray(policyDraft.baseRates)) {
     policyDraft.baseRates.forEach((rate) => {
@@ -113,6 +127,10 @@ export async function savePolicy(policyDraft, actorName = "Business Ops") {
       lateCheckoutPercent: Number(policyDraft.surcharges?.lateCheckoutPercent),
       depositPercent: Number(policyDraft.surcharges?.depositPercent),
       turnoverBufferDays: Number(policyDraft.surcharges?.turnoverBufferDays),
+      checkinGraceDays: Number(policyDraft.surcharges?.checkinGraceDays),
+      checkinLateFeePerDay: Number(policyDraft.surcharges?.checkinLateFeePerDay),
+      extensionGraceDays: Number(policyDraft.surcharges?.extensionGraceDays),
+      extensionLateFeePerDay: Number(policyDraft.surcharges?.extensionLateFeePerDay),
       updatedBy: actorName,
     }),
   });

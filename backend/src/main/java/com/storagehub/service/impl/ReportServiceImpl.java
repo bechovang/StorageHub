@@ -388,7 +388,9 @@ public class ReportServiceImpl implements ReportService {
                             || p.getPurpose() == Payment.Purpose.EXTRA_FEE;
                     String category = switch (p.getPurpose()) {
                         case RENT -> "Tiền thuê kho";
-                        case EXTENSION_FEE -> "Phí gia hạn";
+                        case EXTENSION_FEE, EXTENSION_RENT -> "Tiền thuê gia hạn";
+                        case EXTENSION_DEPOSIT -> "Cọc gia hạn";
+                        case CHECKIN_LATE_FEE -> "Phí check-in trễ";
                         case DAMAGE_FEE -> "Phí hư hại";
                         case EXTRA_FEE -> "Phí phát sinh";
                         case DEPOSIT -> "Cọc";

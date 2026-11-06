@@ -108,6 +108,32 @@ public class PricingEngine {
         );
     }
 
+    /** Đọc rule số nguyên theo policy snapshot + facility; fallback mặc định. */
+    public int ruleInt(Unit unit, RentalPolicy policy, PolicyRule.RuleType ruleType, int fallback) {
+        return (int) ruleLong(unit, policy, ruleType, fallback);
+    }
+
+    public long ruleLong(Unit unit, RentalPolicy policy, PolicyRule.RuleType ruleType, long fallback) {
+        RentalPolicy resolved = policy != null
+                ? policy
+                : rentalPolicyRepository.findByStatus(1).orElse(null);
+        if (resolved == null || unit == null || unit.getType() == null) {
+            return fallback;
+        }
+        Integer facilityId = unit.getZone() != null && unit.getZone().getFacility() != null
+                ? unit.getZone().getFacility().getFacilityId()
+                : null;
+        return policyRuleRepository.findByPolicy_PolicyId(resolved.getPolicyId()).stream()
+                .filter(r -> r.getRuleType() == ruleType)
+                .filter(r -> r.getType().getTypeId().equals(unit.getType().getTypeId()))
+                .filter(r -> r.getFacility() == null
+                        || facilityId == null
+                        || facilityId.equals(r.getFacility().getFacilityId()))
+                .min(java.util.Comparator.comparing(r -> r.getFacility() != null))
+                .map(r -> r.getValue().longValue())
+                .orElse(fallback);
+    }
+
     /** Rule riêng facility nếu có; fallback rule toàn hệ thống/legacy. */
     private List<PolicyRule> rulesForUnit(Unit unit, List<PolicyRule> all) {
         if (unit.getZone() == null || unit.getZone().getFacility() == null) {

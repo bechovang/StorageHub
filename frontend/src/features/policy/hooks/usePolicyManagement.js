@@ -25,6 +25,10 @@ export function usePolicyManagement() {
   const [draftLateFee, setDraftLateFee] = useState("");
   const [draftDeposit, setDraftDeposit] = useState("");
   const [draftBufferDays, setDraftBufferDays] = useState("");
+  const [draftCheckinGrace, setDraftCheckinGrace] = useState(3);
+  const [draftCheckinLateFee, setDraftCheckinLateFee] = useState(50000);
+  const [draftExtensionGrace, setDraftExtensionGrace] = useState(3);
+  const [draftExtensionLateFee, setDraftExtensionLateFee] = useState(50000);
 
   // Lỗi validation & Banner cảnh báo
   const [validationBanner, setValidationBanner] = useState(null);
@@ -63,6 +67,10 @@ export function usePolicyManagement() {
     setDraftLateFee(policy.surcharges?.lateCheckoutPercent ?? "");
     setDraftDeposit(policy.surcharges?.depositPercent ?? "");
     setDraftBufferDays(policy.surcharges?.turnoverBufferDays ?? "");
+    setDraftCheckinGrace(policy.surcharges?.checkinGraceDays ?? 3);
+    setDraftCheckinLateFee(policy.surcharges?.checkinLateFeePerDay ?? 50000);
+    setDraftExtensionGrace(policy.surcharges?.extensionGraceDays ?? 3);
+    setDraftExtensionLateFee(policy.surcharges?.extensionLateFeePerDay ?? 50000);
     setValidationBanner(null);
   };
 
@@ -162,6 +170,10 @@ export function usePolicyManagement() {
         lateCheckoutPercent: Number(draftLateFee),
         depositPercent: Number(draftDeposit),
         turnoverBufferDays: Number(draftBufferDays),
+        checkinGraceDays: Number(draftCheckinGrace),
+        checkinLateFeePerDay: Number(draftCheckinLateFee),
+        extensionGraceDays: Number(draftExtensionGrace),
+        extensionLateFeePerDay: Number(draftExtensionLateFee),
       },
     };
   }, [persistedPolicy, draftBaseRates, draftLateFee, draftDeposit, draftBufferDays]);
@@ -261,6 +273,14 @@ export function usePolicyManagement() {
     setDraftDeposit,
     draftBufferDays,
     setDraftBufferDays,
+    draftCheckinGrace,
+    setDraftCheckinGrace,
+    draftCheckinLateFee,
+    setDraftCheckinLateFee,
+    draftExtensionGrace,
+    setDraftExtensionGrace,
+    draftExtensionLateFee,
+    setDraftExtensionLateFee,
     validationBanner,
     toastMessage,
     capRulesRef,
