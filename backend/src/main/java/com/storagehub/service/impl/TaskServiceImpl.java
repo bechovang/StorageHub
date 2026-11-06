@@ -812,6 +812,8 @@ public class TaskServiceImpl implements TaskService {
         String accessPin = null;
         Long rentAmount = null;
         Long depositPaid = null;
+        Boolean paymentRequired = Boolean.FALSE;
+        Long extensionRent = null;
         String priority = customPriority;
         String issueDesc = customIssueDesc;
         String alertNote = customAlertNote;
@@ -931,8 +933,10 @@ public class TaskServiceImpl implements TaskService {
                         var ext = addendum.getExtension();
                         rentAmount = ext.getExtensionFee() != null
                                 ? ext.getExtensionFee().longValueExact() : null;
+                        extensionRent = rentAmount;
                         depositPaid = ext.getNewDeposit() != null
                                 ? ext.getNewDeposit().longValueExact() : null;
+                        paymentRequired = ext.getStatus() == Extension.Status.PENDING_CONTRACT;
                         alertNote = "Thu 100% rent kỳ gia hạn tại quầy khi ký phụ lục";
                     }
                 }
@@ -974,7 +978,10 @@ public class TaskServiceImpl implements TaskService {
                 ritual,
                 includePhotos ? task.getPaymentProofPhoto() : null,
                 includePhotos ? task.getContractPhoto() : null,
-                includePhotos ? task.getSettlementPhoto() : null
+                includePhotos ? task.getSettlementPhoto() : null,
+                assets,
+                paymentRequired,
+                extensionRent
         );
     }
 

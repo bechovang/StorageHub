@@ -6,12 +6,14 @@ import { completeContractRitual } from "../../../services/taskService.js";
 
 export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [photoUrl, setPhotoUrl] = useState(task.ritual?.contractPhotoUrl || "");
-  const [paymentPhotoUrl, setPaymentPhotoUrl] = useState(task.ritual?.paymentProofPhoto || "");
+  const [paymentPhotoUrl, setPaymentPhotoUrl] = useState(task.paymentProofPhotoUrl || "");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
   const paymentFileInputRef = useRef(null);
-  const requiresPayment = Number(task.rentAmount || 0) > 0;
+  const requiresPayment =
+    task.paymentRequired === true || Number(task.rentAmount || 0) > 0;
+  const extensionRent = Number(task.extensionRent || task.rentAmount || 0);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -92,7 +94,7 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 2. Thu 100% tiền thuê phần gia hạn tại quầy
               </span>
               <span className="ritual-step-badge ritual-step-badge--attention font-mono">
-                {Number(task.rentAmount || 0).toLocaleString("vi-VN")} ₫
+                {extensionRent.toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div style={{ marginBottom: "10px", marginTop: "8px" }}>
