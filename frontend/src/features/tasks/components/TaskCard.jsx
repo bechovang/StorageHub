@@ -75,6 +75,11 @@ export function TaskCard({
             Phụ trách: <strong>{task.assignedStaff.fullName}</strong>
           </p>
         )}
+        {!task.assignedStaff && (
+          <p className="task-card__assignee" style={{ color: "#b45309" }}>
+            Chưa phân công · có thể nhận việc
+          </p>
+        )}
 
         {/* Extra Badges */}
         {task.accessPin && (
