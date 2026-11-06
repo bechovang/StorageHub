@@ -64,6 +64,9 @@ export function usePayment() {
   const queryPayId = searchParams.get("paymentId");
   const targetReservationId = paramResId || queryResId;
   const targetPaymentId = paramPayId || queryPayId;
+  // Khi URL có paymentId, đó là payment intent duy nhất — không được hydrate
+  // payment cọc cũ từ lịch sử đơn thuê.
+  const hasPaymentIntent = Boolean(targetPaymentId);
 
   // Trạng thái đơn đặt chỗ (không dùng dữ liệu cứng — chỉ theo API)
   const [reservation, setReservation] = useState(null);
@@ -188,6 +191,13 @@ export function usePayment() {
     async function loadInitialData() {
       if (!isAuthenticated) return;
 
+      // /payments/{paymentId} (deposit, extension, settlement) tự load session
+      // và reservation trong effect target; không chạy auto-detect cọc cũ.
+      if (hasPaymentIntent) {
+        setLoadingReservation(false);
+        return;
+      }
+
       try {
         setLoadingReservation(true);
         setReservationError("");
@@ -255,6 +265,7 @@ export function usePayment() {
                 if (isMounted && successPayment) {
                   setPaymentSession({
                     id: successPayment.id,
+                    purpose: successPayment.purpose,
                     status: "SUCCEEDED",
                     receiptCode: successPayment.receiptCode,
                     amount: successPayment.amount,
@@ -285,41 +296,58 @@ export function usePayment() {
     paramUnitId,
     searchParams,
     targetReservationId,
+    hasPaymentIntent,
     loadPaymentHistory,
     mapDetailToReservation,
   ]);
 
-  // 2. Tải phiên thanh toán nếu có paymentId trong param
+  // 2. Tải đúng payment intent trong URL. Đây là source-of-truth duy nhất:
+  // không fallback sang payment DEPOSIT cũ của reservation.
   useEffect(() => {
-    if (targetPaymentId && isAuthenticated) {
-      paymentService
-        .getPayment(targetPaymentId)
-        .then(async (session) => {
-          setPaymentSession(session);
-          if (session.method) setSelectedMethod(session.method);
-          setIsModalOpen(true);
+    if (!targetPaymentId || !isAuthenticated) return undefined;
 
-          if (session.reservationId) {
-            try {
-              const detail = await paymentService.getReservation(session.reservationId);
-              if (detail) {
-                setReservation(mapDetailToReservation(detail));
-                loadPaymentHistory(session.reservationId);
-              }
-            } catch {
-              // Vẫn giữ phiên thanh toán; reservation chỉ để hiển thị
+    let cancelled = false;
+    setPaymentSession(null);
+    setPaymentResult(null);
+    setQrDataUrl("");
+    setIsModalOpen(false);
+    setApiError("");
+
+    paymentService
+      .getPayment(targetPaymentId)
+      .then(async (session) => {
+        if (cancelled) return;
+        setPaymentSession(session);
+        if (session.method) setSelectedMethod(session.method);
+        setIsModalOpen(true);
+
+        if (session.reservationId) {
+          try {
+            const detail = await paymentService.getReservation(session.reservationId);
+            if (!cancelled && detail) {
+              setReservation(mapDetailToReservation(detail));
+              loadPaymentHistory(session.reservationId);
             }
+          } catch {
+            // Vẫn giữ phiên thanh toán; reservation chỉ để hiển thị
           }
+        }
 
-          if (session.status === "PENDING" && session.method === "PAYOS") {
-            startPolling(session.id, 5000);
-          }
-        })
-        .catch((err) => {
+        if (session.status === "PENDING" && session.method === "PAYOS") {
+          startPolling(session.id, 5000);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
           setApiError(err.message || "Không thể tải phiên thanh toán.");
-        });
-    }
-  }, [targetPaymentId, isAuthenticated, startPolling, loadPaymentHistory, mapDetailToReservation]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      stopPolling();
+    };
+  }, [targetPaymentId, isAuthenticated, startPolling, stopPolling, loadPaymentHistory, mapDetailToReservation]);
 
   // 3. Render mã QR khi có qrPayload
   useEffect(() => {
