@@ -223,7 +223,7 @@ export default function Facility3DViewer({
           const statusColor = STATUS_COLORS[unit.status] || 0x94a3b8;
           // Thân box ưu tiên màu trạng thái; màu loại kho nằm ở dải mặt trước.
           const bodyColor = new THREE.Color(statusColor).lerp(new THREE.Color(0xffffff), 0.44);
-          const dim = selectedUnitId ? (isSelected ? 1 : (isActive ? 0.48 : 0.14)) : 1;
+          const dim = selectedUnitId ? (isSelected ? 1 : (isActive ? 0.72 : 0.2)) : 1;
 
           const material = new THREE.MeshStandardMaterial({
             color: isSelected ? 0xf59e0b : bodyColor,

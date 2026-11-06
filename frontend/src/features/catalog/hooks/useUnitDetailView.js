@@ -180,6 +180,7 @@ export function useUnitDetailView() {
     dueNow,
     facilityLayout,
     facilityLayoutError,
+    blockedRanges,
     quoteEndDate,
     policyVersion,
   };
