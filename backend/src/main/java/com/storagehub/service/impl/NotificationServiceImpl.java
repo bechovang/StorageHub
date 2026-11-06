@@ -321,21 +321,51 @@ public class NotificationServiceImpl implements NotificationService {
             Reservation reservation,
             com.storagehub.entity.ContractAddendum addendum
     ) {
-        // FR-12 "hai bên": staff nhận bell để chuẩn bị bản giấy tại quầy.
-        userRepository.findFirstByRole_NameAndStatusOrderByUserIdAsc(Role.Name.STAFF, 1)
-                .ifPresent(staff -> {
-                    String title = "Addendum " + addendum.getCode() + " chờ ký tại quầy";
-                    String body = "Khách " + reservation.getCustomer().getFullName()
-                            + " vừa gia hạn kho " + reservation.getUnit().getCode()
-                            + ". Hạn ký: " + addendum.getSignatureDueDate() + ".";
-                    Notification row = new Notification();
-                    row.setUser(staff);
-                    row.setType(TYPE_ADDENDUM_AWAITING_SIGNATURE);
-                    row.setTitle(title);
-                    row.setDeepLink("/rentals/" + reservation.getReservationId());
-                    row.setIsRead(false);
-                    notificationRepository.save(row);
-                });
+        notifyAddendumAwaitingSignature(reservation, addendum, null);
+    }
+
+    @Override
+    public void notifyAddendumAwaitingSignature(
+            Reservation reservation,
+            com.storagehub.entity.ContractAddendum addendum,
+            User assignee
+    ) {
+        // FR-12 "hai bên": ưu tiên đúng staff được giao task CONTRACT; nếu task
+        // đang ở pool chưa ai nhận thì báo manager cơ sở, cuối cùng mới fallback staff.
+        User recipient = assignee;
+        if (recipient == null) {
+            Integer facilityId = reservation.getUnit() != null
+                    && reservation.getUnit().getZone() != null
+                    && reservation.getUnit().getZone().getFacility() != null
+                    ? reservation.getUnit().getZone().getFacility().getFacilityId()
+                    : null;
+            if (facilityId != null) {
+                recipient = userRepository
+                        .findFirstByRole_NameAndStatusAndFacility_FacilityId(
+                                Role.Name.FACILITY_MANAGER, 1, facilityId)
+                        .orElse(null);
+            }
+        }
+        if (recipient == null) {
+            recipient = userRepository
+                    .findFirstByRole_NameAndStatusOrderByUserIdAsc(Role.Name.STAFF, 1)
+                    .orElse(null);
+        }
+        if (recipient == null) {
+            return;
+        }
+
+        String title = "Addendum " + addendum.getCode() + " chờ ký tại quầy";
+        String body = "Khách " + reservation.getCustomer().getFullName()
+                + " vừa gia hạn kho " + reservation.getUnit().getCode()
+                + ". Hạn ký: " + addendum.getSignatureDueDate() + ".";
+        Notification row = new Notification();
+        row.setUser(recipient);
+        row.setType(TYPE_ADDENDUM_AWAITING_SIGNATURE);
+        row.setTitle(title);
+        row.setDeepLink("/tasks");
+        row.setIsRead(false);
+        notificationRepository.save(row);
     }
 
     @Override

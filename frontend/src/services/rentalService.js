@@ -109,6 +109,21 @@ export async function transferReservation({
 }
 
 /**
+ * POST /api/v1/reservations/{reservationId}/extensions
+ * Tạo (hoặc tái dùng) yêu cầu gia hạn PENDING_PAYMENT và trả bảng tính
+ * server-truth. Luồng thanh toán dùng purpose EXTENSION_FEE.
+ */
+export async function createExtensionRequest(reservationId, newEndDate) {
+  const res = await apiClient(`/api/v1/reservations/${reservationId}/extensions`, {
+    method: "POST",
+    body: JSON.stringify({ newEndDate }),
+  });
+  const data = await safeParseJson(res);
+  if (!res.ok) throw { status: res.status, ...data };
+  return data;
+}
+
+/**
  * DELETE /api/v1/reservations/{reservationId}/checkout-request
  * Hủy yêu cầu trả kho (US-20 / FR-17)
  */

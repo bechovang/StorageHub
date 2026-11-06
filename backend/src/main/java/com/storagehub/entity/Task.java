@@ -63,6 +63,11 @@ public class Task {
     @JoinColumn(name = "unit_type_id")
     private UnitType unitType;
 
+    /** Cơ sở sở hữu công việc — cần cho task pool khi chưa gán staff. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "facility_id")
+    private Facility facility;
+
     private LocalDateTime claimedAt;
 
     /** Ghi chú hiển thị trên card (managerPlan / không thu tiền...). */

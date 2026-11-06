@@ -81,6 +81,25 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     """)
     List<Task> findOpenTasksWithStaff();
 
+    /** Task pool: chưa gán staff, cùng cơ sở, còn mở (kể cả task tồn từ ngày trước). */
+    @Query("""
+        SELECT t FROM Task t
+        LEFT JOIN FETCH t.assignedStaff s
+        WHERE t.assignedStaff IS NULL
+          AND t.facility.facilityId = :facilityId
+          AND t.status <> com.storagehub.entity.Task.Status.DONE
+          AND t.workDate <= :workDate
+          AND (:type IS NULL OR t.type = :type)
+          AND (:status IS NULL OR t.status = :status)
+        ORDER BY t.workDate ASC, t.taskId ASC
+    """)
+    List<Task> findUnassignedPoolForFacility(
+            @Param("facilityId") Integer facilityId,
+            @Param("workDate") LocalDate workDate,
+            @Param("type") Task.Type type,
+            @Param("status") Task.Status status
+    );
+
     @Query("""
         SELECT t FROM Task t
         LEFT JOIN FETCH t.assignedStaff s
