@@ -21,7 +21,8 @@ public record UnitDetailResponse(
         String dimensions,
         String security,
         List<String> photoUrls,
-        Integer facilityId
+        Integer facilityId,
+        List<UnitAvailabilityRange> blockedRanges
 ) {
     public UnitDetailResponse(
             Long id, String code, String typeName, BigDecimal sizeM2, Integer floor,
@@ -30,6 +31,6 @@ public record UnitDetailResponse(
             String security, List<String> photoUrls
     ) {
         this(id, code, typeName, sizeM2, floor, zoneCode, facilityName, accessType,
-                baseDailyRent, availability, photoUrl, dimensions, security, photoUrls, null);
+                baseDailyRent, availability, photoUrl, dimensions, security, photoUrls, null, null);
     }
 }

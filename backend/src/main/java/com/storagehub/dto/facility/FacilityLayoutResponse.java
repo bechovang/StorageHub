@@ -29,7 +29,8 @@ public record FacilityLayoutResponse(
             Integer col,
             String status,
             String typeName,
-            Integer sizeM2
+            Integer sizeM2,
+            java.time.LocalDate availableFromDate
     ) {
     }
 }

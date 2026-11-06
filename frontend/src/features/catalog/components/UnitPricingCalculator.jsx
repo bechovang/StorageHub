@@ -22,6 +22,7 @@ export default function UnitPricingCalculator({
   quoteError,
   isSoon,
   availableDate,
+  blockedRanges = [],
   onBookNow,
 }) {
   const invalidRange = Boolean(endDate && startDate && endDate < startDate);
@@ -52,6 +53,7 @@ export default function UnitPricingCalculator({
           durationDays={durationDays}
           availableFromDate={availableDate}
           isSoon={isSoon}
+          blockedRanges={blockedRanges}
           minDate={isSoon && availableDate ? availableDate : getTodayDate()}
         />
 

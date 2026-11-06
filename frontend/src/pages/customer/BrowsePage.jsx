@@ -100,7 +100,7 @@ export default function BrowsePage() {
                 }}
                 aria-hidden="true"
               />
-              <span>{total || units.length} kho đang sẵn sàng</span>
+              <span>{total || units.length} kho</span>
             </div>
 
             {/* Active filter chips */}

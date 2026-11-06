@@ -89,6 +89,7 @@ export async function searchUnits({
   sort = "price-asc",
   page = 1,
   pageSize = 25,
+  includeOccupied = false,
 } = {}) {
   const queryParams = new URLSearchParams();
   if (facilityId) queryParams.set("facility-id", facilityId);
@@ -98,6 +99,7 @@ export async function searchUnits({
   if (startDate) queryParams.set("start-date", startDate);
   if (endDate) queryParams.set("end-date", endDate);
   if (sort) queryParams.set("sort", sort);
+  if (includeOccupied) queryParams.set("include-occupied", "true");
   queryParams.set("page", page);
   queryParams.set("page-size", pageSize);
 

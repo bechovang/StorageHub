@@ -57,6 +57,7 @@ public class UnitController {
             @RequestParam(name = "type-id", required = false) Long typeId,
             @RequestParam(name = "size-m2", required = false) BigDecimal sizeM2,
             @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "include-occupied", defaultValue = "false") boolean includeOccupied,
             @RequestParam(name = "start-date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "end-date", required = false)
@@ -69,9 +70,9 @@ public class UnitController {
     ) {
         UnitPageResponse response = facilityId == null
                 ? unitService.searchUnits(
-                    typeId, sizeM2, q, startDate, endDate, sort, page, pageSize)
+                    typeId, sizeM2, q, startDate, endDate, sort, page, pageSize, includeOccupied)
                 : unitService.searchUnits(
-                    facilityId, typeId, sizeM2, q, startDate, endDate, sort, page, pageSize);
+                    facilityId, typeId, sizeM2, q, startDate, endDate, sort, page, pageSize, includeOccupied);
         return ResponseEntity.ok(response);
     }
 

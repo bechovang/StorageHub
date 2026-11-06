@@ -33,6 +33,7 @@ export function useUnitDetailView() {
   // Layout 3D của cơ sở chứa kho đang xem.
   const [facilityLayout, setFacilityLayout] = useState(null);
   const [facilityLayoutError, setFacilityLayoutError] = useState("");
+  const [blockedRanges, setBlockedRanges] = useState([]);
 
   // 1. Tải thông tin chi tiết của kho
   useEffect(() => {
@@ -42,6 +43,7 @@ export function useUnitDetailView() {
       .then((data) => {
         if (isMounted) {
           setUnit(data);
+          setBlockedRanges(Array.isArray(data.blockedRanges) ? data.blockedRanges : []);
           const from =
             (typeof data.availability === "object"
               ? data.availability?.availableFromDate
@@ -67,12 +69,12 @@ export function useUnitDetailView() {
     if (!unit?.facilityId) return undefined;
     let active = true;
     setFacilityLayoutError("");
-    getFacilityLayout(unit.facilityId)
+    getFacilityLayout(unit.facilityId, { startDate, endDate })
       .then((data) => active && setFacilityLayout(data))
       .catch((err) => active && setFacilityLayoutError(
         err.message || "Không thể tải sơ đồ vị trí kho."))
     return () => { active = false; };
-  }, [unit?.facilityId]);
+  }, [unit?.facilityId, startDate, endDate]);
 
   // 2. Tính toán bảng giá minh bạch khi thay đổi khoảng ngày thuê
   useEffect(() => {

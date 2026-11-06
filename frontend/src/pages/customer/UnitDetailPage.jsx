@@ -36,6 +36,7 @@ export default function UnitDetailPage() {
     handleBookNow,
     isSoon,
     availableDate,
+    rawStatus,
     typeLabel,
     facilityLabel,
     volumeM3,
@@ -123,8 +124,14 @@ export default function UnitDetailPage() {
                 <h1 className="unit-detail-title">
                   Kho {unit.code} · {typeLabel} · {unit.sizeM2} m²
                 </h1>
-                <Badge tone={isSoon ? "warning" : "success"}>
-                  {isSoon ? "Sắp khả dụng" : "Đang trống · Cọc để giữ chỗ"}
+                <Badge tone={isSoon || rawStatus === "RENTED" || rawStatus === "RESERVED" ? "warning" : "success"}>
+                  {rawStatus === "RENTED"
+                    ? "Đang thuê · Xem ngày trống"
+                    : rawStatus === "RESERVED"
+                      ? "Đã giữ chỗ · Xem ngày trống"
+                      : isSoon
+                        ? "Sắp khả dụng"
+                        : "Đang trống · Cọc để giữ chỗ"}
                 </Badge>
               </div>
               <p className="unit-detail-meta">
