@@ -15,6 +15,7 @@ import {
   UnitPricingCalculator,
   UnitFacilityStandards,
 } from "../../features/catalog/index.js";
+import { formatDate } from "../../utils/formatters.js";
 import "./UnitDetailPage.css";
 
 export default function UnitDetailPage() {
@@ -261,6 +262,7 @@ export default function UnitDetailPage() {
               quoteError={quoteError}
               isSoon={isSoon}
               availableDate={availableDate}
+              blockedRanges={blockedRanges}
               onBookNow={handleBookNow}
             />
           </aside>

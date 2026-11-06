@@ -243,3 +243,13 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.facility-3d-viewer .facility-3d-date-range {
+  width: 100%;
+  padding-bottom: 4px;
+  color: var(--color-secondary, #64748b);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
