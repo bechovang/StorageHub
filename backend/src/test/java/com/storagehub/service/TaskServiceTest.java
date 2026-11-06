@@ -173,8 +173,15 @@ class TaskServiceTest {
     @Test
     @DisplayName("autoCreateTask tạo task pool chưa giao người (FR-21)")
     void testAutoCreateTask_AutoAssignByZoneAndShift() {
-        when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))
-                .thenReturn(Optional.of(staffUser));
+        staffUser.setFacility(facility);
+        StaffAssignment assignment = new StaffAssignment();
+        assignment.setAssignmentId(10L);
+        assignment.setStaff(staffUser);
+        assignment.setShift(StaffAssignment.Shift.MORNING);
+        assignment.setWorkDate(today);
+        when(staffAssignmentRepository.findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(
+                1, 2, today, StaffAssignment.Shift.MORNING))
+                .thenReturn(List.of(assignment));
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
@@ -234,8 +241,8 @@ class TaskServiceTest {
         sameFacilityAssignment.setWorkDate(today);
 
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
-        when(staffAssignmentRepository.findByUnitType_TypeIdAndWorkDateAndShift(
-                2, today, StaffAssignment.Shift.MORNING))
+        when(staffAssignmentRepository.findByFacilityAndUnitType_TypeIdAndWorkDateAndShift(
+                1, 2, today, StaffAssignment.Shift.MORNING))
                 .thenReturn(List.of(otherFacilityAssignment, sameFacilityAssignment));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
@@ -261,8 +268,6 @@ class TaskServiceTest {
     @Test
     @DisplayName("autoCreateTask không fallback gán người khi không có staff trực")
     void testAutoCreateTask_FallbackStaff() {
-        when(userRepository.findFirstByRole_NameAndStatus(eq(Role.Name.STAFF), eq(1)))
-                .thenReturn(Optional.of(staffUser));
         when(unitRepository.findWithDetailsById(3L)).thenReturn(Optional.of(unitS3));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> {
             Task t = invocation.getArgument(0);
@@ -285,7 +290,7 @@ class TaskServiceTest {
         TaskResponse res = taskService.autoCreateTask(req);
 
         assertThat(res.taskId()).isEqualTo(100L);
-        assertThat(res.assignedStaff().staffId()).isEqualTo(2L);
+        assertThat(res.assignedStaff()).isNull();
     }
 
     @Test
