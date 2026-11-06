@@ -581,6 +581,13 @@ public class TaskServiceImpl implements TaskService {
         return null;
     }
 
+    private Integer facilityIdOf(Unit unit) {
+        if (unit == null || unit.getZone() == null || unit.getZone().getFacility() == null) {
+            return null;
+        }
+        return unit.getZone().getFacility().getFacilityId();
+    }
+
     private void validateSnapBackRule(Task task) {
         String ref = task.getRefCode();
 
