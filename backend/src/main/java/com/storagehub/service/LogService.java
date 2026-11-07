@@ -4,6 +4,7 @@ import com.storagehub.dto.activity.ActivityLogPageResponse;
 import com.storagehub.entity.User;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Điểm ghi duy nhất cho ACTIVITY_LOGS (AD-6) — append-only, ghi đồng bộ
@@ -22,11 +23,16 @@ public interface LogService {
             String reason
     );
 
+    /**
+     * @param entityTypes      danh sách entity type cần lọc; rỗng = tất cả
+     * @param scopeFacilityId  null = toàn hệ thống; khác null = chỉ cơ sở đó
+     */
     ActivityLogPageResponse getActivityLogs(
             String query,
-            String entityType,
+            List<String> entityTypes,
             LocalDate startDate,
             LocalDate endDate,
+            Long scopeFacilityId,
             int page,
             int pageSize
     );

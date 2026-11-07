@@ -5,6 +5,7 @@ import com.storagehub.entity.ActivityLog;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.User;
 import com.storagehub.repository.ActivityLogRepository;
+import com.storagehub.service.impl.ActivityLogFacilityResolver;
 import com.storagehub.service.impl.LogServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +32,9 @@ class LogServiceTest {
 
     @Mock
     private ActivityLogRepository activityLogRepository;
+
+    @Mock
+    private ActivityLogFacilityResolver facilityResolver;
 
     @InjectMocks
     private LogServiceImpl logService;
@@ -95,17 +99,24 @@ class LogServiceTest {
 
         when(activityLogRepository.findLogs(
                 eq("Tuấn"),
-                eq("UNIT"),
+                isNull(),
+                eq(false),
+                eq(List.of("UNIT")),
+                isNull(),
                 any(LocalDateTime.class),
                 any(LocalDateTime.class),
                 any(Pageable.class)
         )).thenReturn(new PageImpl<>(List.of(logEntry), Pageable.unpaged(), 1));
+        when(activityLogRepository.countInScope(isNull())).thenReturn(1L);
+        when(activityLogRepository.countInScopeByActions(isNull(), any()))
+                .thenReturn(1L, 0L);
 
         ActivityLogPageResponse response = logService.getActivityLogs(
                 "Tuấn",
-                "UNIT",
+                List.of("UNIT"),
                 LocalDate.of(2026, 10, 1),
                 LocalDate.of(2026, 10, 31),
+                null,
                 1,
                 25
         );
@@ -115,6 +126,9 @@ class LogServiceTest {
         assertEquals(1, response.total());
         assertEquals(1, response.page());
         assertEquals(25, response.pageSize());
+        assertEquals(1L, response.summary().totalEntries());
+        assertEquals(1L, response.summary().statusChanges());
+        assertEquals(0L, response.summary().securityEvents());
 
         var item = response.items().get(0);
         assertEquals(101L, item.logId());

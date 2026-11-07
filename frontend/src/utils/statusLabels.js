@@ -149,6 +149,10 @@ export const ENTITY_TYPE_LABELS = {
   AUTH: "Phiên đăng nhập",
   TICKET: "Sự cố",
   POLICY: "Chính sách",
+  EXTENSION: "Gia hạn",
+  ADDENDUM: "Phụ lục",
+  CONTRACT_ADDENDUM: "Phụ lục",
+  LATE_CHECKOUT_CASE: "Trả muộn",
 };
 
 export function getRoleLabel(role) {

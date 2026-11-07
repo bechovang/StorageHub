@@ -76,20 +76,31 @@ Các API dành cho Quản trị viên hệ thống (System Admin) quản lý tà
 
 - **Method / URL**: `GET /api/v1/activity-logs`
 - **Quyền hạn**: `FACILITY_MANAGER`, `BUSINESS_OPS`, `SYSTEM_ADMIN`
-- **Query Params**: `entity-type` (`USER`, `UNIT`, `RESERVATION`, `PAYMENT`, `POLICY`), `q`
+- **Phạm vi**: `FACILITY_MANAGER` chỉ nhận log có `facility_id` = cơ sở của mình (dòng `facility_id = NULL` là sự kiện cấp hệ thống, manager không thấy). `BUSINESS_OPS` và `SYSTEM_ADMIN` thấy toàn bộ.
+- **Query Params**: `entityType` (nhận danh sách phân tách bằng dấu phẩy; `SHIFT` được map thành `STAFF_ASSIGNMENT`), `query`, `startDate`, `endDate`, `page` (1-based), `pageSize` (mặc định 25, tối đa 100)
 - **Hàm Service**: `src/services/activityService.js` ➔ `fetchActivityLogs(params)`
 - **Response Thành Công (`200 OK`)**:
 ```json
 {
   "items": [
     {
-      "id": 101,
+      "logId": 101,
       "actorName": "Hoàng Nam (Admin)",
       "entityType": "USER",
       "action": "STATUS_CHANGE",
       "reason": "Kích hoạt tài khoản khách hàng",
       "createdAt": "2026-10-27T10:30:00Z"
     }
-  ]
+  ],
+  "page": 1,
+  "pageSize": 25,
+  "total": 103,
+  "totalPages": 5,
+  "summary": {
+    "totalEntries": 103,
+    "statusChanges": 67,
+    "securityEvents": 23
+  }
 }
 ```
+`summary` tính trên toàn bộ log trong phạm vi cơ sở của người xem, không phụ thuộc `query`/`entityType`/trang hiện tại.

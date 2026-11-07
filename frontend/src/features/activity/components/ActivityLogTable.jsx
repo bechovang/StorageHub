@@ -3,9 +3,13 @@ import {
   Funnel,
   ArrowRight,
   Database,
+  WarningCircle,
+  CaretLeft,
+  CaretRight,
 } from "@phosphor-icons/react";
 import {
   ENTITY_TYPES,
+  ENTITY_META_FALLBACK,
   ROLE_LABELS,
   ACTION_BADGES,
   STATUS_LABELS,
@@ -19,6 +23,12 @@ export function ActivityLogTable({
   searchTerm,
   onSearchChange,
   isLoginHistory = false,
+  loading = false,
+  error = null,
+  onRetry,
+  page = 1,
+  totalPages = 1,
+  onPageChange,
 }) {
   return (
     <>
@@ -77,7 +87,26 @@ export function ActivityLogTable({
 
       {/* Activity Logs Table */}
       <div className="activity-table-wrapper">
-        {logs.length === 0 ? (
+        {error ? (
+          <div className="activity-error" role="alert">
+            <WarningCircle size={40} className="activity-error__icon" />
+            <div className="activity-error__title">
+              Không tải được nhật ký hoạt động
+            </div>
+            <div className="activity-error__desc">{error}</div>
+            {onRetry && (
+              <button
+                type="button"
+                className="activity-error__retry"
+                onClick={onRetry}
+              >
+                Thử lại
+              </button>
+            )}
+          </div>
+        ) : loading && logs.length === 0 ? (
+          <div className="activity-loading">Đang tải nhật ký hoạt động…</div>
+        ) : logs.length === 0 ? (
           <div className="activity-empty">
             <Database size={40} className="activity-empty__icon" />
             <div className="activity-empty__title">Không có bản ghi nhật ký</div>
@@ -103,7 +132,9 @@ export function ActivityLogTable({
                   label: log.action,
                   class: "badge-action--status",
                 };
-                const entityInfo = ENTITY_TYPES[log.entityType];
+                const entityInfo =
+                  ENTITY_TYPES[log.entityType] ||
+                  ENTITY_META_FALLBACK[log.entityType];
                 const roleLabel = ROLE_LABELS[log.actorRole] || log.actorRole;
                 const fromLabel = STATUS_LABELS[log.fromValue] || log.fromValue;
                 const toLabel = STATUS_LABELS[log.toValue] || log.toValue;
@@ -186,6 +217,32 @@ export function ActivityLogTable({
           </table>
         )}
       </div>
+
+      {!error && (logs.length > 0 || page > 1) && (
+        <div className="activity-pager">
+          <button
+            type="button"
+            className="activity-pager__btn"
+            onClick={() => onPageChange?.(page - 1)}
+            disabled={loading || page <= 1}
+          >
+            <CaretLeft size={14} />
+            Trang trước
+          </button>
+          <span className="activity-pager__info font-mono">
+            Trang {page} / {Math.max(totalPages, 1)}
+          </span>
+          <button
+            type="button"
+            className="activity-pager__btn"
+            onClick={() => onPageChange?.(page + 1)}
+            disabled={loading || page >= totalPages}
+          >
+            Trang sau
+            <CaretRight size={14} />
+          </button>
+        </div>
+      )}
     </>
   );
 }

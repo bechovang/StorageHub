@@ -1146,7 +1146,16 @@ paths:
       operationId: getActivityLogs
       parameters:
         - { name: query, in: query, schema: { type: string }, description: "Tìm kiếm theo tên actor, action, reason" }
-        - { name: entityType, in: query, schema: { type: string }, description: "Lọc theo entity type (UNIT, RESERVATION, CONTRACT, STAFF_ASSIGNMENT, USER, TICKET, PAYMENT...)" }
+        - name: entityType
+          in: query
+          description: |
+            Lọc theo entity type; nhận danh sách phân tách bằng dấu phẩy để gom nhóm
+            (ví dụ SHIFT → STAFF_ASSIGNMENT, ADDENDUM → ADDENDUM,CONTRACT_ADDENDUM).
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: false
         - { name: startDate, in: query, schema: { type: string, format: date }, description: "Từ ngày (YYYY-MM-DD)" }
         - { name: endDate, in: query, schema: { type: string, format: date }, description: "Đến ngày (YYYY-MM-DD)" }
         - { name: page, in: query, schema: { type: integer, default: 1, minimum: 1 }, description: "Trang (1-based)" }
@@ -2688,7 +2697,7 @@ components:
 
     ActivityLogPage:
       type: object
-      required: [items, page, pageSize, total, totalPages]
+      required: [items, page, pageSize, total, totalPages, summary]
       properties:
         items:
           type: array
@@ -2697,6 +2706,14 @@ components:
         pageSize: { type: integer, example: 25 }
         total: { type: integer, format: int64, example: 48 }
         totalPages: { type: integer, example: 2 }
+        summary:
+          type: object
+          description: Số liệu KPI trên toàn bộ log trong phạm vi cơ sở của người xem (không phụ thuộc filter/trang).
+          required: [totalEntries, statusChanges, securityEvents]
+          properties:
+            totalEntries: { type: integer, format: int64, example: 48 }
+            statusChanges: { type: integer, format: int64, example: 31 }
+            securityEvents: { type: integer, format: int64, example: 9 }
 
     # ------------------------------- Shifts (FR-27) -----------------------
 

@@ -7,5 +7,6 @@ public record ActivityLogPageResponse(
         int page,
         int pageSize,
         long total,
-        int totalPages
+        int totalPages,
+        ActivityLogSummaryResponse summary
 ) {}

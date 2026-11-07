@@ -540,3 +540,123 @@
   color: var(--color-secondary, #555555);
   font-size: var(--font-size-sm, 0.82rem);
 }
+
+/* ── Payment / Task / Shift / Policy / Extension / Late-checkout entity tags ── */
+.badge-entity--payment {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.badge-entity--task {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.badge-entity--shift {
+  background: #eef2ff;
+  color: #3730a3;
+  border-color: #6366f1;
+}
+
+.badge-entity--policy {
+  background: #fdf2f8;
+  color: #9d174d;
+  border-color: #ec4899;
+}
+
+.badge-entity--extend {
+  background: #f0f9ff;
+  color: #075985;
+  border-color: #0ea5e9;
+}
+
+.badge-entity--late {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #ea580c;
+}
+
+/* ── Error / loading states ── */
+.activity-error {
+  padding: var(--space-8, 64px) var(--space-4, 16px);
+  text-align: center;
+}
+
+.activity-error__icon {
+  color: #b91c1c;
+  margin-bottom: var(--space-3, 12px);
+}
+
+.activity-error__title {
+  font-family: var(--font-display);
+  font-size: var(--text-h2, 1.4rem);
+  font-weight: var(--font-weight-bold, 700);
+  margin-bottom: var(--space-1, 4px);
+}
+
+.activity-error__desc {
+  color: var(--color-secondary, #555555);
+  font-size: var(--font-size-sm, 0.82rem);
+  margin-bottom: var(--space-4, 16px);
+}
+
+.activity-error__retry {
+  border: 1px solid var(--color-line-strong, #000000);
+  background: var(--color-ink, #000000);
+  color: var(--color-surface, #ffffff);
+  padding: 8px 18px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold, 700);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.activity-error__retry:hover {
+  background: var(--color-surface, #ffffff);
+  color: var(--color-ink, #000000);
+}
+
+.activity-loading {
+  padding: var(--space-8, 64px) var(--space-4, 16px);
+  text-align: center;
+  color: var(--color-secondary, #555555);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+/* ── Pagination ── */
+.activity-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4, 16px);
+  padding: var(--space-3, 12px) var(--space-1, 4px);
+}
+
+.activity-pager__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-line-strong, #000000);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-ink, #000000);
+  padding: 6px 12px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold, 600);
+  cursor: pointer;
+}
+
+.activity-pager__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.activity-pager__info {
+  font-size: 0.78rem;
+  color: var(--color-secondary, #555555);
+}
