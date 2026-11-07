@@ -129,6 +129,18 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     """)
     List<Reservation> findCurrentActiveReservations();
 
+    @Query("""
+        SELECT r FROM Reservation r
+        JOIN FETCH r.customer c
+        JOIN FETCH r.unit u
+        JOIN FETCH u.type
+        JOIN FETCH u.zone z
+        JOIN FETCH z.facility f
+        WHERE r.status IN :statuses
+        ORDER BY r.endDate ASC, r.reservationId ASC
+    """)
+    List<Reservation> findActiveWithDetails(@Param("statuses") Collection<Reservation.Status> statuses);
+
     @Query("SELECT r FROM Reservation r JOIN FETCH r.unit u JOIN FETCH u.zone z JOIN FETCH z.facility f JOIN FETCH r.customer c WHERE r.code = :code")
     Optional<Reservation> findByCode(@Param("code") String code);
 

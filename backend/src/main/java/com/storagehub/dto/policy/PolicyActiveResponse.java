@@ -19,6 +19,7 @@ public record PolicyActiveResponse(
 
     public record Surcharges(
             Integer lateCheckoutPercent,
+            Integer lateEscalationDays,
             Integer depositPercent,
             Integer turnoverBufferDays,
             Integer checkinGraceDays,

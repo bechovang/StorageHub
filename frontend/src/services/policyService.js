@@ -10,7 +10,7 @@
 import { apiClient, safeParseJson } from "./apiClient.js";
 
 export const HARD_CAPS = {
-  LATE_CHECKOUT_MAX_PERCENT: 10, // Trần cứng phí trả trễ tối đa 10%
+  LATE_CHECKOUT_MAX_PERCENT: 500, // Trần cứng phí trả trễ (%/ngày) — V42
   SECURITY_DEPOSIT_MIN_PERCENT: 10, // Trần sàn tiền cọc tối thiểu 10%
   TURNOVER_BUFFER_MIN_DAYS: 1, // Đệm vệ sinh tối thiểu 1 ngày
   TURNOVER_BUFFER_MAX_DAYS: 7, // Đệm vệ sinh tối đa 7 ngày
@@ -49,6 +49,16 @@ export function validatePolicy(policyDraft) {
       field: "lateCheckoutPercent",
       rule: "#CAP-04",
       message: `Late-checkout fee ${lateFee}% exceeds the ${HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}% cap in Rental Policy. Fix the value, or edit the cap first.`,
+    });
+  }
+
+  // 1b. Ngưỡng chuyển quản lý trễ checkout (1 - 30 ngày)
+  const escalationDays = Number(policyDraft.surcharges?.lateEscalationDays ?? 3);
+  if (isNaN(escalationDays) || escalationDays < 1 || escalationDays > 30) {
+    errors.push({
+      field: "lateEscalationDays",
+      rule: "#OPS-042",
+      message: "Ngưỡng chuyển quản lý trễ checkout phải từ 1 đến 30 ngày.",
     });
   }
 
@@ -125,6 +135,7 @@ export async function savePolicy(policyDraft, actorName = "Business Ops") {
         rateVnd: Number(r.rateVnd),
       })),
       lateCheckoutPercent: Number(policyDraft.surcharges?.lateCheckoutPercent),
+      lateEscalationDays: Number(policyDraft.surcharges?.lateEscalationDays ?? 3),
       depositPercent: Number(policyDraft.surcharges?.depositPercent),
       turnoverBufferDays: Number(policyDraft.surcharges?.turnoverBufferDays),
       checkinGraceDays: Number(policyDraft.surcharges?.checkinGraceDays),

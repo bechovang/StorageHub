@@ -20,13 +20,18 @@ public class CheckoutReminderService {
 
     private final ReservationRepository reservationRepository;
     private final NotificationService notificationService;
+    private final LateCheckoutService lateCheckoutService;
 
     @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Ho_Chi_Minh")
     @Transactional
     public void remindUpcomingCheckouts() {
         LocalDate today = LocalDate.now(ICT_ZONE);
         for (Reservation reservation : reservationRepository.findCurrentActiveReservations()) {
-            if (reservation.getStatus() != Reservation.Status.CHECKED_IN) continue;
+            if (reservation.getStatus() != Reservation.Status.CHECKED_IN
+                    && reservation.getStatus() != Reservation.Status.CHECKOUT_REQUESTED) {
+                continue;
+            }
+            lateCheckoutService.evaluate(reservation);
             long days = ChronoUnit.DAYS.between(today, reservation.getEndDate());
             if (days == 7 || days == 3 || days == 1 || days == 0) {
                 notificationService.notifyCheckoutReminder(reservation, (int) days, false);

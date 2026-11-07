@@ -23,6 +23,7 @@ export function usePolicyManagement() {
   // Bản nháp đang thao tác (Form Draft)
   const [draftBaseRates, setDraftBaseRates] = useState([]);
   const [draftLateFee, setDraftLateFee] = useState("");
+  const [draftEscalationDays, setDraftEscalationDays] = useState("");
   const [draftDeposit, setDraftDeposit] = useState("");
   const [draftBufferDays, setDraftBufferDays] = useState("");
   const [draftCheckinGrace, setDraftCheckinGrace] = useState(3);
@@ -65,6 +66,7 @@ export function usePolicyManagement() {
     if (!policy) return;
     setDraftBaseRates(Array.isArray(policy.baseRates) ? policy.baseRates.map((r) => ({ ...r })) : []);
     setDraftLateFee(policy.surcharges?.lateCheckoutPercent ?? "");
+    setDraftEscalationDays(policy.surcharges?.lateEscalationDays ?? 3);
     setDraftDeposit(policy.surcharges?.depositPercent ?? "");
     setDraftBufferDays(policy.surcharges?.turnoverBufferDays ?? "");
     setDraftCheckinGrace(policy.surcharges?.checkinGraceDays ?? 3);
@@ -117,6 +119,20 @@ export function usePolicyManagement() {
       });
     }
 
+    // Kiểm tra ngưỡng chuyển quản lý
+    if (Number(draftEscalationDays) !== Number(persistedPolicy.surcharges.lateEscalationDays ?? 3)) {
+      const daysNum = Number(draftEscalationDays);
+      const isBlocked = isNaN(daysNum) || daysNum < 1 || daysNum > 30;
+      list.push({
+        id: "late-escalation-days",
+        title: "Ngưỡng chuyển quản lý trễ checkout",
+        from: `${persistedPolicy.surcharges.lateEscalationDays ?? 3} ngày`,
+        to: `${draftEscalationDays} ngày`,
+        isValid: !isBlocked,
+        blockReason: isBlocked ? "Ngưỡng phải từ 1 đến 30 ngày" : null,
+      });
+    }
+
     // Kiểm tra tỷ lệ đặt cọc
     if (Number(draftDeposit) !== Number(persistedPolicy.surcharges.depositPercent)) {
       const depNum = Number(draftDeposit);
@@ -153,7 +169,7 @@ export function usePolicyManagement() {
     }
 
     return list;
-  }, [draftBaseRates, draftLateFee, draftDeposit, draftBufferDays, persistedPolicy]);
+  }, [draftBaseRates, draftLateFee, draftEscalationDays, draftDeposit, draftBufferDays, persistedPolicy]);
 
   const hasChanges = pendingModifications.length > 0;
 
@@ -168,6 +184,7 @@ export function usePolicyManagement() {
       surcharges: {
         ...(persistedPolicy.surcharges || {}),
         lateCheckoutPercent: Number(draftLateFee),
+        lateEscalationDays: Number(draftEscalationDays),
         depositPercent: Number(draftDeposit),
         turnoverBufferDays: Number(draftBufferDays),
         checkinGraceDays: Number(draftCheckinGrace),
@@ -176,7 +193,7 @@ export function usePolicyManagement() {
         extensionLateFeePerDay: Number(draftExtensionLateFee),
       },
     };
-  }, [persistedPolicy, draftBaseRates, draftLateFee, draftDeposit, draftBufferDays]);
+  }, [persistedPolicy, draftBaseRates, draftLateFee, draftEscalationDays, draftDeposit, draftBufferDays]);
 
   // Kiểm tra vi phạm các điều kiện trần cứng
   const activeValidationErrors = useMemo(() => {
@@ -184,6 +201,8 @@ export function usePolicyManagement() {
   }, [currentDraftObject]);
 
   const isLateFeeViolated = Number(draftLateFee) > HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT;
+  const isEscalationViolated =
+    Number(draftEscalationDays) < 1 || Number(draftEscalationDays) > 30;
   const isDepositViolated = Number(draftDeposit) < HARD_CAPS.SECURITY_DEPOSIT_MIN_PERCENT;
   const isBufferViolated =
     Number(draftBufferDays) < HARD_CAPS.TURNOVER_BUFFER_MIN_DAYS ||
@@ -192,6 +211,10 @@ export function usePolicyManagement() {
   const isLateFeeModified =
     persistedPolicy?.surcharges
       ? Number(draftLateFee) !== Number(persistedPolicy.surcharges.lateCheckoutPercent)
+      : false;
+  const isEscalationModified =
+    persistedPolicy?.surcharges
+      ? Number(draftEscalationDays) !== Number(persistedPolicy.surcharges.lateEscalationDays ?? 3)
       : false;
   const isDepositModified =
     persistedPolicy?.surcharges
@@ -269,6 +292,8 @@ export function usePolicyManagement() {
     draftBaseRates,
     draftLateFee,
     setDraftLateFee,
+    draftEscalationDays,
+    setDraftEscalationDays,
     draftDeposit,
     setDraftDeposit,
     draftBufferDays,
@@ -288,6 +313,8 @@ export function usePolicyManagement() {
     hasChanges,
     activeValidationErrors,
     isLateFeeViolated,
+    isEscalationViolated,
+    isEscalationModified,
     isDepositViolated,
     isBufferViolated,
     isLateFeeModified,

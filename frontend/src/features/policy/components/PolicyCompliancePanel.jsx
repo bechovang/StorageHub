@@ -60,7 +60,7 @@ export function PolicyCompliancePanel({
               <span className={isLateFeeViolated ? "font-bold text-error" : ""}>
                 {isLateFeeViolated
                   ? `Phí trả trễ vượt trần tối đa (${draftLateFee}% > ${HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}%)`
-                  : "Phí phạt trả trễ tuân thủ trần quy định (≤ 10%)"}
+                  : `Phí phạt trả trễ tuân thủ trần quy định (≤ ${HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}%)`}
               </span>
             </div>
 

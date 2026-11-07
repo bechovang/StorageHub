@@ -117,4 +117,13 @@ public interface TaskService {
      * US-20: Hủy task CHECKOUT khi khách hủy yêu cầu trả kho.
      */
     void cancelCheckoutTask(User actor, String reservationCode);
+
+    /**
+     * V42: tạo/cập nhật task CLEANING cho kho sau thanh lý.
+     * refCode = unit.code; note chứa lý do thanh lý + hướng dẫn xử lý hàng còn lại.
+     */
+    Task createCleaningTask(User actor, Reservation reservation, String note, LocalDate workDate);
+
+    /** V42: kho PREPARING còn task CLEANING active → chưa được coi là available. */
+    boolean hasActiveCleaningTask(String unitCode);
 }

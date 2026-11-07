@@ -82,4 +82,33 @@ public interface NotificationService {
 
     /** Nhắc khách sắp đến hạn trả kho. */
     void notifyCheckoutReminder(Reservation reservation, int daysLeft, boolean overdue);
+
+    /** V42: đơn vừa trễ ngày đầu — báo khách phí đang phát sinh. */
+    void notifyLateCheckoutStarted(Reservation reservation, int daysLate, long lateFee);
+
+    /** V42: quá ngưỡng — báo khách + toàn bộ manager của cơ sở. */
+    void notifyLateCheckoutEscalated(
+            Reservation reservation,
+            int daysLate,
+            long lateFee,
+            java.util.List<User> managers
+    );
+
+    /** V42: manager cho phép trả kho / gia hạn. */
+    void notifyLateCheckoutExtended(
+            Reservation reservation,
+            java.time.LocalDate extendedUntil,
+            boolean allowedToday
+    );
+
+    /** V42: hợp đồng bị thanh lý — khách không còn thao tác được. */
+    void notifyLiquidation(Reservation reservation, String reasonType, java.math.BigDecimal lateFee);
+
+    /** V42: buộc checkout kèm deadline. */
+    void notifyForcedCheckout(
+            Reservation reservation,
+            String type,
+            String note,
+            java.time.LocalDate deadline
+    );
 }

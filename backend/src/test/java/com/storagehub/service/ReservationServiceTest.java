@@ -82,6 +82,9 @@ class ReservationServiceTest {
     @Mock
     private ExtensionService extensionService;
 
+    @Mock
+    private LateCheckoutService lateCheckoutService;
+
     @InjectMocks
     private ReservationService reservationService;
 

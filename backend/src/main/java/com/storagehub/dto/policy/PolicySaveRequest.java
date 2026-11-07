@@ -12,6 +12,8 @@ public record PolicySaveRequest(
 
         Integer lateCheckoutPercent,
 
+        Integer lateEscalationDays,
+
         @Min(value = 10, message = "Tỷ lệ cọc tối thiểu 10%")
         Integer depositPercent,
 

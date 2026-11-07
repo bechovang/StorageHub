@@ -29,6 +29,7 @@ import TaskBoardPage from "../pages/staff/TaskBoardPage.jsx";
 import FacilityOverviewPage from "../pages/facility/FacilityOverviewPage.jsx";
 import UnitManagementPage from "../pages/facility/UnitManagementPage.jsx";
 import StaffShiftsPage from "../pages/facility/StaffShiftsPage.jsx";
+import CheckoutManagementPage from "../pages/facility/CheckoutManagementPage.jsx";
 
 // Business Operations Pages
 import BusinessOverviewPage from "../pages/business/BusinessOverviewPage.jsx";
@@ -195,6 +196,14 @@ export default function AppRouter() {
         element={
           <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
             <StaffShiftsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/facility/checkouts"
+        element={
+          <ProtectedRoute allowedRoles={["FACILITY_MANAGER", "SYSTEM_ADMIN"]}>
+            <CheckoutManagementPage />
           </ProtectedRoute>
         }
       />

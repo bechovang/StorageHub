@@ -144,6 +144,24 @@ public class ContractService {
         return latest;
     }
 
+    /** V42: đóng bản hợp đồng isLatest do thanh lý hợp đồng. */
+    @Transactional
+    public Contract closeForLiquidation(User actor, Reservation reservation, String reason) {
+        Contract latest = contractRepository
+                .findByReservation_ReservationIdAndIsLatestTrue(reservation.getReservationId())
+                .orElse(null);
+        if (latest == null) {
+            return null;
+        }
+        Contract.Status from = latest.getStatus();
+        latest.setStatus(Contract.Status.CLOSED);
+        contractRepository.save(latest);
+        logService.log(actor, "CONTRACT", latest.getContractId(),
+                "LIQUIDATED", from.name(), "CLOSED",
+                reason != null ? reason : "Thanh lý hợp đồng");
+        return latest;
+    }
+
     /**
      * US-15 (FR-11): staff chụp ảnh bản ký tại quầy và đính kèm — bản isLatest
      * DRAFT/PRINTED → SIGNED. Action CONTRACT_SIGNED theo FR-11; đây là điều

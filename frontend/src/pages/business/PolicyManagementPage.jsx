@@ -27,6 +27,8 @@ export default function PolicyManagementPage() {
     draftBaseRates,
     draftLateFee,
     setDraftLateFee,
+    draftEscalationDays,
+    setDraftEscalationDays,
     draftDeposit,
     setDraftDeposit,
     draftBufferDays,
@@ -46,9 +48,11 @@ export default function PolicyManagementPage() {
     hasChanges,
     activeValidationErrors,
     isLateFeeViolated,
+    isEscalationViolated,
     isDepositViolated,
     isBufferViolated,
     isLateFeeModified,
+    isEscalationModified,
     isDepositModified,
     isBufferModified,
     handleRateChange,
@@ -201,6 +205,10 @@ export default function PolicyManagementPage() {
                     setDraftLateFee={setDraftLateFee}
                     isLateFeeViolated={isLateFeeViolated}
                     isLateFeeModified={isLateFeeModified}
+                    draftEscalationDays={draftEscalationDays}
+                    setDraftEscalationDays={setDraftEscalationDays}
+                    isEscalationViolated={isEscalationViolated}
+                    isEscalationModified={isEscalationModified}
                     draftDeposit={draftDeposit}
                     setDraftDeposit={setDraftDeposit}
                     isDepositViolated={isDepositViolated}

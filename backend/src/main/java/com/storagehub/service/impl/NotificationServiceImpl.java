@@ -50,6 +50,10 @@ public class NotificationServiceImpl implements NotificationService {
     private static final String TYPE_TASK_POOL = "TASK_POOL";
     private static final String TYPE_TASK_HANDOFF = "TASK_HANDOFF";
     private static final String TYPE_CHECKOUT_REMINDER = "CHECKOUT_REMINDER";
+    private static final String TYPE_LATE_CHECKOUT_STARTED = "LATE_CHECKOUT_STARTED";
+    private static final String TYPE_LATE_CHECKOUT_ESCALATED = "LATE_CHECKOUT_ESCALATED";
+    private static final String TYPE_LATE_CHECKOUT_EXTENDED = "LATE_CHECKOUT_EXTENDED";
+    private static final String TYPE_LIQUIDATION = "LIQUIDATION";
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -421,11 +425,107 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void notifyForcedCheckout(com.storagehub.entity.Reservation reservation, String type, String note) {
+        notifyForcedCheckout(reservation, type, note, null);
+    }
+
+    @Override
+    @Transactional
+    public void notifyForcedCheckout(
+            com.storagehub.entity.Reservation reservation,
+            String type,
+            String note,
+            java.time.LocalDate deadline
+    ) {
         Notification row = new Notification();
         row.setUser(reservation.getCustomer());
         row.setType(TYPE_FORCED_CHECKOUT);
-        row.setTitle(("VIOLATION".equals(type) ? "Buộc trả kho — " : "Đổi kho — ")
-                + reservation.getUnit().getCode());
+        String deadlineText = deadline != null ? " — trả trước " + deadline : "";
+        row.setTitle(("VIOLATION".equals(type) ? "Buộc trả kho" : "Đổi kho")
+                + " — " + reservation.getUnit().getCode() + deadlineText);
+        row.setDeepLink("/rentals/" + reservation.getReservationId());
+        row.setIsRead(false);
+        notificationRepository.save(row);
+    }
+
+    @Override
+    @Transactional
+    public void notifyLateCheckoutStarted(Reservation reservation, int daysLate, long lateFee) {
+        String title = "Đơn " + reservation.getCode() + " trễ " + daysLate + " ngày";
+        if (notificationRepository.existsByUserAndTypeAndTitle(
+                reservation.getCustomer(), TYPE_LATE_CHECKOUT_STARTED, title)) {
+            return;
+        }
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_LATE_CHECKOUT_STARTED);
+        row.setTitle(title);
+        row.setDeepLink("/rentals/" + reservation.getReservationId());
+        row.setIsRead(false);
+        notificationRepository.save(row);
+    }
+
+    @Override
+    @Transactional
+    public void notifyLateCheckoutEscalated(
+            Reservation reservation,
+            int daysLate,
+            long lateFee,
+            List<User> managers
+    ) {
+        String customerTitle = "Đơn " + reservation.getCode() + " đã chuyển quản lý";
+        if (!notificationRepository.existsByUserAndTypeAndTitle(
+                reservation.getCustomer(), TYPE_LATE_CHECKOUT_ESCALATED, customerTitle)) {
+            Notification row = new Notification();
+            row.setUser(reservation.getCustomer());
+            row.setType(TYPE_LATE_CHECKOUT_ESCALATED);
+            row.setTitle(customerTitle);
+            row.setDeepLink("/rentals/" + reservation.getReservationId());
+            row.setIsRead(false);
+            notificationRepository.save(row);
+        }
+        String managerTitle = "Đơn " + reservation.getCode() + " quá hạn " + daysLate + " ngày";
+        if (managers != null) {
+            for (User manager : managers) {
+                if (notificationRepository.existsByUserAndTypeAndTitle(
+                        manager, TYPE_LATE_CHECKOUT_ESCALATED, managerTitle)) {
+                    continue;
+                }
+                Notification row = new Notification();
+                row.setUser(manager);
+                row.setType(TYPE_LATE_CHECKOUT_ESCALATED);
+                row.setTitle(managerTitle);
+                row.setDeepLink("/facility/checkouts?case=" + reservation.getReservationId());
+                row.setIsRead(false);
+                notificationRepository.save(row);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void notifyLateCheckoutExtended(
+            Reservation reservation,
+            java.time.LocalDate extendedUntil,
+            boolean allowedToday
+    ) {
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_LATE_CHECKOUT_EXTENDED);
+        row.setTitle(allowedToday
+                ? "Quản lý cho phép trả kho hôm nay — " + reservation.getUnit().getCode()
+                : "Quản lý gia hạn trả kho đến " + extendedUntil + " — " + reservation.getUnit().getCode());
+        row.setDeepLink("/rentals/" + reservation.getReservationId());
+        row.setIsRead(false);
+        notificationRepository.save(row);
+    }
+
+    @Override
+    @Transactional
+    public void notifyLiquidation(Reservation reservation, String reasonType, java.math.BigDecimal lateFee) {
+        Notification row = new Notification();
+        row.setUser(reservation.getCustomer());
+        row.setType(TYPE_LIQUIDATION);
+        row.setTitle("Hợp đồng " + reservation.getCode() + " đã thanh lý");
         row.setDeepLink("/rentals/" + reservation.getReservationId());
         row.setIsRead(false);
         notificationRepository.save(row);

@@ -61,6 +61,7 @@ public class UnitService {
     private final UserRepository userRepository;
     private final PricingEngine pricingEngine;
     private final LogService logService;
+    private final TaskService taskService;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -216,9 +217,12 @@ public class UnitService {
             // 1. Tính ngày sẵn sàng sau dọn dẹp của kho
             LocalDate readyDate = today;
             if (unit.getStatus() == Unit.Status.PREPARING) {
+                if (taskService.hasActiveCleaningTask(unit.getCode())) {
+                    continue;
+                }
                 List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
                 if (!closedList.isEmpty()) {
-                    readyDate = closedList.get(0).getEndDate().plusDays(bufferDays);
+                    readyDate = latestClosedDate(closedList.get(0)).plusDays(bufferDays);
                 } else {
                     readyDate = today.plusDays(bufferDays);
                 }
@@ -449,11 +453,15 @@ public class UnitService {
                     currentlyRented ? "RENTED" : "RESERVED",
                     occupiedUntil);
         } else if (unit.getStatus() == Unit.Status.PREPARING) {
-            List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
-            LocalDate readyDate = !closedList.isEmpty()
-                    ? closedList.get(0).getEndDate().plusDays(bufferDays)
-                    : today.plusDays(bufferDays);
-            availability = new UnitAvailabilityResponse("AVAILABLE_SOON", readyDate);
+            if (taskService.hasActiveCleaningTask(unit.getCode())) {
+                availability = new UnitAvailabilityResponse("PREPARING", null);
+            } else {
+                List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
+                LocalDate readyDate = !closedList.isEmpty()
+                        ? latestClosedDate(closedList.get(0)).plusDays(bufferDays)
+                        : today.plusDays(bufferDays);
+                availability = new UnitAvailabilityResponse("AVAILABLE_SOON", readyDate);
+            }
         } else if (unit.getStatus() == Unit.Status.AVAILABLE) {
             availability = new UnitAvailabilityResponse("AVAILABLE", null);
         } else {
@@ -534,6 +542,32 @@ public class UnitService {
                 "STATUS_CHANGED", from.name(), "RENTED",
                 "Check-in — unit handed over");
         return true;
+    }
+
+    /** V42: thanh lý — kho vào PREPARING, chờ task CLEANING hoàn tất mới mở lại. */
+    @Transactional
+    public void markPreparingForCleaning(User actor, Unit unit, String note) {
+        Unit.Status from = unit.getStatus();
+        unit.setStatus(Unit.Status.PREPARING);
+        if (note != null && !note.isBlank()) {
+            String merged = unit.getNotes() != null && !unit.getNotes().isBlank()
+                    ? unit.getNotes() + " | " + note
+                    : note;
+            unit.setNotes(merged.length() > 500 ? merged.substring(0, 500) : merged);
+        }
+        unitRepository.save(unit);
+        logService.log(actor, "UNIT", unit.getUnitId(),
+                "STATUS_CHANGED", from.name(), "PREPARING",
+                note != null ? note : "Thanh lý — chờ dọn kho");
+    }
+
+    /** Ngày đóng thực tế (nếu có) — đơn trả trễ không được coi là available ngay. */
+    private LocalDate latestClosedDate(Reservation closed) {
+        LocalDate end = closed.getEndDate();
+        LocalDate closedAt = closed.getClosedAt() != null
+                ? closed.getClosedAt().toLocalDate()
+                : null;
+        return closedAt != null && closedAt.isAfter(end) ? closedAt : end;
     }
 
     private String normalizeCode(String code) {

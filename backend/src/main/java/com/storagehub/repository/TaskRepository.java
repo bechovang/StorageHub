@@ -26,6 +26,12 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             List<Task.Status> statuses
     );
 
+    boolean existsByTypeAndRefCodeAndStatusIn(
+            Task.Type type,
+            String refCode,
+            List<Task.Status> statuses
+    );
+
     @Query("SELECT t FROM Task t LEFT JOIN FETCH t.assignedStaff WHERE t.taskId = :taskId")
     Optional<Task> findWithStaffById(@Param("taskId") Long taskId);
 

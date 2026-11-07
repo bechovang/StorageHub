@@ -26,6 +26,10 @@ public class PolicyRule {
         DEPOSIT_RATE,
         RENT_RATE,
         LATE_FEE,
+        /** % đơn giá ngày × số ngày trễ (V42). */
+        LATE_FEE_PERCENT,
+        /** Số ngày trễ trước khi chuyển quản lý (V42). */
+        LATE_ESCALATION_DAYS,
         SURCHARGE,
         TURNOVER_BUFFER,
         DISCOUNT,

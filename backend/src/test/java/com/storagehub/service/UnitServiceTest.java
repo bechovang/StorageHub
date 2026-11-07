@@ -69,6 +69,9 @@ class UnitServiceTest {
     @Mock
     private PricingEngine pricingEngine;
 
+    @Mock
+    private TaskService taskService;
+
     @InjectMocks
     private UnitService unitService;
 

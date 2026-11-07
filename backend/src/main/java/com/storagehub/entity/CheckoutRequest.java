@@ -49,6 +49,9 @@ public class CheckoutRequest {
     /** VIOLATION (đuổi vi phạm) / TRANSFER (đổi kho) — NULL = checkout thường (V20). */
     private String checkoutType;
 
+    /** Lý do khách/manager gửi yêu cầu (V42). */
+    private String reason;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

@@ -54,6 +54,7 @@ public class TaskServiceImpl implements TaskService {
     private InspectionAssetRepository inspectionAssetRepository;
     private final com.storagehub.service.PricingEngine pricingEngine;
     private final com.storagehub.service.ReservationService reservationService;
+    private final com.storagehub.service.LateCheckoutService lateCheckoutService;
     private final com.storagehub.service.ContractService contractService;
     private final com.storagehub.repository.ContractAddendumRepository contractAddendumRepository;
     private final com.storagehub.repository.ExtensionRepository extensionRepository;
@@ -76,6 +77,7 @@ public class TaskServiceImpl implements TaskService {
             com.storagehub.repository.CheckoutRequestRepository checkoutRequestRepository,
             com.storagehub.service.PricingEngine pricingEngine,
             @org.springframework.context.annotation.Lazy com.storagehub.service.ReservationService reservationService,
+            com.storagehub.service.LateCheckoutService lateCheckoutService,
             com.storagehub.service.ContractService contractService,
             com.storagehub.repository.ContractAddendumRepository contractAddendumRepository,
             com.storagehub.repository.ExtensionRepository extensionRepository,
@@ -97,6 +99,7 @@ public class TaskServiceImpl implements TaskService {
         this.checkoutRequestRepository = checkoutRequestRepository;
         this.pricingEngine = pricingEngine;
         this.reservationService = reservationService;
+        this.lateCheckoutService = lateCheckoutService;
         this.contractService = contractService;
         this.contractAddendumRepository = contractAddendumRepository;
         this.extensionRepository = extensionRepository;
@@ -247,6 +250,10 @@ public class TaskServiceImpl implements TaskService {
         Task.Status oldStatus = task.getStatus();
         task.setStatus(newStatus);
         Task saved = taskRepository.save(task);
+
+        if (newStatus == Task.Status.DONE && task.getType() == Task.Type.CLEANING) {
+            releaseUnitAfterCleaning(currentUser, saved);
+        }
 
         // Vòng support 2 chiều: task SUPPORT hoàn thành → resolve ticket SR-...
         // (khách thấy "Đã xử lý xong" ngay trên Support page).
@@ -690,6 +697,36 @@ public class TaskServiceImpl implements TaskService {
         return unit.getZone().getFacility().getFacilityId();
     }
 
+    private void releaseUnitAfterCleaning(User actor, Task task) {
+        if (task.getRefCode() == null) {
+            return;
+        }
+        Unit unit = unitRepository.findByCode(task.getRefCode()).orElse(null);
+        if (unit == null || unit.getStatus() != Unit.Status.PREPARING) {
+            return;
+        }
+        boolean stillCleaning = taskRepository.existsByTypeAndRefCodeAndStatusIn(
+                Task.Type.CLEANING,
+                unit.getCode(),
+                List.of(Task.Status.TODO, Task.Status.IN_PROGRESS));
+        if (stillCleaning) {
+            return;
+        }
+        boolean hasActiveReservation = !reservationRepository.findActiveReservationsForUnit(
+                unit.getUnitId(),
+                List.of(Reservation.Status.RESERVED,
+                        Reservation.Status.CHECKED_IN,
+                        Reservation.Status.CHECKOUT_REQUESTED)).isEmpty();
+        if (hasActiveReservation) {
+            return;
+        }
+        unit.setStatus(Unit.Status.AVAILABLE);
+        unitRepository.save(unit);
+        logService.log(actor, "UNIT", unit.getUnitId(), "STATUS_CHANGED",
+                "PREPARING", "AVAILABLE",
+                "Cleaning hoàn tất — kho " + unit.getCode() + " sẵn sàng");
+    }
+
     private void validateSnapBackRule(Task task) {
         String ref = task.getRefCode();
 
@@ -820,6 +857,7 @@ public class TaskServiceImpl implements TaskService {
 
         TaskRitualDto ritual = null;
         Long checkoutUnitId = null;
+        com.storagehub.dto.checkout.LateCheckoutInfo lateInfo = null;
         boolean isDone = (task.getStatus() == Task.Status.DONE);
 
         switch (task.getType()) {
@@ -859,6 +897,8 @@ public class TaskServiceImpl implements TaskService {
                         customerPhone = res.getCustomer().getPhone();
                         depositPaid = res.getDepositAmount() != null ? res.getDepositAmount().longValue() : 360000L;
                         checkoutUnitId = res.getUnit().getUnitId();
+                        lateCheckoutService.evaluate(res);
+                        lateInfo = lateCheckoutService.info(res);
                     }
                 }
                 ritual = new TaskRitualDto(
@@ -981,7 +1021,8 @@ public class TaskServiceImpl implements TaskService {
                 includePhotos ? task.getSettlementPhoto() : null,
                 assets,
                 paymentRequired,
-                extensionRent
+                extensionRent,
+                lateInfo
         );
     }
 
@@ -1221,6 +1262,15 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new com.storagehub.exception.BusinessRuleException(
                         "Đơn chưa có hợp đồng — không thể lập biên bản thanh lý."));
 
+        lateCheckoutService.evaluate(reservation);
+        com.storagehub.dto.checkout.LateCheckoutInfo lateInfo = lateCheckoutService.info(reservation);
+        if (!lateInfo.canSettle()) {
+            throw new com.storagehub.exception.BusinessRuleException(
+                    lateInfo.blockMessage() != null
+                            ? lateInfo.blockMessage()
+                            : "Đơn chưa được phép tất toán.");
+        }
+
         // 1. Bảng nghiệm thu (Inspection)
         java.util.List<com.storagehub.entity.Inspection> inspections = new java.util.ArrayList<>();
         for (var ci : request.checklist()) {
@@ -1251,10 +1301,15 @@ public class TaskServiceImpl implements TaskService {
                     .orElse("Phí hư hại ghi nhận tại quầy");
         }
 
-        long refundAmount = request.refundAmount() == null ? 0L : Math.max(0, request.refundAmount());
-        long extraCharged = request.extraCharged() == null ? 0L : Math.max(0, request.extraCharged());
+        long depositHeld = reservation.getDepositAmount() != null
+                ? reservation.getDepositAmount().longValue()
+                : 0L;
+        long lateDays = lateInfo.daysLate();
+        long lateFee = lateInfo.lateFee();
+        long refundAmount = Math.max(0, depositHeld - damageFee - lateFee);
+        long extraCharged = Math.max(0, damageFee + lateFee - depositHeld);
 
-        // 3. Settlement — biên bản thanh lý
+        // 3. Settlement — biên bản tất toán (server-authoritative amounts)
         var method = switch (request.settlementMethod().toUpperCase()) {
             case "CASH" -> com.storagehub.entity.Payment.Method.CASH;
             case "QR", "TRANSFER", "BANK" -> com.storagehub.entity.Payment.Method.BANK;
@@ -1268,20 +1323,21 @@ public class TaskServiceImpl implements TaskService {
         settlement.setStaff(staff);
         settlement.setDamageFee(java.math.BigDecimal.valueOf(damageFee));
         settlement.setDamageReason(damageReason);
+        settlement.setLateDays((int) lateDays);
+        settlement.setLateFee(java.math.BigDecimal.valueOf(lateFee));
+        settlement.setSettlementType("NORMAL");
         settlement.setRefundAmount(java.math.BigDecimal.valueOf(refundAmount));
         settlement.setReceiptCode("TL-" + System.currentTimeMillis());
+        settlement.setNote("Cọc " + depositHeld + " ₫; hư hại " + damageFee
+                + " ₫; trễ " + lateDays + " ngày × " + lateInfo.lateFeePercent() + "% = " + lateFee
+                + " ₫; hoàn " + refundAmount + " ₫; thu thêm " + extraCharged + " ₫");
         settlementRepository.save(settlement);
 
-        // 4. Phí thu thêm khách: DAMAGE_FEE / EXTRA_FEE — money-in ghi payments
-        if (damageFee > 0) {
-            saveSettlementPayment(reservation, settlement, staff,
-                    com.storagehub.entity.Payment.Purpose.DAMAGE_FEE, method, damageFee,
-                    "Phí hư hại theo biên bản thanh lý");
-        }
+        // 4. Tiền thu thêm (vượt cọc) — một payment EXTRA_FEE, breakdown nằm trên settlement.
         if (extraCharged > 0) {
             saveSettlementPayment(reservation, settlement, staff,
                     com.storagehub.entity.Payment.Purpose.EXTRA_FEE, method, extraCharged,
-                    "Phí phát sinh vượt cọc thu tại quầy");
+                    "Phí hư hại + phạt trễ vượt cọc thu tại quầy");
         }
 
         // 5. Inspection với FK settlement
@@ -1324,6 +1380,7 @@ public class TaskServiceImpl implements TaskService {
         // 6. Đóng vòng thuê: reservation CLOSED, contract CLOSED, kho về PREPARING
         String oldResStatus = reservation.getStatus().name();
         reservation.setStatus(Reservation.Status.CLOSED);
+        reservation.setClosedAt(java.time.LocalDateTime.now(ICT_ZONE));
         reservationRepository.save(reservation);
         contract.setStatus(Contract.Status.CLOSED);
         contractRepository.save(contract);
@@ -1341,8 +1398,10 @@ public class TaskServiceImpl implements TaskService {
         logService.log(staff, "RESERVATION", reservation.getReservationId(),
                 "STATUS_CHANGED", oldResStatus, "CLOSED",
                 "Tất toán " + settlement.getReceiptCode() + " — hoàn cọc " + refundAmount
-                        + " ₫, phí hư hại " + damageFee + " ₫"
+                        + " ₫, phí hư hại " + damageFee + " ₫, phạt trễ " + lateFee
+                        + " ₫ (" + lateDays + " ngày)"
                         + (extraCharged > 0 ? ", thu thêm " + extraCharged + " ₫" : ""));
+        lateCheckoutService.markResolved(reservation);
 
         // 7. Task DONE + báo khách
         task.setStatus(Task.Status.DONE);
@@ -1643,6 +1702,71 @@ public class TaskServiceImpl implements TaskService {
                     "DELETED", fromStatus, null,
                     "Hủy checkout task cho " + reservationCode);
         }
+    }
+
+    @Override
+    public Task createCleaningTask(User actor, Reservation reservation, String note, LocalDate workDate) {
+        Unit unit = reservation.getUnit();
+        if (unit == null) {
+            throw new com.storagehub.exception.BusinessRuleException("Đơn không có kho để dọn.");
+        }
+        LocalDate date = workDate != null ? workDate : getToday();
+        StaffAssignment.Shift shift = getCurrentShift();
+        String cleanNote = note != null && note.length() > 500 ? note.substring(0, 500) : note;
+
+        Task existing = taskRepository
+                .findFirstByTypeAndRefCodeAndStatusIn(
+                        Task.Type.CLEANING,
+                        unit.getCode(),
+                        List.of(Task.Status.TODO, Task.Status.IN_PROGRESS))
+                .orElse(null);
+        if (existing != null) {
+            existing.setWorkDate(date);
+            existing.setShift(shift);
+            existing.setUnitType(unit.getType());
+            existing.setNote(cleanNote);
+            try {
+                existing.setAssignedStaff(autoAssignStaff(unit, date, shift));
+            } catch (Exception ignored) {
+            }
+            Task saved = taskRepository.save(existing);
+            logService.log(actor, "TASK", saved.getTaskId(), "UPDATED",
+                    saved.getStatus().name(), saved.getStatus().name(),
+                    "Cập nhật cleaning task thanh lý kho " + unit.getCode());
+            return saved;
+        }
+
+        User assignee;
+        try {
+            assignee = autoAssignStaff(unit, date, shift);
+        } catch (Exception e) {
+            assignee = actor;
+        }
+        Task task = new Task();
+        task.setType(Task.Type.CLEANING);
+        task.setRefCode(unit.getCode());
+        task.setAssignedStaff(assignee);
+        task.setShift(shift);
+        task.setUnitType(unit.getType());
+        task.setWorkDate(date);
+        task.setStatus(Task.Status.TODO);
+        task.setNote(cleanNote);
+        Task saved = taskRepository.save(task);
+        logService.log(actor, "TASK", saved.getTaskId(), "CREATED", null, Task.Status.TODO.name(),
+                "Cleaning task thanh lý kho " + unit.getCode() + " — " + reservation.getCode());
+        return saved;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasActiveCleaningTask(String unitCode) {
+        if (unitCode == null) {
+            return false;
+        }
+        return taskRepository.existsByTypeAndRefCodeAndStatusIn(
+                Task.Type.CLEANING,
+                unitCode,
+                List.of(Task.Status.TODO, Task.Status.IN_PROGRESS));
     }
 
     private java.util.List<TaskAssetDto> loadTaskAssets(Long unitId) {

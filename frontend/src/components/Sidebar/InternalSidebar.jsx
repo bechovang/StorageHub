@@ -39,6 +39,7 @@ const SIDEBAR_NAV_BY_ROLE = {
         { label: "Tổng quan cơ sở", href: "/facility", icon: Buildings },
         { label: "Danh mục kho", href: "/facility/units", icon: Package },
         { label: "Lịch phân ca", href: "/facility/shifts", icon: CalendarCheck },
+        { label: "Trả kho & Thanh lý", href: "/facility/checkouts", icon: ShieldCheck },
       ],
     },
     {

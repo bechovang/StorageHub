@@ -37,6 +37,7 @@ import java.util.List;
 public class CheckoutServiceImpl implements CheckoutService {
 
     private final CheckoutRequestRepository checkoutRequestRepository;
+    private final com.storagehub.repository.SettlementRepository settlementRepository;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final PolicyRuleRepository policyRuleRepository;
@@ -114,6 +115,12 @@ public class CheckoutServiceImpl implements CheckoutService {
         // 5. "Request mới thay request cũ — request cũ tự hủy"
         List<CheckoutRequest> pendingRequests = checkoutRequestRepository
                 .findByReservation_ReservationIdAndStatus(reservationId, CheckoutRequest.Status.PENDING);
+        boolean forcedByManager = pendingRequests.stream()
+                .anyMatch(r -> "VIOLATION".equalsIgnoreCase(r.getCheckoutType()));
+        if (forcedByManager) {
+            throw new ReservationInvalidStateException(
+                    "Quản lý đã buộc trả kho — khách không thể thay đổi yêu cầu này.");
+        }
         for (CheckoutRequest oldReq : pendingRequests) {
             oldReq.setStatus(CheckoutRequest.Status.CANCELLED);
             checkoutRequestRepository.save(oldReq);
@@ -134,6 +141,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         newReq.setRequestedDate(requestedDate);
         newReq.setTimeSlot(request.timeSlot());
         newReq.setStatus(CheckoutRequest.Status.PENDING);
+        newReq.setReason(request.reason());
         CheckoutRequest savedReq = checkoutRequestRepository.save(newReq);
 
         // 7. Chuyển trạng thái Reservation -> CHECKOUT_REQUESTED qua ReservationService (AD-6)
@@ -211,6 +219,12 @@ public class CheckoutServiceImpl implements CheckoutService {
         // 3. Chuyển các request PENDING thành CANCELLED
         List<CheckoutRequest> pendingRequests = checkoutRequestRepository
                 .findByReservation_ReservationIdAndStatus(reservationId, CheckoutRequest.Status.PENDING);
+        boolean forcedByManager = pendingRequests.stream()
+                .anyMatch(r -> "VIOLATION".equalsIgnoreCase(r.getCheckoutType()));
+        if (forcedByManager) {
+            throw new ReservationInvalidStateException(
+                    "Quản lý đã buộc trả kho — khách không thể hủy yêu cầu này.");
+        }
         for (CheckoutRequest req : pendingRequests) {
             req.setStatus(CheckoutRequest.Status.CANCELLED);
             checkoutRequestRepository.save(req);
@@ -277,13 +291,43 @@ public class CheckoutServiceImpl implements CheckoutService {
                 reservationId,
                 req.getRequestedDate(),
                 null,
-                null,
+                req.getReason(),
                 req.getStatus().name(),
                 req.getCreatedAt(),
                 reservation.getStatus().name(),
                 null,
                 null
         );
+    }
+
+    @Override
+    @Transactional
+    public com.storagehub.entity.Settlement createLiquidationSettlement(
+            Reservation reservation,
+            com.storagehub.entity.Contract contract,
+            User manager,
+            int lateDays,
+            java.math.BigDecimal lateFee,
+            String liquidationReason,
+            String note
+    ) {
+        if (settlementRepository.findByReservation_ReservationId(reservation.getReservationId()).isPresent()) {
+            throw new ReservationInvalidStateException("Đơn đã có biên bản tất toán/thanh lý.");
+        }
+        com.storagehub.entity.Settlement settlement = new com.storagehub.entity.Settlement();
+        settlement.setReservation(reservation);
+        settlement.setContract(contract);
+        settlement.setStaff(manager);
+        settlement.setDamageFee(java.math.BigDecimal.ZERO);
+        settlement.setDamageReason(null);
+        settlement.setLateDays(Math.max(0, lateDays));
+        settlement.setLateFee(lateFee != null ? lateFee : java.math.BigDecimal.ZERO);
+        settlement.setRefundAmount(java.math.BigDecimal.ZERO);
+        settlement.setSettlementType("LIQUIDATION");
+        settlement.setLiquidationReason(liquidationReason);
+        settlement.setNote(note);
+        settlement.setReceiptCode("TL-" + System.currentTimeMillis());
+        return settlementRepository.save(settlement);
     }
 
     private int getTurnoverBufferDays(Integer unitTypeId) {

@@ -21,4 +21,9 @@ public interface CheckoutRequestRepository extends JpaRepository<CheckoutRequest
             Long reservationId,
             CheckoutRequest.Status status
     );
+
+    java.util.Optional<CheckoutRequest> findFirstByReservation_ReservationIdAndCheckoutTypeOrderByCreatedAtDesc(
+            Long reservationId,
+            String checkoutType
+    );
 }

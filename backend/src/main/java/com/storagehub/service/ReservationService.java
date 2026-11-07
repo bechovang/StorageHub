@@ -49,6 +49,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -78,6 +79,7 @@ public class ReservationService {
     private final CheckoutRequestRepository checkoutRequestRepository;
     private final TaskService taskService;
     private final ExtensionService extensionService;
+    private final LateCheckoutService lateCheckoutService;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -327,6 +329,15 @@ public class ReservationService {
         return 1;
     }
 
+    /** Ngày đóng thực tế (nếu có) — tránh lỗi đơn trả trễ bị coi là available ngay. */
+    private LocalDate latestClosedDate(Reservation closed) {
+        LocalDate end = closed.getEndDate();
+        LocalDate closedAt = closed.getClosedAt() != null
+                ? closed.getClosedAt().toLocalDate()
+                : null;
+        return closedAt != null && closedAt.isAfter(end) ? closedAt : end;
+    }
+
     private boolean isUnitAvailable(
             Unit unit,
             LocalDate startDate,
@@ -339,10 +350,14 @@ public class ReservationService {
         }
 
         if (unit.getStatus() == Unit.Status.PREPARING) {
+            if (taskService.hasActiveCleaningTask(unit.getCode())) {
+                return false;
+            }
             List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
-            LocalDate readyDate = !closedList.isEmpty()
-                    ? closedList.get(0).getEndDate().plusDays(bufferDays)
-                    : today.plusDays(bufferDays);
+            LocalDate closedDate = !closedList.isEmpty()
+                    ? latestClosedDate(closedList.get(0))
+                    : today;
+            LocalDate readyDate = closedDate.plusDays(bufferDays);
             if (startDate.isBefore(readyDate)) {
                 return false;
             }
@@ -384,6 +399,10 @@ public class ReservationService {
         LocalDate today = LocalDate.now(ICT_ZONE);
         Reservation.Status effectiveStatus = resolveEffectiveStatus(reservation, today);
         String depositStatus = resolveDepositStatus(effectiveStatus);
+
+        lateCheckoutService.evaluate(reservation);
+        com.storagehub.dto.checkout.LateCheckoutInfo lateCheckout =
+                lateCheckoutService.info(reservation);
 
         Unit unit = reservation.getUnit();
 
@@ -507,7 +526,8 @@ public class ReservationService {
                         ? extensionService.latestAllowedCheckout(reservation)
                         : null,
                 pendingCheckout != null ? pendingCheckout.getRequestedDate() : null,
-                pendingCheckout != null ? pendingCheckout.getTimeSlot() : null
+                pendingCheckout != null ? pendingCheckout.getTimeSlot() : null,
+                lateCheckout
         );
     }
 
@@ -577,9 +597,12 @@ public class ReservationService {
         for (Unit candidate : similarCandidates) {
             LocalDate readyDate = today;
             if (candidate.getStatus() == Unit.Status.PREPARING) {
+                if (taskService.hasActiveCleaningTask(candidate.getCode())) {
+                    continue;
+                }
                 List<Reservation> closedList = reservationRepository.findLatestClosedReservations(candidate.getUnitId());
                 readyDate = !closedList.isEmpty()
-                        ? closedList.get(0).getEndDate().plusDays(bufferDays)
+                        ? latestClosedDate(closedList.get(0)).plusDays(bufferDays)
                         : today.plusDays(bufferDays);
             }
 
@@ -867,6 +890,33 @@ public class ReservationService {
                 Reservation.Status.CHECKED_IN.name(),
                 reason != null && !reason.isBlank() ? reason : "Khách hủy yêu cầu trả kho"
         );
+        return saved;
+    }
+
+    /** V42: đóng reservation do thanh lý — thu hồi access code, hủy request PENDING. */
+    @Transactional
+    public Reservation closeForLiquidation(User actor, Long reservationId, String reason) {
+        Reservation res = reservationRepository.findById(reservationId)
+                .orElseThrow(ReservationNotFoundException::new);
+        if (res.getStatus() == Reservation.Status.CLOSED) {
+            return res;
+        }
+        Reservation.Status prevStatus = res.getStatus();
+        res.setStatus(Reservation.Status.CLOSED);
+        res.setClosedAt(LocalDateTime.now(ICT_ZONE));
+        res.setAccessCode(null);
+        Reservation saved = reservationRepository.save(res);
+
+        checkoutRequestRepository.findByReservation_ReservationIdAndStatus(
+                        reservationId, com.storagehub.entity.CheckoutRequest.Status.PENDING)
+                .forEach(cr -> {
+                    cr.setStatus(com.storagehub.entity.CheckoutRequest.Status.CANCELLED);
+                    checkoutRequestRepository.save(cr);
+                });
+
+        logService.log(actor, "RESERVATION", saved.getReservationId(),
+                "LIQUIDATED", prevStatus.name(), "CLOSED",
+                reason != null && !reason.isBlank() ? reason : "Thanh lý hợp đồng");
         return saved;
     }
 

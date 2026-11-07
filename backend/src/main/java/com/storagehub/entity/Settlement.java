@@ -46,6 +46,21 @@ public class Settlement {
 
     private String damageReason;
 
+    /** Số ngày trễ tại thời điểm tất toán/thanh lý. */
+    private Integer lateDays;
+
+    /** Phí trễ = daysLate × dailyRent × LATE_FEE_PERCENT — VND DECIMAL(15,0). */
+    private BigDecimal lateFee;
+
+    /** NORMAL (checkout) / LIQUIDATION (thanh lý hợp đồng). */
+    private String settlementType;
+
+    /** OVERDUE / VIOLATION / OTHER — chỉ dùng khi LIQUIDATION. */
+    private String liquidationReason;
+
+    /** Ghi chú nghiệp vụ (vượt cọc, lý do thanh lý, …). */
+    private String note;
+
     /** Số tiền hoàn cọc — VND DECIMAL(15,0) (AD-7). */
     private BigDecimal refundAmount;
 

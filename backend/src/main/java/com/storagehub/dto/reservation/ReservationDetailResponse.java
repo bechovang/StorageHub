@@ -37,8 +37,36 @@ public record ReservationDetailResponse(
         LocalDate latestNewCheckout,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         LocalDate checkoutRequestedDate,
-        String checkoutTimeSlot
+        String checkoutTimeSlot,
+        com.storagehub.dto.checkout.LateCheckoutInfo lateCheckout
 ) {
+
+    /** Constructor cũ cho test/consumer chưa cần lateCheckout. */
+    public ReservationDetailResponse(
+            Long id,
+            String code,
+            Reservation.Status status,
+            ReservationUnitSummaryResponse unit,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long depositAmount,
+            String depositStatus,
+            Integer durationDays,
+            QuoteResponse quote,
+            LocalDate checkInDeadline,
+            String depositForfeitReason,
+            String accessCode,
+            List<PaymentRecordResponse> payments,
+            List<ContractChainItemResponse> contracts,
+            LocalDate latestNewCheckout,
+            LocalDate checkoutRequestedDate,
+            String checkoutTimeSlot
+    ) {
+        this(id, code, status, unit, startDate, endDate, depositAmount, depositStatus,
+                durationDays, quote, checkInDeadline, depositForfeitReason, accessCode,
+                payments, contracts, latestNewCheckout, checkoutRequestedDate,
+                checkoutTimeSlot, null);
+    }
 
     /**
      * US-8: bản tóm tắt tối giản trong PaymentResult sau khi thanh toán deposit.
@@ -83,6 +111,7 @@ public record ReservationDetailResponse(
                 payments.stream().map(PaymentRecordResponse::from).toList(),
                 List.of(),
                 latestNewCheckout,
+                null,
                 null,
                 null
         );

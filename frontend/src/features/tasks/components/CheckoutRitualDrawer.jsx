@@ -62,7 +62,11 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const settlementFileInputRef = useRef(null);
 
   const depositHeld = task?.depositAmount || 360000;
-  const totalCharges = charges.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+  const lateInfo = task?.lateCheckout || null;
+  const lateDays = Number(lateInfo?.daysLate || 0);
+  const lateFee = Number(lateInfo?.lateFee || 0);
+  const totalCharges =
+    charges.reduce((sum, c) => sum + (Number(c.amount) || 0), 0) + lateFee;
   const refundAmount = Math.max(0, depositHeld - totalCharges);
   const extraDue = Math.max(0, totalCharges - depositHeld);
 
@@ -110,6 +114,13 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   const handleConfirmCheckout = async () => {
+    if (lateInfo && !lateInfo.canSettle) {
+      showToast?.(
+        lateInfo.blockMessage || "Đơn đã quá hạn — chờ quản lý duyệt tất toán.",
+        "warning"
+      );
+      return;
+    }
     // Validate lý do phụ phí bắt buộc
     const invalid = charges.some((c) => !c.reason || !c.amount || c.amount <= 0);
     if (invalid) {
@@ -196,6 +207,19 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
         size="lg"
       >
         <div className="ritual-flow">
+          {lateInfo && !lateInfo.canSettle && (
+            <div className="ritual-step-card needs-attention" style={{ borderColor: "#fecaca", background: "#fef2f2" }}>
+              <div className="ritual-step-header">
+                <span className="ritual-step-title" style={{ color: "#b91c1c" }}>
+                  <WarningCircle size={18} weight="fill" />
+                  Chờ quản lý duyệt
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "#b91c1c" }}>
+                {lateInfo.blockMessage || "Đơn đã quá 3 ngày — không thể tất toán cho đến khi quản lý duyệt."}
+              </p>
+            </div>
+          )}
           {/* ── BƯỚC 1: KIỂM TRA HIỆN TRẠNG & THU HỒI TÀI SẢN ── */}
           <div className={`ritual-step-card ${isChecklistAllOk && assetsAllOk ? "is-completed" : "needs-attention"}`}>
             <div className="ritual-step-header">
@@ -429,10 +453,14 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 <div className="settlement-ledger-row text-muted">
                   <div className="settlement-ledger-label">
                     <span>3. Khấu trừ phí quá hạn hợp đồng</span>
-                    <small>Thời gian bàn giao đúng hẹn trong kỳ hạn hợp đồng</small>
+                    <small>
+                      {lateDays > 0
+                        ? `${lateDays} ngày × ${lateInfo?.lateFeePercent || 0}% giá thuê/ngày`
+                        : "Bàn giao đúng hạn"}
+                    </small>
                   </div>
-                  <div className="settlement-ledger-value font-mono text-muted">
-                    - 0 ₫
+                  <div className="settlement-ledger-value font-mono" style={{ color: lateFee > 0 ? "#dc2626" : undefined }}>
+                    - {formatVnd(lateFee)}
                   </div>
                 </div>
               </div>
@@ -448,7 +476,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                       : "ĐỐI SOÁT CÂN BẰNG (KHÔNG PHÁT SINH CHÊNH LỆCH):"}
                   </span>
                   <span className="settlement-summary-bar__formula font-mono">
-                    (Cọc {formatVnd(depositHeld)} - Hư hại {formatVnd(totalCharges)} - Quá hạn 0₫)
+                    (Cọc {formatVnd(depositHeld)} - Hư hại {formatVnd(totalCharges - lateFee)} - Quá hạn {formatVnd(lateFee)})
                   </span>
                 </div>
                 <div className="settlement-summary-bar__amount font-mono">
@@ -494,7 +522,6 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 </label>
               </div>
 
-              {/* VietQR / Chi tiết chuyển khoản */}
               {settlementMethod === "TRANSFER" && (
                 <div
                   style={{
@@ -502,42 +529,21 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                     padding: "10px",
                     background: "#f8fafc",
                     border: "1px solid #e2e8f0",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
+                    fontSize: "0.78rem",
+                    lineHeight: "1.5",
                   }}
                 >
-                  <div
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      background: "#ffffff",
-                      border: "1px solid #cbd5e1",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <QrCode size={48} color="#0f172a" />
+                  <div style={{ fontWeight: 700 }}>
+                    {extraDue > 0 ? "Thu thêm qua chuyển khoản thủ công" : "Hoàn cọc qua chuyển khoản thủ công"}
                   </div>
-                  <div style={{ fontSize: "0.76rem", lineHeight: "1.45" }}>
-                    {extraDue > 0 ? (
-                      <>
-                        <div style={{ fontWeight: 700, color: "#dc2626" }}>Khách quét VietQR nộp phụ phí</div>
-                        <div>STK: <strong>1028849929 (Vietcombank)</strong></div>
-                        <div>Số tiền: <strong>{formatVnd(extraDue)}</strong></div>
-                        <div>Nội dung: <strong>THU PHI {task?.refCode}</strong></div>
-                      </>
-                    ) : (
-                      <>
-                        <div style={{ fontWeight: 700, color: "#16a34a" }}>Chuyển khoản hoàn cọc cho khách</div>
-                        <div>Người nhận: <strong>{task?.customerName || "Khách hàng"}</strong></div>
-                        <div>Số tiền hoàn: <strong>{formatVnd(refundAmount)}</strong></div>
-                        <div>Nội dung: <strong>HOAN COC {task?.refCode}</strong></div>
-                      </>
-                    )}
+                  <div>
+                    {extraDue > 0
+                      ? `Số tiền cần thu: ${formatVnd(extraDue)}`
+                      : `Số tiền hoàn: ${formatVnd(refundAmount)}`}
                   </div>
+                  <small style={{ color: "#64748b" }}>
+                    Không tạo QR — staff chụp ảnh biên nhận/chứng từ chuyển khoản để đối soát.
+                  </small>
                 </div>
               )}
             </div>

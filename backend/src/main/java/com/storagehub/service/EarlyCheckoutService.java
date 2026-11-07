@@ -60,6 +60,9 @@ public class EarlyCheckoutService {
 
     @Transactional
     public Reservation forcedCheckout(User actor, Long reservationId, ForcedCheckoutRequest request) {
+        if (!isManager(actor)) {
+            throw new AccessDeniedException("Chỉ quản lý cơ sở mới được buộc trả kho.");
+        }
         Reservation reservation = reservationRepository.findWithDetailsById(reservationId)
                 .orElseThrow(() -> new ReservationNotFoundException("Reservation not found."));
 
@@ -74,12 +77,19 @@ public class EarlyCheckoutService {
             throw new BusinessRuleException("checkoutType phải là VIOLATION hoặc TRANSFER.");
         }
 
+        LocalDate today = LocalDate.now(ICT_ZONE);
+        LocalDate deadline = request.deadline() != null ? request.deadline() : today;
+        if (deadline.isBefore(today) || deadline.isAfter(today.plusDays(3))) {
+            throw new BusinessRuleException("Deadline buộc trả kho phải từ hôm nay đến tối đa +3 ngày.");
+        }
+
         // CheckoutRequest đánh dấu lý do cho Settlement sau này
         CheckoutRequest cr = new CheckoutRequest();
         cr.setReservation(reservation);
-        cr.setRequestedDate(LocalDate.now(ICT_ZONE));
+        cr.setRequestedDate(deadline);
         cr.setStatus(CheckoutRequest.Status.PENDING);
         cr.setCheckoutType(type);
+        cr.setReason(request.reason());
         checkoutRequestRepository.save(cr);
 
         reservation.setStatus(Reservation.Status.CHECKOUT_REQUESTED);
@@ -89,15 +99,12 @@ public class EarlyCheckoutService {
                 ? request.reason()
                 : (type.equals("VIOLATION") ? "Buộc trả kho do vi phạm chính sách" : "Đổi kho theo chỉ đạo quản lý");
 
+        taskService.createOrUpdateCheckoutTask(actor, reservation, deadline, null, note);
+
         logService.log(actor, "RESERVATION", reservation.getReservationId(),
                 "FORCED_CHECKOUT", "CHECKED_IN", "CHECKOUT_REQUESTED",
-                "[" + type + "] " + note);
-        if (type.equals("VIOLATION")) {
-            logService.log(actor, "RESERVATION", reservation.getReservationId(),
-                    "DEPOSIT_FORFEIT_MARKED", null, null,
-                    "Cọc sẽ bị mất khi tất toán do vi phạm chính sách.");
-        }
-        notificationService.notifyForcedCheckout(reservation, type, note);
+                "[" + type + "] " + note + " — deadline " + deadline);
+        notificationService.notifyForcedCheckout(reservation, type, note, deadline);
         return reservation;
     }
 
