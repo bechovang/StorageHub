@@ -5,7 +5,8 @@ Desktop.ini
 
 # ---- IDE ----
 .playwright-mcp/
-.agent/
+.agent/*
+!.agent/rules/
 .idea/
 *.iml
 .vscode/
