@@ -65,7 +65,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
         SELECT t FROM Task t
         LEFT JOIN FETCH t.assignedStaff s
         WHERE (:staffId IS NULL OR s.userId = :staffId)
-          AND s.facility.facilityId = :facilityId
+          AND (t.facility.facilityId = :facilityId OR s.facility.facilityId = :facilityId)
           AND (:workDate IS NULL OR t.workDate = :workDate)
           AND (:type IS NULL OR t.type = :type)
           AND (:status IS NULL OR t.status = :status)
@@ -77,6 +77,29 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             @Param("workDate") LocalDate workDate,
             @Param("type") Task.Type type,
             @Param("status") Task.Status status
+    );
+
+    /**
+     * Cột Done: lấy task theo NGÀY HOÀN TẤT (completed_at), không theo work_date.
+     * Staff/manager/admin dùng chung; facilityId NULL = admin xem tất cả.
+     */
+    @Query("""
+        SELECT t FROM Task t
+        LEFT JOIN FETCH t.assignedStaff s
+        LEFT JOIN FETCH t.completedBy cb
+        WHERE t.status = com.storagehub.entity.Task.Status.DONE
+          AND t.completedAt >= :start AND t.completedAt < :end
+          AND (:staffId IS NULL OR s.userId = :staffId)
+          AND (:facilityId IS NULL OR t.facility.facilityId = :facilityId OR s.facility.facilityId = :facilityId)
+          AND (:type IS NULL OR t.type = :type)
+        ORDER BY t.completedAt ASC
+    """)
+    List<Task> findDoneTasksCompletedBetween(
+            @Param("staffId") Long staffId,
+            @Param("facilityId") Integer facilityId,
+            @Param("start") java.time.LocalDateTime start,
+            @Param("end") java.time.LocalDateTime end,
+            @Param("type") Task.Type type
     );
 
     @Query("""

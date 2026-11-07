@@ -113,9 +113,18 @@ public class ReservationService {
 
                     Unit unit = r.getUnit();
                     ReservationUnitSummaryResponse unitSummary = new ReservationUnitSummaryResponse(
+                            unit.getUnitId(),
                             unit.getCode(),
+                            unit.getType() != null ? unit.getType().getName() : null,
                             unit.getSizeM2(),
-                            unit.getType() != null ? unit.getType().getName() : null
+                            unit.getFloor(),
+                            unit.getZone() != null ? unit.getZone().getCode() : null,
+                            unit.getZone() != null && unit.getZone().getFacility() != null
+                                    ? unit.getZone().getFacility().getName() : null,
+                            unit.getAccessType(),
+                            null,
+                            null,
+                            "/units/" + unit.getCode() + ".jpg"
                     );
 
                     Long depositAmount = r.getDepositAmount() != null ? r.getDepositAmount().longValue() : 0L;

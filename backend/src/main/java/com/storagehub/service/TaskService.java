@@ -80,6 +80,18 @@ public interface TaskService {
      */
     TaskResponse updateTaskStatus(String currentUserEmail, Long taskId, Task.Status newStatus);
 
+    /** Tiền thu tại quầy (CASH/BANK/POS) theo ca trong ngày — manager/admin. */
+    com.storagehub.dto.task.ShiftFinanceSummaryResponse getShiftFinanceSummary(
+            String currentUserEmail,
+            java.time.LocalDate workDate
+    );
+
+    /**
+     * Staff/manager tiếp nhận ticket SUPPORT: gán task cho actor, đưa về
+     * IN_PROGRESS, cập nhật workDate/shift hiện tại và ghi activity log.
+     */
+    TaskResponse acceptSupportTask(User actor, String ticketCode);
+
     /**
      * Tự động sinh task phân cho staff đang trực ca và phụ trách Zone chứa Unit (FR-21).
      * Không hỗ trợ giao task thủ công.

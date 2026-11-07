@@ -67,8 +67,9 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const lateFee = Number(lateInfo?.lateFee || 0);
   const totalCharges =
     charges.reduce((sum, c) => sum + (Number(c.amount) || 0), 0) + lateFee;
-  const refundAmount = Math.max(0, depositHeld - totalCharges);
-  const extraDue = Math.max(0, totalCharges - depositHeld);
+  const faultRent = task?.faultRefund ? Number(task?.rentPaid || 0) : 0;
+  const refundAmount = Math.max(0, depositHeld + faultRent - totalCharges);
+  const extraDue = Math.max(0, totalCharges - depositHeld - faultRent);
 
   const isChecklistAllOk = Object.values(checklist).every((val) => val === "OK");
   const assetsAllChecked = assets.every((asset) => Boolean(assetChecks[String(asset.assetId)]));
@@ -440,13 +441,25 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                   </div>
                 </div>
 
+                {faultRent > 0 && (
+                  <div className="settlement-ledger-row">
+                    <div className="settlement-ledger-label">
+                      <span>Tiền thuê hoàn do lỗi kho</span>
+                      <small>Tất toán theo chỉ đạo Quản lý — hoàn cọc + tiền thuê đã thu</small>
+                    </div>
+                    <div className="settlement-ledger-value font-mono">
+                      + {formatVnd(faultRent)}
+                    </div>
+                  </div>
+                )}
+
                 <div className="settlement-ledger-row" style={{ color: "#dc2626" }}>
                   <div className="settlement-ledger-label">
                     <span style={{ color: "#dc2626" }}>2. Khấu trừ bồi thường hư hại ({charges.length} hạng mục)</span>
                     <small>{charges.length > 0 ? "Chi tiết kê khai theo biên bản kiểm tra" : "Hiện trạng nguyên vẹn, không phát sinh bồi thường"}</small>
                   </div>
                   <div className="settlement-ledger-value font-mono" style={{ color: "#dc2626" }}>
-                    - {formatVnd(totalCharges)}
+                    - {formatVnd(totalCharges - lateFee)}
                   </div>
                 </div>
 
@@ -476,7 +489,9 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
                       : "ĐỐI SOÁT CÂN BẰNG (KHÔNG PHÁT SINH CHÊNH LỆCH):"}
                   </span>
                   <span className="settlement-summary-bar__formula font-mono">
-                    (Cọc {formatVnd(depositHeld)} - Hư hại {formatVnd(totalCharges - lateFee)} - Quá hạn {formatVnd(lateFee)})
+                    (Cọc {formatVnd(depositHeld)}
+                    {faultRent > 0 ? ` + Thuê ${formatVnd(faultRent)}` : ""}
+                    {" "}- Hư hại {formatVnd(totalCharges - lateFee)} - Quá hạn {formatVnd(lateFee)})
                   </span>
                 </div>
                 <div className="settlement-summary-bar__amount font-mono">

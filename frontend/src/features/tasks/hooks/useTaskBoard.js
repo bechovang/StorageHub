@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   getStaffTasks,
+  getShiftFinanceSummary,
   updateTaskStatus,
   checkSnapBackViolation,
 } from "../../../services/taskService.js";
 
-export function useTaskBoard({ staffId } = {}) {
+export function useTaskBoard({ staffId, withFinance = false } = {}) {
   const [tasks, setTasks] = useState([]);
+  const [financeSummary, setFinanceSummary] = useState(null);
   const [activeTab, setActiveTab] = useState("ALL");
   const [loading, setLoading] = useState(true);
 
@@ -34,12 +36,18 @@ export function useTaskBoard({ staffId } = {}) {
 
   const reloadTasks = useCallback(async () => {
     try {
-      const data = await getStaffTasks(staffId);
+      const [data, finance] = await Promise.all([
+        getStaffTasks(staffId),
+        withFinance
+          ? getShiftFinanceSummary().catch(() => null)
+          : Promise.resolve(null),
+      ]);
       setTasks(data);
+      setFinanceSummary(finance);
     } catch (err) {
       console.error("Failed to fetch staff tasks:", err);
     }
-  }, [staffId]);
+  }, [staffId, withFinance]);
 
   // Auto-dismiss Snap-back toast notification sau 4.5s
   useEffect(() => {
@@ -53,10 +61,16 @@ export function useTaskBoard({ staffId } = {}) {
   useEffect(() => {
     let ignore = false;
     setLoading(true);
-    getStaffTasks(staffId)
-      .then((data) => {
+    Promise.all([
+      getStaffTasks(staffId),
+      withFinance
+        ? getShiftFinanceSummary().catch(() => null)
+        : Promise.resolve(null),
+    ])
+      .then(([data, finance]) => {
         if (!ignore) {
           setTasks(data);
+          setFinanceSummary(finance);
           setLoading(false);
         }
       })
@@ -68,7 +82,7 @@ export function useTaskBoard({ staffId } = {}) {
     return () => {
       ignore = true;
     };
-  }, [staffId]);
+  }, [staffId, withFinance]);
 
   // Khách có thể đặt kho trong lúc staff đang mở board — tự làm mới khi tab
   // được focus lại hoặc mỗi 20s, để task mới xuất hiện mà không cần F5.
@@ -175,6 +189,7 @@ export function useTaskBoard({ staffId } = {}) {
   return {
     tasks,
     setTasks,
+    financeSummary,
     activeTab,
     setActiveTab,
     loading,

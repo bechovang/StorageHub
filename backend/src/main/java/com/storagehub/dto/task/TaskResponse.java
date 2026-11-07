@@ -33,7 +33,9 @@ public record TaskResponse(
         List<TaskAssetDto> assets,
         Boolean paymentRequired,
         Long extensionRent,
-        com.storagehub.dto.checkout.LateCheckoutInfo lateCheckout
+        com.storagehub.dto.checkout.LateCheckoutInfo lateCheckout,
+        Boolean faultRefund,
+        Long rentPaid
 ) {
     public TaskResponse(
             Long taskId,
@@ -61,7 +63,8 @@ public record TaskResponse(
         this(taskId, type, refCode, unitCode, customerName, customerPhone, dueTime,
                 status, workDate, shift, accessPin, rentAmount, depositPaid, priority,
                 issueDescription, alertNote, assignedStaff, ritual, paymentProofPhotoUrl,
-                contractPhotoUrl, settlementPhotoUrl, null, null, null, null);
+                contractPhotoUrl, settlementPhotoUrl, null, null, null, null,
+                null, null);
     }
 
     /** Constructor cũ cho test/consumer chưa cần ảnh ritual. */
@@ -88,6 +91,6 @@ public record TaskResponse(
         this(taskId, type, refCode, unitCode, customerName, customerPhone, dueTime,
                 status, workDate, shift, accessPin, rentAmount, depositPaid, priority,
                 issueDescription, alertNote, assignedStaff, ritual, null, null, null, null,
-                null, null, null);
+                null, null, null, null, null);
     }
 }

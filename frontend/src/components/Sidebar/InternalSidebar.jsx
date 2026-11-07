@@ -45,6 +45,7 @@ const SIDEBAR_NAV_BY_ROLE = {
     {
       groupTitle: "GIÁM SÁT & HỖ TRỢ",
       items: [
+        { label: "Bảng công việc", href: "/tasks", icon: Kanban },
         { label: "Hỗ trợ sự cố", href: "/support", icon: Lifebuoy },
         { label: "Nhật ký hoạt động", href: "/facility/activity", icon: ClockCounterClockwise },
       ],
@@ -85,6 +86,7 @@ const SIDEBAR_NAV_BY_ROLE = {
     {
       groupTitle: "CHẾ ĐỘ XEM",
       items: [
+        { label: "Bảng công việc", href: "/tasks", icon: Kanban },
         { label: "Trang khách hàng", href: "/browse", icon: ArrowSquareOut },
       ],
     },

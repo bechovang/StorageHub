@@ -52,6 +52,20 @@ public class TaskController {
     }
 
     /**
+     * Tiền thu tại quầy (CASH/BANK/POS) theo ca trong ngày — manager/admin.
+     * Dùng cho cột Done của Task Board.
+     */
+    @GetMapping("/shift-summary")
+    public ResponseEntity<com.storagehub.dto.task.ShiftFinanceSummaryResponse> getShiftFinanceSummary(
+            @RequestParam(name = "workDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
+            Authentication authentication
+    ) {
+        String email = authentication != null ? authentication.getName() : "";
+        return ResponseEntity.ok(taskService.getShiftFinanceSummary(email, workDate));
+    }
+
+    /**
      * Chi tiết 1 nhiệm vụ.
      */
     @GetMapping("/{taskId}")

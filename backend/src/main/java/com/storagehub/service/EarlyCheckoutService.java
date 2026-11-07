@@ -73,8 +73,8 @@ public class EarlyCheckoutService {
         }
 
         String type = request.checkoutType().trim().toUpperCase(Locale.ROOT);
-        if (!type.equals("VIOLATION") && !type.equals("TRANSFER")) {
-            throw new BusinessRuleException("checkoutType phải là VIOLATION hoặc TRANSFER.");
+        if (!type.equals("VIOLATION") && !type.equals("TRANSFER") && !type.equals("FAULT_REFUND")) {
+            throw new BusinessRuleException("checkoutType phải là VIOLATION, TRANSFER hoặc FAULT_REFUND.");
         }
 
         LocalDate today = LocalDate.now(ICT_ZONE);
@@ -97,7 +97,11 @@ public class EarlyCheckoutService {
 
         String note = request.reason() != null && !request.reason().isBlank()
                 ? request.reason()
-                : (type.equals("VIOLATION") ? "Buộc trả kho do vi phạm chính sách" : "Đổi kho theo chỉ đạo quản lý");
+                : switch (type) {
+                    case "VIOLATION" -> "Buộc trả kho do vi phạm chính sách";
+                    case "FAULT_REFUND" -> "Hoàn cọc + tiền thuê do lỗi kho";
+                    default -> "Đổi kho theo chỉ đạo quản lý";
+                };
 
         taskService.createOrUpdateCheckoutTask(actor, reservation, deadline, null, note);
 

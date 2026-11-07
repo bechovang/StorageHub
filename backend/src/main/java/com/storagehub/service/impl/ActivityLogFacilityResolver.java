@@ -89,9 +89,10 @@ public class ActivityLogFacilityResolver {
                     WHERE t.ticket_id = ?
                     """;
             case "TASK" -> """
-                    SELECT facility_id
-                    FROM tasks
-                    WHERE task_id = ?
+                    SELECT COALESCE(t.facility_id, u.facility_id)
+                    FROM tasks t
+                    LEFT JOIN users u ON u.user_id = t.assigned_staff_id
+                    WHERE t.task_id = ?
                     """;
             case "STAFF_ASSIGNMENT" -> """
                     SELECT u.facility_id

@@ -22,10 +22,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -111,6 +117,17 @@ public class TaskServiceImpl implements TaskService {
         return LocalDate.now(clock.withZone(ICT_ZONE));
     }
 
+    /** Ghi nhận hoàn tất một lần: status + completed_at + completed_by. */
+    private void markDone(Task task, User actor) {
+        task.setStatus(Task.Status.DONE);
+        if (task.getCompletedAt() == null) {
+            task.setCompletedAt(LocalDateTime.now(clock.withZone(ICT_ZONE)));
+        }
+        if (task.getCompletedBy() == null && actor != null) {
+            task.setCompletedBy(actor);
+        }
+    }
+
     private StaffAssignment.Shift getCurrentShift() {
         LocalTime now = LocalTime.now(clock.withZone(ICT_ZONE));
         if (!now.isBefore(LocalTime.of(7, 0)) && now.isBefore(LocalTime.of(15, 0))) {
@@ -145,47 +162,61 @@ public class TaskServiceImpl implements TaskService {
         expireDueTasks();
         carryOverStaleTasks();
 
-        boolean isDefaultDate = (workDate == null);
-        LocalDate targetDate = isDefaultDate ? getToday() : workDate;
+        LocalDate targetDate = (workDate != null) ? workDate : getToday();
         StaffAssignment.Shift targetShift = (shift != null) ? shift : getCurrentShift();
+        boolean includeDone = status == null || status == Task.Status.DONE;
+        Task.Status openStatus = (status != null && status != Task.Status.DONE) ? status : null;
 
-        List<Task> tasks;
-        if (roleName == Role.Name.STAFF) {
-            tasks = taskRepository.findFilteredTasks(currentUser.getUserId(), targetDate, type, status);
-            if (tasks.isEmpty() && isDefaultDate) {
-                tasks = taskRepository.findStaffTasks(currentUser.getUserId(), type, status);
-            }
-            if (currentUser.getFacility() != null) {
-                tasks = java.util.stream.Stream.concat(
-                                tasks.stream(),
-                                taskRepository.findUnassignedPoolForFacility(
-                                        currentUser.getFacility().getFacilityId(),
-                                        targetDate, type, status).stream())
-                        .toList();
-            }
-        } else if (roleName == Role.Name.FACILITY_MANAGER
-                && currentUser.getFacility() != null) {
-            Integer facilityId = currentUser.getFacility().getFacilityId();
-            tasks = taskRepository.findFilteredTasksByFacility(
-                    staffId, facilityId, targetDate, type, status);
-            if (tasks.isEmpty() && isDefaultDate) {
-                tasks = taskRepository.findFilteredTasksByFacility(
-                        staffId, facilityId, null, type, status);
-            }
-            tasks = java.util.stream.Stream.concat(
-                            tasks.stream(),
-                            taskRepository.findUnassignedPoolForFacility(
-                                    facilityId, targetDate, type, status).stream())
-                    .toList();
-        } else {
-            // System Admin: xem toàn bộ hoặc lọc theo 1 staff.
-            tasks = taskRepository.findFilteredTasks(staffId, targetDate, type, status);
-            if (tasks.isEmpty() && isDefaultDate) {
-                tasks = taskRepository.findFilteredTasks(staffId, null, type, status);
+        List<Task> tasks = new ArrayList<>();
+        if (status != Task.Status.DONE) {
+            if (roleName == Role.Name.STAFF) {
+                tasks.addAll(taskRepository.findFilteredTasks(
+                        currentUser.getUserId(), targetDate, type, openStatus));
+                if (currentUser.getFacility() != null) {
+                    tasks.addAll(taskRepository.findUnassignedPoolForFacility(
+                            currentUser.getFacility().getFacilityId(),
+                            targetDate, type, openStatus));
+                }
+            } else if (roleName == Role.Name.FACILITY_MANAGER
+                    && currentUser.getFacility() != null) {
+                Integer facilityId = currentUser.getFacility().getFacilityId();
+                tasks.addAll(taskRepository.findFilteredTasksByFacility(
+                        staffId, facilityId, targetDate, type, openStatus));
+                tasks.addAll(taskRepository.findUnassignedPoolForFacility(
+                        facilityId, targetDate, type, openStatus));
+            } else {
+                // System Admin: xem toàn bộ hoặc lọc theo 1 staff.
+                tasks.addAll(taskRepository.findFilteredTasks(
+                        staffId, targetDate, type, openStatus));
             }
         }
 
-        return tasks.stream()
+        // DONE lấy theo completed_at, không theo work_date — task check-in sớm
+        // hoặc hoàn tất qua ngày vẫn nằm đúng cột Done của ngày hoàn tất.
+        if (includeDone) {
+            tasks.removeIf(t -> t.getStatus() == Task.Status.DONE);
+            Integer doneFacilityId = (roleName == Role.Name.FACILITY_MANAGER
+                    && currentUser.getFacility() != null)
+                    ? currentUser.getFacility().getFacilityId()
+                    : null;
+            Long doneStaffId = roleName == Role.Name.STAFF ? currentUser.getUserId() : staffId;
+            LocalDateTime startUtc = LocalDateTime.ofInstant(
+                    targetDate.atStartOfDay(ICT_ZONE).toInstant(), ZoneOffset.UTC);
+            LocalDateTime endUtc = LocalDateTime.ofInstant(
+                    targetDate.plusDays(1).atStartOfDay(ICT_ZONE).toInstant(), ZoneOffset.UTC);
+            tasks.addAll(taskRepository.findDoneTasksCompletedBetween(
+                    doneStaffId, doneFacilityId, startUtc, endUtc, type));
+        }
+
+        // Dedupe taskId (manager main query + pool có thể trùng task hôm nay).
+        Map<Long, Task> unique = new LinkedHashMap<>();
+        for (Task task : tasks) {
+            if (task.getTaskId() != null) {
+                unique.putIfAbsent(task.getTaskId(), task);
+            }
+        }
+
+        return unique.values().stream()
                 .map(t -> toTaskResponse(t, targetShift, null, null, null, null))
                 .toList();
     }
@@ -224,8 +255,22 @@ public class TaskServiceImpl implements TaskService {
                 }
                 task.setAssignedStaff(currentUser);
                 task.setClaimedAt(java.time.LocalDateTime.now(clock.withZone(ICT_ZONE)));
+                // Bám đúng ca/ngày người nhận — tránh carryOverStaleTasks bàn
+                // giao ngay sau khi bấm "Nhận việc".
+                task.setWorkDate(getToday());
+                task.setShift(getCurrentShift());
             } else if (!currentUser.getUserId().equals(task.getAssignedStaff().getUserId())) {
                 throw new AccessDeniedException("Nhiệm vụ chưa được bạn nhận hoặc không được phân công.");
+            }
+            // Bắt đầu xử lý task đã được gán sẵn: bám ca/ngày hiện tại và
+            // đánh dấu claimed để carryOverStaleTasks không bàn giao ngay.
+            if (task.getStatus() == Task.Status.TODO
+                    && newStatus == Task.Status.IN_PROGRESS) {
+                task.setWorkDate(getToday());
+                task.setShift(getCurrentShift());
+                if (task.getClaimedAt() == null) {
+                    task.setClaimedAt(LocalDateTime.now(clock.withZone(ICT_ZONE)));
+                }
             }
         }
 
@@ -248,7 +293,11 @@ public class TaskServiceImpl implements TaskService {
         }
 
         Task.Status oldStatus = task.getStatus();
-        task.setStatus(newStatus);
+        if (newStatus == Task.Status.DONE) {
+            markDone(task, currentUser);
+        } else {
+            task.setStatus(newStatus);
+        }
         Task saved = taskRepository.save(task);
 
         if (newStatus == Task.Status.DONE && task.getType() == Task.Type.CLEANING) {
@@ -264,17 +313,182 @@ public class TaskServiceImpl implements TaskService {
             resolveSupportTicketByTask(currentUser, task.getRefCode());
         }
 
+        String action;
+        String reason;
+        if (oldStatus == Task.Status.TODO && newStatus == Task.Status.IN_PROGRESS) {
+            action = "TASK_CLAIMED";
+            reason = "Nhận việc task kanban: " + task.getType() + " · " + task.getRefCode();
+        } else if (oldStatus == Task.Status.IN_PROGRESS && newStatus == Task.Status.TODO) {
+            action = "TASK_BACK";
+            reason = "Trả task về Chờ xử lý: " + task.getType() + " · " + task.getRefCode();
+        } else if (newStatus == Task.Status.DONE) {
+            action = "TASK_DONE";
+            reason = "Hoàn tất task kanban: " + task.getType() + " · " + task.getRefCode();
+        } else {
+            action = "STATUS_CHANGE";
+            reason = "Chuyển trạng thái task kanban: " + oldStatus + " -> " + newStatus;
+        }
         logService.log(
                 currentUser,
                 "TASK",
                 task.getTaskId(),
-                "STATUS_CHANGE",
+                action,
                 oldStatus.name(),
                 newStatus.name(),
-                "Chuyển trạng thái task kanban: " + oldStatus + " -> " + newStatus
+                reason
         );
 
         return toTaskResponse(saved, getCurrentShift(), null, null, null, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.storagehub.dto.task.ShiftFinanceSummaryResponse getShiftFinanceSummary(
+            String currentUserEmail,
+            LocalDate workDate
+    ) {
+        User actor = userRepository.findByEmailIgnoreCase(currentUserEmail)
+                .orElseThrow(() -> new AccessDeniedException("Người dùng không tồn tại"));
+        Role.Name role = actor.getRole() != null ? actor.getRole().getName() : null;
+        if (role != Role.Name.FACILITY_MANAGER && role != Role.Name.SYSTEM_ADMIN) {
+            throw new AccessDeniedException("Chỉ quản lý cơ sở hoặc quản trị hệ thống mới xem được tiền thu ca.");
+        }
+
+        LocalDate date = workDate != null ? workDate : getToday();
+        Integer facilityId = role == Role.Name.FACILITY_MANAGER && actor.getFacility() != null
+                ? actor.getFacility().getFacilityId()
+                : null;
+
+        LocalDateTime startUtc = LocalDateTime.ofInstant(
+                date.atStartOfDay(ICT_ZONE).toInstant(), ZoneOffset.UTC);
+        LocalDateTime endUtc = LocalDateTime.ofInstant(
+                date.plusDays(1).atStartOfDay(ICT_ZONE).toInstant(), ZoneOffset.UTC);
+
+        Map<StaffAssignment.Shift, long[]> buckets = new LinkedHashMap<>();
+        for (StaffAssignment.Shift shift : List.of(
+                StaffAssignment.Shift.MORNING,
+                StaffAssignment.Shift.AFTERNOON,
+                StaffAssignment.Shift.EVENING)) {
+            buckets.put(shift, new long[]{0L, 0L});
+        }
+
+        for (Payment payment : paymentRepository.findByStatusAndCreatedAtBetween(
+                Payment.Status.SUCCEEDED, startUtc, endUtc)) {
+            if (!isCounterMethod(payment.getMethod()) || !isCollectablePurpose(payment.getPurpose())) {
+                continue;
+            }
+            if (facilityId != null && !facilityId.equals(facilityIdOfPayment(payment))) {
+                continue;
+            }
+            StaffAssignment.Shift shift = shiftOf(payment.getCreatedAt());
+            buckets.get(shift)[0] += payment.getAmount() != null ? payment.getAmount().longValue() : 0L;
+        }
+
+        for (Settlement settlement : settlementRepository.findByCreatedAtBetween(startUtc, endUtc)) {
+            if (facilityId != null && !facilityId.equals(facilityIdOfSettlement(settlement))) {
+                continue;
+            }
+            long refund = settlement.getRefundAmount() != null
+                    ? settlement.getRefundAmount().longValue() : 0L;
+            if (refund <= 0) {
+                continue;
+            }
+            StaffAssignment.Shift shift = shiftOf(settlement.getCreatedAt());
+            buckets.get(shift)[1] += refund;
+        }
+
+        List<com.storagehub.dto.task.ShiftFinanceBucketResponse> shifts = new ArrayList<>();
+        long totalCollected = 0L;
+        long totalRefunded = 0L;
+        for (Map.Entry<StaffAssignment.Shift, long[]> entry : buckets.entrySet()) {
+            long collected = entry.getValue()[0];
+            long refunded = entry.getValue()[1];
+            totalCollected += collected;
+            totalRefunded += refunded;
+            shifts.add(new com.storagehub.dto.task.ShiftFinanceBucketResponse(
+                    entry.getKey(), collected, refunded));
+        }
+
+        return new com.storagehub.dto.task.ShiftFinanceSummaryResponse(
+                date, totalCollected, totalRefunded, shifts);
+    }
+
+    @Override
+    public TaskResponse acceptSupportTask(User actor, String ticketCode) {
+        if (actor == null || ticketCode == null || ticketCode.isBlank()) {
+            return null;
+        }
+        Task task = taskRepository
+                .findFirstByTypeAndRefCodeOrderByCreatedAtDesc(Task.Type.SUPPORT, ticketCode)
+                .orElse(null);
+        if (task == null) {
+            return null;
+        }
+        Task.Status oldStatus = task.getStatus();
+        if (oldStatus == Task.Status.DONE) {
+            task.setCompletedAt(null);
+            task.setCompletedBy(null);
+        }
+        task.setAssignedStaff(actor);
+        task.setStatus(Task.Status.IN_PROGRESS);
+        task.setWorkDate(getToday());
+        task.setShift(getCurrentShift());
+        task.setClaimedAt(LocalDateTime.now(clock.withZone(ICT_ZONE)));
+        Task saved = taskRepository.save(task);
+        logService.log(actor, "TASK", saved.getTaskId(), "TASK_CLAIMED",
+                oldStatus != null ? oldStatus.name() : null,
+                Task.Status.IN_PROGRESS.name(),
+                "Tiếp nhận ticket " + ticketCode);
+        return toTaskResponse(saved, getCurrentShift(), null, null, null, null);
+    }
+
+    private boolean isCounterMethod(Payment.Method method) {
+        return method == Payment.Method.CASH
+                || method == Payment.Method.BANK
+                || method == Payment.Method.POS;
+    }
+
+    private boolean isCollectablePurpose(Payment.Purpose purpose) {
+        return switch (purpose) {
+            case RENT, CHECKIN_LATE_FEE, EXTRA_FEE, DAMAGE_FEE,
+                 EXTENSION_RENT, EXTENSION_FEE -> true;
+            default -> false;
+        };
+    }
+
+    private StaffAssignment.Shift shiftOf(LocalDateTime utcTime) {
+        if (utcTime == null) {
+            return StaffAssignment.Shift.EVENING;
+        }
+        LocalTime ict = utcTime.atZone(ZoneOffset.UTC)
+                .withZoneSameInstant(ICT_ZONE)
+                .toLocalTime();
+        if (!ict.isBefore(LocalTime.of(7, 0)) && ict.isBefore(LocalTime.of(15, 0))) {
+            return StaffAssignment.Shift.MORNING;
+        }
+        if (!ict.isBefore(LocalTime.of(15, 0)) && ict.isBefore(LocalTime.of(23, 0))) {
+            return StaffAssignment.Shift.AFTERNOON;
+        }
+        return StaffAssignment.Shift.EVENING;
+    }
+
+    private Integer facilityIdOfPayment(Payment payment) {
+        if (payment.getReservation() != null) {
+            return facilityIdOf(payment.getReservation().getUnit());
+        }
+        if (payment.getExtension() != null && payment.getExtension().getReservation() != null) {
+            return facilityIdOf(payment.getExtension().getReservation().getUnit());
+        }
+        if (payment.getSettlement() != null && payment.getSettlement().getReservation() != null) {
+            return facilityIdOf(payment.getSettlement().getReservation().getUnit());
+        }
+        return null;
+    }
+
+    private Integer facilityIdOfSettlement(Settlement settlement) {
+        return settlement.getReservation() != null
+                ? facilityIdOf(settlement.getReservation().getUnit())
+                : null;
     }
 
     @Override
@@ -394,7 +608,7 @@ public class TaskServiceImpl implements TaskService {
         }
         supportTicketRepository.save(ticket);
 
-        task.setStatus(Task.Status.DONE);
+        markDone(task, currentUser);
         Task saved = taskRepository.save(task);
 
         notificationService.notifyTicketStatusChanged(ticket, oldStatus);
@@ -530,7 +744,7 @@ public class TaskServiceImpl implements TaskService {
                 }
             }
 
-            task.setStatus(Task.Status.DONE);
+            markDone(task, task.getAssignedStaff());
             String oldNote = task.getNote();
             task.setNote(oldNote == null || oldNote.isBlank() ? note : oldNote + " | " + note);
             Task saved = taskRepository.save(task);
@@ -545,6 +759,12 @@ public class TaskServiceImpl implements TaskService {
         for (Task task : taskRepository.findOpenTasksWithStaff()) {
             if (task.getShift() == null || task.getWorkDate() == null
                     || task.getWorkDate().isAfter(today)) {
+                continue;
+            }
+            // Người đã chủ động nhận việc trong hôm nay thì giữ task cho họ
+            // hết ngày — không tự bàn giao ngay sau thao tác "Nhận việc".
+            if (task.getClaimedAt() != null
+                    && task.getClaimedAt().toLocalDate().equals(today)) {
                 continue;
             }
             LocalDate targetDate = today;
@@ -851,6 +1071,8 @@ public class TaskServiceImpl implements TaskService {
         Long depositPaid = null;
         Boolean paymentRequired = Boolean.FALSE;
         Long extensionRent = null;
+        Boolean faultRefund = null;
+        Long rentPaid = null;
         String priority = customPriority;
         String issueDesc = customIssueDesc;
         String alertNote = customAlertNote;
@@ -899,6 +1121,15 @@ public class TaskServiceImpl implements TaskService {
                         checkoutUnitId = res.getUnit().getUnitId();
                         lateCheckoutService.evaluate(res);
                         lateInfo = lateCheckoutService.info(res);
+                        var pendingCr = checkoutRequestRepository
+                                .findFirstByReservation_ReservationIdAndStatusOrderByCreatedAtDesc(
+                                        res.getReservationId(), CheckoutRequest.Status.PENDING)
+                                .orElse(null);
+                        faultRefund = pendingCr != null
+                                && "FAULT_REFUND".equalsIgnoreCase(pendingCr.getCheckoutType());
+                        if (Boolean.TRUE.equals(faultRefund)) {
+                            rentPaid = rentPaidFor(res);
+                        }
                     }
                 }
                 ritual = new TaskRitualDto(
@@ -1022,8 +1253,34 @@ public class TaskServiceImpl implements TaskService {
                 assets,
                 paymentRequired,
                 extensionRent,
-                lateInfo
+                lateInfo,
+                faultRefund,
+                rentPaid
         );
+    }
+
+    /** Tổng tiền thuê đã thu của reservation (RENT + rent gia hạn). */
+    private long rentPaidFor(Reservation reservation) {
+        long total = 0L;
+        for (Payment payment : paymentRepository.findByReservation_ReservationId(
+                reservation.getReservationId())) {
+            if (payment.getStatus() == Payment.Status.SUCCEEDED
+                    && payment.getPurpose() == Payment.Purpose.RENT) {
+                total += payment.getAmount() != null ? payment.getAmount().longValue() : 0L;
+            }
+        }
+        for (Extension extension : extensionRepository.findByReservation_ReservationId(
+                reservation.getReservationId())) {
+            for (Payment payment : paymentRepository.findByExtension_ExtensionId(
+                    extension.getExtensionId())) {
+                if (payment.getStatus() == Payment.Status.SUCCEEDED
+                        && (payment.getPurpose() == Payment.Purpose.EXTENSION_RENT
+                            || payment.getPurpose() == Payment.Purpose.EXTENSION_FEE)) {
+                    total += payment.getAmount() != null ? payment.getAmount().longValue() : 0L;
+                }
+            }
+        }
+        return total;
     }
 
     @Override
@@ -1216,7 +1473,7 @@ public class TaskServiceImpl implements TaskService {
                     staff, contract.getReservation(), request.contractPhotoUrl());
         }
 
-        task.setStatus(Task.Status.DONE);
+        markDone(task, staff);
         task.setContractPhoto(request.contractPhotoUrl());
         if (request.paymentProofPhoto() != null) {
             task.setPaymentProofPhoto(request.paymentProofPhoto());
@@ -1304,10 +1561,17 @@ public class TaskServiceImpl implements TaskService {
         long depositHeld = reservation.getDepositAmount() != null
                 ? reservation.getDepositAmount().longValue()
                 : 0L;
+        boolean faultRefund = checkoutRequestRepository
+                .findFirstByReservation_ReservationIdAndStatusOrderByCreatedAtDesc(
+                        reservation.getReservationId(),
+                        com.storagehub.entity.CheckoutRequest.Status.PENDING)
+                .map(cr -> "FAULT_REFUND".equalsIgnoreCase(cr.getCheckoutType()))
+                .orElse(false);
+        long rentPaid = faultRefund ? rentPaidFor(reservation) : 0L;
         long lateDays = lateInfo.daysLate();
         long lateFee = lateInfo.lateFee();
-        long refundAmount = Math.max(0, depositHeld - damageFee - lateFee);
-        long extraCharged = Math.max(0, damageFee + lateFee - depositHeld);
+        long refundAmount = Math.max(0, depositHeld + rentPaid - damageFee - lateFee);
+        long extraCharged = Math.max(0, damageFee + lateFee - depositHeld - rentPaid);
 
         // 3. Settlement — biên bản tất toán (server-authoritative amounts)
         var method = switch (request.settlementMethod().toUpperCase()) {
@@ -1325,11 +1589,14 @@ public class TaskServiceImpl implements TaskService {
         settlement.setDamageReason(damageReason);
         settlement.setLateDays((int) lateDays);
         settlement.setLateFee(java.math.BigDecimal.valueOf(lateFee));
-        settlement.setSettlementType("NORMAL");
+        settlement.setSettlementType(faultRefund ? "FAULT_REFUND" : "NORMAL");
         settlement.setRefundAmount(java.math.BigDecimal.valueOf(refundAmount));
         settlement.setReceiptCode("TL-" + System.currentTimeMillis());
-        settlement.setNote("Cọc " + depositHeld + " ₫; hư hại " + damageFee
-                + " ₫; trễ " + lateDays + " ngày × " + lateInfo.lateFeePercent() + "% = " + lateFee
+        settlement.setNote((faultRefund ? "Hoàn do lỗi kho — " : "")
+                + "Cọc " + depositHeld + " ₫"
+                + (faultRefund ? "; tiền thuê " + rentPaid + " ₫" : "")
+                + "; hư hại " + damageFee + " ₫"
+                + "; trễ " + lateDays + " ngày × " + lateInfo.lateFeePercent() + "% = " + lateFee
                 + " ₫; hoàn " + refundAmount + " ₫; thu thêm " + extraCharged + " ₫");
         settlementRepository.save(settlement);
 
@@ -1403,11 +1670,32 @@ public class TaskServiceImpl implements TaskService {
                         + (extraCharged > 0 ? ", thu thêm " + extraCharged + " ₫" : ""));
         lateCheckoutService.markResolved(reservation);
 
-        // 7. Task DONE + báo khách
-        task.setStatus(Task.Status.DONE);
+        // 7. Task DONE + dọn kho đúng unit.code + báo khách
+        markDone(task, staff);
         task.setSettlementPhoto(request.settlementPhotoUrl());
         Task saved = taskRepository.save(task);
+        createCleaningTask(staff, reservation,
+                "Dọn kho sau tất toán " + reservation.getCode()
+                        + (faultRefund ? " — hoàn cọc + tiền thuê do lỗi kho" : ""),
+                getToday());
         notificationService.notifySettlementCompleted(reservation, refundAmount);
+
+        // 8. Đóng ticket SUPPORT đang chờ tất toán của đơn này.
+        supportTicketRepository
+                .findFirstByReservation_ReservationIdAndStatusOrderByCreatedAtDesc(
+                        reservation.getReservationId(),
+                        com.storagehub.entity.SupportTicket.Status.IN_PROGRESS)
+                .ifPresent(ticket -> {
+                    String old = ticket.getStatus().name();
+                    ticket.setStatus(com.storagehub.entity.SupportTicket.Status.RESOLVED);
+                    ticket.setResolutionNote("Đã tất toán " + settlement.getReceiptCode()
+                            + " — hoàn " + refundAmount + " ₫");
+                    ticket.setResolvedAt(java.time.LocalDateTime.now(ICT_ZONE));
+                    supportTicketRepository.save(ticket);
+                    logService.log(staff, "TICKET", ticket.getTicketId(), "RESOLVED",
+                            old, "RESOLVED", "Tất toán checkout " + reservation.getCode());
+                    notificationService.notifyTicketStatusChanged(ticket, old);
+                });
 
         return toTaskResponse(saved, getCurrentShift(), null, null, null, null);
     }
@@ -1536,7 +1824,7 @@ public class TaskServiceImpl implements TaskService {
             Task current = taskRepository.findWithStaffById(taskId)
                     .orElseThrow(() -> new TaskNotFoundException(taskId));
             String oldStatus = current.getStatus().name();
-            current.setStatus(Task.Status.DONE);
+            markDone(current, staff);
             current.setPaymentProofPhoto(request.paymentProofPhoto());
             current.setContractPhoto(request.contractPhotoUrl());
             Task done = taskRepository.save(current);
@@ -1614,7 +1902,7 @@ public class TaskServiceImpl implements TaskService {
         }
 
         String fromStatus = task.getStatus().name();
-        task.setStatus(Task.Status.DONE);
+        markDone(task, actor);
         Task saved = taskRepository.save(task);
 
         logService.log(actor, "TASK", saved.getTaskId(),
@@ -1753,6 +2041,7 @@ public class TaskServiceImpl implements TaskService {
         task.setAssignedStaff(assignee);
         task.setShift(shift);
         task.setUnitType(unit.getType());
+        task.setFacility(facilityOf(unit));
         task.setWorkDate(date);
         task.setStatus(Task.Status.TODO);
         task.setNote(cleanNote);

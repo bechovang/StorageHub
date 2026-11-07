@@ -28,4 +28,6 @@ public interface ExtensionRepository extends JpaRepository<Extension, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Extension e WHERE e.extensionId = :extensionId")
     Optional<Extension> findByIdForUpdate(@Param("extensionId") Long extensionId);
+
+    java.util.List<Extension> findByReservation_ReservationId(Long reservationId);
 }

@@ -62,6 +62,9 @@ class TaskServiceTest {
     private PaymentRepository paymentRepository;
 
     @Mock
+    private SettlementRepository settlementRepository;
+
+    @Mock
     private LogService logService;
 
     @Mock
@@ -363,7 +366,8 @@ class TaskServiceTest {
         task.setRefCode("SR-0032");
         task.setAssignedStaff(staffUser);
         task.setStatus(Task.Status.TODO);
-        task.setWorkDate(today);
+        task.setWorkDate(today.minusDays(2));
+        task.setShift(StaffAssignment.Shift.AFTERNOON);
 
         when(userRepository.findByEmailIgnoreCase("minh@demo.storagehub.vn")).thenReturn(Optional.of(staffUser));
         when(taskRepository.findWithStaffById(50L)).thenReturn(Optional.of(task));
@@ -372,7 +376,78 @@ class TaskServiceTest {
         TaskResponse res = taskService.updateTaskStatus("minh@demo.storagehub.vn", 50L, Task.Status.IN_PROGRESS);
 
         assertThat(res.status()).isEqualTo(Task.Status.IN_PROGRESS);
-        verify(logService).log(eq(staffUser), eq("TASK"), eq(50L), eq("STATUS_CHANGE"), eq("TODO"), eq("IN_PROGRESS"), any());
+        assertThat(task.getWorkDate()).isEqualTo(today);
+        assertThat(task.getShift()).isEqualTo(StaffAssignment.Shift.MORNING);
+        assertThat(task.getClaimedAt()).isNotNull();
+        verify(logService).log(eq(staffUser), eq("TASK"), eq(50L), eq("TASK_CLAIMED"), eq("TODO"), eq("IN_PROGRESS"), any());
+    }
+
+    @Test
+    @DisplayName("getShiftFinanceSummary chỉ cộng tiền thu tại quầy và chia đúng ca")
+    void testGetShiftFinanceSummary_CounterOnlyByShift() {
+        Role managerRole = new Role();
+        managerRole.setRoleId(3);
+        managerRole.setName(Role.Name.FACILITY_MANAGER);
+        User manager = new User();
+        manager.setUserId(9L);
+        manager.setEmail("manager@demo.storagehub.vn");
+        manager.setRole(managerRole);
+        manager.setFacility(facility);
+        manager.setStatus(1);
+
+        Reservation reservation = new Reservation();
+        reservation.setReservationId(20L);
+        reservation.setUnit(unitS3);
+
+        Payment rentCash = new Payment();
+        rentCash.setMethod(Payment.Method.CASH);
+        rentCash.setPurpose(Payment.Purpose.RENT);
+        rentCash.setAmount(BigDecimal.valueOf(900000));
+        rentCash.setStatus(Payment.Status.SUCCEEDED);
+        rentCash.setCreatedAt(today.atTime(2, 0)); // 09:00 ICT
+        rentCash.setReservation(reservation);
+
+        Payment rentOnline = new Payment();
+        rentOnline.setMethod(Payment.Method.PAYOS);
+        rentOnline.setPurpose(Payment.Purpose.RENT);
+        rentOnline.setAmount(BigDecimal.valueOf(900000));
+        rentOnline.setStatus(Payment.Status.SUCCEEDED);
+        rentOnline.setCreatedAt(today.atTime(2, 0));
+        rentOnline.setReservation(reservation);
+
+        Payment extraBank = new Payment();
+        extraBank.setMethod(Payment.Method.BANK);
+        extraBank.setPurpose(Payment.Purpose.EXTRA_FEE);
+        extraBank.setAmount(BigDecimal.valueOf(50000));
+        extraBank.setStatus(Payment.Status.SUCCEEDED);
+        extraBank.setCreatedAt(today.atTime(9, 0)); // 16:00 ICT
+        extraBank.setReservation(reservation);
+
+        Settlement settlement = new Settlement();
+        settlement.setReservation(reservation);
+        settlement.setRefundAmount(BigDecimal.valueOf(100000));
+        settlement.setCreatedAt(today.atTime(9, 30)); // 16:30 ICT
+
+        when(userRepository.findByEmailIgnoreCase("manager@demo.storagehub.vn"))
+                .thenReturn(Optional.of(manager));
+        when(paymentRepository.findByStatusAndCreatedAtBetween(
+                eq(Payment.Status.SUCCEEDED), any(), any()))
+                .thenReturn(List.of(rentCash, rentOnline, extraBank));
+        when(settlementRepository.findByCreatedAtBetween(any(), any()))
+                .thenReturn(List.of(settlement));
+
+        var summary = taskService.getShiftFinanceSummary("manager@demo.storagehub.vn", today);
+
+        assertThat(summary.totalCollected()).isEqualTo(950000L);
+        assertThat(summary.totalRefunded()).isEqualTo(100000L);
+        var morning = summary.shifts().stream()
+                .filter(s -> s.shift() == StaffAssignment.Shift.MORNING).findFirst().orElseThrow();
+        var afternoon = summary.shifts().stream()
+                .filter(s -> s.shift() == StaffAssignment.Shift.AFTERNOON).findFirst().orElseThrow();
+        assertThat(morning.collected()).isEqualTo(900000L);
+        assertThat(morning.refunded()).isZero();
+        assertThat(afternoon.collected()).isEqualTo(50000L);
+        assertThat(afternoon.refunded()).isEqualTo(100000L);
     }
 
     @Test

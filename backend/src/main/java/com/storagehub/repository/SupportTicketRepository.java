@@ -16,4 +16,9 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
 
     @Query("SELECT st FROM SupportTicket st LEFT JOIN FETCH st.unit u LEFT JOIN FETCH st.customer c WHERE st.status IN :statuses ORDER BY st.createdAt DESC")
     java.util.List<SupportTicket> findByStatusInWithDetails(@Param("statuses") java.util.Collection<SupportTicket.Status> statuses);
+
+    Optional<SupportTicket> findFirstByReservation_ReservationIdAndStatusOrderByCreatedAtDesc(
+            Long reservationId,
+            SupportTicket.Status status
+    );
 }

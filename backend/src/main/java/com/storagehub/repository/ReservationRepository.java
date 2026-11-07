@@ -103,7 +103,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT r FROM Reservation r " +
             "WHERE r.unit.unitId = :unitId " +
             "AND r.status = com.storagehub.entity.Reservation.Status.CLOSED " +
-            "ORDER BY r.endDate DESC")
+            "ORDER BY COALESCE(r.closedAt, r.endDate) DESC")
     List<Reservation> findLatestClosedReservations(@Param("unitId") Long unitId);
 
     /**

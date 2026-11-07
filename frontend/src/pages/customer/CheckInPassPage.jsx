@@ -54,6 +54,13 @@ export default function CheckInPassPage() {
                         Quay lại đơn thuê
                     </Link>
 
+                    {pass?.unit?.id && (
+                        <Link to={`/units/${pass.unit.id}`} className="cip__back-link">
+                            <Package size={16} weight="bold" />
+                            Xem chi tiết kho
+                        </Link>
+                    )}
+
                     {pass && (
                         <button
                             className="cip__print-btn"
@@ -195,7 +202,7 @@ export default function CheckInPassPage() {
                                 <Warning size={18} weight="fill" />
                                 {isOverdue
                                     ? "Đơn đã quá hạn nhận kho. Quý khách vui lòng liên hệ nhân viên quầy để được hỗ trợ kịp thời."
-                                    : `Lưu ý: Quý khách còn ${days} ngày để đến nhận kho trước khi đơn bị hủy.`}
+                                    : `Lưu ý: Quý khách còn ${days} ngày để đến nhận kho trước khi đơn hết hạn và mất toàn bộ tiền cọc.`}
                             </div>
                         )}
 

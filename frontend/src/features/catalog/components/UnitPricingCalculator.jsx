@@ -145,7 +145,7 @@ export default function UnitPricingCalculator({
         </p>
       )}
 
-      {/* Cam kết bảo mật & Hủy miễn phí */}
+      {/* Cam kết bảo mật & Chính sách no-show */}
       <div className="pricing-guarantees">
         <div className="guarantee-item">
           <Lock size={15} weight="bold" />
@@ -156,7 +156,7 @@ export default function UnitPricingCalculator({
         <div className="guarantee-item">
           <Clock size={15} weight="bold" />
           <span>
-            Hủy miễn phí trong vòng 24 giờ trước ngày nhận kho, hoàn 100% cọc
+            Sau 3 ngày kể từ ngày nhận kho dự kiến, nếu Quý khách không check-in thì đơn sẽ bị hủy và mất toàn bộ tiền cọc.
           </span>
         </div>
       </div>
