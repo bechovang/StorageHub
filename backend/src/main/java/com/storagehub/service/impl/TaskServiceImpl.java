@@ -1540,9 +1540,14 @@ public class TaskServiceImpl implements TaskService {
             current.setPaymentProofPhoto(request.paymentProofPhoto());
             current.setContractPhoto(request.contractPhotoUrl());
             Task done = taskRepository.save(current);
-            logService.log(staff, "TASK", done.getTaskId(),
-                    "STATUS_CHANGED", oldStatus, "DONE",
-                    "Check-in ritual hoàn tất — " + reservation.getCode());
+            // checkIn() ở trên đã hoàn tất CHECK_IN task (completeCheckInTask ghi log
+            // IN_PROGRESS/TODO → DONE). Chỉ log tại đây khi vẫn còn chuyển trạng thái
+            // thực — tránh dòng audit vô nghĩa DONE → DONE.
+            if (!Task.Status.DONE.name().equals(oldStatus)) {
+                logService.log(staff, "TASK", done.getTaskId(),
+                        "STATUS_CHANGED", oldStatus, "DONE",
+                        "Check-in ritual hoàn tất — " + reservation.getCode());
+            }
             return done;
         });
 
@@ -1614,7 +1619,7 @@ public class TaskServiceImpl implements TaskService {
 
         logService.log(actor, "TASK", saved.getTaskId(),
                 "STATUS_CHANGED", fromStatus, "DONE",
-                "Check-in completed — " + reservationCode);
+                "Check-in hoàn tất tại quầy — " + reservationCode);
         return saved;
     }
 
