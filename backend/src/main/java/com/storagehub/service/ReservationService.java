@@ -345,7 +345,11 @@ public class ReservationService {
             int bufferDays,
             LocalDate today
     ) {
-        if (unit.getStatus() != Unit.Status.AVAILABLE && unit.getStatus() != Unit.Status.PREPARING) {
+        // Bảo trì / ngừng khai thác là chặn cứng. RENTED/RESERVED KHÔNG chặn
+        // theo trạng thái hiện tại: kho đang thuê vẫn nhận được kỳ đặt kế tiếp
+        // không giao nhau — quyết định nằm ở kiểm tra overlap bên dưới.
+        if (unit.getStatus() == Unit.Status.MAINTENANCE
+                || unit.getStatus() == Unit.Status.RETIRED) {
             return false;
         }
 

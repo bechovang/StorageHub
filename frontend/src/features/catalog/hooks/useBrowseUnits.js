@@ -9,14 +9,12 @@ export function useBrowseUnits() {
   // Danh mục dữ liệu cho dropdown filter
   const [filterOptions, setFilterOptions] = useState({
     types: [],
-    sizesM2: [],
     facilities: [],
   });
 
   // State các giá trị trong form bộ lọc
   const [selectedFacility, setSelectedFacility] = useState("");
   const [selectedType, setSelectedType] = useState("");
-  const [selectedSize, setSelectedSize] = useState("");
   // Tìm theo mã kho (vd: "S-7") — BE match contains, bỏ qua hoa/thường + dấu gạch
   const [searchQuery, setSearchQuery] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -25,7 +23,6 @@ export function useBrowseUnits() {
   const [activeFilters, setActiveFilters] = useState({
     facilityId: "",
     typeId: "",
-    sizeM2: "",
     query: "",
   });
 
@@ -65,7 +62,6 @@ export function useBrowseUnits() {
       const data = await searchUnits({
         facilityId: filters.facilityId,
         typeId: filters.typeId,
-        sizeM2: filters.sizeM2,
         query: filters.query,
         sort,
         page: targetPage,
@@ -141,7 +137,6 @@ export function useBrowseUnits() {
     const newFilters = {
       facilityId: selectedFacility,
       typeId: selectedType,
-      sizeM2: selectedSize,
       query: searchQuery,
     };
     setActiveFilters(newFilters);
@@ -160,13 +155,11 @@ export function useBrowseUnits() {
   const handleResetFilters = () => {
     setSelectedFacility("");
     setSelectedType("");
-    setSelectedSize("");
     setSearchQuery("");
     const reset = {
       facilityId: "",
       typeId: "",
-      sizeM2: "",
-        query: "",
+      query: "",
     };
     setActiveFilters(reset);
     setPage(1);
@@ -182,9 +175,6 @@ export function useBrowseUnits() {
     } else if (filterKey === "typeId") {
       updated.typeId = "";
       setSelectedType("");
-    } else if (filterKey === "sizeM2") {
-      updated.sizeM2 = "";
-      setSelectedSize("");
     } else if (filterKey === "query") {
       updated.query = "";
       setSearchQuery("");
@@ -227,8 +217,6 @@ export function useBrowseUnits() {
     setSelectedFacility,
     selectedType,
     setSelectedType,
-    selectedSize,
-    setSelectedSize,
     searchQuery,
     setSearchQuery,
     searchError,
