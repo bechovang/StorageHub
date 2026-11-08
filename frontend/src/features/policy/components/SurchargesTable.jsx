@@ -17,12 +17,12 @@ export function SurchargesTable({
   isBufferModified,
   draftCheckinGrace,
   setDraftCheckinGrace,
-  draftCheckinLateFee,
-  setDraftCheckinLateFee,
+  draftCheckinLatePercent,
+  setDraftCheckinLatePercent,
   draftExtensionGrace,
   setDraftExtensionGrace,
-  draftExtensionLateFee,
-  setDraftExtensionLateFee,
+  draftExtensionLatePercent,
+  setDraftExtensionLatePercent,
 }) {
   return (
     <div className="policy-section">
@@ -359,16 +359,16 @@ export function SurchargesTable({
             <input className="policy-input" type="number" min="1" max="30" value={draftCheckinGrace} onChange={(e) => setDraftCheckinGrace(e.target.value)} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
-            Check-in — phí trễ / ngày (₫)
-            <input className="policy-input" type="number" min="0" value={draftCheckinLateFee} onChange={(e) => setDraftCheckinLateFee(e.target.value)} />
+            Check-in — phí trễ / ngày (% giá thuê)
+            <input className="policy-input" type="number" min="0" value={draftCheckinLatePercent} max="500" onChange={(e) => setDraftCheckinLatePercent(e.target.value)} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
             Gia hạn — số ngày grace
             <input className="policy-input" type="number" min="1" max="30" value={draftExtensionGrace} onChange={(e) => setDraftExtensionGrace(e.target.value)} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
-            Gia hạn — phí trễ / ngày (₫)
-            <input className="policy-input" type="number" min="0" value={draftExtensionLateFee} onChange={(e) => setDraftExtensionLateFee(e.target.value)} />
+            Gia hạn — phí trễ / ngày (% giá thuê)
+            <input className="policy-input" type="number" min="0" value={draftExtensionLatePercent} max="500" onChange={(e) => setDraftExtensionLatePercent(e.target.value)} />
           </label>
         </div>
       </div>

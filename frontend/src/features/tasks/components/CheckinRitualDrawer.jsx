@@ -15,7 +15,7 @@ import Button from "../../../components/Button/Button.jsx";
 import ContractViewerModal from "../../../components/ContractModal/ContractViewerModal.jsx";
 import { useContractPreview } from "../hooks/useContractPreview.js";
 import { completeCheckinRitual } from "../../../services/taskService.js";
-import { formatVND as formatVnd, PLACEHOLDER_UNIT_IMAGE } from "../../../utils/formatters.js";
+import { formatVND as formatVnd } from "../../../utils/formatters.js";
 
 export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const [paymentMethod, setPaymentMethod] = useState("CASH");
@@ -37,6 +37,10 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
 
   const paymentFileInputRef = useRef(null);
   const contractFileInputRef = useRef(null);
+
+  const handoverLate = task?.handoverLate || null;
+  const lateFee = Number(handoverLate?.fee || 0);
+  const totalCollect = Number(task?.rentAmount || 0) + lateFee;
 
   const handleCopyPin = async () => {
     const pin = task?.accessPin || "8842-Active";
@@ -187,7 +191,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <strong style={{ color: "var(--color-accent, #dc2626)", fontSize: "0.95rem", fontFamily: "var(--font-mono)" }}>
-                  {formatVnd(task.rentAmount)}
+                  {formatVnd(totalCollect)}
                 </strong>
                 <span className={`ritual-step-badge ${paymentPhotoUrl ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
                   {paymentPhotoUrl ? "✓ ĐÃ THU ĐỦ TIỀN" : "⚠ CHƯA ĐÍNH KÈM ẢNH"}
@@ -197,6 +201,30 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
             <p style={{ margin: "2px 0 8px 0", fontSize: "0.78rem", color: "var(--color-secondary)" }}>
               Quy định bắt buộc: Thu đủ 100% tiền thuê kỳ đầu và chụp ảnh biên nhận/giao dịch trước khi bàn giao.
             </p>
+            {lateFee > 0 && (
+              <div
+                style={{
+                  margin: "0 0 10px 0",
+                  padding: "8px 10px",
+                  border: "1px solid #fecaca",
+                  background: "#fef2f2",
+                  color: "#b91c1c",
+                  fontSize: "0.78rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                <div>
+                  Tiền thuê kỳ đầu: <strong>{formatVnd(task.rentAmount)}</strong>
+                </div>
+                <div>
+                  Phí check-in trễ ({handoverLate?.daysLate} ngày × {handoverLate?.feePercent}%):
+                  {" "}<strong>{formatVnd(lateFee)}</strong>
+                </div>
+                <div>
+                  Tổng thu tại quầy: <strong>{formatVnd(totalCollect)}</strong>
+                </div>
+              </div>
+            )}
 
             {/* Chọn hình thức thu tiền */}
             <div style={{ marginBottom: "10px" }}>

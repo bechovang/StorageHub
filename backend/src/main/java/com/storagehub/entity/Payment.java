@@ -37,6 +37,7 @@ public class Payment {
         EXTENSION_DEPOSIT,
         EXTENSION_RENT,
         CHECKIN_LATE_FEE,
+        EXTENSION_LATE_FEE,
         DAMAGE_FEE,
         EXTRA_FEE
     }

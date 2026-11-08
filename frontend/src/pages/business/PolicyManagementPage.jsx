@@ -39,12 +39,12 @@ export default function PolicyManagementPage() {
     setDraftBufferDays,
     draftCheckinGrace,
     setDraftCheckinGrace,
-    draftCheckinLateFee,
-    setDraftCheckinLateFee,
+    draftCheckinLatePercent,
+    setDraftCheckinLatePercent,
     draftExtensionGrace,
     setDraftExtensionGrace,
-    draftExtensionLateFee,
-    setDraftExtensionLateFee,
+    draftExtensionLatePercent,
+    setDraftExtensionLatePercent,
     validationBanner,
     toastMessage,
     capRulesRef,
@@ -269,12 +269,12 @@ export default function PolicyManagementPage() {
                     isBufferModified={isBufferModified}
                     draftCheckinGrace={draftCheckinGrace}
                     setDraftCheckinGrace={setDraftCheckinGrace}
-                    draftCheckinLateFee={draftCheckinLateFee}
-                    setDraftCheckinLateFee={setDraftCheckinLateFee}
+                    draftCheckinLatePercent={draftCheckinLatePercent}
+                    setDraftCheckinLatePercent={setDraftCheckinLatePercent}
                     draftExtensionGrace={draftExtensionGrace}
                     setDraftExtensionGrace={setDraftExtensionGrace}
-                    draftExtensionLateFee={draftExtensionLateFee}
-                    setDraftExtensionLateFee={setDraftExtensionLateFee}
+                    draftExtensionLatePercent={draftExtensionLatePercent}
+                    setDraftExtensionLatePercent={setDraftExtensionLatePercent}
                   />
 
                   {/* Footer Meta Details */}

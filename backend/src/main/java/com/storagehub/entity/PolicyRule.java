@@ -36,8 +36,10 @@ public class PolicyRule {
         WAIVER_CAP,
         CHECKIN_GRACE_DAYS,
         CHECKIN_LATE_FEE_PER_DAY,
+        CHECKIN_LATE_FEE_PERCENT,
         EXTENSION_GRACE_DAYS,
-        EXTENSION_LATE_FEE_PER_DAY
+        EXTENSION_LATE_FEE_PER_DAY,
+        EXTENSION_LATE_FEE_PERCENT
     }
 
     /** Chỉ áp dụng cho SURCHARGE / DISCOUNT: PERCENT (%) hoặc FIXED (đồng). */

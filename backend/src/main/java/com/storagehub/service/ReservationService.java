@@ -239,19 +239,36 @@ public class ReservationService {
         return reservation.getStartDate().plusDays(grace);
     }
 
-    /** Phí check-in trễ theo số ngày sau startDate, trong grace. */
+    /** Phí check-in trễ = dailyRent × số ngày trễ × %/100, trong grace. */
     public long checkinLateFee(Reservation reservation, LocalDate today) {
-        if (!today.isAfter(reservation.getStartDate())) {
+        if (reservation == null || reservation.getUnit() == null
+                || !today.isAfter(reservation.getStartDate())) {
             return 0L;
         }
         long daysLate = java.time.temporal.ChronoUnit.DAYS.between(
                 reservation.getStartDate(), today);
-        long feePerDay = pricingEngine.ruleLong(
+        if (daysLate <= 0) {
+            return 0L;
+        }
+        long dailyRent;
+        try {
+            var quote = pricingEngine.calculateQuote(
+                    reservation.getUnit(),
+                    reservation.getStartDate(),
+                    reservation.getEndDate(),
+                    reservation.getPolicy());
+            dailyRent = quote.durationDays() > 0
+                    ? quote.totalRent() / quote.durationDays()
+                    : 0L;
+        } catch (Exception ignored) {
+            dailyRent = 0L;
+        }
+        int percent = pricingEngine.ruleInt(
                 reservation.getUnit(),
                 reservation.getPolicy(),
-                PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY,
-                50000L);
-        return Math.max(0, daysLate * feePerDay);
+                PolicyRule.RuleType.CHECKIN_LATE_FEE_PERCENT,
+                300);
+        return Math.max(0, dailyRent * daysLate * percent / 100);
     }
 
     /**

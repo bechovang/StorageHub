@@ -52,7 +52,7 @@ public class PolicyAdminService {
     private static final int DEFAULT_LATE_CHECKOUT_PERCENT = 300;
     private static final int DEFAULT_LATE_ESCALATION_DAYS = 3;
     private static final int DEFAULT_GRACE_DAYS = 3;
-    private static final long DEFAULT_HANDOVER_LATE_FEE = 50_000L;
+    private static final int DEFAULT_HANDOVER_LATE_PERCENT = 300;
 
     private final RentalPolicyRepository rentalPolicyRepository;
     private final PolicyRuleRepository policyRuleRepository;
@@ -93,18 +93,18 @@ public class PolicyAdminService {
                 ? request.checkinGraceDays()
                 : resolvedInt(currentRules, facility.getFacilityId(),
                         PolicyRule.RuleType.CHECKIN_GRACE_DAYS, DEFAULT_GRACE_DAYS);
-        long checkinLateFee = request.checkinLateFeePerDay() != null
-                ? request.checkinLateFeePerDay()
-                : resolvedLong(currentRules, facility.getFacilityId(),
-                        PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY, DEFAULT_HANDOVER_LATE_FEE);
+        int checkinLateFee = request.checkinLateFeePercent() != null
+                ? request.checkinLateFeePercent()
+                : resolvedInt(currentRules, facility.getFacilityId(),
+                        PolicyRule.RuleType.CHECKIN_LATE_FEE_PERCENT, DEFAULT_HANDOVER_LATE_PERCENT);
         int extensionGrace = request.extensionGraceDays() != null
                 ? request.extensionGraceDays()
                 : resolvedInt(currentRules, facility.getFacilityId(),
                         PolicyRule.RuleType.EXTENSION_GRACE_DAYS, DEFAULT_GRACE_DAYS);
-        long extensionLateFee = request.extensionLateFeePerDay() != null
-                ? request.extensionLateFeePerDay()
-                : resolvedLong(currentRules, facility.getFacilityId(),
-                        PolicyRule.RuleType.EXTENSION_LATE_FEE_PER_DAY, DEFAULT_HANDOVER_LATE_FEE);
+        int extensionLateFee = request.extensionLateFeePercent() != null
+                ? request.extensionLateFeePercent()
+                : resolvedInt(currentRules, facility.getFacilityId(),
+                        PolicyRule.RuleType.EXTENSION_LATE_FEE_PERCENT, DEFAULT_HANDOVER_LATE_PERCENT);
 
         // Map rateVnd theo typeName từ request
         Map<String, Long> requestedRates = request.baseRates() == null ? Map.of()
@@ -135,11 +135,11 @@ public class PolicyAdminService {
                     null, escalationDays, null, null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_GRACE_DAYS,
                     null, checkinGrace, null, null));
-            rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY,
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_LATE_FEE_PERCENT,
                     null, checkinLateFee, null, null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_GRACE_DAYS,
                     null, extensionGrace, null, null));
-            rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_LATE_FEE_PER_DAY,
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_LATE_FEE_PERCENT,
                     null, extensionLateFee, null, null));
 
             copyRuleAsGlobal(currentRules, facility, type, PolicyRule.RuleType.LATE_FEE, saved, rules);
@@ -175,12 +175,12 @@ public class PolicyAdminService {
                     null, DEFAULT_LATE_ESCALATION_DAYS, null, null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_GRACE_DAYS,
                     null, DEFAULT_GRACE_DAYS, null, null));
-            rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY,
-                    null, DEFAULT_HANDOVER_LATE_FEE, null, null));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.CHECKIN_LATE_FEE_PERCENT,
+                    null, DEFAULT_HANDOVER_LATE_PERCENT, null, null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_GRACE_DAYS,
                     null, DEFAULT_GRACE_DAYS, null, null));
-            rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_LATE_FEE_PER_DAY,
-                    null, DEFAULT_HANDOVER_LATE_FEE, null, null));
+            rules.add(buildRule(saved, type, PolicyRule.RuleType.EXTENSION_LATE_FEE_PERCENT,
+                    null, DEFAULT_HANDOVER_LATE_PERCENT, null, null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.LATE_FEE, null,
                     Math.max(2_000L, rate / 3), null, null));
             rules.add(buildRule(saved, type, PolicyRule.RuleType.WAIVER_CAP, null,
@@ -235,11 +235,11 @@ public class PolicyAdminService {
         int checkinGrace = resolvedInt(rules, facilityId,
                 PolicyRule.RuleType.CHECKIN_GRACE_DAYS, DEFAULT_GRACE_DAYS);
         int checkinLateFee = resolvedInt(rules, facilityId,
-                PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY, (int) DEFAULT_HANDOVER_LATE_FEE);
+                PolicyRule.RuleType.CHECKIN_LATE_FEE_PERCENT, DEFAULT_HANDOVER_LATE_PERCENT);
         int extensionGrace = resolvedInt(rules, facilityId,
                 PolicyRule.RuleType.EXTENSION_GRACE_DAYS, DEFAULT_GRACE_DAYS);
         int extensionLateFee = resolvedInt(rules, facilityId,
-                PolicyRule.RuleType.EXTENSION_LATE_FEE_PER_DAY, (int) DEFAULT_HANDOVER_LATE_FEE);
+                PolicyRule.RuleType.EXTENSION_LATE_FEE_PERCENT, DEFAULT_HANDOVER_LATE_PERCENT);
 
         PolicyActiveResponse.Surcharges surcharges = new PolicyActiveResponse.Surcharges(
                 latePercent,
@@ -308,17 +308,6 @@ public class PolicyAdminService {
     ) {
         return findResolvedRule(rules, facilityId, ruleType, null)
                 .map(r -> r.getValue().intValue())
-                .orElse(fallback);
-    }
-
-    private long resolvedLong(
-            List<PolicyRule> rules,
-            Integer facilityId,
-            PolicyRule.RuleType ruleType,
-            long fallback
-    ) {
-        return findResolvedRule(rules, facilityId, ruleType, null)
-                .map(r -> r.getValue().longValue())
                 .orElse(fallback);
     }
 

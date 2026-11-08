@@ -28,9 +28,9 @@ public record PolicyActiveResponse(
             Integer depositPercent,
             Integer turnoverBufferDays,
             Integer checkinGraceDays,
-            Integer checkinLateFeePerDay,
+            Integer checkinLateFeePercent,
             Integer extensionGraceDays,
-            Integer extensionLateFeePerDay
+            Integer extensionLateFeePercent
     ) {
     }
 }

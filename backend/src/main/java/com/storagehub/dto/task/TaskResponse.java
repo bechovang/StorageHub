@@ -35,8 +35,17 @@ public record TaskResponse(
         Long extensionRent,
         com.storagehub.dto.checkout.LateCheckoutInfo lateCheckout,
         Boolean faultRefund,
-        Long rentPaid
+        Long rentPaid,
+        HandoverLateInfo handoverLate
 ) {
+    /** Phí trễ bàn giao (check-in hoặc ký phụ lục gia hạn). */
+    public record HandoverLateInfo(
+            Long daysLate,
+            Long fee,
+            Integer feePercent
+    ) {
+    }
+
     public TaskResponse(
             Long taskId,
             Task.Type type,
@@ -64,7 +73,7 @@ public record TaskResponse(
                 status, workDate, shift, accessPin, rentAmount, depositPaid, priority,
                 issueDescription, alertNote, assignedStaff, ritual, paymentProofPhotoUrl,
                 contractPhotoUrl, settlementPhotoUrl, null, null, null, null,
-                null, null);
+                null, null, null);
     }
 
     /** Constructor cũ cho test/consumer chưa cần ảnh ritual. */
@@ -91,6 +100,6 @@ public record TaskResponse(
         this(taskId, type, refCode, unitCode, customerName, customerPhone, dueTime,
                 status, workDate, shift, accessPin, rentAmount, depositPaid, priority,
                 issueDescription, alertNote, assignedStaff, ritual, null, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 }

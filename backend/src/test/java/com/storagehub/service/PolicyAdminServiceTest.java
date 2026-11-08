@@ -120,6 +120,8 @@ class PolicyAdminServiceTest {
         assertThat(response.baseRates()).hasSize(1);
         assertThat(response.baseRates().get(0).rateVnd()).isEqualTo(32_000L);
         assertThat(response.surcharges().depositPercent()).isEqualTo(15);
+        assertThat(response.surcharges().checkinLateFeePercent()).isEqualTo(300);
+        assertThat(response.surcharges().extensionLateFeePercent()).isEqualTo(300);
     }
 
     @Test

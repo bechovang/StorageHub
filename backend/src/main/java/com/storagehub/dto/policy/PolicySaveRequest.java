@@ -26,11 +26,11 @@ public record PolicySaveRequest(
 
         Integer checkinGraceDays,
 
-        Integer checkinLateFeePerDay,
+        Integer checkinLateFeePercent,
 
         Integer extensionGraceDays,
 
-        Integer extensionLateFeePerDay,
+        Integer extensionLateFeePercent,
 
         String updatedBy
 ) {

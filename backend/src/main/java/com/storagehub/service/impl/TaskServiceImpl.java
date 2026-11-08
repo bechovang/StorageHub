@@ -451,7 +451,7 @@ public class TaskServiceImpl implements TaskService {
 
     private boolean isCollectablePurpose(Payment.Purpose purpose) {
         return switch (purpose) {
-            case RENT, CHECKIN_LATE_FEE, EXTRA_FEE, DAMAGE_FEE,
+            case RENT, CHECKIN_LATE_FEE, EXTENSION_LATE_FEE, EXTRA_FEE, DAMAGE_FEE,
                  EXTENSION_RENT, EXTENSION_FEE -> true;
             default -> false;
         };
@@ -1081,6 +1081,7 @@ public class TaskServiceImpl implements TaskService {
         TaskRitualDto ritual = null;
         Long checkoutUnitId = null;
         com.storagehub.dto.checkout.LateCheckoutInfo lateInfo = null;
+        com.storagehub.dto.task.TaskResponse.HandoverLateInfo handoverLate = null;
         boolean isDone = (task.getStatus() == Task.Status.DONE);
 
         switch (task.getType()) {
@@ -1094,7 +1095,27 @@ public class TaskServiceImpl implements TaskService {
                         customerPhone = res.getCustomer().getPhone();
                         accessPin = res.getAccessCode() != null ? res.getAccessCode() + "-Active" : "8842-Active";
                         depositPaid = res.getDepositAmount() != null ? res.getDepositAmount().longValue() : null;
-                        rentAmount = depositPaid != null ? depositPaid * 10 : null;
+                        LocalDate today = getToday();
+                        try {
+                            var quote = pricingEngine.calculateQuote(
+                                    res.getUnit(), res.getStartDate(), res.getEndDate(), res.getPolicy());
+                            rentAmount = quote.totalRent();
+                            long daysLate = Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(
+                                    res.getStartDate(), today));
+                            boolean stillReserved = reservationService.resolveEffectiveStatus(
+                                    res, today) == Reservation.Status.RESERVED;
+                            if (stillReserved && daysLate > 0) {
+                                int percent = pricingEngine.ruleInt(
+                                        res.getUnit(), res.getPolicy(),
+                                        PolicyRule.RuleType.CHECKIN_LATE_FEE_PERCENT, 300);
+                                handoverLate = new com.storagehub.dto.task.TaskResponse.HandoverLateInfo(
+                                        daysLate,
+                                        reservationService.checkinLateFee(res, today),
+                                        percent);
+                            }
+                        } catch (Exception ignored) {
+                            rentAmount = depositPaid != null ? depositPaid * 10 : null;
+                        }
                     }
                 }
                 ritual = new TaskRitualDto(
@@ -1209,6 +1230,25 @@ public class TaskServiceImpl implements TaskService {
                                 ? ext.getNewDeposit().longValueExact() : null;
                         paymentRequired = ext.getStatus() == Extension.Status.PENDING_CONTRACT;
                         alertNote = "Thu 100% rent kỳ gia hạn tại quầy khi ký phụ lục";
+
+                        long addedDays = java.time.temporal.ChronoUnit.DAYS.between(
+                                ext.getOldEndDate(), ext.getNewEndDate());
+                        long dailyExtension = addedDays > 0 && ext.getExtensionFee() != null
+                                ? ext.getExtensionFee().longValue() / addedDays : 0L;
+                        long daysLate = Math.max(0,
+                                java.time.temporal.ChronoUnit.DAYS.between(
+                                        ext.getOldEndDate().plusDays(1), getToday()));
+                        if (daysLate > 0) {
+                            int percent = pricingEngine.ruleInt(
+                                    ext.getReservation().getUnit(),
+                                    addendum.getPolicy(),
+                                    PolicyRule.RuleType.EXTENSION_LATE_FEE_PERCENT,
+                                    300);
+                            handoverLate = new com.storagehub.dto.task.TaskResponse.HandoverLateInfo(
+                                    daysLate,
+                                    dailyExtension * daysLate * percent / 100,
+                                    percent);
+                        }
                     }
                 }
                 ritual = new TaskRitualDto(
@@ -1255,7 +1295,8 @@ public class TaskServiceImpl implements TaskService {
                 extensionRent,
                 lateInfo,
                 faultRefund,
-                rentPaid
+                rentPaid,
+                handoverLate
         );
     }
 
@@ -1454,6 +1495,44 @@ public class TaskServiceImpl implements TaskService {
                     paymentRepository.saveAndFlush(rent);
                     logService.log(staff, "PAYMENT", rent.getPaymentId(), "PAYMENT_SUCCEEDED",
                             null, "SUCCEEDED", "Thu 100% rent gia hạn " + extension.getExtensionFee() + " ₫");
+                }
+
+                long addedDays = java.time.temporal.ChronoUnit.DAYS.between(
+                        extension.getOldEndDate(), extension.getNewEndDate());
+                long dailyExtension = addedDays > 0 && extension.getExtensionFee() != null
+                        ? extension.getExtensionFee().longValue() / addedDays : 0L;
+                long daysLate = Math.max(0,
+                        java.time.temporal.ChronoUnit.DAYS.between(
+                                extension.getOldEndDate().plusDays(1), getToday()));
+                int latePercent = pricingEngine.ruleInt(
+                        extension.getReservation().getUnit(),
+                        addendum.getPolicy(),
+                        PolicyRule.RuleType.EXTENSION_LATE_FEE_PERCENT,
+                        300);
+                long extensionLateFee = dailyExtension * daysLate * latePercent / 100;
+
+                if (extensionLateFee > 0) {
+                    boolean lateCollected = paymentRepository
+                            .findByExtension_ExtensionId(extension.getExtensionId())
+                            .stream()
+                            .anyMatch(p -> p.getPurpose()
+                                    == com.storagehub.entity.Payment.Purpose.EXTENSION_LATE_FEE
+                                    && p.getStatus() == com.storagehub.entity.Payment.Status.SUCCEEDED);
+                    if (!lateCollected) {
+                        com.storagehub.entity.Payment late = new com.storagehub.entity.Payment();
+                        late.setPayer(extension.getReservation().getCustomer());
+                        late.setExtension(extension);
+                        late.setPurpose(com.storagehub.entity.Payment.Purpose.EXTENSION_LATE_FEE);
+                        late.setMethod(method);
+                        late.setAmount(java.math.BigDecimal.valueOf(extensionLateFee));
+                        late.setStatus(com.storagehub.entity.Payment.Status.SUCCEEDED);
+                        late.setReceiptCode("RT-EL-" + System.currentTimeMillis());
+                        paymentRepository.saveAndFlush(late);
+                        logService.log(staff, "PAYMENT", late.getPaymentId(), "PAYMENT_SUCCEEDED",
+                                null, "SUCCEEDED",
+                                "Phí ký phụ lục trễ " + extensionLateFee + " ₫ — "
+                                        + extension.getReservation().getCode());
+                    }
                 }
             }
             contractService.signAddendum(

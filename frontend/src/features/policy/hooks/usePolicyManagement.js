@@ -33,9 +33,9 @@ export function usePolicyManagement() {
   const [draftDeposit, setDraftDeposit] = useState("");
   const [draftBufferDays, setDraftBufferDays] = useState("");
   const [draftCheckinGrace, setDraftCheckinGrace] = useState(3);
-  const [draftCheckinLateFee, setDraftCheckinLateFee] = useState(50000);
+  const [draftCheckinLatePercent, setDraftCheckinLatePercent] = useState(300);
   const [draftExtensionGrace, setDraftExtensionGrace] = useState(3);
-  const [draftExtensionLateFee, setDraftExtensionLateFee] = useState(50000);
+  const [draftExtensionLatePercent, setDraftExtensionLatePercent] = useState(300);
 
   // Lỗi validation & Banner cảnh báo
   const [validationBanner, setValidationBanner] = useState(null);
@@ -102,9 +102,9 @@ export function usePolicyManagement() {
     setDraftDeposit("");
     setDraftBufferDays("");
     setDraftCheckinGrace(3);
-    setDraftCheckinLateFee(50000);
+    setDraftCheckinLatePercent(300);
     setDraftExtensionGrace(3);
-    setDraftExtensionLateFee(50000);
+    setDraftExtensionLatePercent(300);
     setValidationBanner(null);
   }
 
@@ -117,9 +117,9 @@ export function usePolicyManagement() {
     setDraftDeposit(policy.surcharges?.depositPercent ?? "");
     setDraftBufferDays(policy.surcharges?.turnoverBufferDays ?? "");
     setDraftCheckinGrace(policy.surcharges?.checkinGraceDays ?? 3);
-    setDraftCheckinLateFee(policy.surcharges?.checkinLateFeePerDay ?? 50000);
+    setDraftCheckinLatePercent(policy.surcharges?.checkinLateFeePercent ?? 300);
     setDraftExtensionGrace(policy.surcharges?.extensionGraceDays ?? 3);
-    setDraftExtensionLateFee(policy.surcharges?.extensionLateFeePerDay ?? 50000);
+    setDraftExtensionLatePercent(policy.surcharges?.extensionLateFeePercent ?? 300);
     setValidationBanner(null);
   };
 
@@ -235,9 +235,9 @@ export function usePolicyManagement() {
         depositPercent: Number(draftDeposit),
         turnoverBufferDays: Number(draftBufferDays),
         checkinGraceDays: Number(draftCheckinGrace),
-        checkinLateFeePerDay: Number(draftCheckinLateFee),
+        checkinLateFeePercent: Number(draftCheckinLatePercent),
         extensionGraceDays: Number(draftExtensionGrace),
-        extensionLateFeePerDay: Number(draftExtensionLateFee),
+        extensionLateFeePercent: Number(draftExtensionLatePercent),
       },
     };
   }, [
@@ -248,9 +248,9 @@ export function usePolicyManagement() {
     draftDeposit,
     draftBufferDays,
     draftCheckinGrace,
-    draftCheckinLateFee,
+    draftCheckinLatePercent,
     draftExtensionGrace,
-    draftExtensionLateFee,
+    draftExtensionLatePercent,
   ]);
 
   // Kiểm tra vi phạm các điều kiện trần cứng
@@ -380,12 +380,12 @@ export function usePolicyManagement() {
     setDraftBufferDays,
     draftCheckinGrace,
     setDraftCheckinGrace,
-    draftCheckinLateFee,
-    setDraftCheckinLateFee,
+    draftCheckinLatePercent,
+    setDraftCheckinLatePercent,
     draftExtensionGrace,
     setDraftExtensionGrace,
-    draftExtensionLateFee,
-    setDraftExtensionLateFee,
+    draftExtensionLatePercent,
+    setDraftExtensionLatePercent,
     validationBanner,
     toastMessage,
     capRulesRef,

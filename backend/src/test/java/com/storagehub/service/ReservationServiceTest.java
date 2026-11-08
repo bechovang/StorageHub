@@ -318,4 +318,29 @@ class ReservationServiceTest {
     }
 
 
+
+    @Test
+    @DisplayName("checkinLateFee = dailyRent × số ngày trễ × % policy")
+    void testCheckinLateFee_PercentOfDailyRent() {
+        LocalDate start = LocalDate.of(2026, 10, 10);
+        LocalDate end = LocalDate.of(2026, 11, 8);
+        Reservation reservation = new Reservation();
+        reservation.setReservationId(7001L);
+        reservation.setCode("BK-7001");
+        reservation.setUnit(unitS3);
+        reservation.setPolicy(activePolicy);
+        reservation.setStartDate(start);
+        reservation.setEndDate(end);
+
+        QuoteResponse quote = new QuoteResponse(
+                unitS3.getUnitId(), start, end, 30, List.of(),
+                900_000L, 90_000L, 90_000L, "v3");
+        when(pricingEngine.calculateQuote(unitS3, start, end, activePolicy)).thenReturn(quote);
+        when(pricingEngine.ruleInt(unitS3, activePolicy,
+                PolicyRule.RuleType.CHECKIN_LATE_FEE_PERCENT, 300)).thenReturn(300);
+
+        long fee = reservationService.checkinLateFee(reservation, start.plusDays(2));
+
+        assertThat(fee).isEqualTo(180_000L);
+    }
 }

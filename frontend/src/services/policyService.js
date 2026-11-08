@@ -90,10 +90,14 @@ export function validatePolicy(policyDraft) {
       errors.push({ field, rule: "#HANDOVER-01", message: "Số ngày gia hạn/check-in phải từ 1 đến 30." });
     }
   });
-  ["checkinLateFeePerDay", "extensionLateFeePerDay"].forEach((field) => {
+  ["checkinLateFeePercent", "extensionLateFeePercent"].forEach((field) => {
     const value = Number(policyDraft.surcharges?.[field]);
-    if (isNaN(value) || value < 0) {
-      errors.push({ field, rule: "#HANDOVER-02", message: "Phí trễ mỗi ngày không được âm." });
+    if (isNaN(value) || value < 0 || value > HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT) {
+      errors.push({
+        field,
+        rule: "#HANDOVER-02",
+        message: `Phí trễ mỗi ngày phải từ 0 đến ${HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}%.`,
+      });
     }
   });
 
@@ -144,9 +148,9 @@ export async function savePolicy(policyDraft, actorName = "Business Ops", facili
       depositPercent: Number(policyDraft.surcharges?.depositPercent),
       turnoverBufferDays: Number(policyDraft.surcharges?.turnoverBufferDays),
       checkinGraceDays: Number(policyDraft.surcharges?.checkinGraceDays),
-      checkinLateFeePerDay: Number(policyDraft.surcharges?.checkinLateFeePerDay),
+      checkinLateFeePercent: Number(policyDraft.surcharges?.checkinLateFeePercent),
       extensionGraceDays: Number(policyDraft.surcharges?.extensionGraceDays),
-      extensionLateFeePerDay: Number(policyDraft.surcharges?.extensionLateFeePerDay),
+      extensionLateFeePercent: Number(policyDraft.surcharges?.extensionLateFeePercent),
       updatedBy: actorName,
     }),
   });
