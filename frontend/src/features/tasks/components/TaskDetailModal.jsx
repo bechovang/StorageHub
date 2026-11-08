@@ -40,6 +40,15 @@ export function TaskDetailModal({ task, onClose }) {
   if (!detail) return null;
   const taskView = detail;
   const typeConfig = TASK_TYPES[taskView.type] || TASK_TYPES.CHECK_IN;
+  const handoverLateFee = Number(taskView.handoverLate?.fee || 0);
+  const checkoutLateFee = Number(taskView.lateCheckout?.lateFee || 0);
+  const rentLabel =
+    taskView.type === "CONTRACT" ? "Tiền thuê gia hạn" : "Tiền thuê kỳ đầu";
+  const totalCollect =
+    Number(taskView.rentAmount ?? taskView.extensionRent ?? 0)
+    + handoverLateFee;
+  const showTotal =
+    taskView.type === "CHECK_IN" || taskView.type === "CONTRACT";
 
   return (
     <Modal isOpen={Boolean(task)} onClose={onClose} title={`CHI TIẾT NHIỆM VỤ · ${typeConfig.label}`}>
@@ -89,8 +98,36 @@ export function TaskDetailModal({ task, onClose }) {
           )}
           {taskView.rentAmount != null && (
             <div>
-              <dt>Tiền thuê cần thu</dt>
+              <dt>{rentLabel}</dt>
               <dd>{fmtVND(taskView.rentAmount)}</dd>
+            </div>
+          )}
+          {handoverLateFee > 0 && (
+            <div>
+              <dt>Phí trễ bàn giao</dt>
+              <dd style={{ color: "#b91c1c", fontWeight: 700 }}>
+                {fmtVND(handoverLateFee)}
+                <small style={{ marginLeft: 6, fontWeight: 500, color: "#64748b" }}>
+                  ({taskView.handoverLate?.daysLate} ngày × {taskView.handoverLate?.feePercent}%)
+                </small>
+              </dd>
+            </div>
+          )}
+          {checkoutLateFee > 0 && (
+            <div>
+              <dt>Phí trả kho trễ</dt>
+              <dd style={{ color: "#b91c1c", fontWeight: 700 }}>
+                {fmtVND(checkoutLateFee)}
+                <small style={{ marginLeft: 6, fontWeight: 500, color: "#64748b" }}>
+                  ({taskView.lateCheckout?.daysLate} ngày × {taskView.lateCheckout?.lateFeePercent}%)
+                </small>
+              </dd>
+            </div>
+          )}
+          {showTotal && totalCollect > 0 && (
+            <div>
+              <dt>Tổng thu tại quầy</dt>
+              <dd style={{ fontWeight: 800 }}>{fmtVND(totalCollect)}</dd>
             </div>
           )}
           {taskView.depositPaid != null && (
