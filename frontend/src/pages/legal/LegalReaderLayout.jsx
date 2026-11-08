@@ -113,9 +113,6 @@ export default function LegalReaderLayout({
 
             {/* Metadata badges */}
             <div className="legal-meta-row">
-              <span className="legal-badge legal-badge--version">
-                Phiên bản {docData.version}
-              </span>
               <span className="legal-badge legal-badge--effective">
                 <CalendarCheck size={13} weight="bold" />
                 Hiệu lực từ: {docData.effectiveDate}

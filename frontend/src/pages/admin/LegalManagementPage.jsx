@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router";
+import { useSearchParams } from "react-router";
 import {
   FileText,
   ShieldCheck,
@@ -230,7 +230,7 @@ export default function LegalManagementPage() {
               {/* Card 1: Thông tin văn bản */}
               <div className="legal-mgmt-card">
                 <div className="legal-mgmt-card__header">
-                  <h3 className="legal-mgmt-card__title">Thông tin Phiên bản</h3>
+                  <h3 className="legal-mgmt-card__title">Thông tin văn bản</h3>
                 </div>
                 <div className="legal-mgmt-card__body">
                   <div className="legal-edit-group">
@@ -242,23 +242,13 @@ export default function LegalManagementPage() {
                     />
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                    <div className="legal-edit-group">
-                      <label className="legal-edit-label">Phiên bản</label>
-                      <input
-                        className="legal-edit-input"
-                        value={docData.version || ""}
-                        onChange={(e) => handleDocFieldChange("version", e.target.value)}
-                      />
-                    </div>
-                    <div className="legal-edit-group">
-                      <label className="legal-edit-label">Ngày hiệu lực</label>
-                      <input
-                        className="legal-edit-input"
-                        value={docData.effectiveDate || ""}
-                        onChange={(e) => handleDocFieldChange("effectiveDate", e.target.value)}
-                      />
-                    </div>
+                  <div className="legal-edit-group">
+                    <label className="legal-edit-label">Ngày hiệu lực</label>
+                    <input
+                      className="legal-edit-input"
+                      value={docData.effectiveDate || ""}
+                      onChange={(e) => handleDocFieldChange("effectiveDate", e.target.value)}
+                    />
                   </div>
 
                   <div className="legal-edit-group" style={{ marginBottom: 0 }}>
