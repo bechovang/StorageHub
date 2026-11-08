@@ -210,7 +210,7 @@ public class UnitService {
         List<UnitSummaryResponse> resultItems = new ArrayList<>();
 
         for (Unit unit : filteredUnits) {
-            List<PolicyRule> unitRules = rulesForUnit(unit, rules);
+            List<PolicyRule> unitRules = pricingEngine.resolveRules(unit, rules);
             int bufferDays = bufferFor(unit, unitRules, 1);
             long dailyRent = rentFor(unit, unitRules, 0L);
 
@@ -421,7 +421,7 @@ public class UnitService {
 
         List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
 
-        List<PolicyRule> unitRules = rulesForUnit(unit, rules);
+        List<PolicyRule> unitRules = pricingEngine.resolveRules(unit, rules);
         long dailyRent = rentFor(unit, unitRules, 0L);
         int bufferDays = bufferFor(unit, unitRules, 1);
 
@@ -601,18 +601,6 @@ public class UnitService {
             return "Smart keyless lock + CCTV 24/7";
         }
         return "Keycard/QR 24/7 + CCTV";
-    }
-
-    private List<PolicyRule> rulesForUnit(Unit unit, List<PolicyRule> all) {
-        if (unit.getZone() == null || unit.getZone().getFacility() == null) {
-            return all;
-        }
-        Integer facilityId = unit.getZone().getFacility().getFacilityId();
-        List<PolicyRule> facilityRules = all.stream()
-                .filter(r -> r.getFacility() != null
-                        && facilityId.equals(r.getFacility().getFacilityId()))
-                .toList();
-        return facilityRules.isEmpty() ? all : facilityRules;
     }
 
     private long rentFor(Unit unit, List<PolicyRule> rules, long fallback) {

@@ -6,7 +6,6 @@ import com.storagehub.dto.checkout.CreateCheckoutRequest;
 import com.storagehub.dto.notification.NotificationEventResponse;
 import com.storagehub.entity.CheckoutRequest;
 import com.storagehub.entity.PolicyRule;
-import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Task;
 import com.storagehub.entity.User;
@@ -14,8 +13,6 @@ import com.storagehub.exception.InvalidCredentialsException;
 import com.storagehub.exception.ReservationInvalidStateException;
 import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.repository.CheckoutRequestRepository;
-import com.storagehub.repository.PolicyRuleRepository;
-import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UserRepository;
 import com.storagehub.service.CheckoutService;
@@ -40,8 +37,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final com.storagehub.repository.SettlementRepository settlementRepository;
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
-    private final PolicyRuleRepository policyRuleRepository;
-    private final RentalPolicyRepository rentalPolicyRepository;
+    private final com.storagehub.service.PricingEngine pricingEngine;
     private final ReservationService reservationService;
     private final TaskService taskService;
     private final NotificationService notificationService;
@@ -95,10 +91,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                 List.of(Reservation.Status.RESERVED, Reservation.Status.CHECKED_IN, Reservation.Status.CHECKOUT_REQUESTED)
         );
 
-        Integer unitTypeId = (reservation.getUnit() != null && reservation.getUnit().getType() != null)
-                ? reservation.getUnit().getType().getTypeId()
-                : null;
-        int bufferDays = getTurnoverBufferDays(unitTypeId);
+        int bufferDays = getTurnoverBufferDays(reservation.getUnit());
 
         for (Reservation other : activeReservations) {
             if (!other.getReservationId().equals(reservation.getReservationId())
@@ -330,23 +323,11 @@ public class CheckoutServiceImpl implements CheckoutService {
         return settlementRepository.save(settlement);
     }
 
-    private int getTurnoverBufferDays(Integer unitTypeId) {
-        if (unitTypeId == null) {
+    private int getTurnoverBufferDays(com.storagehub.entity.Unit unit) {
+        if (unit == null || unit.getType() == null) {
             return 1;
         }
-        try {
-            RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1).orElse(null);
-            if (activePolicy != null) {
-                List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
-                for (PolicyRule r : rules) {
-                    if (r.getType() != null && unitTypeId.equals(r.getType().getTypeId())
-                            && r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER) {
-                        return r.getValue().intValue();
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return 1;
+        return Math.max(1,
+                pricingEngine.ruleInt(unit, null, PolicyRule.RuleType.TURNOVER_BUFFER, 1));
     }
 }

@@ -150,6 +150,7 @@ export function useUnitDetailView() {
   const quoteEndDate = quote?.endDate || endDate;
   const policyVersion = quote?.policyVersion || "";
   const depositPercent = quote?.depositPercent ?? null;
+  const minDeposit = quote?.minDeposit ?? null;
 
   return {
     unitId,
@@ -177,6 +178,7 @@ export function useUnitDetailView() {
     totalRent,
     depositAmount,
     depositPercent,
+    minDeposit,
     dueNow,
     facilityLayout,
     facilityLayoutError,

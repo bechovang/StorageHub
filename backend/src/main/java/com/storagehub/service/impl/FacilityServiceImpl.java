@@ -234,9 +234,8 @@ public class FacilityServiceImpl implements FacilityService {
         }
 
         // 6. Biểu đồ cơ cấu doanh thu theo loại kho (Revenue Mix)
-        Map<Integer, BigDecimal> rentRateMap = policyRuleRepository.findActiveRulesByType(PolicyRule.RuleType.RENT_RATE)
-                .stream()
-                .collect(Collectors.toMap(r -> r.getType().getTypeId(), PolicyRule::getValue, (v1, v2) -> v1));
+        Map<String, BigDecimal> rentRateMap = rentRateIndex(
+                policyRuleRepository.findActiveRulesByType(PolicyRule.RuleType.RENT_RATE));
 
         List<UnitType> unitTypes = unitTypeRepository.findAll();
         Map<Integer, BigDecimal> typeRevenueMap = new LinkedHashMap<>();
@@ -244,13 +243,16 @@ public class FacilityServiceImpl implements FacilityService {
         BigDecimal totalMonthlyRevenue = BigDecimal.ZERO;
 
         for (UnitType ut : unitTypes) {
-            int rentedCount = (int) units.stream()
-                    .filter(u -> u.getStatus() == Unit.Status.RENTED && u.getType() != null && ut.getTypeId().equals(u.getType().getTypeId()))
-                    .count();
-            BigDecimal monthlyRent = rentRateMap.getOrDefault(ut.getTypeId(), BigDecimal.ZERO);
-            BigDecimal typeRev = monthlyRent.multiply(BigDecimal.valueOf(rentedCount));
+            List<Unit> rentedOfType = units.stream()
+                    .filter(u -> u.getStatus() == Unit.Status.RENTED
+                            && u.getType() != null
+                            && ut.getTypeId().equals(u.getType().getTypeId()))
+                    .toList();
+            BigDecimal typeRev = rentedOfType.stream()
+                    .map(u -> rentRateFor(u, rentRateMap))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
             typeRevenueMap.put(ut.getTypeId(), typeRev);
-            typeRentedCountMap.put(ut.getTypeId(), rentedCount);
+            typeRentedCountMap.put(ut.getTypeId(), rentedOfType.size());
             totalMonthlyRevenue = totalMonthlyRevenue.add(typeRev);
         }
 
@@ -367,10 +369,9 @@ public class FacilityServiceImpl implements FacilityService {
             }
         }
 
-        // Bảng giá thuê chuẩn
-        Map<Integer, BigDecimal> rentRateMap = policyRuleRepository.findActiveRulesByType(PolicyRule.RuleType.RENT_RATE)
-                .stream()
-                .collect(Collectors.toMap(r -> r.getType().getTypeId(), PolicyRule::getValue, (v1, v2) -> v1));
+        // Bảng giá thuê chuẩn theo (facility, type), fallback global
+        Map<String, BigDecimal> rentRateMap = rentRateIndex(
+                policyRuleRepository.findActiveRulesByType(PolicyRule.RuleType.RENT_RATE));
 
         long totalItems = matchedUnits.size();
         int totalPages = (int) Math.ceil((double) totalItems / validPageSize);
@@ -385,7 +386,7 @@ public class FacilityServiceImpl implements FacilityService {
                 Reservation res = unitReservationMap.get(u.getUnitId());
                 String tenantName = (res != null && res.getCustomer() != null) ? res.getCustomer().getFullName() : null;
                 String rentalCode = (res != null) ? res.getCode() : null;
-                BigDecimal rentPrice = (u.getType() != null) ? rentRateMap.getOrDefault(u.getType().getTypeId(), BigDecimal.ZERO) : BigDecimal.ZERO;
+                BigDecimal rentPrice = rentRateFor(u, rentRateMap);
                 return new FacilityDrilldownItem(
                         u.getUnitId(),
                         u.getCode(),
@@ -409,5 +410,36 @@ public class FacilityServiceImpl implements FacilityService {
                 totalPages,
                 status
         );
+    }
+
+    /** Index RENT_RATE theo "facilityId:typeId" và "g:typeId" (global fallback). */
+    private Map<String, BigDecimal> rentRateIndex(List<PolicyRule> rules) {
+        Map<String, BigDecimal> index = new HashMap<>();
+        for (PolicyRule r : rules) {
+            if (r.getType() == null) continue;
+            if (r.getFacility() != null) {
+                index.put(r.getFacility().getFacilityId() + ":" + r.getType().getTypeId(),
+                        r.getValue());
+            } else {
+                index.putIfAbsent("g:" + r.getType().getTypeId(), r.getValue());
+            }
+        }
+        return index;
+    }
+
+    private BigDecimal rentRateFor(Unit unit, Map<String, BigDecimal> index) {
+        if (unit == null || unit.getType() == null) {
+            return BigDecimal.ZERO;
+        }
+        Integer facilityId = unit.getZone() != null && unit.getZone().getFacility() != null
+                ? unit.getZone().getFacility().getFacilityId()
+                : null;
+        BigDecimal rate = facilityId != null
+                ? index.get(facilityId + ":" + unit.getType().getTypeId())
+                : null;
+        if (rate == null) {
+            rate = index.get("g:" + unit.getType().getTypeId());
+        }
+        return rate != null ? rate : BigDecimal.ZERO;
     }
 }

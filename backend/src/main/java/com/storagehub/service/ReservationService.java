@@ -30,8 +30,6 @@ import com.storagehub.repository.ContractAddendumRepository;
 import com.storagehub.repository.CheckoutRequestRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
-import com.storagehub.repository.PolicyRuleRepository;
-import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UnitRepository;
 import com.storagehub.repository.UserRepository;
@@ -63,8 +61,6 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
-    private final PolicyRuleRepository policyRuleRepository;
-    private final RentalPolicyRepository rentalPolicyRepository;
     private final UnitRepository unitRepository;
     private final PricingEngine pricingEngine;
     private final PaymentRepository paymentRepository;
@@ -326,16 +322,7 @@ public class ReservationService {
     }
 
     private int turnoverBufferDays(Unit unit) {
-        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
-                .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
-        List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
-        for (PolicyRule r : rules) {
-            if (r.getType().getTypeId().equals(unit.getType().getTypeId())
-                    && r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER) {
-                return r.getValue().intValue();
-            }
-        }
-        return 1;
+        return pricingEngine.ruleInt(unit, null, PolicyRule.RuleType.TURNOVER_BUFFER, 1);
     }
 
     /** Ngày đóng thực tế (nếu có) — tránh lỗi đơn trả trễ bị coi là available ngay. */

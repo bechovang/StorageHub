@@ -7,6 +7,7 @@ import {
   validatePolicy,
   HARD_CAPS,
 } from "../../../services/policyService.js";
+import { getFacilities } from "../../../services/facilityService.js";
 import { formatVND } from "../../../utils/formatters.js";
 
 export function usePolicyManagement() {
@@ -19,6 +20,11 @@ export function usePolicyManagement() {
   const [persistedPolicy, setPersistedPolicy] = useState(null);
   const [policyError, setPolicyError] = useState("");
   const [policyLoading, setPolicyLoading] = useState(true);
+
+  // Phạm vi cơ sở đang chỉnh sửa
+  const [facilities, setFacilities] = useState([]);
+  const [facilityId, setFacilityId] = useState(null);
+  const [facilityError, setFacilityError] = useState("");
 
   // Bản nháp đang thao tác (Form Draft)
   const [draftBaseRates, setDraftBaseRates] = useState([]);
@@ -37,14 +43,42 @@ export function usePolicyManagement() {
 
   const capRulesRef = useRef(null);
 
-  // Tải chính sách hiện hành từ API
+  // Tải danh sách cơ sở để chọn phạm vi
   useEffect(() => {
+    let ignore = false;
+    getFacilities()
+      .then((list) => {
+        if (ignore) return;
+        const active = Array.isArray(list) ? list : [];
+        setFacilities(active);
+        if (active.length === 0) {
+          setPolicyLoading(false);
+          setFacilityError("Chưa có cơ sở đang hoạt động để cấu hình chính sách.");
+          return;
+        }
+        setFacilityId((prev) => prev ?? active[0].id);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        setPolicyLoading(false);
+        setFacilityError(err.message || "Không thể tải danh sách cơ sở.");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  // Tải chính sách hiện hành theo cơ sở đang chọn
+  useEffect(() => {
+    if (facilityId == null) return undefined;
     let ignore = false;
     async function loadPolicy() {
       setPolicyLoading(true);
       setPolicyError("");
+      setPersistedPolicy(null);
+      clearDraft();
       try {
-        const policy = await getCurrentPolicy();
+        const policy = await getCurrentPolicy(facilityId);
         if (!ignore) {
           setPersistedPolicy(policy);
           syncDraftFromPersisted(policy);
@@ -59,7 +93,20 @@ export function usePolicyManagement() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [facilityId]);
+
+  function clearDraft() {
+    setDraftBaseRates([]);
+    setDraftLateFee("");
+    setDraftEscalationDays(3);
+    setDraftDeposit("");
+    setDraftBufferDays("");
+    setDraftCheckinGrace(3);
+    setDraftCheckinLateFee(50000);
+    setDraftExtensionGrace(3);
+    setDraftExtensionLateFee(50000);
+    setValidationBanner(null);
+  }
 
   // Khi persistedPolicy đổi, đồng bộ form draft
   function syncDraftFromPersisted(policy) {
@@ -193,7 +240,18 @@ export function usePolicyManagement() {
         extensionLateFeePerDay: Number(draftExtensionLateFee),
       },
     };
-  }, [persistedPolicy, draftBaseRates, draftLateFee, draftEscalationDays, draftDeposit, draftBufferDays]);
+  }, [
+    persistedPolicy,
+    draftBaseRates,
+    draftLateFee,
+    draftEscalationDays,
+    draftDeposit,
+    draftBufferDays,
+    draftCheckinGrace,
+    draftCheckinLateFee,
+    draftExtensionGrace,
+    draftExtensionLateFee,
+  ]);
 
   // Kiểm tra vi phạm các điều kiện trần cứng
   const activeValidationErrors = useMemo(() => {
@@ -247,7 +305,7 @@ export function usePolicyManagement() {
     }
 
     try {
-      const saved = await savePolicy(currentDraftObject, currentActorName);
+      const saved = await savePolicy(currentDraftObject, currentActorName, facilityId);
       setPersistedPolicy(saved);
       syncDraftFromPersisted(saved);
       showToast(
@@ -257,6 +315,23 @@ export function usePolicyManagement() {
       setValidationBanner(err.message);
     }
   };
+
+  // Đổi cơ sở — chặn mất draft chưa lưu
+  const handleFacilityChange = (nextFacilityId) => {
+    const next = Number(nextFacilityId);
+    if (Number.isNaN(next) || next === Number(facilityId)) return;
+    if (
+      hasChanges &&
+      !window.confirm(
+        "Bạn đang có thay đổi chưa lưu ở cơ sở hiện tại. Đổi cơ sở sẽ hủy bỏ các thay đổi này. Tiếp tục?"
+      )
+    ) {
+      return;
+    }
+    setFacilityId(next);
+  };
+
+  const selectedFacility = facilities.find((f) => Number(f.id) === Number(facilityId)) || null;
 
   // Hủy chỉnh sửa (Discard changes)
   const handleDiscardChanges = () => {
@@ -269,11 +344,11 @@ export function usePolicyManagement() {
   const handleResetToBaseline = async () => {
     if (
       window.confirm(
-        "Bạn có chắc muốn khôi phục chính sách về phiên bản mặc định chuẩn v3.0.4 không? Thao tác này sẽ ghi nhật ký kiểm toán."
+        "Khôi phục giá thuê của cơ sở đang chọn về mặc định gốc? Các tham số dùng chung (cọc, phạt trễ, buffer...) cũng sẽ về mặc định. Thao tác này sẽ ghi nhật ký kiểm toán."
       )
     ) {
       try {
-        const reset = await resetPolicyToDefault(currentActorName);
+        const reset = await resetPolicyToDefault(currentActorName, facilityId);
         setPersistedPolicy(reset);
         syncDraftFromPersisted(reset);
         showToast("Đã khôi phục chính sách về bản gốc mặc định.");
@@ -289,6 +364,11 @@ export function usePolicyManagement() {
     persistedPolicy,
     policyError,
     policyLoading,
+    facilities,
+    facilityId,
+    facilityError,
+    selectedFacility,
+    handleFacilityChange,
     draftBaseRates,
     draftLateFee,
     setDraftLateFee,

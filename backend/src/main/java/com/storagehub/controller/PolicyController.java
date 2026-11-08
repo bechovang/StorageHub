@@ -25,8 +25,11 @@ public class PolicyController {
     private final PolicyAdminService policyAdminService;
 
     @GetMapping("/active")
-    public ResponseEntity<PolicyActiveResponse> getActivePolicy() {
-        return ResponseEntity.ok(policyAdminService.getActivePolicy());
+    public ResponseEntity<PolicyActiveResponse> getActivePolicy(
+            @org.springframework.web.bind.annotation.RequestParam(
+                    name = "facilityId", required = false) Integer facilityId
+    ) {
+        return ResponseEntity.ok(policyAdminService.getActivePolicy(facilityId));
     }
 
     @PostMapping
@@ -40,9 +43,12 @@ public class PolicyController {
 
     @PostMapping("/reset")
     public ResponseEntity<PolicyActiveResponse> resetPolicy(
+            @org.springframework.web.bind.annotation.RequestParam(
+                    name = "facilityId", required = false) Integer facilityId,
             Authentication authentication
     ) {
         return ResponseEntity.ok(policyAdminService.resetToDefault(
+                facilityId,
                 authentication != null ? authentication.getName() : "system"));
     }
 

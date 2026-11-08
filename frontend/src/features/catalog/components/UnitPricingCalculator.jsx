@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import {
   ShieldCheck,
   Lock,
@@ -16,6 +17,7 @@ export default function UnitPricingCalculator({
   totalRent,
   depositAmount,
   depositPercent,
+  minDeposit,
   dueNow,
   policyVersion,
   quoteLoading,
@@ -86,7 +88,7 @@ export default function UnitPricingCalculator({
           <div className="pricing-row-left">
             <span className="pricing-row-label">Tiền đặt cọc giữ chỗ</span>
             <span className="pricing-row-hint">
-              {depositPercent != null ? `${depositPercent}%` : "Theo chính sách"} tổng tiền thuê (tối thiểu 5.000 ₫) · Hoàn lại 100% khi trả kho
+              {`${depositPercent != null ? `${depositPercent}%` : "Theo chính sách"} tổng tiền thuê${minDeposit != null ? ` (tối thiểu ${formatVND(minDeposit)})` : ""} · Hoàn lại 100% khi trả kho`}
             </span>
           </div>
           <strong className="pricing-row-val">{formatVND(depositAmount)}</strong>
@@ -113,6 +115,14 @@ export default function UnitPricingCalculator({
             Cọc {depositPercent != null ? `${depositPercent}%` : "theo chính sách"} được lưu trữ an toàn và hoàn trả ngay khi kết thúc thuê kho.
           </p>
         </div>
+        <Link
+          to="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="pricing-policy-badge__link"
+        >
+          Xem Điều khoản dịch vụ
+        </Link>
       </div>
 
       {/* ── TỔNG CỘNG THANH TOÁN HÔM NAY (TIỀN CỌC GIỮ CHỖ) ── */}

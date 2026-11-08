@@ -20,8 +20,9 @@ export const HARD_CAPS = {
  * Lấy chính sách hiện hành: GET /api/v1/policies/active
  * Lỗi (404/500/mạng) sẽ được ném lên để UI hiển thị.
  */
-export async function getCurrentPolicy() {
-  const res = await apiClient("/api/v1/policies/active");
+export async function getCurrentPolicy(facilityId) {
+  const query = facilityId != null ? `?facilityId=${encodeURIComponent(facilityId)}` : "";
+  const res = await apiClient(`/api/v1/policies/active${query}`);
   const data = await safeParseJson(res);
   if (!res.ok) {
     throw new Error(data.message || "Không thể tải chính sách thuê kho hiện hành.");
@@ -117,7 +118,10 @@ export function validatePolicy(policyDraft) {
  * Lưu chính sách mới: POST /api/v1/policies
  * Chặn lưu nếu có lỗi validation; lỗi backend sẽ surface lên UI.
  */
-export async function savePolicy(policyDraft, actorName = "Business Ops") {
+export async function savePolicy(policyDraft, actorName = "Business Ops", facilityId) {
+  if (facilityId == null) {
+    throw new Error("Chưa chọn cơ sở — không thể lưu chính sách giá.");
+  }
   const errors = validatePolicy(policyDraft);
   if (errors.length > 0) {
     const errorObj = new Error(errors[0].message);
@@ -127,8 +131,9 @@ export async function savePolicy(policyDraft, actorName = "Business Ops") {
 
   const res = await apiClient("/api/v1/policies", {
     method: "POST",
-    // Body đúng contract: { baseRates, lateCheckoutPercent, depositPercent, turnoverBufferDays, updatedBy }
+    // Body đúng contract: { facilityId, baseRates, lateCheckoutPercent, depositPercent, turnoverBufferDays, updatedBy }
     body: JSON.stringify({
+      facilityId: Number(facilityId),
       baseRates: (policyDraft.baseRates || []).map((r) => ({
         id: r.id,
         typeName: r.typeName,
@@ -155,8 +160,12 @@ export async function savePolicy(policyDraft, actorName = "Business Ops") {
 /**
  * Khôi phục chính sách mặc định: POST /api/v1/policies/reset
  */
-export async function resetPolicyToDefault(actorName = "Business Ops") {
-  const res = await apiClient("/api/v1/policies/reset", {
+export async function resetPolicyToDefault(actorName = "Business Ops", facilityId) {
+  if (facilityId == null) {
+    throw new Error("Chưa chọn cơ sở — không thể khôi phục chính sách mặc định.");
+  }
+  const query = `?facilityId=${encodeURIComponent(facilityId)}`;
+  const res = await apiClient(`/api/v1/policies/reset${query}`, {
     method: "POST",
     body: JSON.stringify({ actorName }),
   });

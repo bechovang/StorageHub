@@ -14,8 +14,6 @@ import com.storagehub.exception.ReservationInvalidStateException;
 import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.ExtensionRepository;
-import com.storagehub.repository.PolicyRuleRepository;
-import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -57,8 +55,6 @@ public class ExtensionService {
     private final ReservationRepository reservationRepository;
     private final ContractRepository contractRepository;
     private final UserRepository userRepository;
-    private final RentalPolicyRepository rentalPolicyRepository;
-    private final PolicyRuleRepository policyRuleRepository;
     private final PricingEngine pricingEngine;
     private final LogService logService;
 
@@ -259,20 +255,8 @@ public class ExtensionService {
         return extension;
     }
 
-    /** Deposit% theo unit type từ policy active — cùng logic PricingEngine. */
+    /** Deposit% resolve theo policy snapshot + facility của unit. */
     private int depositPercentFor(Unit unit, RentalPolicy policy) {
-        int depositPercent = 10;
-        RentalPolicy activePolicy = policy != null
-                ? policy
-                : rentalPolicyRepository.findByStatus(1)
-                    .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
-        Integer typeId = unit.getType().getTypeId();
-        for (PolicyRule r : policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId())) {
-            if (r.getType().getTypeId().equals(typeId)
-                    && r.getRuleType() == PolicyRule.RuleType.DEPOSIT_RATE) {
-                depositPercent = r.getValue().intValue();
-            }
-        }
-        return depositPercent;
+        return pricingEngine.ruleInt(unit, policy, PolicyRule.RuleType.DEPOSIT_RATE, 10);
     }
 }

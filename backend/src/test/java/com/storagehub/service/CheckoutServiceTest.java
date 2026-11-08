@@ -5,8 +5,6 @@ import com.storagehub.dto.checkout.CheckoutRequestResponse;
 import com.storagehub.dto.checkout.CreateCheckoutRequest;
 import com.storagehub.dto.notification.NotificationEventResponse;
 import com.storagehub.entity.CheckoutRequest;
-import com.storagehub.entity.PolicyRule;
-import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Reservation;
 import com.storagehub.entity.Role;
 import com.storagehub.entity.Task;
@@ -17,8 +15,6 @@ import com.storagehub.exception.InvalidCredentialsException;
 import com.storagehub.exception.ReservationInvalidStateException;
 import com.storagehub.exception.ReservationNotFoundException;
 import com.storagehub.repository.CheckoutRequestRepository;
-import com.storagehub.repository.PolicyRuleRepository;
-import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UserRepository;
 import com.storagehub.service.impl.CheckoutServiceImpl;
@@ -31,7 +27,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -58,9 +53,7 @@ class CheckoutServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private PolicyRuleRepository policyRuleRepository;
-    @Mock
-    private RentalPolicyRepository rentalPolicyRepository;
+    private PricingEngine pricingEngine;
     @Mock
     private ReservationService reservationService;
     @Mock
@@ -78,8 +71,6 @@ class CheckoutServiceTest {
     private Unit unit;
     private UnitType unitType;
     private Reservation reservation;
-    private RentalPolicy policy;
-    private PolicyRule bufferRule;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -119,15 +110,6 @@ class CheckoutServiceTest {
         reservation.setEndDate(today.plusMonths(2));
         reservation.setStatus(Reservation.Status.CHECKED_IN);
 
-        policy = new RentalPolicy();
-        policy.setPolicyId(1);
-        policy.setStatus(1);
-
-        bufferRule = new PolicyRule();
-        bufferRule.setPolicy(policy);
-        bufferRule.setType(unitType);
-        bufferRule.setRuleType(PolicyRule.RuleType.TURNOVER_BUFFER);
-        bufferRule.setValue(new BigDecimal("1"));
     }
 
     @Test
@@ -140,8 +122,8 @@ class CheckoutServiceTest {
         when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customer));
         when(reservationRepository.findWithDetailsById(100L)).thenReturn(Optional.of(reservation));
         when(reservationRepository.findActiveReservationsForUnit(eq(1L), any())).thenReturn(List.of(reservation));
-        when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(policy));
-        when(policyRuleRepository.findByPolicy_PolicyId(1)).thenReturn(List.of(bufferRule));
+
+
         when(checkoutRequestRepository.findByReservation_ReservationIdAndStatus(100L, CheckoutRequest.Status.PENDING))
                 .thenReturn(new ArrayList<>());
 
@@ -207,8 +189,8 @@ class CheckoutServiceTest {
         when(userRepository.findByEmailIgnoreCase("lan@demo.vn")).thenReturn(Optional.of(customer));
         when(reservationRepository.findWithDetailsById(100L)).thenReturn(Optional.of(reservation));
         when(reservationRepository.findActiveReservationsForUnit(eq(1L), any())).thenReturn(List.of(reservation));
-        when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(policy));
-        when(policyRuleRepository.findByPolicy_PolicyId(1)).thenReturn(List.of(bufferRule));
+
+
         when(checkoutRequestRepository.findByReservation_ReservationIdAndStatus(100L, CheckoutRequest.Status.PENDING))
                 .thenReturn(List.of(oldReq));
 
@@ -313,8 +295,8 @@ class CheckoutServiceTest {
         when(reservationRepository.findWithDetailsById(100L)).thenReturn(Optional.of(reservation));
         when(reservationRepository.findActiveReservationsForUnit(eq(1L), any()))
                 .thenReturn(List.of(reservation, nextReservation));
-        when(rentalPolicyRepository.findByStatus(1)).thenReturn(Optional.of(policy));
-        when(policyRuleRepository.findByPolicy_PolicyId(1)).thenReturn(List.of(bufferRule));
+
+
 
         ReservationInvalidStateException ex = assertThrows(ReservationInvalidStateException.class, () ->
                 checkoutService.createCheckoutRequest("lan@demo.vn", 100L, request));

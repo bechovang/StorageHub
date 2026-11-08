@@ -104,6 +104,11 @@ class UnitServiceTest {
         activePolicy.setPolicyId(2);
         activePolicy.setVersion("v3");
         activePolicy.setStatus(1);
+
+        org.mockito.Mockito.lenient()
+                .when(pricingEngine.resolveRules(any(Unit.class),
+                        org.mockito.ArgumentMatchers.<PolicyRule>anyList()))
+                .thenAnswer(inv -> inv.getArgument(1));
     }
 
     @Test

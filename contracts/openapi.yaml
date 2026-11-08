@@ -1953,6 +1953,7 @@ components:
         policyVersion: { type: string, example: v3 }
         policyId: { type: integer, nullable: true, description: "Policy snapshot dùng cho quote" }
         depositPercent: { type: integer, nullable: true, example: 10, description: "Tỷ lệ cọc của policy snapshot" }
+        minDeposit: { type: integer, nullable: true, example: 5000, description: "Sàn tiền cọc áp dụng bởi PricingEngine" }
 
     # --------------------------- Reservations -----------------------------
 

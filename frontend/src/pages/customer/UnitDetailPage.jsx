@@ -8,19 +8,16 @@ import {
 import AppShell from "../../components/AppShell/AppShell.jsx";
 const Facility3DViewer = lazy(() => import("../../components/Facility3DViewer/Facility3DViewer.jsx"));
 import { Badge, Button } from "../../components";
-import { useAuth } from "../../context/AuthContext";
 import {
   useUnitDetailView,
   UnitImageSlider,
   UnitPricingCalculator,
   UnitFacilityStandards,
 } from "../../features/catalog/index.js";
-import { formatDate } from "../../utils/formatters.js";
 import "./UnitDetailPage.css";
 
 export default function UnitDetailPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const {
     unit,
     loading,
@@ -44,6 +41,7 @@ export default function UnitDetailPage() {
     totalRent,
     depositAmount,
     depositPercent,
+    minDeposit,
     dueNow,
     facilityLayout,
     facilityLayoutError,
@@ -257,6 +255,7 @@ export default function UnitDetailPage() {
               totalRent={totalRent}
               depositAmount={depositAmount}
               depositPercent={depositPercent}
+              minDeposit={minDeposit}
               dueNow={dueNow}
               policyVersion={policyVersion}
               quoteLoading={quoteLoading}
