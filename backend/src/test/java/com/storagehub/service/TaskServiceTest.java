@@ -174,6 +174,35 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("getTasks cột Done dùng biên ngày ICT — task hoàn tất 17:30 vẫn hiện")
+    void testGetTasks_DoneAfter17hStillVisible() {
+        Task doneTask = new Task();
+        doneTask.setTaskId(90L);
+        doneTask.setType(Task.Type.CLEANING);
+        doneTask.setRefCode("S-1");
+        doneTask.setAssignedStaff(staffUser);
+        doneTask.setWorkDate(today);
+        doneTask.setStatus(Task.Status.DONE);
+        doneTask.setCompletedAt(today.atTime(17, 30));
+        doneTask.setCompletedBy(staffUser);
+
+        when(userRepository.findByEmailIgnoreCase("minh@demo.storagehub.vn"))
+                .thenReturn(Optional.of(staffUser));
+        when(taskRepository.findDoneTasksCompletedBetween(
+                eq(2L),
+                eq(null),
+                eq(today.atStartOfDay()),
+                eq(today.plusDays(1).atStartOfDay()),
+                eq(null)
+        )).thenReturn(List.of(doneTask));
+
+        List<TaskResponse> result = taskService.getTasks(
+                "minh@demo.storagehub.vn", null, null, null, null, null);
+
+        assertThat(result).extracting(TaskResponse::taskId).containsExactly(90L);
+    }
+
+    @Test
     @DisplayName("getTasks ném AccessDeniedException khi vai trò là Customer")
     void testGetTasks_AccessDeniedForCustomer() {
         when(userRepository.findByEmailIgnoreCase("lan@demo.storagehub.vn")).thenReturn(Optional.of(customerUser));

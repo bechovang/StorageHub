@@ -200,12 +200,13 @@ public class TaskServiceImpl implements TaskService {
                     ? currentUser.getFacility().getFacilityId()
                     : null;
             Long doneStaffId = roleName == Role.Name.STAFF ? currentUser.getUserId() : staffId;
-            LocalDateTime startUtc = LocalDateTime.ofInstant(
-                    targetDate.atStartOfDay(ICT_ZONE).toInstant(), ZoneOffset.UTC);
-            LocalDateTime endUtc = LocalDateTime.ofInstant(
-                    targetDate.plusDays(1).atStartOfDay(ICT_ZONE).toInstant(), ZoneOffset.UTC);
+            // completed_at được ghi bằng giờ ICT (markDone) nên biên ngày cũng
+            // phải là ICT. Trước đây chuyển biên sang UTC khiến task hoàn tất
+            // sau 17:00 ICT rơi ra khỏi cột Done của hôm nay.
+            LocalDateTime start = targetDate.atStartOfDay();
+            LocalDateTime end = targetDate.plusDays(1).atStartOfDay();
             tasks.addAll(taskRepository.findDoneTasksCompletedBetween(
-                    doneStaffId, doneFacilityId, startUtc, endUtc, type));
+                    doneStaffId, doneFacilityId, start, end, type));
         }
 
         // Dedupe taskId (manager main query + pool có thể trùng task hôm nay).
