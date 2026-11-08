@@ -1092,8 +1092,8 @@ public class TaskServiceImpl implements TaskService {
                         customerName = res.getCustomer().getFullName();
                         customerPhone = res.getCustomer().getPhone();
                         accessPin = res.getAccessCode() != null ? res.getAccessCode() + "-Active" : "8842-Active";
-                        depositPaid = res.getDepositAmount() != null ? res.getDepositAmount().longValue() : 180000L;
-                        rentAmount = depositPaid * 10;
+                        depositPaid = res.getDepositAmount() != null ? res.getDepositAmount().longValue() : null;
+                        rentAmount = depositPaid != null ? depositPaid * 10 : null;
                     }
                 }
                 ritual = new TaskRitualDto(
@@ -1110,14 +1110,13 @@ public class TaskServiceImpl implements TaskService {
                 unitCode = "Unit M-2";
                 customerName = "Hoàng Nam";
                 customerPhone = "0933 555 777";
-                depositPaid = 360000L;
                 if (refCode != null && refCode.startsWith("BK-")) {
                     Reservation res = reservationRepository.findByCode(refCode).orElse(null);
                     if (res != null) {
                         unitCode = "Unit " + res.getUnit().getCode();
                         customerName = res.getCustomer().getFullName();
                         customerPhone = res.getCustomer().getPhone();
-                        depositPaid = res.getDepositAmount() != null ? res.getDepositAmount().longValue() : 360000L;
+                        depositPaid = res.getDepositAmount() != null ? res.getDepositAmount().longValue() : null;
                         checkoutUnitId = res.getUnit().getUnitId();
                         lateCheckoutService.evaluate(res);
                         lateInfo = lateCheckoutService.info(res);

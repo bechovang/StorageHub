@@ -61,7 +61,7 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
 
   const settlementFileInputRef = useRef(null);
 
-  const depositHeld = task?.depositAmount || 360000;
+  const depositHeld = task?.depositPaid ?? 0;
   const lateInfo = task?.lateCheckout || null;
   const lateDays = Number(lateInfo?.daysLate || 0);
   const lateFee = Number(lateInfo?.lateFee || 0);
@@ -115,6 +115,13 @@ export function CheckoutRitualDrawer({ task, onClose, onSuccess, showToast }) {
   };
 
   const handleConfirmCheckout = async () => {
+    if (task?.depositPaid == null) {
+      showToast?.(
+        "Nhiệm vụ chưa gắn đơn đặt chỗ có cọc — không thể lập biên bản tất toán.",
+        "warning"
+      );
+      return;
+    }
     if (lateInfo && !lateInfo.canSettle) {
       showToast?.(
         lateInfo.blockMessage || "Đơn đã quá hạn — chờ quản lý duyệt tất toán.",

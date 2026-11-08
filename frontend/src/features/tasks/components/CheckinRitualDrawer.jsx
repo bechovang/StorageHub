@@ -153,7 +153,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 <div>Khách hàng: <strong>{task.customerName}</strong></div>
                 <div>Điện thoại: <strong>{task.customerPhone || "0901 234 567"}</strong></div>
                 <div>CCCD đối chiếu: <strong>079198002345</strong></div>
-                <div>Tiền cọc đã trả: <strong>{formatVnd(task.depositPaid || 180000)}</strong></div>
+                <div>Tiền cọc đã trả: <strong>{formatVnd(task.depositPaid)}</strong></div>
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "6px", borderTop: "1px solid #e2e8f0" }}>
@@ -187,7 +187,7 @@ export function CheckinRitualDrawer({ task, onClose, onSuccess, showToast }) {
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <strong style={{ color: "var(--color-accent, #dc2626)", fontSize: "0.95rem", fontFamily: "var(--font-mono)" }}>
-                  {formatVnd(task.rentAmount || 1800000)}
+                  {formatVnd(task.rentAmount)}
                 </strong>
                 <span className={`ritual-step-badge ${paymentPhotoUrl ? "ritual-step-badge--completed" : "ritual-step-badge--attention"}`}>
                   {paymentPhotoUrl ? "✓ ĐÃ THU ĐỦ TIỀN" : "⚠ CHƯA ĐÍNH KÈM ẢNH"}

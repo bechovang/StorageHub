@@ -237,7 +237,7 @@ export async function completeCheckinRitual(taskId, { paymentMethod, contractPho
 /**
  * Thực hiện nghiệp vụ Checkout Ritual (US-21)
  */
-export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged, settlementMethod, settlementPhotoUrl }) {
+export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged, settlementMethod, settlementPhotoUrl, assetChecks }) {
   // POST /api/v1/tasks/{id}/rituals/checkout — BE lập Settlement + Inspection +
   // ghi phí hư hại/phát sinh vào payments + đóng vòng thuê (1 transaction).
   const res = await apiClient(`/api/v1/tasks/${taskId}/rituals/checkout`, {
@@ -253,6 +253,11 @@ export async function completeCheckoutRitual(taskId, { checklist, damageCharges,
       extraCharged: Number(extraCharged) || 0,
       settlementMethod,
       settlementPhotoUrl,
+      assetChecks: (assetChecks || []).map((a) => ({
+        assetId: a.assetId,
+        result: a.result || "OK",
+        note: a.note || "",
+      })),
     }),
   });
   const data = await safeParseJson(res);
