@@ -8,8 +8,6 @@ export default function BrowseFilterForm({
   setSelectedFacility,
   selectedType,
   setSelectedType,
-  selectedSize,
-  setSelectedSize,
   onSearchSubmit,
 }) {
   return (
@@ -65,26 +63,6 @@ export default function BrowseFilterForm({
             {filterOptions.types.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* 4. Kích thước (m²) */}
-        <div className="browse-filter-field">
-          <label className="browse-filter-field__label" htmlFor="filter-size">
-            Kích thước (m²)
-          </label>
-          <select
-            id="filter-size"
-            className="browse-filter-field__select"
-            value={selectedSize}
-            onChange={(e) => setSelectedSize(e.target.value)}
-          >
-            <option value="">Tất cả kích thước</option>
-            {filterOptions.sizesM2.map((s) => (
-              <option key={s} value={s}>
-                {s} m²
               </option>
             ))}
           </select>

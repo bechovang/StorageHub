@@ -20,6 +20,12 @@ export default function ActivityLogPage() {
     totalEntries,
     statusChangeCount,
     securityEventCount,
+    loading,
+    error,
+    refreshLogs,
+    page,
+    setPage,
+    totalPages,
   } = useActivityLogs({ isLoginHistory });
 
   return (
@@ -62,6 +68,12 @@ export default function ActivityLogPage() {
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             isLoginHistory={isLoginHistory}
+            loading={loading}
+            error={error}
+            onRetry={refreshLogs}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
           />
         </div>
       </div>

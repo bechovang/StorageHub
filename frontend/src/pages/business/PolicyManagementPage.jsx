@@ -20,25 +20,31 @@ import "./PolicyManagementPage.css";
 
 export default function PolicyManagementPage() {
   const {
-    user,
     persistedPolicy,
     policyError,
     policyLoading,
+    facilities,
+    facilityId,
+    facilityError,
+    selectedFacility,
+    handleFacilityChange,
     draftBaseRates,
     draftLateFee,
     setDraftLateFee,
+    draftEscalationDays,
+    setDraftEscalationDays,
     draftDeposit,
     setDraftDeposit,
     draftBufferDays,
     setDraftBufferDays,
     draftCheckinGrace,
     setDraftCheckinGrace,
-    draftCheckinLateFee,
-    setDraftCheckinLateFee,
+    draftCheckinLatePercent,
+    setDraftCheckinLatePercent,
     draftExtensionGrace,
     setDraftExtensionGrace,
-    draftExtensionLateFee,
-    setDraftExtensionLateFee,
+    draftExtensionLatePercent,
+    setDraftExtensionLatePercent,
     validationBanner,
     toastMessage,
     capRulesRef,
@@ -46,9 +52,11 @@ export default function PolicyManagementPage() {
     hasChanges,
     activeValidationErrors,
     isLateFeeViolated,
+    isEscalationViolated,
     isDepositViolated,
     isBufferViolated,
     isLateFeeModified,
+    isEscalationModified,
     isDepositModified,
     isBufferModified,
     handleRateChange,
@@ -96,6 +104,11 @@ export default function PolicyManagementPage() {
               {policyError}
             </div>
           )}
+          {facilityError && (
+            <div className="policy-validation-banner" role="alert" style={{ marginBottom: "16px" }}>
+              {facilityError}
+            </div>
+          )}
           {/* ── 3. Page Header / Title Row ── */}
           <section className="policy-header">
             <div className="policy-header__left">
@@ -128,6 +141,45 @@ export default function PolicyManagementPage() {
 
             {/* Action Cluster: Exact ONE Primary Button */}
             <div className="policy-header__actions">
+              <label
+                htmlFor="policy-facility"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px",
+                  fontSize: "0.68rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  color: "var(--color-secondary)",
+                  textTransform: "uppercase",
+                }}
+              >
+                <span>Phạm vi cơ sở</span>
+                <select
+                  id="policy-facility"
+                  value={facilityId ?? ""}
+                  onChange={(e) => handleFacilityChange(e.target.value)}
+                  disabled={policyLoading || facilities.length === 0}
+                  style={{
+                    padding: "7px 10px",
+                    border: "1px solid var(--color-border, #cbd5e1)",
+                    borderRadius: "6px",
+                    background: "#fff",
+                    color: "var(--color-text, #0f172a)",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    minWidth: "180px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {facilities.length === 0 && <option value="">Đang tải cơ sở...</option>}
+                  {facilities.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <button
                 type="button"
                 className="policy-btn policy-btn--secondary"
@@ -180,7 +232,9 @@ export default function PolicyManagementPage() {
                     </p>
                   </div>
                   <div className="policy-card__tags">
-                    <span className="policy-tag policy-tag--facility">Phạm vi: Cơ sở Tân Bình</span>
+                    <span className="policy-tag policy-tag--facility">
+                      Phạm vi: {selectedFacility?.name || "Chưa chọn cơ sở"}
+                    </span>
                     <span className="policy-tag policy-tag--status">
                       {hasChanges ? "Bản thảo chưa lưu" : "Đang áp dụng"}
                     </span>
@@ -201,6 +255,10 @@ export default function PolicyManagementPage() {
                     setDraftLateFee={setDraftLateFee}
                     isLateFeeViolated={isLateFeeViolated}
                     isLateFeeModified={isLateFeeModified}
+                    draftEscalationDays={draftEscalationDays}
+                    setDraftEscalationDays={setDraftEscalationDays}
+                    isEscalationViolated={isEscalationViolated}
+                    isEscalationModified={isEscalationModified}
                     draftDeposit={draftDeposit}
                     setDraftDeposit={setDraftDeposit}
                     isDepositViolated={isDepositViolated}
@@ -211,12 +269,12 @@ export default function PolicyManagementPage() {
                     isBufferModified={isBufferModified}
                     draftCheckinGrace={draftCheckinGrace}
                     setDraftCheckinGrace={setDraftCheckinGrace}
-                    draftCheckinLateFee={draftCheckinLateFee}
-                    setDraftCheckinLateFee={setDraftCheckinLateFee}
+                    draftCheckinLatePercent={draftCheckinLatePercent}
+                    setDraftCheckinLatePercent={setDraftCheckinLatePercent}
                     draftExtensionGrace={draftExtensionGrace}
                     setDraftExtensionGrace={setDraftExtensionGrace}
-                    draftExtensionLateFee={draftExtensionLateFee}
-                    setDraftExtensionLateFee={setDraftExtensionLateFee}
+                    draftExtensionLatePercent={draftExtensionLatePercent}
+                    setDraftExtensionLatePercent={setDraftExtensionLatePercent}
                   />
 
                   {/* Footer Meta Details */}

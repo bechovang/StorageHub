@@ -32,6 +32,14 @@ public class ActivityLog {
     @JoinColumn(name = "actor_id")
     private User actor;
 
+    /**
+     * Cơ sở của đối tượng bị tác động (FR-28 / NFR-4). NULL = sự kiện cấp hệ
+     * thống hoặc không suy được cơ sở (Facility Manager không thấy các dòng này).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "facility_id")
+    private Facility facility;
+
     /** Bảng/nghiệp vụ bị tác động — registry mở. */
     private String entityType;
 

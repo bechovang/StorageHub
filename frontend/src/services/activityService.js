@@ -6,23 +6,41 @@
 import { apiClient, safeParseJson } from "./apiClient.js";
 import { ENTITY_TYPE_LABELS } from "../utils/statusLabels.js";
 
-// Chỉ chứa các nhóm lọc thực thể duy nhất (đã loại bỏ khóa trùng lặp STAFF_ASSIGNMENT gây lặp 2 nút "Ca trực")
 export const ENTITY_TYPES = {
   ALL: { key: "ALL", label: "Tất cả", badgeClass: "" },
   UNIT: { key: "UNIT", label: "Kho", badgeClass: "badge-entity--unit" },
   RESERVATION: { key: "RESERVATION", label: "Đơn thuê", badgeClass: "badge-entity--reservation" },
   CONTRACT: { key: "CONTRACT", label: "Hợp đồng", badgeClass: "badge-entity--contract" },
+  ADDENDUM: { key: "ADDENDUM", label: "Phụ lục", badgeClass: "badge-entity--contract" },
   PAYMENT: { key: "PAYMENT", label: "Thanh toán", badgeClass: "badge-entity--payment" },
   TASK: { key: "TASK", label: "Công việc", badgeClass: "badge-entity--task" },
   SHIFT: { key: "SHIFT", label: "Ca trực", badgeClass: "badge-entity--shift" },
+  EXTENSION: { key: "EXTENSION", label: "Gia hạn", badgeClass: "badge-entity--extend" },
+  LATE_CHECKOUT_CASE: { key: "LATE_CHECKOUT_CASE", label: "Trả muộn", badgeClass: "badge-entity--late" },
   POLICY: { key: "POLICY", label: "Chính sách", badgeClass: "badge-entity--policy" },
   TICKET: { key: "TICKET", label: "Sự cố", badgeClass: "badge-entity--ticket" },
   USER: { key: "USER", label: "Tài khoản", badgeClass: "badge-entity--user" },
 };
 
+/**
+ * Chip trên UI gom nhiều entity_type ở backend (1 chip = nhiều giá trị).
+ * Backend nhận `entityType` dạng danh sách phân tách bằng dấu phẩy.
+ */
+const ENTITY_FILTER_QUERY = {
+  SHIFT: "STAFF_ASSIGNMENT",
+  ADDENDUM: "ADDENDUM,CONTRACT_ADDENDUM",
+};
+
+/** entity_type lưu trong DB → key hiển thị trên UI. */
+const ENTITY_DISPLAY_TYPE = {
+  STAFF_ASSIGNMENT: "SHIFT",
+  CONTRACT_ADDENDUM: "ADDENDUM",
+};
+
 export const ENTITY_META_FALLBACK = {
   ...ENTITY_TYPES,
   STAFF_ASSIGNMENT: { key: "STAFF_ASSIGNMENT", label: "Ca trực", badgeClass: "badge-entity--shift" },
+  CONTRACT_ADDENDUM: { key: "CONTRACT_ADDENDUM", label: "Phụ lục", badgeClass: "badge-entity--contract" },
   AUTH: { key: "AUTH", label: "Phiên đăng nhập", badgeClass: "badge-entity--user" },
 };
 
@@ -37,6 +55,7 @@ export const ROLE_LABELS = {
 
 export const ACTION_BADGES = {
   STATUS_CHANGE: { label: "Đổi trạng thái", class: "badge-action--status" },
+  STATUS_CHANGED: { label: "Đổi trạng thái", class: "badge-action--status" },
   CREATED: { label: "Tạo mới", class: "badge-action--create" },
   CREATE_UNIT: { label: "Tạo kho", class: "badge-action--create" },
   DELETED: { label: "Xóa bỏ", class: "badge-action--fail" },
@@ -45,6 +64,7 @@ export const ACTION_BADGES = {
   UPDATED: { label: "Cập nhật", class: "badge-action--fix" },
   UPDATE_SPECS: { label: "Cập nhật thông số", class: "badge-action--fix" },
   EXTENDED: { label: "Gia hạn hợp đồng", class: "badge-action--extend" },
+  DEPOSIT_CONFIRMED: { label: "Xác nhận cọc gia hạn", class: "badge-action--payment" },
   CONTRACT_SIGNED: { label: "Ký hợp đồng", class: "badge-action--sign" },
   LOGIN_FAILED: { label: "Đăng nhập thất bại", class: "badge-action--fail" },
   LOGIN: { label: "Đăng nhập", class: "badge-action--login" },
@@ -58,6 +78,17 @@ export const ACTION_BADGES = {
   RESOLVED: { label: "Đã giải quyết", class: "badge-action--resolve" },
   ESCALATED: { label: "Chuyển cấp Quản lý", class: "badge-action--escalate" },
   ROLE_CHANGED: { label: "Đổi vai trò", class: "badge-action--fix" },
+  ROLE_ASSIGNED: { label: "Gán vai trò", class: "badge-action--fix" },
+  AUTO_HANDOFF: { label: "Tự động bàn giao", class: "badge-action--status" },
+  TASK_CLAIMED: { label: "Nhận việc", class: "badge-action--status" },
+  TASK_BACK: { label: "Trả về chờ xử lý", class: "badge-action--status" },
+  TASK_DONE: { label: "Hoàn tất nhiệm vụ", class: "badge-action--resolve" },
+  TICKET_ACCEPTED: { label: "Tiếp nhận sự cố", class: "badge-action--status" },
+  MANAGER_INSTRUCT: { label: "Quản lý chỉ đạo", class: "badge-action--escalate" },
+  MANAGER_RELOCATE: { label: "Quản lý điều chuyển", class: "badge-action--maintenance" },
+  MANAGER_CHECKOUT_REFUND: { label: "Quản lý hoàn tiền", class: "badge-action--payment" },
+  TRANSFER_CREATED: { label: "Tạo đơn chuyển kho", class: "badge-action--create" },
+  PAYMENT_SUCCEEDED: { label: "Thanh toán thành công", class: "badge-action--payment" },
 };
 
 export const STATUS_LABELS = {
@@ -102,12 +133,12 @@ export async function fetchActivityLogs({
   startDate,
   endDate,
   page = 1,
-  pageSize = 50,
+  pageSize = 25,
   signal,
 } = {}) {
   const params = new URLSearchParams();
   if (entityType && entityType !== "ALL") {
-    params.append("entityType", entityType);
+    params.append("entityType", ENTITY_FILTER_QUERY[entityType] || entityType);
   }
   if (searchTerm && searchTerm.trim()) params.append("query", searchTerm.trim());
   if (startDate) params.append("startDate", startDate);
@@ -116,16 +147,16 @@ export async function fetchActivityLogs({
   params.append("pageSize", String(pageSize));
 
   const response = await apiClient(`/api/v1/activity-logs?${params.toString()}`, { signal });
-  const errorData = await safeParseJson(response).catch(() => ({}));
+  // Đọc body đúng MỘT lần — response.text() lần thứ hai trả rỗng và làm mất toàn bộ items.
+  const data = await safeParseJson(response);
   if (!response.ok) {
-    throw new Error(errorData.message || "Không thể tải nhật ký hoạt động hệ thống.");
+    throw new Error(data?.message || "Không thể tải nhật ký hoạt động hệ thống.");
   }
 
-  const data = await safeParseJson(response);
   const items = Array.isArray(data.items) ? data.items : [];
 
   const mapped = items.map((item) => {
-    const normalizedEntity = item.entityType === "STAFF_ASSIGNMENT" ? "SHIFT" : item.entityType;
+    const normalizedEntity = ENTITY_DISPLAY_TYPE[item.entityType] || item.entityType;
     return {
       id: item.logId,
       timestamp: item.createdAt,
@@ -142,12 +173,18 @@ export async function fetchActivityLogs({
     };
   });
 
+  const summary = data.summary || {};
+
   return {
     items: mapped,
     page: data.page || page,
     pageSize: data.pageSize || pageSize,
-    total: data.total || mapped.length,
-    totalPages: data.totalPages || 1,
+    total: data.total ?? mapped.length,
+    totalPages: data.totalPages ?? 1,
+    summary: {
+      totalEntries: summary.totalEntries ?? data.total ?? 0,
+      statusChanges: summary.statusChanges ?? 0,
+      securityEvents: summary.securityEvents ?? 0,
+    },
   };
 }
-

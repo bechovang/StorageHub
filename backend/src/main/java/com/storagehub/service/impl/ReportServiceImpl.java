@@ -71,7 +71,7 @@ public class ReportServiceImpl implements ReportService {
             long amt = p.getAmount() != null ? p.getAmount().longValue() : 0L;
             switch (p.getPurpose()) {
                 case RENT, EXTENSION_FEE -> net += amt;
-                case DAMAGE_FEE, EXTRA_FEE -> surcharge += amt;
+                case DAMAGE_FEE, EXTRA_FEE, CHECKIN_LATE_FEE, EXTENSION_LATE_FEE -> surcharge += amt;
                 case DEPOSIT -> escrow += amt;
             }
         }
@@ -202,7 +202,7 @@ public class ReportServiceImpl implements ReportService {
             switch (p.getPurpose()) {
                 case RENT -> acc[0] += amt;
                 case EXTENSION_FEE -> acc[1] += amt;
-                case DAMAGE_FEE, EXTRA_FEE -> acc[2] += amt;
+                case DAMAGE_FEE, EXTRA_FEE, CHECKIN_LATE_FEE, EXTENSION_LATE_FEE -> acc[2] += amt;
                 default -> { }
             }
         }
@@ -385,12 +385,15 @@ public class ReportServiceImpl implements ReportService {
                 .map(p -> {
                     long amt = p.getAmount() != null ? p.getAmount().longValue() : 0L;
                     boolean isSurcharge = p.getPurpose() == Payment.Purpose.DAMAGE_FEE
-                            || p.getPurpose() == Payment.Purpose.EXTRA_FEE;
+                            || p.getPurpose() == Payment.Purpose.EXTRA_FEE
+                            || p.getPurpose() == Payment.Purpose.CHECKIN_LATE_FEE
+                            || p.getPurpose() == Payment.Purpose.EXTENSION_LATE_FEE;
                     String category = switch (p.getPurpose()) {
                         case RENT -> "Tiền thuê kho";
                         case EXTENSION_FEE, EXTENSION_RENT -> "Tiền thuê gia hạn";
                         case EXTENSION_DEPOSIT -> "Cọc gia hạn";
                         case CHECKIN_LATE_FEE -> "Phí check-in trễ";
+                        case EXTENSION_LATE_FEE -> "Phí ký phụ lục trễ";
                         case DAMAGE_FEE -> "Phí hư hại";
                         case EXTRA_FEE -> "Phí phát sinh";
                         case DEPOSIT -> "Cọc";
@@ -431,7 +434,9 @@ public class ReportServiceImpl implements ReportService {
     private List<Map<String, Object>> getSurchargeRows() {
         return paymentRepository.findByStatus(Payment.Status.SUCCEEDED).stream()
                 .filter(p -> p.getPurpose() == Payment.Purpose.DAMAGE_FEE
-                        || p.getPurpose() == Payment.Purpose.EXTRA_FEE)
+                        || p.getPurpose() == Payment.Purpose.EXTRA_FEE
+                        || p.getPurpose() == Payment.Purpose.CHECKIN_LATE_FEE
+                        || p.getPurpose() == Payment.Purpose.EXTENSION_LATE_FEE)
                 .sorted(Comparator.comparing(Payment::getPaymentId).reversed())
                 .map(p -> createMap(
                         "id", p.getReceiptCode() != null ? p.getReceiptCode() : "SC-" + p.getPaymentId(),

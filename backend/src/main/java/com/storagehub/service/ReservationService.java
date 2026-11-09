@@ -30,8 +30,6 @@ import com.storagehub.repository.ContractAddendumRepository;
 import com.storagehub.repository.CheckoutRequestRepository;
 import com.storagehub.repository.ContractRepository;
 import com.storagehub.repository.PaymentRepository;
-import com.storagehub.repository.PolicyRuleRepository;
-import com.storagehub.repository.RentalPolicyRepository;
 import com.storagehub.repository.ReservationRepository;
 import com.storagehub.repository.UnitRepository;
 import com.storagehub.repository.UserRepository;
@@ -49,6 +47,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -62,8 +61,6 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
-    private final PolicyRuleRepository policyRuleRepository;
-    private final RentalPolicyRepository rentalPolicyRepository;
     private final UnitRepository unitRepository;
     private final PricingEngine pricingEngine;
     private final PaymentRepository paymentRepository;
@@ -78,6 +75,7 @@ public class ReservationService {
     private final CheckoutRequestRepository checkoutRequestRepository;
     private final TaskService taskService;
     private final ExtensionService extensionService;
+    private final LateCheckoutService lateCheckoutService;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -111,9 +109,18 @@ public class ReservationService {
 
                     Unit unit = r.getUnit();
                     ReservationUnitSummaryResponse unitSummary = new ReservationUnitSummaryResponse(
+                            unit.getUnitId(),
                             unit.getCode(),
+                            unit.getType() != null ? unit.getType().getName() : null,
                             unit.getSizeM2(),
-                            unit.getType() != null ? unit.getType().getName() : null
+                            unit.getFloor(),
+                            unit.getZone() != null ? unit.getZone().getCode() : null,
+                            unit.getZone() != null && unit.getZone().getFacility() != null
+                                    ? unit.getZone().getFacility().getName() : null,
+                            unit.getAccessType(),
+                            null,
+                            null,
+                            "/units/" + unit.getCode() + ".jpg"
                     );
 
                     Long depositAmount = r.getDepositAmount() != null ? r.getDepositAmount().longValue() : 0L;
@@ -232,19 +239,36 @@ public class ReservationService {
         return reservation.getStartDate().plusDays(grace);
     }
 
-    /** Phí check-in trễ theo số ngày sau startDate, trong grace. */
+    /** Phí check-in trễ = dailyRent × số ngày trễ × %/100, trong grace. */
     public long checkinLateFee(Reservation reservation, LocalDate today) {
-        if (!today.isAfter(reservation.getStartDate())) {
+        if (reservation == null || reservation.getUnit() == null
+                || !today.isAfter(reservation.getStartDate())) {
             return 0L;
         }
         long daysLate = java.time.temporal.ChronoUnit.DAYS.between(
                 reservation.getStartDate(), today);
-        long feePerDay = pricingEngine.ruleLong(
+        if (daysLate <= 0) {
+            return 0L;
+        }
+        long dailyRent;
+        try {
+            var quote = pricingEngine.calculateQuote(
+                    reservation.getUnit(),
+                    reservation.getStartDate(),
+                    reservation.getEndDate(),
+                    reservation.getPolicy());
+            dailyRent = quote.durationDays() > 0
+                    ? quote.totalRent() / quote.durationDays()
+                    : 0L;
+        } catch (Exception ignored) {
+            dailyRent = 0L;
+        }
+        int percent = pricingEngine.ruleInt(
                 reservation.getUnit(),
                 reservation.getPolicy(),
-                PolicyRule.RuleType.CHECKIN_LATE_FEE_PER_DAY,
-                50000L);
-        return Math.max(0, daysLate * feePerDay);
+                PolicyRule.RuleType.CHECKIN_LATE_FEE_PERCENT,
+                300);
+        return Math.max(0, dailyRent * daysLate * percent / 100);
     }
 
     /**
@@ -315,16 +339,16 @@ public class ReservationService {
     }
 
     private int turnoverBufferDays(Unit unit) {
-        RentalPolicy activePolicy = rentalPolicyRepository.findByStatus(1)
-                .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
-        List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
-        for (PolicyRule r : rules) {
-            if (r.getType().getTypeId().equals(unit.getType().getTypeId())
-                    && r.getRuleType() == PolicyRule.RuleType.TURNOVER_BUFFER) {
-                return r.getValue().intValue();
-            }
-        }
-        return 1;
+        return pricingEngine.ruleInt(unit, null, PolicyRule.RuleType.TURNOVER_BUFFER, 1);
+    }
+
+    /** Ngày đóng thực tế (nếu có) — tránh lỗi đơn trả trễ bị coi là available ngay. */
+    private LocalDate latestClosedDate(Reservation closed) {
+        LocalDate end = closed.getEndDate();
+        LocalDate closedAt = closed.getClosedAt() != null
+                ? closed.getClosedAt().toLocalDate()
+                : null;
+        return closedAt != null && closedAt.isAfter(end) ? closedAt : end;
     }
 
     private boolean isUnitAvailable(
@@ -334,15 +358,23 @@ public class ReservationService {
             int bufferDays,
             LocalDate today
     ) {
-        if (unit.getStatus() != Unit.Status.AVAILABLE && unit.getStatus() != Unit.Status.PREPARING) {
+        // Bảo trì / ngừng khai thác là chặn cứng. RENTED/RESERVED KHÔNG chặn
+        // theo trạng thái hiện tại: kho đang thuê vẫn nhận được kỳ đặt kế tiếp
+        // không giao nhau — quyết định nằm ở kiểm tra overlap bên dưới.
+        if (unit.getStatus() == Unit.Status.MAINTENANCE
+                || unit.getStatus() == Unit.Status.RETIRED) {
             return false;
         }
 
         if (unit.getStatus() == Unit.Status.PREPARING) {
+            if (taskService.hasActiveCleaningTask(unit.getCode())) {
+                return false;
+            }
             List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
-            LocalDate readyDate = !closedList.isEmpty()
-                    ? closedList.get(0).getEndDate().plusDays(bufferDays)
-                    : today.plusDays(bufferDays);
+            LocalDate closedDate = !closedList.isEmpty()
+                    ? latestClosedDate(closedList.get(0))
+                    : today;
+            LocalDate readyDate = closedDate.plusDays(bufferDays);
             if (startDate.isBefore(readyDate)) {
                 return false;
             }
@@ -384,6 +416,10 @@ public class ReservationService {
         LocalDate today = LocalDate.now(ICT_ZONE);
         Reservation.Status effectiveStatus = resolveEffectiveStatus(reservation, today);
         String depositStatus = resolveDepositStatus(effectiveStatus);
+
+        lateCheckoutService.evaluate(reservation);
+        com.storagehub.dto.checkout.LateCheckoutInfo lateCheckout =
+                lateCheckoutService.info(reservation);
 
         Unit unit = reservation.getUnit();
 
@@ -507,7 +543,8 @@ public class ReservationService {
                         ? extensionService.latestAllowedCheckout(reservation)
                         : null,
                 pendingCheckout != null ? pendingCheckout.getRequestedDate() : null,
-                pendingCheckout != null ? pendingCheckout.getTimeSlot() : null
+                pendingCheckout != null ? pendingCheckout.getTimeSlot() : null,
+                lateCheckout
         );
     }
 
@@ -577,9 +614,12 @@ public class ReservationService {
         for (Unit candidate : similarCandidates) {
             LocalDate readyDate = today;
             if (candidate.getStatus() == Unit.Status.PREPARING) {
+                if (taskService.hasActiveCleaningTask(candidate.getCode())) {
+                    continue;
+                }
                 List<Reservation> closedList = reservationRepository.findLatestClosedReservations(candidate.getUnitId());
                 readyDate = !closedList.isEmpty()
-                        ? closedList.get(0).getEndDate().plusDays(bufferDays)
+                        ? latestClosedDate(closedList.get(0)).plusDays(bufferDays)
                         : today.plusDays(bufferDays);
             }
 
@@ -867,6 +907,33 @@ public class ReservationService {
                 Reservation.Status.CHECKED_IN.name(),
                 reason != null && !reason.isBlank() ? reason : "Khách hủy yêu cầu trả kho"
         );
+        return saved;
+    }
+
+    /** V42: đóng reservation do thanh lý — thu hồi access code, hủy request PENDING. */
+    @Transactional
+    public Reservation closeForLiquidation(User actor, Long reservationId, String reason) {
+        Reservation res = reservationRepository.findById(reservationId)
+                .orElseThrow(ReservationNotFoundException::new);
+        if (res.getStatus() == Reservation.Status.CLOSED) {
+            return res;
+        }
+        Reservation.Status prevStatus = res.getStatus();
+        res.setStatus(Reservation.Status.CLOSED);
+        res.setClosedAt(LocalDateTime.now(ICT_ZONE));
+        res.setAccessCode(null);
+        Reservation saved = reservationRepository.save(res);
+
+        checkoutRequestRepository.findByReservation_ReservationIdAndStatus(
+                        reservationId, com.storagehub.entity.CheckoutRequest.Status.PENDING)
+                .forEach(cr -> {
+                    cr.setStatus(com.storagehub.entity.CheckoutRequest.Status.CANCELLED);
+                    checkoutRequestRepository.save(cr);
+                });
+
+        logService.log(actor, "RESERVATION", saved.getReservationId(),
+                "LIQUIDATED", prevStatus.name(), "CLOSED",
+                reason != null && !reason.isBlank() ? reason : "Thanh lý hợp đồng");
         return saved;
     }
 

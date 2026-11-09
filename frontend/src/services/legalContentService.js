@@ -8,7 +8,6 @@ export const DEFAULT_TERMS = {
   type: "TERMS",
   title: "Điều khoản Dịch vụ Thuê kho Tự quản",
   subtitle: "Quy định quyền lợi, nghĩa vụ và nguyên tắc an toàn vận hành hệ thống kho thông minh StorageHub",
-  version: "v3.2.0",
   effectiveDate: "01/11/2026",
   lastUpdated: "2026-11-01T08:00:00Z",
   updatedBy: "Ban Quản lý Vận hành StorageHub",
@@ -22,7 +21,7 @@ export const DEFAULT_TERMS = {
       bullets: [
         "Hạ tầng kho tiêu chuẩn: Vách ngăn thép dập gân chịu lực, trần thông thủy 2.8m, cửa cuốn hoặc cửa thép dán seal an ninh.",
         "Tiện ích đi kèm: Hệ thống kiểm soát độ ẩm < 65%, quạt thông gió đối lưu liên tục, camera giám sát hành lang 24/7 và hệ thống khóa số PIN điện tử cá nhân.",
-        "Địa bàn áp dụng: Toàn bộ hệ thống trung tâm lưu trữ StorageHub (hiện bao gồm Depot Tân Bình Gateway và các cơ sở liên kết).",
+        "Địa bàn áp dụng: Toàn bộ hệ thống kho StorageHub, bao gồm các cơ sở đang hoạt động (hiện tại: Tân Bình, Thủ Đức, Bình Thạnh).",
       ],
     },
     {
@@ -30,7 +29,7 @@ export const DEFAULT_TERMS = {
       number: "ĐIỀU 2",
       title: "QUY TRÌNH ĐẶT CHỖ & KÝ QUỸ ĐẶT CỌC",
       content:
-        "Để đảm bảo kho được giữ chỗ chính thức trên hệ thống và tránh tình trạng đặt chỗ ảo, Khách hàng phải hoàn tất thanh toán khoản tiền ký quỹ bảo đảm giữ chỗ tương đương 10% tổng giá trị tiền thuê của kỳ cam kết.",
+        "Để đảm bảo kho được giữ chỗ chính thức trên hệ thống và tránh tình trạng đặt chỗ ảo, Khách hàng phải hoàn tất thanh toán khoản tiền ký quỹ bảo đảm giữ chỗ theo tỷ lệ quy định tại Chính sách giá hiện hành của StorageHub cho kỳ cam kết.",
       bullets: [
         "Trạng thái giữ chỗ (RESERVED): Kho chỉ được khóa giữ chỗ trên hệ thống sau khi cổng thanh toán ghi nhận thành công giao dịch đặt cọc.",
         "Bảo toàn tiền cọc: Toàn bộ 100% tiền cọc được giữ an toàn tại tài khoản chuyên thu ký quỹ bảo đảm của StorageHub và được hoàn trả đầy đủ cho Khách hàng khi kết thúc hợp đồng.",
@@ -118,7 +117,6 @@ export const DEFAULT_PRIVACY = {
   type: "PRIVACY",
   title: "Chính sách Bảo mật & Quyền Riêng tư",
   subtitle: "Cam kết bảo vệ dữ liệu định danh, hình ảnh giám sát và quyền riêng tư của Khách hàng tại StorageHub",
-  version: "v3.2.0",
   effectiveDate: "01/11/2026",
   lastUpdated: "2026-11-01T08:00:00Z",
   updatedBy: "Bộ phận Pháp chế & An toàn Thông tin StorageHub",

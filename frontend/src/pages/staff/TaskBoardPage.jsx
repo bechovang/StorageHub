@@ -72,8 +72,10 @@ export default function TaskBoardPage() {
     handleDrop,
     getColTasks,
     taskTypeCounts,
+    financeSummary,
   } = useTaskBoard({
     staffId: isSupervisor && selectedStaffId ? Number(selectedStaffId) : undefined,
+    withFinance: isSupervisor,
   });
 
   return (
@@ -175,6 +177,7 @@ export default function TaskBoardPage() {
                     onOpenSupport={setActiveSupportTask}
                     onOpenContract={setActiveContractTask}
                     showAssignee={isSupervisor && !selectedStaffId}
+                    financeSummary={isSupervisor ? financeSummary : null}
                   />
                 );
               })}

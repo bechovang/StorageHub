@@ -40,6 +40,7 @@ const ROLE_CONFIGS = {
       { label: "Tổng quan", href: "/facility" },
       { label: "Danh mục kho", href: "/facility/units" },
       { label: "Lịch phân ca", href: "/facility/shifts" },
+      { label: "Bảng công việc", href: "/tasks" },
       { label: "Hỗ trợ sự cố", href: "/support" },
       { label: "Nhật ký", href: "/facility/activity" },
     ],
@@ -60,6 +61,7 @@ const ROLE_CONFIGS = {
     links: [
       { label: "Tài khoản", href: "/users" },
       { label: "Lịch sử đăng nhập", href: "/login-history" },
+      { label: "Bảng công việc", href: "/tasks" },
       { label: "Nhật ký hệ thống", href: "/facility/activity" },
       { label: "Chính sách & Biểu phí", href: "/policy" },
       { label: "Điều khoản & Pháp lý", href: "/legal-management" },

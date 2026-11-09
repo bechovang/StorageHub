@@ -92,6 +92,22 @@ export function TaskCard({
             {task.alertNote}
           </span>
         )}
+        {Number(task.handoverLate?.fee || 0) > 0 && (
+          <span
+            className="task-card__extra-badge"
+            style={{ backgroundColor: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca" }}
+          >
+            Phí trễ: {Number(task.handoverLate.fee).toLocaleString("vi-VN")} ₫
+          </span>
+        )}
+        {task.type === "CONTRACT" && Number(task.extensionRent || 0) > 0 && (
+          <span
+            className="task-card__extra-badge"
+            style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}
+          >
+            Thu gia hạn: {Number(task.extensionRent).toLocaleString("vi-VN")} ₫
+          </span>
+        )}
         {task.priority && (
           <span className="task-card__extra-badge task-card__extra-badge--priority">
             Ưu tiên: {task.priority}

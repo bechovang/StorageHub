@@ -1,4 +1,12 @@
 import { TaskCard } from "./TaskCard.jsx";
+import { formatVND } from "../../../utils/formatters.js";
+
+const SHIFT_LABELS = {
+  MORNING: "Ca sáng",
+  AFTERNOON: "Ca chiều",
+  EVENING: "Ca tối",
+  FULL_DAY: "Cả ngày",
+};
 
 export function KanbanColumn({
   statusDef,
@@ -19,6 +27,7 @@ export function KanbanColumn({
   onOpenContract,
   onShowDetail,
   showAssignee,
+  financeSummary,
 }) {
   return (
     <section
@@ -34,6 +43,31 @@ export function KanbanColumn({
           <span className="kanban-column-count">{colTasks.length}</span>
         </h2>
       </div>
+
+      {statusDef.key === "DONE" && financeSummary && (
+        <div className="kanban-finance" aria-label="Tiền thu tại quầy theo ca">
+          <div className="kanban-finance__title">
+            Thu tại quầy · {formatVND(financeSummary.totalCollected || 0)}
+          </div>
+          {(financeSummary.shifts || [])
+            .filter((s) => Number(s.collected || 0) > 0 || Number(s.refunded || 0) > 0)
+            .map((s) => (
+              <div key={s.shift} className="kanban-finance__row">
+                <span>{SHIFT_LABELS[s.shift] || s.shift}</span>
+                <strong>{formatVND(s.collected || 0)}</strong>
+                {Number(s.refunded || 0) > 0 && (
+                  <span className="kanban-finance__refund">
+                    hoàn {formatVND(s.refunded)}
+                  </span>
+                )}
+              </div>
+            ))}
+          {Number(financeSummary.totalCollected || 0) === 0
+            && Number(financeSummary.totalRefunded || 0) === 0 && (
+              <div className="kanban-finance__empty">Chưa phát sinh thu trong ca</div>
+            )}
+        </div>
+      )}
 
       {/* Cards Container */}
       <div className="kanban-cards-list">

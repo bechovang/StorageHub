@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Printer, X, ShieldCheck, CheckCircle } from "@phosphor-icons/react";
+import { Printer, X, ShieldCheck } from "@phosphor-icons/react";
 import Button from "../Button/Button.jsx";
 import "./ContractViewerModal.css";
 import { formatVND, formatDate } from "../../utils/formatters.js";
@@ -225,32 +225,18 @@ export default function ContractViewerModal({
             </div>
           </section>
 
-          {/* Chữ ký số và con dấu xác thực */}
+          {/* Khoảng trống để ký tay khi in bản giấy */}
           <footer className="contract-signature-block">
             <div className="contract-sig-col">
               <p className="contract-sig-label">ĐẠI DIỆN BÊN CHO THUÊ (BÊN A)</p>
-              <span className="contract-sig-sub">(Ký số, đóng dấu điện tử)</span>
-              <div className="contract-stamp-box">
-                <div className="contract-digital-stamp">
-                  <CheckCircle size={28} weight="fill" color="#dc2626" />
-                  <div>
-                    <strong>CÔNG TY TNHH STORAGEHUB VN</strong>
-                    <span>ĐÃ KÝ SỐ HỢP LỆ</span>
-                    <small className="font-mono">Ngày: {formatDate(startDate)}</small>
-                  </div>
-                </div>
-              </div>
-              <p className="contract-sig-signer">Phạm Tuấn (Giám đốc Cơ sở)</p>
+              <span className="contract-sig-sub">(Ký, đóng dấu)</span>
+              <div className="contract-sig-space" />
             </div>
 
             <div className="contract-sig-col">
               <p className="contract-sig-label">ĐẠI DIỆN BÊN THUÊ KHO (BÊN B)</p>
-              <span className="contract-sig-sub">(Ký xác nhận điện tử / OTP)</span>
-              <div className="contract-customer-sig-box">
-                <span className="customer-sig-name">{customerName}</span>
-                <span className="customer-sig-note">✓ Đã xác thực CCCD & Số điện thoại</span>
-              </div>
-              <p className="contract-sig-signer">{customerName}</p>
+              <span className="contract-sig-sub">(Ký, ghi rõ họ tên)</span>
+              <div className="contract-sig-space" />
             </div>
           </footer>
         </div>

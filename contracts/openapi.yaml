@@ -54,6 +54,7 @@ tags:
   - name: Facility
   - name: ActivityLogs
   - name: Shifts
+  - name: CheckoutManagement
 
 # ---------------------------------------------------------------------------
 paths:
@@ -1002,6 +1003,25 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /tasks/shift-summary:
+    get:
+      tags: [Tasks]
+      summary: Tiền thu tại quầy theo ca trong ngày (manager/admin)
+      description: |
+        Chỉ tính payment SUCCEEDED với method CASH/BANK/POS.
+        Không tính DEPOSIT/EXTENSION_DEPOSIT (escrow) và giao dịch online.
+      operationId: getShiftFinanceSummary
+      parameters:
+        - { name: workDate, in: query, required: false, schema: { type: string, format: date }, description: "Ngày làm việc (mặc định hôm nay ICT)" }
+      responses:
+        "200":
+          description: Tổng thu/hoàn theo ca
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShiftFinanceSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /tasks/{taskId}:
     get:
       tags: [Tasks]
@@ -1145,7 +1165,16 @@ paths:
       operationId: getActivityLogs
       parameters:
         - { name: query, in: query, schema: { type: string }, description: "Tìm kiếm theo tên actor, action, reason" }
-        - { name: entityType, in: query, schema: { type: string }, description: "Lọc theo entity type (UNIT, RESERVATION, CONTRACT, STAFF_ASSIGNMENT, USER, TICKET, PAYMENT...)" }
+        - name: entityType
+          in: query
+          description: |
+            Lọc theo entity type; nhận danh sách phân tách bằng dấu phẩy để gom nhóm
+            (ví dụ SHIFT → STAFF_ASSIGNMENT, ADDENDUM → ADDENDUM,CONTRACT_ADDENDUM).
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: false
         - { name: startDate, in: query, schema: { type: string, format: date }, description: "Từ ngày (YYYY-MM-DD)" }
         - { name: endDate, in: query, schema: { type: string, format: date }, description: "Đến ngày (YYYY-MM-DD)" }
         - { name: page, in: query, schema: { type: integer, default: 1, minimum: 1 }, description: "Trang (1-based)" }
@@ -1550,6 +1579,111 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  # ------------------- CHECKOUT MANAGEMENT (V42) -------------------------
+
+  /checkout-cases:
+    get:
+      tags: [CheckoutManagement]
+      summary: "V42: danh sách case trễ checkout cho manager"
+      operationId: listCheckoutCases
+      security:
+        - BearerAuth: []
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [LATE, PENDING_MANAGER, EXTENDED, RESOLVED, LIQUIDATED, ALL] } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: page-size, in: query, schema: { type: integer, default: 50 } }
+      responses:
+        "200":
+          description: Danh sách case
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LateCheckoutCase" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /checkout-cases/active-rentals:
+    get:
+      tags: [CheckoutManagement]
+      summary: "V42: đơn đang thuê để manager ép checkout / thanh lý"
+      operationId: listActiveRentalsForCheckout
+      security:
+        - BearerAuth: []
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: page-size, in: query, schema: { type: integer, default: 50 } }
+      responses:
+        "200":
+          description: Danh sách đơn đang thuê
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LateCheckoutActiveRental" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /checkout-cases/{caseId}/decision:
+    post:
+      tags: [CheckoutManagement]
+      summary: "V42: manager duyệt gia hạn hoặc thanh lý"
+      operationId: decideCheckoutCase
+      security:
+        - BearerAuth: []
+      parameters:
+        - { name: caseId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LateCheckoutDecisionRequest" }
+      responses:
+        "200":
+          description: Đã ghi quyết định
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  caseId: { type: integer, format: int64 }
+                  status: { type: string }
+                  extendedUntil: { type: string, format: date, nullable: true }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /reservations/{reservationId}/liquidation:
+    post:
+      tags: [CheckoutManagement]
+      summary: "V42: manager ép thanh lý hợp đồng"
+      operationId: liquidateReservation
+      security:
+        - BearerAuth: []
+      parameters:
+        - { name: reservationId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LiquidationRequest" }
+      responses:
+        "200":
+          description: Đã thanh lý
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationId: { type: integer, format: int64 }
+                  code: { type: string }
+                  status: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
 components:
 
   securitySchemes:
@@ -1819,6 +1953,7 @@ components:
         policyVersion: { type: string, example: v3 }
         policyId: { type: integer, nullable: true, description: "Policy snapshot dùng cho quote" }
         depositPercent: { type: integer, nullable: true, example: 10, description: "Tỷ lệ cọc của policy snapshot" }
+        minDeposit: { type: integer, nullable: true, example: 5000, description: "Sàn tiền cọc áp dụng bởi PricingEngine" }
 
     # --------------------------- Reservations -----------------------------
 
@@ -1841,6 +1976,7 @@ components:
         unit:
           type: object
           properties:
+            id: { type: integer, format: int64, nullable: true, description: "Unit id để mở trang chi tiết kho" }
             code: { type: string, example: S-3 }
             sizeM2: { type: number }
             typeName: { type: string }
@@ -1885,6 +2021,10 @@ components:
               format: date
               nullable: true
               description: "US-18 (FR-16): ngày trả muộn nhất được phép khi gia hạn = start của reservation kế tiếp trên cùng unit − 1; null khi không CHECKED_IN hoặc unit trống phía sau"
+            lateCheckout:
+              allOf:
+                - $ref: "#/components/schemas/LateCheckoutInfo"
+              description: "V42: trạng thái trễ checkout + phí tạm tính"
 
     ReservationPage:
       type: object
@@ -1913,6 +2053,72 @@ components:
           type: string
           nullable: true
           example: "EXPIRED_NEED"
+
+    LateCheckoutInfo:
+      type: object
+      properties:
+        daysLate: { type: integer }
+        dailyRent: { type: integer }
+        lateFeePercent: { type: integer, example: 300 }
+        lateFee: { type: integer }
+        escalationThresholdDays: { type: integer, example: 3 }
+        effectiveDueDate: { type: string, format: date }
+        caseStatus: { type: string, nullable: true }
+        extendedUntil: { type: string, format: date, nullable: true }
+        canSettle: { type: boolean }
+        blockMessage: { type: string, nullable: true }
+
+    LateCheckoutCase:
+      type: object
+      properties:
+        caseId: { type: integer, format: int64 }
+        reservationId: { type: integer, format: int64 }
+        reservationCode: { type: string }
+        customerName: { type: string }
+        customerPhone: { type: string, nullable: true }
+        unitCode: { type: string }
+        endDate: { type: string, format: date }
+        daysLate: { type: integer }
+        lateFee: { type: integer }
+        status: { type: string, enum: [LATE, PENDING_MANAGER, EXTENDED, RESOLVED, LIQUIDATED] }
+        decision: { type: string, nullable: true, enum: [EXTEND, LIQUIDATE, null] }
+        extensionDays: { type: integer, nullable: true }
+        extendedUntil: { type: string, format: date, nullable: true }
+        reason: { type: string, nullable: true }
+        managerName: { type: string, nullable: true }
+        decidedAt: { type: string, format: date-time, nullable: true }
+        settlementId: { type: integer, format: int64, nullable: true }
+
+    LateCheckoutActiveRental:
+      type: object
+      properties:
+        reservationId: { type: integer, format: int64 }
+        reservationCode: { type: string }
+        customerName: { type: string }
+        customerPhone: { type: string, nullable: true }
+        unitCode: { type: string }
+        endDate: { type: string, format: date }
+        reservationStatus: { type: string }
+        daysLate: { type: integer }
+        lateFee: { type: integer }
+        caseStatus: { type: string, nullable: true }
+        extendedUntil: { type: string, format: date, nullable: true }
+        canSettle: { type: boolean }
+
+    LateCheckoutDecisionRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [EXTEND, LIQUIDATE] }
+        extensionDays: { type: integer, minimum: 0, maximum: 30, description: "0 = cho phép trả kho hôm nay" }
+        reason: { type: string, nullable: true }
+
+    LiquidationRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string }
+        reasonType: { type: string, enum: [OVERDUE, VIOLATION, OTHER], default: OTHER }
 
     CheckoutRequestResponse:
       type: object
@@ -2228,6 +2434,8 @@ components:
         priority: { type: string, nullable: true, example: "Medium" }
         issueDescription: { type: string, nullable: true }
         alertNote: { type: string, nullable: true }
+        faultRefund: { type: boolean, nullable: true, description: "Checkout do lỗi kho — hoàn thêm tiền thuê" }
+        rentPaid: { type: integer, format: int64, nullable: true, description: "Tổng tiền thuê đã thu (RENT + rent gia hạn) khi faultRefund=true" }
         assignedStaff:
           type: object
           required: [staffId, fullName]
@@ -2249,6 +2457,25 @@ components:
             resolvedNote: { type: string, nullable: true }
             escalated: { type: boolean }
             escalationReason: { type: string, nullable: true }
+
+    ShiftFinanceSummary:
+      type: object
+      required: [workDate, totalCollected, totalRefunded, shifts]
+      properties:
+        workDate: { type: string, format: date }
+        totalCollected: { type: integer, format: int64, example: 1250000 }
+        totalRefunded: { type: integer, format: int64, example: 200000 }
+        shifts:
+          type: array
+          items: { $ref: "#/components/schemas/ShiftFinanceBucket" }
+
+    ShiftFinanceBucket:
+      type: object
+      required: [shift, collected, refunded]
+      properties:
+        shift: { type: string, enum: [MORNING, AFTERNOON, EVENING] }
+        collected: { type: integer, format: int64 }
+        refunded: { type: integer, format: int64 }
 
     UpdateTaskStatusRequest:
       type: object
@@ -2451,19 +2678,12 @@ components:
       properties:
         items:
           type: array
-          items:
-            $ref: "#/components/schemas/FacilityDrilldownItem"
+          items: { $ref: "#/components/schemas/LoginHistoryItem" }
         page: { type: integer, example: 1 }
         pageSize: { type: integer, example: 25 }
         totalItems: { type: integer, format: int64, example: 35 }
         totalPages: { type: integer, example: 2 }
         statusFilter: { type: string, nullable: true, example: "RENTED" }
-
-          items: { $ref: "#/components/schemas/LoginHistoryItem" }
-        page: { type: integer, example: 1 }
-        pageSize: { type: integer, example: 25 }
-        totalItems: { type: integer, format: int64, example: 50 }
-        totalPages: { type: integer, example: 2 }
 
     PermissionItem:
       type: object
@@ -2519,7 +2739,7 @@ components:
 
     ActivityLogPage:
       type: object
-      required: [items, page, pageSize, total, totalPages]
+      required: [items, page, pageSize, total, totalPages, summary]
       properties:
         items:
           type: array
@@ -2528,6 +2748,14 @@ components:
         pageSize: { type: integer, example: 25 }
         total: { type: integer, format: int64, example: 48 }
         totalPages: { type: integer, example: 2 }
+        summary:
+          type: object
+          description: Số liệu KPI trên toàn bộ log trong phạm vi cơ sở của người xem (không phụ thuộc filter/trang).
+          required: [totalEntries, statusChanges, securityEvents]
+          properties:
+            totalEntries: { type: integer, format: int64, example: 48 }
+            statusChanges: { type: integer, format: int64, example: 31 }
+            securityEvents: { type: integer, format: int64, example: 9 }
 
     # ------------------------------- Shifts (FR-27) -----------------------
 

@@ -85,6 +85,12 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/v1/units/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN", "BUSINESS_OPS")
                         .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/units/**").hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN")
                         .requestMatchers("/api/v1/reports/**").hasAnyRole("BUSINESS_OPS", "SYSTEM_ADMIN")
+                        .requestMatchers("/api/v1/checkout-cases/**")
+                            .hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST,
+                                "/api/v1/reservations/*/checkout-request/forced",
+                                "/api/v1/reservations/*/liquidation")
+                            .hasAnyRole("FACILITY_MANAGER", "SYSTEM_ADMIN")
                         // Layout 3D và danh sách cơ sở là dữ liệu public của catalog.
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,

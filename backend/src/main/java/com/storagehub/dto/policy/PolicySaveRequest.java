@@ -2,6 +2,7 @@ package com.storagehub.dto.policy;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
@@ -10,7 +11,12 @@ public record PolicySaveRequest(
         @NotEmpty(message = "baseRates không được để trống")
         List<RateItem> baseRates,
 
+        @NotNull(message = "facilityId là bắt buộc — chính sách giá phải theo từng cơ sở")
+        Integer facilityId,
+
         Integer lateCheckoutPercent,
+
+        Integer lateEscalationDays,
 
         @Min(value = 10, message = "Tỷ lệ cọc tối thiểu 10%")
         Integer depositPercent,
@@ -20,11 +26,11 @@ public record PolicySaveRequest(
 
         Integer checkinGraceDays,
 
-        Integer checkinLateFeePerDay,
+        Integer checkinLateFeePercent,
 
         Integer extensionGraceDays,
 
-        Integer extensionLateFeePerDay,
+        Integer extensionLateFeePercent,
 
         String updatedBy
 ) {

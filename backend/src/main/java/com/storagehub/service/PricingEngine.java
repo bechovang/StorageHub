@@ -58,7 +58,7 @@ public class PricingEngine {
                 : rentalPolicyRepository.findByStatus(1)
                     .orElseThrow(() -> new IllegalStateException("Hệ thống chưa có chính sách giá hiệu lực"));
 
-        List<PolicyRule> rules = rulesForUnit(
+        List<PolicyRule> rules = resolveRules(
                 unit, policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId()));
 
         long dailyRent = 0L;
@@ -104,7 +104,8 @@ public class PricingEngine {
                 dueNow,
                 activePolicy.getVersion(),
                 activePolicy.getPolicyId(),
-                depositPercent
+                depositPercent,
+                MIN_DEPOSIT
         );
     }
 
@@ -120,30 +121,56 @@ public class PricingEngine {
         if (resolved == null || unit == null || unit.getType() == null) {
             return fallback;
         }
-        Integer facilityId = unit.getZone() != null && unit.getZone().getFacility() != null
-                ? unit.getZone().getFacility().getFacilityId()
-                : null;
-        return policyRuleRepository.findByPolicy_PolicyId(resolved.getPolicyId()).stream()
+        return resolveRules(unit, policyRuleRepository.findByPolicy_PolicyId(resolved.getPolicyId())).stream()
                 .filter(r -> r.getRuleType() == ruleType)
-                .filter(r -> r.getType().getTypeId().equals(unit.getType().getTypeId()))
-                .filter(r -> r.getFacility() == null
-                        || facilityId == null
-                        || facilityId.equals(r.getFacility().getFacilityId()))
-                .min(java.util.Comparator.comparing(r -> r.getFacility() != null))
+                .filter(r -> r.getType() != null
+                        && r.getType().getTypeId().equals(unit.getType().getTypeId()))
                 .map(r -> r.getValue().longValue())
+                .findFirst()
                 .orElse(fallback);
     }
 
-    /** Rule riêng facility nếu có; fallback rule toàn hệ thống/legacy. */
-    private List<PolicyRule> rulesForUnit(Unit unit, List<PolicyRule> all) {
-        if (unit.getZone() == null || unit.getZone().getFacility() == null) {
-            return all;
+    /** Rule của policy đang hiệu lực, đã merge theo facility của unit. */
+    public List<PolicyRule> resolveRules(Unit unit, RentalPolicy policy) {
+        RentalPolicy resolved = policy != null
+                ? policy
+                : rentalPolicyRepository.findByStatus(1).orElse(null);
+        if (resolved == null) {
+            return List.of();
         }
-        Integer facilityId = unit.getZone().getFacility().getFacilityId();
-        List<PolicyRule> facilityRules = all.stream()
-                .filter(r -> r.getFacility() != null
-                        && facilityId.equals(r.getFacility().getFacilityId()))
-                .toList();
-        return facilityRules.isEmpty() ? all : facilityRules;
+        return resolveRules(unit, policyRuleRepository.findByPolicy_PolicyId(resolved.getPolicyId()));
+    }
+
+    /**
+     * Merge rule theo (unit type, rule type): facility-specific thắng global.
+     * Không trộn rule của cơ sở khác — thiếu rule facility thì dùng global.
+     */
+    public List<PolicyRule> resolveRules(Unit unit, List<PolicyRule> all) {
+        if (all == null || all.isEmpty()) {
+            return List.of();
+        }
+        Integer facilityId = facilityIdOf(unit);
+        java.util.Map<String, PolicyRule> merged = new java.util.LinkedHashMap<>();
+        for (PolicyRule r : all) {
+            if (r.getType() == null || r.getRuleType() == null) {
+                continue;
+            }
+            if (r.getFacility() != null
+                    && (facilityId == null || !facilityId.equals(r.getFacility().getFacilityId()))) {
+                continue;
+            }
+            String key = r.getType().getTypeId() + "|" + r.getRuleType().name();
+            PolicyRule existing = merged.get(key);
+            if (existing == null || (existing.getFacility() == null && r.getFacility() != null)) {
+                merged.put(key, r);
+            }
+        }
+        return new ArrayList<>(merged.values());
+    }
+
+    private Integer facilityIdOf(Unit unit) {
+        return unit != null && unit.getZone() != null && unit.getZone().getFacility() != null
+                ? unit.getZone().getFacility().getFacilityId()
+                : null;
     }
 }

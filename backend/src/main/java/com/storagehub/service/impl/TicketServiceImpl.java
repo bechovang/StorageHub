@@ -259,24 +259,24 @@ public class TicketServiceImpl implements TicketService {
         if ("CHECKOUT_REFUND".equals(mode)) {
             String reason = request.managerPlan() != null && !request.managerPlan().isBlank()
                     ? request.managerPlan().trim()
-                    : "Không có kho phù hợp — trả kho và hoàn tiền ngay";
+                    : "Không có kho phù hợp — trả kho, hoàn cọc + tiền thuê do lỗi kho";
+            // PA B: manager chỉ chỉ đạo checkout; staff tất toán tại quầy.
+            // Checkout type riêng để ritual biết hoàn thêm tiền thuê.
             earlyCheckoutService.forcedCheckout(
                     actor,
                     oldReservation.getReservationId(),
-                    new com.storagehub.dto.checkout.ForcedCheckoutRequest("TRANSFER", reason)
+                    new com.storagehub.dto.checkout.ForcedCheckoutRequest("FAULT_REFUND", reason)
             );
-            taskService.createOrUpdateCheckoutTask(
-                    actor, oldReservation, LocalDate.now(ICT_ZONE), null, reason);
 
-            ticket.setStatus(SupportTicket.Status.RESOLVED);
+            ticket.setStatus(SupportTicket.Status.IN_PROGRESS);
             ticket.setManagerPlan(reason);
             ticket.setSeverityMode("SEVERE");
-            ticket.setResolutionNote("Không có kho phù hợp. Checkout và hoàn tiền ngay cho khách; không thu thêm tiền.");
-            ticket.setResolvedAt(LocalDateTime.now(ICT_ZONE));
+            ticket.setResolutionNote(null);
             SupportTicket saved = ticketRepository.save(ticket);
             notificationService.notifyTicketStatusChanged(saved, oldStatus);
             logService.log(actor, "TICKET", saved.getTicketId(), "MANAGER_CHECKOUT_REFUND",
-                    oldStatus, saved.getStatus().name(), reason);
+                    oldStatus, saved.getStatus().name(),
+                    reason + " — chờ staff tất toán hoàn cọc + tiền thuê");
             return TicketResponse.from(saved);
         }
 
@@ -330,7 +330,14 @@ public class TicketServiceImpl implements TicketService {
 
         SupportTicket saved = ticketRepository.save(ticket);
 
-        logService.log(actor, "TICKET", saved.getTicketId(), "STATUS_CHANGED",
+        // Tiếp nhận ticket = nhận luôn task SUPPORT tương ứng, gán đúng người
+        // và ca hiện tại để task không bị carry-over bàn giao ngay.
+        if (newStatus == SupportTicket.Status.IN_PROGRESS) {
+            taskService.acceptSupportTask(actor, saved.getCode());
+        }
+
+        logService.log(actor, "TICKET", saved.getTicketId(),
+                newStatus == SupportTicket.Status.IN_PROGRESS ? "TICKET_ACCEPTED" : "STATUS_CHANGED",
                 oldStatus, newStatus.name(),
                 "Ticket " + saved.getCode() + " chuyển " + oldStatus + " → " + newStatus);
         notificationService.notifyTicketStatusChanged(saved, oldStatus);

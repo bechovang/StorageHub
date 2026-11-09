@@ -629,6 +629,32 @@
   color: #166534;
 }
 
+/* ── BADGE QUY CHẾ THUÊ + LINK ĐIỀU KHOẢN ── */
+.pricing-policy-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.pricing-policy-badge > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pricing-policy-badge__link {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-primary, #0284c7);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.pricing-policy-badge__link:hover {
+  color: var(--color-primary-dark, #0369a1);
+}
+
 /* ── SỐ TIỀN THANH TOÁN HÔM NAY (DUE NOW) ── */
 .pricing-due-now-box {
   padding: 14px 16px;

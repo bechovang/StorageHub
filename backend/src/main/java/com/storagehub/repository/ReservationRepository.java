@@ -103,7 +103,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT r FROM Reservation r " +
             "WHERE r.unit.unitId = :unitId " +
             "AND r.status = com.storagehub.entity.Reservation.Status.CLOSED " +
-            "ORDER BY r.endDate DESC")
+            "ORDER BY COALESCE(r.closedAt, r.endDate) DESC")
     List<Reservation> findLatestClosedReservations(@Param("unitId") Long unitId);
 
     /**
@@ -128,6 +128,18 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                            com.storagehub.entity.Reservation.Status.RESERVED)
     """)
     List<Reservation> findCurrentActiveReservations();
+
+    @Query("""
+        SELECT r FROM Reservation r
+        JOIN FETCH r.customer c
+        JOIN FETCH r.unit u
+        JOIN FETCH u.type
+        JOIN FETCH u.zone z
+        JOIN FETCH z.facility f
+        WHERE r.status IN :statuses
+        ORDER BY r.endDate ASC, r.reservationId ASC
+    """)
+    List<Reservation> findActiveWithDetails(@Param("statuses") Collection<Reservation.Status> statuses);
 
     @Query("SELECT r FROM Reservation r JOIN FETCH r.unit u JOIN FETCH u.zone z JOIN FETCH z.facility f JOIN FETCH r.customer c WHERE r.code = :code")
     Optional<Reservation> findByCode(@Param("code") String code);

@@ -61,6 +61,7 @@ public class UnitService {
     private final UserRepository userRepository;
     private final PricingEngine pricingEngine;
     private final LogService logService;
+    private final TaskService taskService;
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -209,16 +210,19 @@ public class UnitService {
         List<UnitSummaryResponse> resultItems = new ArrayList<>();
 
         for (Unit unit : filteredUnits) {
-            List<PolicyRule> unitRules = rulesForUnit(unit, rules);
+            List<PolicyRule> unitRules = pricingEngine.resolveRules(unit, rules);
             int bufferDays = bufferFor(unit, unitRules, 1);
             long dailyRent = rentFor(unit, unitRules, 0L);
 
             // 1. Tính ngày sẵn sàng sau dọn dẹp của kho
             LocalDate readyDate = today;
             if (unit.getStatus() == Unit.Status.PREPARING) {
+                if (taskService.hasActiveCleaningTask(unit.getCode())) {
+                    continue;
+                }
                 List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
                 if (!closedList.isEmpty()) {
-                    readyDate = closedList.get(0).getEndDate().plusDays(bufferDays);
+                    readyDate = latestClosedDate(closedList.get(0)).plusDays(bufferDays);
                 } else {
                     readyDate = today.plusDays(bufferDays);
                 }
@@ -417,7 +421,7 @@ public class UnitService {
 
         List<PolicyRule> rules = policyRuleRepository.findByPolicy_PolicyId(activePolicy.getPolicyId());
 
-        List<PolicyRule> unitRules = rulesForUnit(unit, rules);
+        List<PolicyRule> unitRules = pricingEngine.resolveRules(unit, rules);
         long dailyRent = rentFor(unit, unitRules, 0L);
         int bufferDays = bufferFor(unit, unitRules, 1);
 
@@ -449,11 +453,15 @@ public class UnitService {
                     currentlyRented ? "RENTED" : "RESERVED",
                     occupiedUntil);
         } else if (unit.getStatus() == Unit.Status.PREPARING) {
-            List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
-            LocalDate readyDate = !closedList.isEmpty()
-                    ? closedList.get(0).getEndDate().plusDays(bufferDays)
-                    : today.plusDays(bufferDays);
-            availability = new UnitAvailabilityResponse("AVAILABLE_SOON", readyDate);
+            if (taskService.hasActiveCleaningTask(unit.getCode())) {
+                availability = new UnitAvailabilityResponse("PREPARING", null);
+            } else {
+                List<Reservation> closedList = reservationRepository.findLatestClosedReservations(unit.getUnitId());
+                LocalDate readyDate = !closedList.isEmpty()
+                        ? latestClosedDate(closedList.get(0)).plusDays(bufferDays)
+                        : today.plusDays(bufferDays);
+                availability = new UnitAvailabilityResponse("AVAILABLE_SOON", readyDate);
+            }
         } else if (unit.getStatus() == Unit.Status.AVAILABLE) {
             availability = new UnitAvailabilityResponse("AVAILABLE", null);
         } else {
@@ -536,6 +544,32 @@ public class UnitService {
         return true;
     }
 
+    /** V42: thanh lý — kho vào PREPARING, chờ task CLEANING hoàn tất mới mở lại. */
+    @Transactional
+    public void markPreparingForCleaning(User actor, Unit unit, String note) {
+        Unit.Status from = unit.getStatus();
+        unit.setStatus(Unit.Status.PREPARING);
+        if (note != null && !note.isBlank()) {
+            String merged = unit.getNotes() != null && !unit.getNotes().isBlank()
+                    ? unit.getNotes() + " | " + note
+                    : note;
+            unit.setNotes(merged.length() > 500 ? merged.substring(0, 500) : merged);
+        }
+        unitRepository.save(unit);
+        logService.log(actor, "UNIT", unit.getUnitId(),
+                "STATUS_CHANGED", from.name(), "PREPARING",
+                note != null ? note : "Thanh lý — chờ dọn kho");
+    }
+
+    /** Ngày đóng thực tế (nếu có) — đơn trả trễ không được coi là available ngay. */
+    private LocalDate latestClosedDate(Reservation closed) {
+        LocalDate end = closed.getEndDate();
+        LocalDate closedAt = closed.getClosedAt() != null
+                ? closed.getClosedAt().toLocalDate()
+                : null;
+        return closedAt != null && closedAt.isAfter(end) ? closedAt : end;
+    }
+
     private String normalizeCode(String code) {
         return code == null ? "" : code.replaceAll("[^a-zA-Z0-9]", "").toUpperCase(Locale.ROOT);
     }
@@ -567,18 +601,6 @@ public class UnitService {
             return "Smart keyless lock + CCTV 24/7";
         }
         return "Keycard/QR 24/7 + CCTV";
-    }
-
-    private List<PolicyRule> rulesForUnit(Unit unit, List<PolicyRule> all) {
-        if (unit.getZone() == null || unit.getZone().getFacility() == null) {
-            return all;
-        }
-        Integer facilityId = unit.getZone().getFacility().getFacilityId();
-        List<PolicyRule> facilityRules = all.stream()
-                .filter(r -> r.getFacility() != null
-                        && facilityId.equals(r.getFacility().getFacilityId()))
-                .toList();
-        return facilityRules.isEmpty() ? all : facilityRules;
     }
 
     private long rentFor(Unit unit, List<PolicyRule> rules, long fallback) {

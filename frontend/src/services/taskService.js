@@ -70,6 +70,18 @@ export async function getStaffTasks(staffId) {
 }
 
 /**
+ * Tiền thu tại quầy theo ca trong ngày — GET /api/v1/tasks/shift-summary
+ * Manager/admin only. Chỉ CASH/BANK/POS, không gồm online/escrow.
+ */
+export async function getShiftFinanceSummary({ workDate } = {}) {
+  const query = workDate ? `?workDate=${encodeURIComponent(workDate)}` : "";
+  const res = await apiClient(`/api/v1/tasks/shift-summary${query}`);
+  const data = await safeParseJson(res);
+  if (!res.ok) throw new Error(data.message || "Không thể tải tiền thu theo ca.");
+  return data;
+}
+
+/**
  * Cập nhật trạng thái nhiệm vụ (To do -> In progress -> Done): PATCH /api/v1/tasks/{taskId}/status
  */
 export async function getTaskContractPreview(taskId) {
@@ -225,7 +237,7 @@ export async function completeCheckinRitual(taskId, { paymentMethod, contractPho
 /**
  * Thực hiện nghiệp vụ Checkout Ritual (US-21)
  */
-export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged, settlementMethod, settlementPhotoUrl }) {
+export async function completeCheckoutRitual(taskId, { checklist, damageCharges, refundAmount, extraCharged, settlementMethod, settlementPhotoUrl, assetChecks }) {
   // POST /api/v1/tasks/{id}/rituals/checkout — BE lập Settlement + Inspection +
   // ghi phí hư hại/phát sinh vào payments + đóng vòng thuê (1 transaction).
   const res = await apiClient(`/api/v1/tasks/${taskId}/rituals/checkout`, {
@@ -241,6 +253,11 @@ export async function completeCheckoutRitual(taskId, { checklist, damageCharges,
       extraCharged: Number(extraCharged) || 0,
       settlementMethod,
       settlementPhotoUrl,
+      assetChecks: (assetChecks || []).map((a) => ({
+        assetId: a.assetId,
+        result: a.result || "OK",
+        note: a.note || "",
+      })),
     }),
   });
   const data = await safeParseJson(res);
@@ -248,20 +265,7 @@ export async function completeCheckoutRitual(taskId, { checklist, damageCharges,
     throw new Error(data.message || "Không thể tất toán trả kho.");
   }
 
-  // Tự động tạo task dọn kho CLEANING qua POST /api/v1/tasks
-  try {
-    await apiClient("/api/v1/tasks", {
-      method: "POST",
-      body: JSON.stringify({
-        type: "CLEANING",
-        refCode: `CL-${Date.now().toString().slice(-4)}`,
-        dueTime: "17:00",
-        alertNote: "Cần dọn dẹp và kiểm tra kho sau khi khách trả",
-      }),
-    });
-  } catch (err) {
-    console.warn("Failed to auto-create cleaning task:", err);
-  }
+  // Backend tự tạo CLEANING task đúng refCode = unit.code trong ritual.
   return data;
 }
 

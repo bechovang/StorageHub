@@ -74,7 +74,7 @@ spring:
     activate:
       on-profile: dev
   flyway:
-    locations: classpath:db/migration,classpath:db/seed
+    locations: classpath:db/migration,classpath:db/seed,classpath:db/demo
     # Dev-only: clean toàn bộ schema rồi migrate + seed lại mỗi lần start
     clean-disabled: false
 

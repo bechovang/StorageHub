@@ -3,6 +3,10 @@ export function SurchargesTable({
   setDraftLateFee,
   isLateFeeViolated,
   isLateFeeModified,
+  draftEscalationDays,
+  setDraftEscalationDays,
+  isEscalationViolated,
+  isEscalationModified,
   draftDeposit,
   setDraftDeposit,
   isDepositViolated,
@@ -13,12 +17,12 @@ export function SurchargesTable({
   isBufferModified,
   draftCheckinGrace,
   setDraftCheckinGrace,
-  draftCheckinLateFee,
-  setDraftCheckinLateFee,
+  draftCheckinLatePercent,
+  setDraftCheckinLatePercent,
   draftExtensionGrace,
   setDraftExtensionGrace,
-  draftExtensionLateFee,
-  setDraftExtensionLateFee,
+  draftExtensionLatePercent,
+  setDraftExtensionLatePercent,
 }) {
   return (
     <div className="policy-section">
@@ -68,7 +72,7 @@ export function SurchargesTable({
                   <input
                     type="number"
                     min="1"
-                    max="30"
+                    max="500"
                     className={`policy-input policy-input--percent ${
                       isLateFeeViolated
                         ? "policy-input--error"
@@ -83,7 +87,7 @@ export function SurchargesTable({
                 </div>
                 {isLateFeeViolated && (
                   <div className="policy-field-error">
-                    Vượt trần quy định tối đa 10%
+                    Vượt trần quy định tối đa 500%
                   </div>
                 )}
                 {!isLateFeeViolated && isLateFeeModified && (
@@ -109,6 +113,67 @@ export function SurchargesTable({
                   <span className="status-badge status-badge--active">
                     Áp dụng
                   </span>
+                )}
+              </td>
+            </tr>
+
+            {/* Row 1b: Late checkout escalation threshold */}
+            <tr
+              className={`${
+                isEscalationViolated
+                  ? "policy-row--error"
+                  : isEscalationModified
+                  ? "policy-row--modified"
+                  : ""
+              }`.trim()}
+            >
+              <td>
+                <div className="policy-cell-content">
+                  <span className="policy-cell-title">Ngưỡng chuyển quản lý</span>
+                  <span className="policy-cell-sub">
+                    Quá số ngày này thì manager phải duyệt
+                  </span>
+                </div>
+              </td>
+              <td className="text-muted text-xs">Số ngày trễ</td>
+              <td>
+                <div className="policy-input-wrap">
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    className={`policy-input policy-input--days ${
+                      isEscalationViolated
+                        ? "policy-input--error"
+                        : isEscalationModified
+                        ? "policy-input--modified"
+                        : ""
+                    }`.trim()}
+                    value={draftEscalationDays}
+                    onChange={(e) => setDraftEscalationDays(e.target.value)}
+                  />
+                  <span className="policy-input__suffix">ngày</span>
+                </div>
+                {isEscalationViolated && (
+                  <div className="policy-field-error">Ngưỡng phải từ 1 đến 30 ngày</div>
+                )}
+                {!isEscalationViolated && isEscalationModified && (
+                  <div className="policy-input-hint">Đã sửa đổi trong bản nháp</div>
+                )}
+              </td>
+              <td>
+                <div className="policy-cap-cell">
+                  <span className="policy-cap-limit">1 - 30 ngày</span>
+                  <span className="policy-cap-note">Mặc định 3 ngày</span>
+                </div>
+              </td>
+              <td className="text-right">
+                {isEscalationViolated ? (
+                  <span className="status-badge status-badge--blocked">Bị chặn</span>
+                ) : isEscalationModified ? (
+                  <span className="status-badge status-badge--drafting">Bản thảo</span>
+                ) : (
+                  <span className="status-badge status-badge--active">Áp dụng</span>
                 )}
               </td>
             </tr>
@@ -294,16 +359,16 @@ export function SurchargesTable({
             <input className="policy-input" type="number" min="1" max="30" value={draftCheckinGrace} onChange={(e) => setDraftCheckinGrace(e.target.value)} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
-            Check-in — phí trễ / ngày (₫)
-            <input className="policy-input" type="number" min="0" value={draftCheckinLateFee} onChange={(e) => setDraftCheckinLateFee(e.target.value)} />
+            Check-in — phí trễ / ngày (% giá thuê)
+            <input className="policy-input" type="number" min="0" value={draftCheckinLatePercent} max="500" onChange={(e) => setDraftCheckinLatePercent(e.target.value)} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
             Gia hạn — số ngày grace
             <input className="policy-input" type="number" min="1" max="30" value={draftExtensionGrace} onChange={(e) => setDraftExtensionGrace(e.target.value)} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8rem" }}>
-            Gia hạn — phí trễ / ngày (₫)
-            <input className="policy-input" type="number" min="0" value={draftExtensionLateFee} onChange={(e) => setDraftExtensionLateFee(e.target.value)} />
+            Gia hạn — phí trễ / ngày (% giá thuê)
+            <input className="policy-input" type="number" min="0" value={draftExtensionLatePercent} max="500" onChange={(e) => setDraftExtensionLatePercent(e.target.value)} />
           </label>
         </div>
       </div>

@@ -62,10 +62,11 @@ class ActivityLogControllerTest {
                 1,
                 25,
                 1L,
-                1
+                1,
+                new com.storagehub.dto.activity.ActivityLogSummaryResponse(1L, 1L, 0L)
         );
 
-        when(logService.getActivityLogs(any(), any(), any(), any(), eq(1), eq(25)))
+        when(logService.getActivityLogs(any(), any(), any(), any(), any(), eq(1), eq(25)))
                 .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/v1/activity-logs")

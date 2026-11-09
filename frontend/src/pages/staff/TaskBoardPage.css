@@ -252,6 +252,52 @@
   color: var(--color-secondary);
 }
 
+.kanban-finance {
+  flex-shrink: 0;
+  border: var(--border);
+  background-color: #f8fafc;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kanban-finance__title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-ink);
+  padding-bottom: 4px;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.kanban-finance__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--color-secondary);
+}
+
+.kanban-finance__row strong {
+  font-family: var(--font-mono);
+  color: #047857;
+  font-size: 0.78rem;
+}
+
+.kanban-finance__refund {
+  font-size: 0.68rem;
+  color: #b45309;
+}
+
+.kanban-finance__empty {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}
+
 .kanban-cards-list {
   flex: 1;
   min-height: 0;

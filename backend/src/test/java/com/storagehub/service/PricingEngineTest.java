@@ -2,10 +2,12 @@ package com.storagehub.service;
 
 import com.storagehub.dto.quote.QuoteLineResponse;
 import com.storagehub.dto.quote.QuoteResponse;
+import com.storagehub.entity.Facility;
 import com.storagehub.entity.PolicyRule;
 import com.storagehub.entity.RentalPolicy;
 import com.storagehub.entity.Unit;
 import com.storagehub.entity.UnitType;
+import com.storagehub.entity.Zone;
 import com.storagehub.repository.PolicyRuleRepository;
 import com.storagehub.repository.RentalPolicyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,6 +92,7 @@ class PricingEngineTest {
         assertThat(quote.policyVersion()).isEqualTo("v3");
         assertThat(quote.policyId()).isEqualTo(2);
         assertThat(quote.depositPercent()).isEqualTo(10);
+        assertThat(quote.minDeposit()).isEqualTo(5_000L);
 
         assertThat(quote.lines()).hasSize(2);
         QuoteLineResponse rentLine = quote.lines().get(0);
@@ -151,5 +154,63 @@ class PricingEngineTest {
         assertThatThrownBy(() -> pricingEngine.calculateQuote(unit, LocalDate.of(2026, 10, 3), LocalDate.of(2026, 10, 3)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Hệ thống chưa có chính sách giá hiệu lực");
+    }
+
+    @Test
+    @DisplayName("resolveRules: RENT_RATE của facility thắng global và không lẫn cơ sở khác")
+    void testResolveRules_FacilityRateOverridesGlobal() {
+        Facility tanBinh = new Facility();
+        tanBinh.setFacilityId(1);
+        tanBinh.setCode("TB");
+        Zone zone = new Zone();
+        zone.setZoneId(1);
+        zone.setFacility(tanBinh);
+        unit.setZone(zone);
+
+        Facility thuDuc = new Facility();
+        thuDuc.setFacilityId(2);
+        thuDuc.setCode("TD");
+
+        PolicyRule globalRent = new PolicyRule();
+        globalRent.setType(typeS);
+        globalRent.setRuleType(PolicyRule.RuleType.RENT_RATE);
+        globalRent.setValue(new BigDecimal("5000"));
+        globalRent.setFacility(null);
+
+        PolicyRule tanBinhRent = new PolicyRule();
+        tanBinhRent.setType(typeS);
+        tanBinhRent.setRuleType(PolicyRule.RuleType.RENT_RATE);
+        tanBinhRent.setValue(new BigDecimal("30000"));
+        tanBinhRent.setFacility(tanBinh);
+
+        PolicyRule thuDucRent = new PolicyRule();
+        thuDucRent.setType(typeS);
+        thuDucRent.setRuleType(PolicyRule.RuleType.RENT_RATE);
+        thuDucRent.setValue(new BigDecimal("27000"));
+        thuDucRent.setFacility(thuDuc);
+
+        PolicyRule globalDeposit = new PolicyRule();
+        globalDeposit.setType(typeS);
+        globalDeposit.setRuleType(PolicyRule.RuleType.DEPOSIT_RATE);
+        globalDeposit.setValue(new BigDecimal("10"));
+        globalDeposit.setFacility(null);
+
+        List<PolicyRule> allRules = List.of(globalRent, tanBinhRent, thuDucRent, globalDeposit);
+        when(policyRuleRepository.findByPolicy_PolicyId(2)).thenReturn(allRules);
+
+        List<PolicyRule> resolved = pricingEngine.resolveRules(unit, allRules);
+
+        assertThat(resolved).hasSize(2);
+        assertThat(resolved.stream()
+                .filter(r -> r.getRuleType() == PolicyRule.RuleType.RENT_RATE)
+                .findFirst().orElseThrow().getValue())
+                .isEqualByComparingTo("30000");
+        assertThat(resolved.stream()
+                .filter(r -> r.getRuleType() == PolicyRule.RuleType.DEPOSIT_RATE)
+                .findFirst().orElseThrow().getValue())
+                .isEqualByComparingTo("10");
+        assertThat(pricingEngine.ruleLong(unit, activePolicy,
+                PolicyRule.RuleType.RENT_RATE, 0L))
+                .isEqualTo(30000L);
     }
 }

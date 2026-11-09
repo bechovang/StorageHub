@@ -199,65 +199,10 @@
   font-style: italic;
 }
 
-.contract-stamp-box {
+.contract-sig-space {
   height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   margin: 8px 0;
-}
-
-.contract-digital-stamp {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  border: 2px dashed #dc2626;
-  background-color: #fef2f2;
-  text-align: left;
-  border-radius: 4px;
-}
-
-.contract-digital-stamp strong {
-  display: block;
-  font-size: 0.74rem;
-  color: #991b1b;
-}
-
-.contract-digital-stamp span {
-  display: block;
-  font-size: 0.7rem;
-  color: #dc2626;
-  font-weight: 700;
-}
-
-.contract-customer-sig-box {
-  height: 100px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin: 8px 0;
-}
-
-.customer-sig-name {
-  font-family: cursive, sans-serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #1e3a8a;
-}
-
-.customer-sig-note {
-  font-size: 0.7rem;
-  color: #16a34a;
-  font-weight: 600;
-}
-
-.contract-sig-signer {
-  font-size: 0.84rem;
-  font-weight: 700;
-  margin: 0;
-  color: #0f172a;
+  border-bottom: 1px dashed #94a3b8;
 }
 
 @media print {

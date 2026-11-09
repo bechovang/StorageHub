@@ -30,6 +30,7 @@ import java.util.Map;
 public class EarlyCheckoutController {
 
     private final EarlyCheckoutService earlyCheckoutService;
+    private final com.storagehub.service.CheckoutLiquidationService liquidationService;
     private final UserRepository userRepository;
 
     @PostMapping("/{reservationId}/checkout-request/forced")
@@ -40,6 +41,21 @@ public class EarlyCheckoutController {
     ) {
         Reservation reservation = earlyCheckoutService.forcedCheckout(
                 requireUser(authentication), reservationId, request);
+        return ResponseEntity.ok(Map.of(
+                "reservationId", reservation.getReservationId(),
+                "code", reservation.getCode(),
+                "status", reservation.getStatus().name()
+        ));
+    }
+
+    @PostMapping("/{reservationId}/liquidation")
+    public ResponseEntity<Map<String, Object>> liquidate(
+            @PathVariable Long reservationId,
+            @Valid @RequestBody com.storagehub.dto.checkout.LiquidationRequest request,
+            Authentication authentication
+    ) {
+        Reservation reservation = liquidationService.liquidate(
+                requireUser(authentication), reservationId, request.reasonType(), request.reason());
         return ResponseEntity.ok(Map.of(
                 "reservationId", reservation.getReservationId(),
                 "code", reservation.getCode(),

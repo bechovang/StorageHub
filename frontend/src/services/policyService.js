@@ -10,7 +10,7 @@
 import { apiClient, safeParseJson } from "./apiClient.js";
 
 export const HARD_CAPS = {
-  LATE_CHECKOUT_MAX_PERCENT: 10, // Trần cứng phí trả trễ tối đa 10%
+  LATE_CHECKOUT_MAX_PERCENT: 500, // Trần cứng phí trả trễ (%/ngày) — V42
   SECURITY_DEPOSIT_MIN_PERCENT: 10, // Trần sàn tiền cọc tối thiểu 10%
   TURNOVER_BUFFER_MIN_DAYS: 1, // Đệm vệ sinh tối thiểu 1 ngày
   TURNOVER_BUFFER_MAX_DAYS: 7, // Đệm vệ sinh tối đa 7 ngày
@@ -20,8 +20,9 @@ export const HARD_CAPS = {
  * Lấy chính sách hiện hành: GET /api/v1/policies/active
  * Lỗi (404/500/mạng) sẽ được ném lên để UI hiển thị.
  */
-export async function getCurrentPolicy() {
-  const res = await apiClient("/api/v1/policies/active");
+export async function getCurrentPolicy(facilityId) {
+  const query = facilityId != null ? `?facilityId=${encodeURIComponent(facilityId)}` : "";
+  const res = await apiClient(`/api/v1/policies/active${query}`);
   const data = await safeParseJson(res);
   if (!res.ok) {
     throw new Error(data.message || "Không thể tải chính sách thuê kho hiện hành.");
@@ -52,6 +53,16 @@ export function validatePolicy(policyDraft) {
     });
   }
 
+  // 1b. Ngưỡng chuyển quản lý trễ checkout (1 - 30 ngày)
+  const escalationDays = Number(policyDraft.surcharges?.lateEscalationDays ?? 3);
+  if (isNaN(escalationDays) || escalationDays < 1 || escalationDays > 30) {
+    errors.push({
+      field: "lateEscalationDays",
+      rule: "#OPS-042",
+      message: "Ngưỡng chuyển quản lý trễ checkout phải từ 1 đến 30 ngày.",
+    });
+  }
+
   // 2. Kiểm tra tỷ lệ đặt cọc tối thiểu (Deposit >= 10%)
   const deposit = Number(policyDraft.surcharges?.depositPercent);
   if (isNaN(deposit) || deposit < HARD_CAPS.SECURITY_DEPOSIT_MIN_PERCENT) {
@@ -79,10 +90,14 @@ export function validatePolicy(policyDraft) {
       errors.push({ field, rule: "#HANDOVER-01", message: "Số ngày gia hạn/check-in phải từ 1 đến 30." });
     }
   });
-  ["checkinLateFeePerDay", "extensionLateFeePerDay"].forEach((field) => {
+  ["checkinLateFeePercent", "extensionLateFeePercent"].forEach((field) => {
     const value = Number(policyDraft.surcharges?.[field]);
-    if (isNaN(value) || value < 0) {
-      errors.push({ field, rule: "#HANDOVER-02", message: "Phí trễ mỗi ngày không được âm." });
+    if (isNaN(value) || value < 0 || value > HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT) {
+      errors.push({
+        field,
+        rule: "#HANDOVER-02",
+        message: `Phí trễ mỗi ngày phải từ 0 đến ${HARD_CAPS.LATE_CHECKOUT_MAX_PERCENT}%.`,
+      });
     }
   });
 
@@ -107,7 +122,10 @@ export function validatePolicy(policyDraft) {
  * Lưu chính sách mới: POST /api/v1/policies
  * Chặn lưu nếu có lỗi validation; lỗi backend sẽ surface lên UI.
  */
-export async function savePolicy(policyDraft, actorName = "Business Ops") {
+export async function savePolicy(policyDraft, actorName = "Business Ops", facilityId) {
+  if (facilityId == null) {
+    throw new Error("Chưa chọn cơ sở — không thể lưu chính sách giá.");
+  }
   const errors = validatePolicy(policyDraft);
   if (errors.length > 0) {
     const errorObj = new Error(errors[0].message);
@@ -117,20 +135,22 @@ export async function savePolicy(policyDraft, actorName = "Business Ops") {
 
   const res = await apiClient("/api/v1/policies", {
     method: "POST",
-    // Body đúng contract: { baseRates, lateCheckoutPercent, depositPercent, turnoverBufferDays, updatedBy }
+    // Body đúng contract: { facilityId, baseRates, lateCheckoutPercent, depositPercent, turnoverBufferDays, updatedBy }
     body: JSON.stringify({
+      facilityId: Number(facilityId),
       baseRates: (policyDraft.baseRates || []).map((r) => ({
         id: r.id,
         typeName: r.typeName,
         rateVnd: Number(r.rateVnd),
       })),
       lateCheckoutPercent: Number(policyDraft.surcharges?.lateCheckoutPercent),
+      lateEscalationDays: Number(policyDraft.surcharges?.lateEscalationDays ?? 3),
       depositPercent: Number(policyDraft.surcharges?.depositPercent),
       turnoverBufferDays: Number(policyDraft.surcharges?.turnoverBufferDays),
       checkinGraceDays: Number(policyDraft.surcharges?.checkinGraceDays),
-      checkinLateFeePerDay: Number(policyDraft.surcharges?.checkinLateFeePerDay),
+      checkinLateFeePercent: Number(policyDraft.surcharges?.checkinLateFeePercent),
       extensionGraceDays: Number(policyDraft.surcharges?.extensionGraceDays),
-      extensionLateFeePerDay: Number(policyDraft.surcharges?.extensionLateFeePerDay),
+      extensionLateFeePercent: Number(policyDraft.surcharges?.extensionLateFeePercent),
       updatedBy: actorName,
     }),
   });
@@ -144,8 +164,12 @@ export async function savePolicy(policyDraft, actorName = "Business Ops") {
 /**
  * Khôi phục chính sách mặc định: POST /api/v1/policies/reset
  */
-export async function resetPolicyToDefault(actorName = "Business Ops") {
-  const res = await apiClient("/api/v1/policies/reset", {
+export async function resetPolicyToDefault(actorName = "Business Ops", facilityId) {
+  if (facilityId == null) {
+    throw new Error("Chưa chọn cơ sở — không thể khôi phục chính sách mặc định.");
+  }
+  const query = `?facilityId=${encodeURIComponent(facilityId)}`;
+  const res = await apiClient(`/api/v1/policies/reset${query}`, {
     method: "POST",
     body: JSON.stringify({ actorName }),
   });

@@ -22,7 +22,8 @@ public record QuoteResponse(
         Long dueNow,
         String policyVersion,
         Integer policyId,
-        Integer depositPercent
+        Integer depositPercent,
+        Long minDeposit
 ) {
     /** Backward-compatible cho test/code cũ. */
     public QuoteResponse(
@@ -37,6 +38,6 @@ public record QuoteResponse(
             String policyVersion
     ) {
         this(unitId, startDate, endDate, durationDays, lines, totalRent,
-                depositAmount, dueNow, policyVersion, null, null);
+                depositAmount, dueNow, policyVersion, null, null, null);
     }
 }

@@ -1,0 +1,13 @@
+# Demo profile dành cho môi trường deploy demo.
+# Chỉ thêm seed demo mới (db/demo), KHÔNG dùng db/seed của dev để tránh
+# Flyway validation thiếu V2..V35 trên DB được khởi tạo bằng profile prod.
+spring:
+  config:
+    activate:
+      on-profile: demo
+  flyway:
+    locations: classpath:db/migration,classpath:db/demo
+
+payment:
+  demo:
+    skip-enabled: true

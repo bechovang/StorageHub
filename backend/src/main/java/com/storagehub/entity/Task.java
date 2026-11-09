@@ -70,6 +70,14 @@ public class Task {
 
     private LocalDateTime claimedAt;
 
+    /** Mốc hoàn tất thật — cột Done query theo ngày này, không theo work_date. */
+    private LocalDateTime completedAt;
+
+    /** Người bấm hoàn tất (staff/manager/admin). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "completed_by")
+    private User completedBy;
+
     /** Ghi chú hiển thị trên card (managerPlan / không thu tiền...). */
     private String note;
 

@@ -1,23 +1,36 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchActivityLogs } from "../../../services/activityService.js";
 import { getLoginHistory } from "../../../services/userService.js";
 
+const PAGE_SIZE = 25;
+
+const EMPTY_SUMMARY = { totalEntries: 0, statusChanges: 0, securityEvents: 0 };
+
 /**
- * useActivityLogs — Custom hook managing audit activity logs from backend API
+ * useActivityLogs — Custom hook managing audit activity logs from backend API.
+ * Phân trang server-side; KPI lấy từ summary của server (không phụ thuộc trang).
  */
 export function useActivityLogs({ isLoginHistory = false } = {}) {
   const [selectedEntity, setSelectedEntity] = useState(() =>
     isLoginHistory ? "USER" : "ALL"
   );
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [summary, setSummary] = useState(EMPTY_SUMMARY);
 
   useEffect(() => {
     setSelectedEntity(isLoginHistory ? "USER" : "ALL");
+    setPage(1);
   }, [isLoginHistory]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedEntity, searchTerm]);
 
   const abortControllerRef = useRef(null);
 
@@ -29,7 +42,8 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
       if (isLoginHistory) {
         const res = await getLoginHistory({
           query: searchTerm,
-          pageSize: 100,
+          page,
+          pageSize: PAGE_SIZE,
           signal,
         });
         const items = Array.isArray(res.items) ? res.items : [];
@@ -47,26 +61,39 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
           toValue: item.status,
           reason: item.reason || (item.status === "SUCCESS" ? "Đăng nhập thành công" : "Đăng nhập thất bại"),
         }));
+        const total = res.totalItems ?? res.total ?? mapped.length;
         setLogs(mapped);
-        setTotalCount(res.total || mapped.length);
+        setTotalCount(total);
+        setTotalPages(res.totalPages ?? 1);
+        setSummary({
+          totalEntries: total,
+          statusChanges: 0,
+          securityEvents: total,
+        });
       } else {
         const res = await fetchActivityLogs({
           entityType: selectedEntity,
           searchTerm,
-          pageSize: 100,
+          page,
+          pageSize: PAGE_SIZE,
           signal,
         });
         setLogs(res.items);
         setTotalCount(res.total);
+        setTotalPages(res.totalPages);
+        setSummary(res.summary || EMPTY_SUMMARY);
       }
     } catch (err) {
       if (err.name === "AbortError") return;
       console.error("Failed to fetch activity logs:", err);
       setError(err.message || "Không thể tải nhật ký hoạt động.");
+      setLogs([]);
+      setTotalCount(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [isLoginHistory, selectedEntity, searchTerm]);
+  }, [isLoginHistory, selectedEntity, searchTerm, page]);
 
   useEffect(() => {
     if (abortControllerRef.current) {
@@ -85,28 +112,6 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
     };
   }, [loadLogs]);
 
-  // Aggregate metrics
-  const totalEntries = totalCount || logs.length;
-  const statusChangeCount = useMemo(
-    () =>
-      logs.filter(
-        (l) =>
-          l.action.includes("STATUS") ||
-          l.action.includes("MAINTENANCE") ||
-          l.action.includes("RETIRE") ||
-          l.action.includes("UPDATED")
-      ).length,
-    [logs]
-  );
-
-  const securityEventCount = useMemo(
-    () =>
-      logs.filter(
-        (l) => l.action.includes("LOGIN") || l.action.includes("FAIL")
-      ).length,
-    [logs]
-  );
-
   return {
     loading,
     error,
@@ -115,9 +120,12 @@ export function useActivityLogs({ isLoginHistory = false } = {}) {
     setSelectedEntity,
     searchTerm,
     setSearchTerm,
+    page,
+    setPage,
+    totalPages,
     logs,
-    totalEntries,
-    statusChangeCount,
-    securityEventCount,
+    totalEntries: summary.totalEntries || totalCount || logs.length,
+    statusChangeCount: summary.statusChanges,
+    securityEventCount: summary.securityEvents,
   };
 }

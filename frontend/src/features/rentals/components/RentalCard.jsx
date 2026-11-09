@@ -156,6 +156,8 @@ export default function RentalCard({ item }) {
             <CheckCircle size={16} weight="fill" />
             <span>
               <strong>Đã giữ chỗ thành công:</strong> Quý khách vui lòng xuất trình CCCD và thẻ nhận kho khi đến quầy lễ tân để nhận kho.
+              <br />
+              Sau 3 ngày kể từ ngày nhận kho dự kiến, nếu Quý khách không check-in thì đơn sẽ bị hủy và mất toàn bộ tiền cọc.
             </span>
           </div>
         )}
@@ -180,6 +182,17 @@ export default function RentalCard({ item }) {
               >
                 <QrCode size={15} weight="bold" />
                 Mở thẻ nhận kho
+                <ArrowRight size={14} weight="bold" />
+              </Link>
+            )}
+
+            {item.unit?.id && (
+              <Link
+                to={`/units/${item.unit.id}`}
+                className="rental-btn rental-btn--secondary"
+                title="Xem thông số và vị trí kho"
+              >
+                Chi tiết kho
                 <ArrowRight size={14} weight="bold" />
               </Link>
             )}

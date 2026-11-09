@@ -14,6 +14,9 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
   const requiresPayment =
     task.paymentRequired === true || Number(task.rentAmount || 0) > 0;
   const extensionRent = Number(task.extensionRent || task.rentAmount || 0);
+  const handoverLate = task?.handoverLate || null;
+  const lateFee = Number(handoverLate?.fee || 0);
+  const totalCollect = extensionRent + lateFee;
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -94,9 +97,29 @@ export function ContractRitualDrawer({ task, onClose, onSuccess, showToast }) {
                 2. Thu 100% tiền thuê phần gia hạn tại quầy
               </span>
               <span className="ritual-step-badge ritual-step-badge--attention font-mono">
-                {extensionRent.toLocaleString("vi-VN")} ₫
+                {totalCollect.toLocaleString("vi-VN")} ₫
               </span>
             </div>
+            {lateFee > 0 && (
+              <div
+                style={{
+                  margin: "8px 0 0 0",
+                  padding: "8px 10px",
+                  border: "1px solid #fecaca",
+                  background: "#fef2f2",
+                  color: "#b91c1c",
+                  fontSize: "0.78rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                <div>Tiền thuê gia hạn: <strong>{extensionRent.toLocaleString("vi-VN")} ₫</strong></div>
+                <div>
+                  Phí ký phụ lục trễ ({handoverLate?.daysLate} ngày × {handoverLate?.feePercent}%):
+                  {" "}<strong>{lateFee.toLocaleString("vi-VN")} ₫</strong>
+                </div>
+                <div>Tổng thu tại quầy: <strong>{totalCollect.toLocaleString("vi-VN")} ₫</strong></div>
+              </div>
+            )}
             <div style={{ marginBottom: "10px", marginTop: "8px" }}>
               <label style={{ fontSize: "0.75rem", fontWeight: 700, display: "block", marginBottom: "6px" }}>
                 PHƯƠNG THỨC THU TIỀN:

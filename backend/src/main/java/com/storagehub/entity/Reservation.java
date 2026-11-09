@@ -75,6 +75,9 @@ public class Reservation {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    /** Thời điểm đóng thực tế (checkout/liquidation) — dùng cho turnover buffer/availability. */
+    private LocalDateTime closedAt;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

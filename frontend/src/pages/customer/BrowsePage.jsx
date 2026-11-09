@@ -17,8 +17,6 @@ export default function BrowsePage() {
     setSelectedFacility,
     selectedType,
     setSelectedType,
-    selectedSize,
-    setSelectedSize,
     searchError,
     activeFilters,
     searchQuery,
@@ -81,8 +79,6 @@ export default function BrowsePage() {
           setSelectedFacility={setSelectedFacility}
           selectedType={selectedType}
           setSelectedType={setSelectedType}
-          selectedSize={selectedSize}
-          setSelectedSize={setSelectedSize}
           onSearchSubmit={handleSearchSubmit}
         />
 
@@ -141,20 +137,6 @@ export default function BrowsePage() {
                     className="browse-chip__remove"
                     onClick={() => handleRemoveFilter("query")}
                     aria-label={`Xóa tìm kiếm ${activeFilters.query}`}
-                  >
-                    <X size={12} weight="bold" />
-                  </button>
-                </span>
-              )}
-
-              {activeFilters.sizeM2 && (
-                <span className="browse-chip">
-                  Diện tích: {activeFilters.sizeM2} m²
-                  <button
-                    type="button"
-                    className="browse-chip__remove"
-                    onClick={() => handleRemoveFilter("sizeM2")}
-                    aria-label={`Xóa lọc diện tích ${activeFilters.sizeM2} m²`}
                   >
                     <X size={12} weight="bold" />
                   </button>

@@ -26,14 +26,20 @@ public class PolicyRule {
         DEPOSIT_RATE,
         RENT_RATE,
         LATE_FEE,
+        /** % đơn giá ngày × số ngày trễ (V42). */
+        LATE_FEE_PERCENT,
+        /** Số ngày trễ trước khi chuyển quản lý (V42). */
+        LATE_ESCALATION_DAYS,
         SURCHARGE,
         TURNOVER_BUFFER,
         DISCOUNT,
         WAIVER_CAP,
         CHECKIN_GRACE_DAYS,
         CHECKIN_LATE_FEE_PER_DAY,
+        CHECKIN_LATE_FEE_PERCENT,
         EXTENSION_GRACE_DAYS,
-        EXTENSION_LATE_FEE_PER_DAY
+        EXTENSION_LATE_FEE_PER_DAY,
+        EXTENSION_LATE_FEE_PERCENT
     }
 
     /** Chỉ áp dụng cho SURCHARGE / DISCOUNT: PERCENT (%) hoặc FIXED (đồng). */

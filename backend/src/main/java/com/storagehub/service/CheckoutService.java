@@ -34,4 +34,18 @@ public interface CheckoutService {
             String currentUserEmail,
             Long reservationId
     );
+
+    /**
+     * V42: biên bản thanh lý — refund = 0, không inspection, không payment.
+     * Owner duy nhất của SETTLEMENTS.
+     */
+    com.storagehub.entity.Settlement createLiquidationSettlement(
+            com.storagehub.entity.Reservation reservation,
+            com.storagehub.entity.Contract contract,
+            com.storagehub.entity.User manager,
+            int lateDays,
+            java.math.BigDecimal lateFee,
+            String liquidationReason,
+            String note
+    );
 }

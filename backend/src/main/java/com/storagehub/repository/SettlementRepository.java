@@ -6,4 +6,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
+
+    java.util.Optional<Settlement> findByReservation_ReservationId(Long reservationId);
+
+    java.util.List<Settlement> findByCreatedAtBetween(
+            java.time.LocalDateTime start,
+            java.time.LocalDateTime end
+    );
 }

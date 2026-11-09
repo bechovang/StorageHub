@@ -33,6 +33,7 @@ routes:
   # Staff / Manager / Ops / Admin — landing đã định, trang Sprint 2+
   tasks: /tasks                            # landing STAFF (placeholder Sprint 2)
   facility: /facility                      # landing FACILITY_MANAGER (placeholder Sprint 2)
+  checkout-management: /facility/checkouts # V42 — trả kho & thanh lý
   overview: /overview                      # landing BUSINESS_OPS (placeholder Sprint 3)
   users: /users                            # landing SYSTEM_ADMIN (placeholder Sprint 3)
 
@@ -56,3 +57,8 @@ deep-links:
   RESERVATION_EXPIRED: rental-detail
   CHECKOUT_REQUESTED: rental-detail
   CHECKOUT_REQUEST_CANCELLED: rental-detail
+  LATE_CHECKOUT_STARTED: rental-detail
+  LATE_CHECKOUT_ESCALATED: checkout-management
+  LATE_CHECKOUT_EXTENDED: rental-detail
+  LIQUIDATION: rental-detail
+  FORCED_CHECKOUT: rental-detail

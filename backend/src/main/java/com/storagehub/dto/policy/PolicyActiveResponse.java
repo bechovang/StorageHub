@@ -2,6 +2,7 @@ package com.storagehub.dto.policy;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,18 +14,23 @@ public record PolicyActiveResponse(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime updatedAt,
         String updatedBy,
+        LocalDate effectiveDate,
+        Integer facilityId,
+        String facilityCode,
+        String facilityName,
         List<PolicyRateItem> baseRates,
         Surcharges surcharges
 ) {
 
     public record Surcharges(
             Integer lateCheckoutPercent,
+            Integer lateEscalationDays,
             Integer depositPercent,
             Integer turnoverBufferDays,
             Integer checkinGraceDays,
-            Integer checkinLateFeePerDay,
+            Integer checkinLateFeePercent,
             Integer extensionGraceDays,
-            Integer extensionLateFeePerDay
+            Integer extensionLateFeePercent
     ) {
     }
 }
