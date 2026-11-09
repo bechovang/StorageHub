@@ -1,7 +1,7 @@
 # STORAGEHUB DATABASE SCHEMA & MIGRATION MAP
 
 > **Single Source of Truth** cho Cơ Sở Dữ Liệu PostgreSQL / H2 của StorageHub.
-> Trạng thái Migration hiện tại: **V45** (`V45__renewal_deposit_flow.sql`).
+> Trạng thái Migration hiện tại: **V52** (`V52__late_fee_percent_policy.sql`).
 > AI Agent **BẮT BUỘC** phải tra cứu tệp này để biết chính xác tên bảng, tên cột, kiểu dữ liệu và giá trị Enum trước khi viết query, migration SQL hay JPA Repository.
 
 ---
@@ -19,6 +19,8 @@
 | **`Task.Status`** | `tasks.status` | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
 | **`Ticket.Status`** | `support_tickets.status` | `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED` |
 | **`Ticket.Priority`** | `support_tickets.priority` | `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` |
+| **`LateCheckoutCase.Status`** | `late_checkout_cases.status` | `LATE`, `PENDING_MANAGER`, `EXTENDED`, `RESOLVED`, `LIQUIDATED` |
+| **`LateCheckoutCase.Decision`** | `late_checkout_cases.decision` | `EXTEND`, `LIQUIDATE` |
 
 ---
 
@@ -109,6 +111,7 @@ reservations (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     status VARCHAR(50) NOT NULL,          -- PENDING_PAYMENT, ACTIVE, OVERDUE, CHECKED_OUT
+    closed_at DATETIME(6),                -- V46: thời điểm đóng hợp đồng
     monthly_rate NUMERIC(15, 2) NOT NULL,
     deposit_amount NUMERIC(15, 2) NOT NULL,
     total_amount NUMERIC(15, 2) NOT NULL,
@@ -154,6 +157,40 @@ checkout_requests (
     reason TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- V46: Quyết định gia hạn / thanh lý của quản lý cơ sở khi khách trễ hạn
+late_checkout_cases (
+    case_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reservation_id BIGINT NOT NULL UNIQUE REFERENCES reservations(id),
+    status VARCHAR(30) NOT NULL,        -- LATE, PENDING_MANAGER, EXTENDED, RESOLVED, LIQUIDATED
+    decision VARCHAR(20),               -- EXTEND, LIQUIDATE
+    days_late INT NOT NULL DEFAULT 0,
+    accrued_fee NUMERIC(15, 0) NOT NULL DEFAULT 0,
+    escalation_count INT NOT NULL DEFAULT 0,
+    manager_id BIGINT REFERENCES users(id),
+    extension_days INT,
+    extended_until DATE,
+    reason VARCHAR(1000),
+    settlement_id BIGINT REFERENCES settlements(id),
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6),
+    decided_at DATETIME(6)
+);
+
+-- Quyết toán hoàn cọc, phụ phí & thanh lý
+settlements (
+    settlement_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reservation_id BIGINT NOT NULL REFERENCES reservations(id),
+    damage_fee NUMERIC(15, 2) DEFAULT 0,
+    damage_reason TEXT,
+    late_days INT NOT NULL DEFAULT 0,   -- V46
+    late_fee NUMERIC(15, 0) DEFAULT 0,  -- V46
+    settlement_type VARCHAR(20) DEFAULT 'NORMAL', -- 'NORMAL', 'LIQUIDATION' (V46)
+    liquidation_reason VARCHAR(30),     -- V46
+    note VARCHAR(500),                  -- V46
+    refund_amount NUMERIC(15, 2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ---
@@ -170,6 +207,8 @@ tasks (
     status VARCHAR(50) NOT NULL,        -- 'PENDING', 'IN_PROGRESS', 'COMPLETED'
     title VARCHAR(255) NOT NULL,
     note TEXT,
+    completed_at DATETIME(6),           -- V50: thời điểm hoàn thành
+    completed_by BIGINT REFERENCES users(id), -- V50: nhân viên hoàn thành
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -185,4 +224,28 @@ support_tickets (
     assigned_to INT REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Audit trail hệ thống (V47: phân quyền theo facility_id)
+activity_logs (
+    log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    actor_id BIGINT REFERENCES users(id),
+    facility_id INT REFERENCES facilities(id), -- V47: NULL = toàn hệ thống
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id BIGINT NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+### ⚖️ 2.5. Chính Sách Giá & Quy Tắc Vận Hành (V51 & V52 Scope)
+- **`RENT_RATE`**: Áp dụng riêng theo từng cơ sở (`facility_id NOT NULL`).
+- **Các rule vận hành (Global - `facility_id IS NULL`)**:
+  - `CHECKIN_LATE_FEE_PERCENT` (300% giá ngày)
+  - `EXTENSION_LATE_FEE_PERCENT` (300% giá ngày)
+  - `LATE_FEE_PERCENT` (300% giá ngày)
+  - `LATE_ESCALATION_DAYS` (3 ngày trễ chuyển Manager)
+  - `DAMAGE_DEPOSIT_MULTIPLIER`, `BUFFER_DAYS`, `GRACE_PERIOD_DAYS`.
 ```

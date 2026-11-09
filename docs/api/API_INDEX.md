@@ -97,6 +97,7 @@
 | `DELETE` | `/api/v1/reservations/{id}/checkout-request` | Customer | *None* | `CancelCheckoutResponse` | Hủy yêu cầu trả kho |
 | `GET` | `/api/v1/reservations/{id}/checkout-request` | Customer / Staff | *None* | `CheckoutRequestResponse` | Xem trạng thái phiếu trả kho |
 | `POST` | `/api/v1/reservations/{id}/checkout-request/forced` | Manager | `ForcedCheckoutRequest` | `Map<String, Object>` | Cưỡng chế thu hồi kho do vi phạm |
+| `POST` | `/api/v1/reservations/{id}/liquidation` | Manager / Ops | `LiquidationRequest` (`reasonType`, `reason`) | `Map<String, Object>` | Thanh lý tài sản kho quá hạn/vi phạm |
 
 ---
 
@@ -125,6 +126,7 @@
 | Method | Endpoint | Quyền hạn | Request Body / Params | Response Type | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/tasks` | Staff / Manager | Query: `facilityId`, `status`, `type` | `List<TaskResponse>` | Danh sách tác vụ cần xử lý trong ca |
+| `GET` | `/api/v1/tasks/shift-summary` | Staff / Manager / Admin | Query: `workDate` (YYYY-MM-DD) | `ShiftFinanceSummaryResponse` | Báo cáo tiền mặt/CK/POS thu tại quầy theo ca |
 | `GET` | `/api/v1/tasks/{taskId}` | Staff / Manager | Path: `taskId` | `TaskResponse` | Chi tiết tác vụ, kho liên quan, checklist |
 | `GET` | `/api/v1/tasks/{taskId}/contract-preview` | Staff / Manager | Path: `taskId` | `ContractPreviewResponse` | Xem trước hợp đồng kèm bằng chứng thanh toán |
 | `PATCH` | `/api/v1/tasks/{taskId}/status` | Staff | Path: `taskId`, Body: `UpdateTaskStatusRequest` | `TaskResponse` | Nhận việc hoặc chuyển trạng thái |
@@ -156,7 +158,25 @@
 
 ---
 
-### 📊 2.13. Báo Cáo Doanh Thu & Vận Hành (`/api/v1/reports`)
+### ⚖️ 2.13. Quản Trị Chính Sách & Bảng Giá (`/api/v1/policies`)
+| Method | Endpoint | Quyền hạn | Request Body / Params | Response Type | Ghi chú |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/policies/active` | Ops / Admin | Query: `facilityId` | `PolicyActiveResponse` | Chính sách hiệu lực (giá thuê, cọc, phí trễ) |
+| `POST` | `/api/v1/policies` | Ops / Admin | `PolicySaveRequest` | `PolicyActiveResponse` | Lưu cấu hình chính sách mới (tạo version mới) |
+| `POST` | `/api/v1/policies/reset` | Ops / Admin | Query: `facilityId` | `PolicyActiveResponse` | Khôi phục chính sách về cấu hình mặc định ban đầu |
+
+---
+
+### 🚪 2.14. Quản Lý Trả Kho & Thanh Lý Quá Hạn (`/api/v1/checkout-cases`)
+| Method | Endpoint | Quyền hạn | Request Body / Params | Response Type | Ghi chú |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/checkout-cases` | Manager | Query: `status`, `q`, `page`, `page-size` | `List<LateCheckoutCaseResponse>` | Danh sách ca trả kho trễ hạn / tranh chấp |
+| `GET` | `/api/v1/checkout-cases/active-rentals` | Manager | Query: `q`, `page`, `page-size` | `List<LateCheckoutActiveRentalResponse>` | Danh sách hợp đồng đang thuê cần theo dõi |
+| `POST` | `/api/v1/checkout-cases/{caseId}/decision` | Manager | Path: `caseId`, Body: `LateCheckoutDecisionRequest` | `Map<String, Object>` | Quyết định gia hạn (`EXTEND`) hoặc thanh lý kho (`LIQUIDATE`) |
+
+---
+
+### 📊 2.15. Báo Cáo Doanh Thu & Vận Hành (`/api/v1/reports`)
 | Method | Endpoint | Quyền hạn | Request Body / Params | Response Type | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/reports/financial-summary` | Admin / Ops | Query: `from`, `to`, `facilityId` | `FinancialSummaryResponse` | Báo cáo doanh thu, tiền cọc, nợ đọng |
@@ -166,11 +186,11 @@
 
 ---
 
-### 🔔 2.14. Thông Báo & Nhật Ký (`/api/v1/notifications`, `/api/v1/activity-logs`)
+### 🔔 2.16. Thông Báo & Nhật Ký Hệ Thống (`/api/v1/notifications`, `/api/v1/activity-logs`)
 | Method | Endpoint | Quyền hạn | Request Body / Params | Response Type | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/notifications` | Authenticated | Query: `page`, `size` | `NotificationPageResponse` | Danh sách thông báo cá nhân |
 | `GET` | `/api/v1/notifications/unread-count` | Authenticated | *None* | `UnreadCountResponse` | Số lượng thông báo chưa đọc |
 | `POST` | `/api/v1/notifications/{id}/read` | Authenticated | Path: `id` | `Void` | Đánh dấu đã đọc 1 thông báo |
 | `POST` | `/api/v1/notifications/mark-all-read` | Authenticated | *None* | `Void` | Đánh dấu đã đọc tất cả |
-| `GET` | `/api/v1/activity-logs` | Admin / Ops | Query: `entityType`, `entityId`, `page` | `ActivityLogPageResponse` | Audit trail lịch sử thay đổi hệ thống |
+| `GET` | `/api/v1/activity-logs` | Admin / Ops / Manager | Query: `query`, `entityType` (List), `startDate`, `endDate`, `page`, `pageSize` | `ActivityLogPageResponse` | Audit trail hệ thống (Manager bị giới hạn theo cơ sở) |
