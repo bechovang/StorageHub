@@ -7,6 +7,13 @@ spring:
       on-profile: demo
   flyway:
     locations: classpath:db/migration,classpath:db/demo
+    # Chỉ cho phép clean khi profile demo; bean DemoDatabaseResetConfig chỉ
+    # gọi clean nếu APP_DEMO_RESET_ON_START=true.
+    clean-disabled: false
+
+app:
+  demo:
+    reset-on-start: ${DEMO_RESET_ON_START:false}
 
 payment:
   demo:
